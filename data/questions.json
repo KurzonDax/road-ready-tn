@@ -483,7 +483,7 @@
       "id": "a-032",
       "topic": "vehicle",
       "question": "How can you tell if carbon monoxide is in your car?",
-      "answer": "You can't: it has no taste, smell, or color",
+      "answer": "You can't tell, because it has no taste, smell, or color",
       "wrong": [
         "It has a strong smell like rotten eggs or gasoline",
         "It looks like a light gray smoke",
@@ -738,13 +738,13 @@
       "id": "a-050",
       "topic": "vehicle",
       "question": "Which statement about car seats is correct?",
-      "answer": "Under 1 year and under 20 lbs: rear-facing. Ages 1-3 and over 20 lbs: forward-facing",
+      "answer": "Rear-facing if under 1 year old and under 20 pounds. Forward-facing if 1 through 3 years old and over 20 pounds",
       "wrong": [
-        "Under 1 year and under 20 lbs: forward-facing. Ages 1-3 and over 20 lbs: rear-facing",
-        "Under 1 year and under 20 lbs: rear-facing. Ages 1-3 and over 20 lbs: booster seat",
-        "Under 1 year and under 20 lbs: booster seat. Ages 1-3 and over 20 lbs: seat belt only"
+        "Forward-facing if under 1 year old and under 20 pounds. Rear-facing if 1 through 3 years old and over 20 pounds",
+        "Rear-facing if under 1 year old and under 20 pounds. Booster seat if 1 through 3 years old and over 20 pounds",
+        "Booster seat if under 1 year old and under 20 pounds. Seat belt only if 1 through 3 years old and over 20 pounds"
       ],
-      "explanation": "Under 1 year (or under 20 lbs): rear-facing. Ages 1 through 3 and over 20 lbs: forward-facing.",
+      "explanation": "A child under 1 year old, or any child under 20 pounds, must ride rear-facing. Children 1 through 3 years old who weigh more than 20 pounds must ride forward-facing.",
       "page": 31,
       "manual_quote": "facing the rear of the car... one through three years old, and who weigh more than 20 pounds... facing forward.",
       "manual_sample": true
@@ -1104,7 +1104,7 @@
         "The bed of a pickup truck",
         "The front seat with the seat moved forward"
       ],
-      "explanation": "\"The Back Is Where It's At\" for children 12 and under. Air bags pose a severe risk to them.",
+      "explanation": "Children ages 12 and under are safer in the back seat. Air bags pose a severe risk to children of that age.",
       "page": 33,
       "manual_quote": "CHILDREN ages 12 and under are safer in the back seat of a vehicle.",
       "manual_sample": true
@@ -1429,7 +1429,7 @@
         "Railroad ahead",
         "No passing"
       ],
-      "explanation": "The octagon is the only eight-sided sign. It is always red with white letters and means come to a complete stop.",
+      "explanation": "The octagon is the only eight-sided sign. It is always red, and it means you must come to a complete stop.",
       "page": 36,
       "manual_quote": "This sign is the only eight-sided sign on the roadway.",
       "manual_sample": false,
@@ -1491,7 +1491,7 @@
         "Signal and go at regular speed",
         "Railroad crossing ahead"
       ],
-      "explanation": "A yield sign means slow down and yield to traffic. If no cars are coming, you need not stop fully.",
+      "explanation": "A yield sign means slow down and yield to traffic. If no cars are coming, you do not have to come to a complete stop. If traffic is heavy, always stop.",
       "page": 36,
       "manual_quote": "you need not come to a complete stop but you must slow down and enter the intersection with caution.",
       "manual_sample": true,
@@ -2205,7 +2205,7 @@
       "id": "a-146",
       "topic": "signals",
       "question": "Unless a sign says otherwise, may you turn right on a red light?",
-      "answer": "Yes, after a complete stop if no pedestrians or cross traffic",
+      "answer": "Yes, after a complete stop, if there are no pedestrians or cross traffic",
       "wrong": [
         "No, never on a red light",
         "Yes, without stopping if the road is clear",
@@ -2226,7 +2226,7 @@
         "Keep going at the same speed",
         "Slam on the brakes, even if you are already in the intersection"
       ],
-      "explanation": "Yellow means the light is about to turn red. Slow down and stop if you safely can. Don't speed up to beat the light.",
+      "explanation": "Yellow means the light is about to turn red. Slow down and stop, unless you are too close to stop safely. Do not speed up to try to get through before the light turns red.",
       "page": 41,
       "manual_quote": "You must stop if it is safe to do so. Do not speed up to beat the light.",
       "manual_sample": false
@@ -2282,7 +2282,7 @@
       "question": "You have a green light (not an arrow) and want to turn left. Who must you yield to?",
       "answer": "Oncoming vehicles",
       "wrong": [
-        "No one, green gives you the right of way",
+        "No one, because green gives you the right-of-way",
         "Only vehicles behind you",
         "Only vehicles turning right"
       ],
@@ -2295,7 +2295,7 @@
       "id": "a-152",
       "topic": "signals",
       "question": "What does a green turn arrow (protected turn) mean?",
-      "answer": "You may turn that way, and you have the right of way",
+      "answer": "You may turn that way, and you have the right-of-way",
       "wrong": [
         "You must yield to all oncoming traffic before you turn",
         "You may go in any direction",
@@ -2312,7 +2312,7 @@
       "question": "What does a yellow left arrow mean?",
       "answer": "Your protected turn is ending, so get ready to yield",
       "wrong": [
-        "You may turn left with the right of way",
+        "You may turn left with the right-of-way",
         "You must stop now and wait for the next green light",
         "Oncoming traffic must stop for you"
       ],
@@ -2342,7 +2342,7 @@
       "question": "What does a flashing yellow arrow mean?",
       "answer": "Turn left after yielding to oncoming cars and pedestrians",
       "wrong": [
-        "You have the right of way to turn left, and oncoming cars must stop",
+        "You have the right-of-way to turn left, and oncoming cars must stop",
         "You may not turn left at all",
         "You must stop before turning left"
       ],
@@ -2601,7 +2601,7 @@
         "You may only make right turns here",
         "You must drive below the speed limit"
       ],
-      "explanation": "If the broken yellow line is on your side, you are in the passing zone and may pass if safe. If the solid line is on your side, you may not pass.",
+      "explanation": "If the broken yellow line is on your side, you are in the passing zone and may pass when it is safe. If the solid line is on your side, you may not pass.",
       "page": 43,
       "manual_quote": "If the broken yellow line is on your side, you are in the \"passing zone\" and may pass",
       "manual_sample": true
@@ -3081,7 +3081,7 @@
         "Drive 5 mph under the posted limit",
         "Drive as fast as the car ahead of you"
       ],
-      "explanation": "The Basic Speed Rule is a safety principle, not a law. It does not set an exact limit; conditions decide your safe speed.",
+      "explanation": "The Basic Speed Rule is a safety principle, not a law. It does not set an exact limit. The conditions decide what speed is safe.",
       "page": 46,
       "manual_quote": "it teaches that the speed you may drive is limited by current conditions.",
       "manual_sample": false
@@ -3246,7 +3246,7 @@
         "75 mph",
         "80 mph"
       ],
-      "explanation": "The interstate maximum is 70 mph, and it should be driven only in ideal conditions. Some sections are posted lower.",
+      "explanation": "The interstate maximum is 70 mph. Drive that fast only in ideal conditions. Some sections have a lower posted limit.",
       "page": 47,
       "manual_quote": "The maximum speed set by Tennessee law for interstate highways is 70 m.p.h.",
       "manual_sample": false
@@ -3366,7 +3366,7 @@
         "Only when a police officer is parked in the zone",
         "All day and night, every day of the whole year"
       ],
-      "explanation": "School zone limits are regulated when children are going to or from the school or during a school recess hour.",
+      "explanation": "School zone speed limits are in effect when children are going to or from school, or during a school recess.",
       "page": 47,
       "manual_quote": "Speed limits in all school zones are regulated when children are going to or from the school or during a school recess hour.",
       "manual_sample": false
@@ -3576,7 +3576,7 @@
         "Measure the distance in car lengths instead",
         "Check your speedometer and mirrors"
       ],
-      "explanation": "Count \"one-thousand and one, one-thousand and two\" until you reach the same point.",
+      "explanation": "Count “one-thousand and one, one-thousand and two” until you reach the same point.",
       "page": 48,
       "manual_quote": "count the seconds it takes you to reach the same spot.",
       "manual_sample": false
@@ -3599,14 +3599,14 @@
     {
       "id": "b-055",
       "topic": "road",
-      "question": "The two-second rule for following at a safe distance will hold true at:",
-      "answer": "Any speed",
+      "question": "At what speeds does the two-second rule for following at a safe distance hold true?",
+      "answer": "At any speed",
       "wrong": [
-        "Speeds up to 30 mph",
-        "Speeds up to 55 mph",
-        "Speeds up to 45 mph"
+        "Only at speeds up to 30 mph",
+        "Only at speeds up to 55 mph",
+        "Only at speeds up to 45 mph"
       ],
-      "explanation": "The two-second rule works at any speed on state and U.S. highways with moderate speed limits. Increase it in bad conditions.",
+      "explanation": "The two-second rule works at any speed on state and U.S. highways with moderate speed limits. In bad weather, at night, and at higher interstate speeds, increase it to at least four seconds.",
       "page": 49,
       "manual_quote": "This principle will hold true at any speed on state and U.S. highways with moderate speed limits.",
       "manual_sample": true
@@ -4116,7 +4116,7 @@
         "Stop for 10 seconds, then go slowly",
         "Speed up so you pass the bus quickly"
       ],
-      "explanation": "On a highway divided by a median or barrier, drivers on the other side need not stop, but should be careful.",
+      "explanation": "On a highway divided by a median or barrier that cars cannot drive on, drivers on the other side do not have to stop, but they must drive with caution.",
       "page": 51,
       "manual_quote": "divided by median space or a barrier not suitable for vehicular traffic, the driver need not stop, but should proceed with caution.",
       "manual_sample": false
@@ -4589,7 +4589,7 @@
     {
       "id": "b-121",
       "topic": "road",
-      "question": "At a \"T\" intersection, your road ends at a main road. Who must yield?",
+      "question": "At a “T” intersection, your road ends at a main road. Who must yield?",
       "answer": "You must yield to traffic from both directions",
       "wrong": [
         "Main road traffic must yield to you",
@@ -5166,7 +5166,7 @@
         "Whichever lane has the least traffic",
         "The center turn lane of the new street, if there is one"
       ],
-      "explanation": "Turn into the first lane past the center line. Never turn wide into the right lane; oncoming right turners use it.",
+      "explanation": "Turn into the first lane past the center line. Never turn wide into the right lane, because oncoming drivers who are turning right will use that lane.",
       "page": 57,
       "manual_quote": "be sure to turn into the first lane past the center line.",
       "manual_sample": false
@@ -5226,7 +5226,7 @@
         "The lane nearest the right curb",
         "Any lane, if you signal"
       ],
-      "explanation": "From a one-way street, approach in the lane farthest to the left curb.",
+      "explanation": "From a one-way street, approach the turn in the lane nearest the left curb.",
       "page": 57,
       "manual_quote": "Make your approach in the traffic lane furthermost to the left curb of the street.",
       "manual_sample": true
@@ -6621,7 +6621,7 @@
         "20 feet past a fire hydrant",
         "In a parking lot"
       ],
-      "explanation": "It is illegal to park upon any bridge or within a tunnel.",
+      "explanation": "It is illegal to park on any bridge or in a tunnel.",
       "page": 65,
       "manual_quote": "Upon any bridge or within a tunnel",
       "manual_sample": false
@@ -7547,7 +7547,7 @@
     {
       "id": "c-042",
       "topic": "weather",
-      "question": "Compared to daytime, driving at night is:",
+      "question": "How does driving at night compare to driving in the daytime?",
       "answer": "More dangerous, because your headlights limit how far you can see",
       "wrong": [
         "Safer, because there is less traffic and there are fewer distractions",
@@ -7577,7 +7577,7 @@
     {
       "id": "c-044",
       "topic": "weather",
-      "question": "Continuous hard braking on ice and snow often:",
+      "question": "What does continuous hard braking on ice and snow often do?",
       "answer": "Locks the front wheels, so you lose steering control",
       "wrong": [
         "Helps you stop faster on the ice",
@@ -8049,7 +8049,7 @@
         "Drive through quickly to keep momentum",
         "Follow another car through the water"
       ],
-      "explanation": "Turn Around, Don't Drown. The water may be deeper than it looks, and the road may be washed out.",
+      "explanation": "Do not drive into flood water. The water may be deeper than it looks, and the road under it may be washed out.",
       "page": 76,
       "manual_quote": "TURN AROUND, DON’T DROWN®.",
       "manual_sample": false
@@ -8252,7 +8252,7 @@
     {
       "id": "c-089",
       "topic": "alcohol",
-      "question": "Driving under the influence of drugs carries:",
+      "question": "What penalty does driving under the influence of drugs carry?",
       "answer": "The same penalty as for alcohol",
       "wrong": [
         "A lesser penalty than for alcohol",
@@ -8282,7 +8282,7 @@
     {
       "id": "c-091",
       "topic": "alcohol",
-      "question": "As the percentage of alcohol in your blood (BAC) goes up, you become:",
+      "question": "As the percentage of alcohol in your blood (BAC) goes up, what do you become?",
       "answer": "More intoxicated",
       "wrong": [
         "More sober",
@@ -8732,12 +8732,12 @@
     {
       "id": "c-121",
       "topic": "alcohol",
-      "question": "A driver age 16 to 20 can be convicted of underage driving while impaired with a BAC as low as:",
-      "answer": ".02 percent",
+      "question": "What is the lowest BAC at which a driver age 16 to 20 can be convicted of underage driving while impaired?",
+      "answer": "0.02 percent",
       "wrong": [
-        ".05 percent",
-        ".08 percent",
-        ".10 percent"
+        "0.05 percent",
+        "0.08 percent",
+        "0.10 percent"
       ],
       "explanation": "Being under the influence of alcohol or any other intoxicant also counts.",
       "page": 83,
@@ -8814,7 +8814,7 @@
         "The beer has much more",
         "The beer has none"
       ],
-      "explanation": "A 12-ounce beer has about as much alcohol as a 1-ounce shot of whiskey. Beer is not a \"safer\" drink.",
+      "explanation": "A 12-ounce beer has about as much alcohol as a 1-ounce shot of whiskey. Drinking beer instead of whiskey does not make you any safer.",
       "page": 83,
       "manual_quote": "The amount of alcohol in one (12 ounce) bottle of beer is about equal to that in a (1 ounce) shot of whiskey.",
       "manual_sample": false
@@ -8897,7 +8897,7 @@
     {
       "id": "c-132",
       "topic": "record",
-      "question": "After a reportable crash, the driver must file a crash report with the Department of Safety within:",
+      "question": "After a reportable crash, how long does the driver have to file a crash report with the Department of Safety?",
       "answer": "20 days",
       "wrong": [
         "10 days",
@@ -8919,7 +8919,7 @@
         "Slow down to calm your nerves",
         "Park nearby to watch the rescue"
       ],
-      "explanation": "\"Accident gazing\" can cause secondary crashes and block emergency crews.",
+      "explanation": "Slowing down to look at a crash (“accident gazing”) can cause more crashes and block emergency crews.",
       "page": 90,
       "manual_quote": "slowly continue on in your vehicle so not to interfere with the arrival of police and emergency medical and fire/rescue services.",
       "manual_sample": true
@@ -11679,7 +11679,7 @@
         "Only after you can see the workers on the road",
         "Only when a flagger tells you to"
       ],
-      "explanation": "Merge as soon as possible. You can be ticketed and be the cause of an accident for being a last chance merger.",
+      "explanation": "Merge as soon as possible. If you wait until the last moment to merge, you can get a ticket and you can cause a crash.",
       "page": 112,
       "manual_quote": "You can be ticketed and the cause of an accident for being a last chance merger.",
       "manual_sample": false
