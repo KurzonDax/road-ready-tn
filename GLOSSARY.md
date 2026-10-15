@@ -5,11 +5,11 @@ A study app that takes a learner, one small step at a time, from zero to ready f
 ## People
 
 **Learner**:
-The person studying for the knowledge test with the app. Every word on the page is addressed to them.
+The person studying for the knowledge test with the app. Every word on the Learner's pages is addressed to them.
 _Avoid_: Student, user, child
 
 **Helper**:
-The person who sets the app up for a Learner and follows their progress. Never addressed by anything on the page.
+The person who sets the app up for a Learner and follows their progress. Never addressed by anything on the Learner's pages; only the Helper's view speaks to them.
 _Avoid_: Parent, guardian, admin, device manager
 
 ## Hosting
@@ -43,5 +43,23 @@ _Avoid_: State, save
 Every Set a Learner has finished, with each answer and when it was given. Resetting Progress keeps the History.
 _Avoid_: Log, activity
 
+**Study session**:
+A stretch of study with no break longer than 30 minutes between answers.
+_Avoid_: Sitting, visit
+
 **Ready for the test**:
 27 or more right out of 30 on three Practice tests in a row.
+
+## Helper's view
+
+**Helper's view**:
+The screens a Helper sees after signing in: every Learner, and each Learner's Progress and History.
+_Avoid_: Dashboard, admin panel, parent view
+
+**Reset**:
+A Helper putting a Learner's Progress back to the start of Section 1. The History is kept.
+_Avoid_: Restart, wipe
+
+**Move**:
+A Helper setting which Section a Learner does next, or sending them on to Review and Practice tests.
+_Avoid_: Jump, skip
