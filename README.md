@@ -12,7 +12,8 @@ The learner sees only the section they're on: 10 questions, an explanation after
 | Review | Only the questions they missed, 10 at a time | Nothing left to review |
 | Practice tests | 30 questions drawn from all 120, like the real test | 27 or more right, three times in a row |
 
-- Finished sections are colored by their latest score: green for 10 of 10, yellow for 7 to 9, red for under 7. Tapping a finished section redoes it in a new order.
+- Finished sections show as finished, whatever the score. "See your section scores" on the home screen lists each section's latest score and lets the learner do it again in a new order.
+- Stopping partway, or closing the page, keeps the answers so far. The home screen offers to continue where the learner stopped.
 - The real test is 30 questions and needs 24 right (80%). "Ready" asks for 27 (90%) to leave room for nerves.
 - Progress is saved in the browser on the device being used.
 
@@ -48,7 +49,7 @@ docs/
 2. Run `python3 build.py`. It refuses to build if a rule in `tests/validate_data.py` is broken.
 3. Run `python3 tests/check_quotes.py` and `python3 tests/test_app.py`.
 
-The browser test needs Playwright: `pip install playwright && playwright install chromium`. Rebuilding the manual text needs `pdftotext` (poppler-utils) and the manual PDF from [tn.gov/safety](https://www.tn.gov/safety).
+The browser test needs Playwright: `pip install playwright && playwright install chromium`. To use an installed Chromium instead, set `CHROMIUM_PATH` (for example `CHROMIUM_PATH=/usr/bin/chromium`). Rebuilding the manual text needs `pdftotext` (poppler-utils) and the manual PDF from [tn.gov/safety](https://www.tn.gov/safety).
 
 ## Source and disclaimer
 

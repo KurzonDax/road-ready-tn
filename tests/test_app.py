@@ -5,11 +5,15 @@ Needs Playwright with Chromium:  pip install playwright && playwright install ch
 Run after building:              python3 build.py && python3 tests/test_app.py
 
 Covers the whole path the student takes: all 12 sections, redoing a section,
-section colors, review of missed questions, practice tests, the "ready" screen,
-the hidden #restart / #sectionN links, and saving progress across a reload.
+section scores, review of missed questions, practice tests, the "ready" screen,
+the hidden #restart / #sectionN links, saving progress across a reload, picking
+up a half-finished section, and the phone layout.
+
+Set CHROMIUM_PATH to use an installed Chromium instead of Playwright's download.
 """
 import functools
 import http.server
+import os
 import pathlib
 import threading
 
@@ -52,6 +56,15 @@ def answer_set(pg, miss=0):
     return n
 
 
+def answer_one(pg):
+    """Click the right answer to the question on screen."""
+    right = pg.evaluate("run.items[run.i].q.a")
+    for o in pg.query_selector_all("button.opt"):
+        if o.inner_text().split("\n", 1)[-1].strip() == right:
+            o.click()
+            return
+
+
 def h1(pg):
     return pg.inner_text(".home h1")
 
@@ -60,7 +73,23 @@ def main():
     srv, url = serve()
     errors = []
     with sync_playwright() as p:
-        browser = p.chromium.launch()
+        browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
+
+        # A real phone lays the page out at its own width, not a shrunken desktop page.
+        phone = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
+        pg = phone.new_page()
+        pg.goto(url)
+        print("\n[phone]")
+        check(pg.evaluate("document.compatMode") == "CSS1Compat", "page runs in standards mode")
+        check(pg.evaluate("innerWidth") == 390, "phone lays the page out at the phone's width")
+        check(pg.evaluate("document.documentElement.lang") == "en", "page language is set")
+        pg.click("#startBtn")
+        pg.query_selector_all(".opt")[0].click()
+        box = pg.query_selector("#feedback .verdict").bounding_box()
+        check(box is not None and 0 <= box["y"] < 844, "after answering, the verdict is on screen")
+        nb = pg.query_selector("#nextBtn").bounding_box()
+        check(nb is not None and nb["y"] + nb["height"] <= 844, "after answering, Next is on screen")
+        phone.close()
         for scheme in ("light", "dark"):
             print(f"\n[{scheme} mode]")
             ctx = browser.new_context(viewport={"width": 400, "height": 900}, color_scheme=scheme)
@@ -86,24 +115,46 @@ def main():
                   "a redo doesn't move his place forward")
             pg.click("#homeBtn")
 
-            # Sections 2 and 3 at 8 and 5 to check the colors.
+            # Sections 2 and 3 at 8 and 5. Scores are shown on request, not as colors.
             for miss in (2, 5):
                 pg.click("#startBtn"); answer_set(pg, miss); pg.click("#homeBtn")
-            classes = [b.get_attribute("class") for b in pg.query_selector_all(".redo")]
-            check("g-all" in classes[0] and "g-mid" in classes[1] and "g-low" in classes[2],
-                  "finished sections are green (10), yellow (7-9), red (under 7)")
+            check(len(pg.query_selector_all(".road .stop.done")) == 3, "finished sections show as finished")
+            check(not pg.query_selector(".road .g-low, .road .g-mid"), "finished sections are not colored by score")
+            pg.click(".scores summary")
+            scores = [e.inner_text() for e in pg.query_selector_all(".scores .sscore")]
+            check(scores == ["Last time: 10 of 10 right", "Last time: 8 of 10 right", "Last time: 5 of 10 right"],
+                  "section scores list the latest score for each section")
 
-            # Tapping a finished section redoes it; the color follows the latest score.
+            # Doing a finished section again updates its score.
             pg.click('.redo[data-day="3"]'); answer_set(pg); pg.click("#homeBtn")
-            check("g-all" in pg.query_selector('.redo[data-day="3"]').get_attribute("class"),
-                  "redoing a red section at 10 of 10 turns it green")
+            pg.click(".scores summary")
+            check(pg.inner_text('.scores li:nth-child(3) .sscore') == "Last time: 10 of 10 right",
+                  "redoing a section updates its score")
+
+            # A half-finished section is saved: stopping, or closing the page, keeps the answers.
+            pg.click("#startBtn")
+            answer_one(pg); pg.click("#nextBtn")
+            answer_one(pg)
+            pg.click("#quitBtn")
+            check(pg.query_selector("#resumeBtn") is not None and "answered 2 of 10" in pg.inner_text(".home"),
+                  "stopping partway shows how far you got")
+            pg.reload()
+            check(pg.query_selector("#resumeBtn") is not None, "a half-finished section survives a reload")
+            pg.click("#resumeBtn")
+            check(pg.evaluate("run.i") == 1 and pg.query_selector("#nextBtn") is not None,
+                  "continuing picks up at the same question")
+            pg.click("#nextBtn")
+            answer_set(pg)
+            check(pg.inner_text(".score") == "10 of 10" and pg.query_selector("details.missed") is None,
+                  "a resumed section finishes normally")
+            pg.click("#homeBtn")
 
             # Progress survives a reload.
             pg.reload()
-            check(h1(pg) == "Section 4 of 12", "progress is saved across a reload")
+            check(h1(pg) == "Section 5 of 12", "progress is saved across a reload")
 
             # Finish the rest, missing 2 in each.
-            for _ in range(4, 13):
+            for _ in range(5, 13):
                 pg.click("#startBtn"); answer_set(pg, 2); pg.click("#homeBtn")
             check(h1(pg) == "Review", "after Section 12 comes review of missed questions")
             rounds = 0

@@ -25,7 +25,10 @@ Five quotes come from tables the PDF extracts out of order (a-022, a-050, a-084,
 ## App behavior
 
 - **Saved progress key.** The app saves progress in the browser under `tn-permit-daily-v1`. Don't rename it; doing so would erase progress on devices already using the app.
-- **Section scores** show the most recent attempt, so redoing a red section at 10 of 10 turns it green.
+- **Section scores** show the most recent attempt. They live behind "See your section scores" instead of coloring the progress track, so past low scores aren't the loudest thing on every screen for an anxious learner.
+- **Half-finished sets are saved** in the same progress key (`run`: question ids, the shown answer order, and answers so far). If the questions change so a saved set no longer matches, it is dropped quietly.
+- **"I'm done for now"** is the main button after a set, because one section per sitting is the intended pace. "Go on to Section N now" stays available.
+- **Wording is literal.** No idioms ("Not quite", "stay sharp"), no gesture words like "Tap", and the page says it is a practice app not made by the State of Tennessee.
 - **Missed questions** go into review after Section 12. Getting one right on a redo removes it from review.
 - **"Ready for the test"** means 27 or more of 30 on three practice tests in a row (90%). The real test passes at 24 of 30 (80%); the extra margin allows for test-day nerves.
 - **Order.** The first time through, a section's questions run easiest first. Redos and review shuffle the order, and answer choices are shuffled every time.
