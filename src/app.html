@@ -2,13 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Ready TN</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Overpass:wght@600;800&display=swap">
+<meta name="theme-color" content="#f3f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111814" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="Road Ready">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
 <style>
+/* Self-hosted fonts, Latin subset (see src/fonts/README.md). Overpass is one variable font for 600 to 800. */
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2") format("woff2"); }
+@font-face { font-family: "Overpass"; font-style: normal; font-weight: 600 800; font-display: swap; src: url("fonts/overpass/overpass-variable.woff2") format("woff2"); }
 /* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. Highway guide-sign palette. */
 :root {
   --bg: #f3f5f2;
@@ -46,7 +52,8 @@ body {
   font-family: var(--font-body); font-size: 18px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 24px 48px;
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(48px, env(safe-area-inset-bottom, 0px));
 }
 ::selection { background: var(--guide); color: var(--guide-ink); }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -86,6 +93,17 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .btn.slim { width: auto; font-size: 16px; padding: 10px 14px; min-height: 44px; border-radius: 10px; }
 .link { font: inherit; font-size: 16px; background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 10px 8px; min-height: 44px; align-self: center; }
 .fine { font-size: 15px; color: var(--muted); margin: 18px 0 0; border-top: 1.5px solid var(--line); padding-top: 14px; }
+.fine p { margin: 0; }
+.fine .link { font-size: 15px; padding: 10px 0; margin-top: 4px; }
+
+/* Sign-in: one short form, labels above their fields. */
+.signin { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label { font-weight: 700; }
+.field input { font: inherit; font-size: 19px; padding: 12px 14px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); width: 100%; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 17px; cursor: pointer; align-self: flex-start; }
+.check input { width: 22px; height: 22px; margin: 0; accent-color: var(--guide); }
+#signInMsg:empty { display: none; }
 .warn { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--bad-soft); color: var(--ink); font-size: 16px; }
 
 .progress { display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 16px; }
@@ -137,6 +155,33 @@ button.opt { cursor: pointer; }
 .ticks span { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid var(--control-line); background: var(--surface); }
 .ticks span.on { background: var(--guide); border-color: var(--guide); }
 
+/* The Helper's view: a list of Learners, and one Learner's page in plain parts, top to bottom. Long names and answers wrap instead of widening the page. */
+.helper, .helper button { overflow-wrap: anywhere; }
+.learners { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lrow { font: inherit; text-align: left; width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.lrow .lname { font-weight: 700; font-size: 20px; }
+.lrow .lwhen { color: var(--muted); font-size: 16px; }
+.link.top { align-self: flex-start; padding-left: 0; }
+.now { display: flex; flex-direction: column; gap: 4px; }
+.now p, .part p { margin: 0; }
+.part { border-top: 1.5px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.part h2 { font-size: 22px; }
+.part ul { list-style: none; margin: 0; padding: 0; }
+.part > ul > li { border-top: 1px solid var(--line); padding: 10px 0; display: flex; flex-direction: column; gap: 2px; }
+.part > ul > li:first-child { border-top: 0; padding-top: 0; }
+.sections summary { cursor: pointer; min-height: 44px; }
+.sections .sname, .when, .mq { font-weight: 700; }
+.sections .sscore { display: block; color: var(--muted); font-size: 16px; font-variant-numeric: tabular-nums; }
+.part .sets { padding: 6px 0 4px 22px; font-size: 16px; display: flex; flex-direction: column; gap: 4px; }
+.missedmost .mpage, .missedmost .mcount { color: var(--muted); font-size: 16px; }
+/* Managing a Learner: plain buttons at the bottom of their page; each action asks first on a screen of its own. */
+.note { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--guide-soft); color: var(--ink); font-size: 16px; }
+.btn.bad { border-color: var(--bad); color: var(--bad); }
+.btn.bad.primary { background: var(--bad); color: var(--surface); }
+.btn:disabled { cursor: not-allowed; opacity: .5; }
+.field select { font: inherit; font-size: 19px; padding: 12px 14px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); width: 100%; }
+#formMsg:empty { display: none; }
+
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 </head>
@@ -148,7 +193,6 @@ button.opt { cursor: pointer; }
 </div>
 
 <script>
-const DATA = __DATA__;
 const SIGNS = {
   octagon: '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#c62828" stroke="#7a1a1a" stroke-width="2"/></svg>',
   triangle: '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="4,10 96,10 50,92" fill="#c62828"/><polygon points="20,20 80,20 50,73" fill="#fff"/></svg>',
@@ -158,57 +202,227 @@ const SIGNS = {
   rectangle: '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="20" y="6" width="60" height="88" rx="4" fill="#fff" stroke="#222" stroke-width="3"/><rect x="30" y="20" width="40" height="6" fill="#222"/><rect x="30" y="36" width="40" height="6" fill="#222"/><rect x="34" y="56" width="32" height="24" fill="#222"/></svg>',
   swatch: c => `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="10" y="22" width="80" height="56" rx="6" fill="${c}" stroke="#555" stroke-width="2"/></svg>`
 };
-const DAYS = DATA.days, QS = DATA.qs, TOTAL_DAYS = DAYS.length;
-const BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
+let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.json when the page starts
 const TEST_LEN = 30, READY_SCORE = 27, READY_STREAK = 3, PASS_SCORE = 24;
-const KEY = 'tn-permit-daily-v1'; // keep this key: changing it would erase saved progress on existing devices
-
-function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-const canSave = (() => { try { localStorage.setItem(KEY + '-check', '1'); localStorage.removeItem(KEY + '-check'); return true; } catch (e) { return false; } })();
-let S = Object.assign({ day: 1, last: {}, tests: [] }, load() || {});
-let run = null; // the set on screen; a copy is kept in S.run so leaving the page doesn't lose answers
+// The device copy of the signed-in Learner, saved under `rrtn-learner-<account id>`:
+// {records: what the server last handed back, pending: finished Sets not yet stored on the
+// server, unfinished: the Set on screen, so leaving the page doesn't lose answers, rejected:
+// records the server refused as badly shaped, kept aside so they don't hold back the others}.
+let copy = null, copyFor = null; // the copy, and the account id it belongs to
+const copyKey = id => `rrtn-learner-${id}`;
+// The saved state from before accounts. The page only reads it, for the one-time import; it never writes or deletes it.
+const OLD_KEY = 'tn-permit-daily-v1';
+// Set once this device has made an Imported record. It belongs to the device, not to a Learner, so
+// it outlasts sign-out and only the first Learner to sign in here gets the import (decision #7).
+const IMPORTED_KEY = 'rrtn-old-progress-imported';
+const canSave = (() => { try { localStorage.setItem('rrtn-check', '1'); localStorage.removeItem('rrtn-check'); return true; } catch (e) { return false; } })();
+function readCopy(id) {
+  try {
+    const c = JSON.parse(localStorage.getItem(copyKey(id)));
+    if (c && Array.isArray(c.records) && Array.isArray(c.pending)) {
+      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null,
+        rejected: Array.isArray(c.rejected) ? c.rejected : [] };
+    }
+  } catch (e) {}
+  return null;
+}
+function saveCopy() { try { localStorage.setItem(copyKey(copyFor), JSON.stringify(copy)); } catch (e) {} }
+const copyRecords = () => copy.records.concat(copy.pending);
+// S is the Learner's Progress ({day, last, scores, tests}), worked out from every record in the
+// copy, sent or waiting, plus `run`: the unfinished Set as saved.
+let S = null;
+function workOut() { S = Object.assign(progressFrom(copyRecords()), { run: copy.unfinished }); }
+let run = null; // the Set on screen
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const reviewPile = () => QS.filter(q => S.last[q.id] === false);
-function streak() { let n = 0; for (let i = S.tests.length - 1; i >= 0 && S.tests[i] >= READY_SCORE; i--) n++; return n; }
+// These read the signed-in Learner's Progress `S`, or another Progress passed in (the Helper's view).
+const reviewPile = (p = S) => QS.filter(q => p.last[q.id] === false);
+function streak(p = S) { let n = 0; for (let i = p.tests.length - 1; i >= 0 && p.tests[i] >= READY_SCORE; i--) n++; return n; }
 
-function phase() {
-  if (S.day <= TOTAL_DAYS) return 'day';
-  if (streak() >= READY_STREAK) return 'test';
-  if (reviewPile().length) return 'review';
+function phase(p = S) {
+  if (p.day <= TOTAL_DAYS) return 'day';
+  if (streak(p) >= READY_STREAK) return 'test';
+  if (reviewPile(p).length) return 'review';
   return 'test';
 }
 
-// Saved runs store question ids and the shown option order. A run that no longer matches the questions is dropped.
+// Progress is worked out from a Learner's records (docs/adr/0001-*); it is never saved itself.
+// Records are ordered by finish time, then by the server's arrival number (seq). A record still
+// waiting on the device has no seq and sorts after the sent ones with the same time.
+const recordTime = r => { const t = Date.parse(r.at); return Number.isNaN(t) ? 0 : t; };
+function orderRecords(records) {
+  return records.slice().sort((a, b) => recordTime(a) - recordTime(b) ||
+    (a.seq === undefined ? Infinity : a.seq) - (b.seq === undefined ? Infinity : b.seq) || 0);
+}
+// The id of the latest Reset, or null when there has been none.
+function currentReset(records) {
+  const resets = orderRecords(records).filter(r => r.kind === 'reset');
+  return resets.length ? resets[resets.length - 1].id : null;
+}
+// The latest Reset or Move record, or null when there has been none.
+function latestChange(records) {
+  const changes = orderRecords(records).filter(r => r.kind === 'reset' || r.kind === 'move');
+  return changes.length ? changes[changes.length - 1] : null;
+}
+// A Reset or Move drops any unfinished Set (#24). An unfinished Set names the latest Reset or Move
+// known when it started (`after`), so one this device kept from before a newer one is dropped too.
+// A Set saved without `after` is dropped if a Reset or Move came after it was last saved.
+function droppedByChange(u, records) {
+  const c = latestChange(records);
+  if (u.after === null || typeof u.after === 'string') return u.after !== (c && c.id);
+  return c !== null && recordTime(c) > (Date.parse(u.saved_at) || 0);
+}
+// The records that count toward Progress, in order: those after the latest Reset that name it
+// (or, with no Reset, those that name none). The others stay in the History only.
+function countedRecords(records) {
+  const ordered = orderRecords(records), reset = currentReset(records);
+  const from = reset === null ? 0 : ordered.findIndex(r => r.id === reset) + 1;
+  return ordered.slice(from).filter(r => r.kind !== 'reset' && r.reset === reset);
+}
+// An Imported record's old saved state, keeping only fields of the right type.
+function importedStart(state) {
+  const p = { day: 1, last: {}, scores: {}, tests: [] }, plain = v => v && typeof v === 'object' && !Array.isArray(v);
+  if (!plain(state)) return p;
+  if (Number.isInteger(state.day) && state.day >= 1 && state.day <= TOTAL_DAYS + 1) p.day = state.day;
+  if (plain(state.last)) for (const [q, right] of Object.entries(state.last)) if (typeof right === 'boolean') p.last[q] = right;
+  if (plain(state.scores)) for (const [d, n] of Object.entries(state.scores)) if (Number.isInteger(n) && n >= 0) p.scores[d] = n;
+  if (Array.isArray(state.tests)) p.tests = state.tests.filter(n => Number.isInteger(n) && n >= 0);
+  return p;
+}
+// A Learner's Progress ({day, last, scores, tests}) from their records, by the study rules.
+function progressFrom(records) {
+  let p = { day: 1, last: {}, scores: {}, tests: [] };
+  for (const r of countedRecords(records)) {
+    if (r.kind === 'imported') p = importedStart(r.data.state);
+    else if (r.kind === 'move') p.day = r.data.to;
+    else if (r.kind === 'set') {
+      const d = r.data, right = d.answers.filter(a => a.right).length;
+      d.answers.forEach(a => { p.last[a.q] = a.right; });
+      if (d.type === 'day' || d.type === 'redo') p.scores[d.section] = right;
+      if (d.type === 'day' && d.section === p.day) p.day++; // otherwise it counts as a redo of that Section
+      if (d.type === 'test') p.tests.push(right);
+    }
+  }
+  return p;
+}
+
+// Saved runs store question ids, the shown option order, and when each answer was chosen. A run that no longer matches the questions is dropped.
 function packRun(r) {
-  return { kind: r.kind, dayNum: r.dayNum, i: r.i, answered: r.answered, items: r.items.map(it => ({ id: it.q.id, options: it.options, chosen: it.chosen })) };
+  return { kind: r.kind, dayNum: r.dayNum, i: r.i, answered: r.answered, set_id: r.set_id, started_at: r.started_at, after: r.after,
+    items: r.items.map(it => ({ id: it.q.id, options: it.options, chosen: it.chosen, at: it.at })) };
 }
 function unpackRun(p) {
   try {
     const items = p.items.map(x => {
       const q = BY_ID[x.id];
       if (!q || x.options.slice().sort().join('\n') !== [q.a, ...q.o].sort().join('\n')) throw new Error('changed');
-      return { q, options: x.options, chosen: x.chosen };
+      return { q, options: x.options, chosen: x.chosen, at: x.at || null };
     });
-    if (!items.length || p.i < 0 || p.i >= items.length) return null;
-    return { kind: p.kind, dayNum: p.dayNum, i: p.i, answered: !!p.answered, items };
+    if (!items.length || p.i < 0 || p.i >= items.length || typeof p.set_id !== 'string' || !p.set_id) return null;
+    return { kind: p.kind, dayNum: p.dayNum, i: p.i, answered: !!p.answered, set_id: p.set_id,
+      started_at: p.started_at || new Date().toISOString(), after: p.after, items };
   } catch (e) { return null; }
 }
-function keepRun() { S.run = run ? packRun(run) : null; save(); }
-
-function runName(r) {
-  if (r.kind === 'day') return `Section ${r.dayNum}`;
-  if (r.kind === 'redo') return `Section ${r.dayNum}`;
-  if (r.kind === 'review') return 'Review';
-  return 'Practice test';
+// Saves the Set on screen in the device copy, stamped with saved_at, and sends it to the server.
+function keepRun() {
+  copy.unfinished = S.run = run ? Object.assign(packRun(run), { saved_at: new Date().toISOString() }) : null;
+  saveCopy();
+  sendUnfinished();
 }
 
-let painted = false;
+// A finished Set as a record. It names the latest Reset this device knows about.
+function setRecord(r) {
+  const now = new Date().toISOString();
+  return { id: crypto.randomUUID(), kind: 'set', reset: currentReset(copyRecords()), at: now,
+    data: { set_id: r.set_id, type: r.kind, section: r.kind === 'day' || r.kind === 'redo' ? r.dayNum : null, started_at: r.started_at,
+      answers: r.items.map(it => ({ q: it.q.id, chosen: it.chosen, right: it.chosen === it.q.a, at: it.at || now })) } };
+}
+
+// Sends the records waiting on this device, up to 100 (and under the server's body limit) at a
+// time. Those the server stored, or skipped because it already has them, move from `pending` to
+// `records`. If the server can't be reached they stay in `pending`, and are sent when the app
+// opens, when the device comes back online, after the next finished Set, or before sign-out.
+// One send runs at a time; a call made meanwhile sends again once it ends.
+let sending = null, sendAgain = false;
+function sendPending() {
+  if (sending) { sendAgain = true; return sending; }
+  sendAgain = false;
+  sending = sendWaiting().finally(() => { sending = null; if (sendAgain) sendPending(); });
+  return sending;
+}
+const BATCH_BYTES = 60000; // the server refuses a body over 64 KB
+const jsonBytes = v => new TextEncoder().encode(JSON.stringify(v)).length;
+async function sendWaiting() {
+  const mine = copy;
+  while (mine && copy === mine && mine.pending.length) {
+    const batch = [];
+    let size = 20;
+    for (const x of mine.pending) {
+      const n = jsonBytes(x) + 1;
+      if (batch.length && (batch.length === 100 || size + n > BATCH_BYTES)) break;
+      batch.push(x);
+      size += n;
+    }
+    let r, body;
+    try {
+      r = await postJSON('/api/records', { records: batch });
+      if (r.status === 400) body = await r.json();
+    } catch (e) { return; }
+    if (copy !== mine) return;
+    if (body && body.error === 'bad-record' && batch[body.index]) {
+      // The server will never take a record of that shape; leaving it waiting would hold back every
+      // one after it. It is kept aside rather than deleted.
+      const bad = batch[body.index];
+      mine.pending = mine.pending.filter(x => x.id !== bad.id);
+      mine.rejected.push(bad);
+      saveCopy();
+      continue;
+    }
+    if (!r.ok) return;
+    const sent = new Set(batch.map(x => x.id)), have = new Set(mine.records.map(x => x.id));
+    mine.pending = mine.pending.filter(x => !sent.has(x.id));
+    mine.records = mine.records.concat(batch.filter(x => !have.has(x.id)));
+    saveCopy();
+  }
+}
+
+// Sends the unfinished Set (or null once it is finished) to the server, so the Learner can go on
+// with it on another device. One send at a time, always the latest; `unfinishedUnsent` says the
+// server is behind the device, so it is sent again when the device comes back online.
+let sendingUnfinished = false, unfinishedUnsent = false;
+async function sendUnfinished() {
+  unfinishedUnsent = true;
+  if (sendingUnfinished || !copy) return;
+  sendingUnfinished = true;
+  const mine = copy;
+  try {
+    while (unfinishedUnsent && copy === mine) {
+      unfinishedUnsent = false;
+      const r = await postJSON('/api/unfinished', { set: mine.unfinished });
+      if (!r.ok) { unfinishedUnsent = copy === mine; break; }
+    }
+  } catch (e) {
+    unfinishedUnsent = copy === mine;
+  } finally {
+    sendingUnfinished = false;
+  }
+}
+
+window.addEventListener('online', () => {
+  if (!copy) return;
+  sendPending();
+  if (unfinishedUnsent) sendUnfinished();
+});
+
+// A Set's name from its type ('day', 'redo', 'review' or 'test') and Section number.
+const setName = (type, section) => type === 'review' ? 'Review' : type === 'test' ? 'Practice test' : `Section ${section}`;
+
+let painted = false, onHome = false; // onHome: the Learner's home screen (or its "You stopped partway" form) is showing
 function paint(html, focus) {
+  onHome = false;
   $('stage').innerHTML = html;
   if (painted && focus) { const el = document.querySelector(focus); if (el) el.focus({ preventScroll: true }); }
   painted = true;
@@ -235,12 +449,13 @@ function scoresPanel() {
   return `<details class="scores"><summary>See your section scores</summary><ul>${rows}</ul></details>`;
 }
 
-const disclaimer = `<p class="fine">This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p>`;
+// The fine print at the bottom of the Learner's home screen, with a quiet Sign out beside it.
+const disclaimer = `<footer class="fine"><p>This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p><button class="link" type="button" id="signOutBtn">Sign out</button></footer>`;
 
 function renderHome() {
   run = null;
   const saved = S.run && unpackRun(S.run);
-  if (S.run && !saved) { S.run = null; save(); }
+  if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
   if (saved) return renderResume(saved);
   const ph = phase(), st = streak(), ready = ph === 'test' && st >= READY_STREAK;
   let top, sub = '', btn, extra = '';
@@ -271,19 +486,21 @@ function renderHome() {
       ${top}
       ${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${extra}
-      ${canSave ? '' : '<p class="warn">This browser is not saving your progress. If you close this page, you will start again from Section 1.</p>'}
+      ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
       <button class="btn primary" type="button" id="startBtn">${btn}</button>
       ${roadMarkers()}
       ${scoresPanel()}
       ${disclaimer}
     </section>`, 'h1');
+  onHome = true;
   $('startBtn').onclick = () => start();
   document.querySelectorAll('.redo').forEach(b => b.onclick = () => start(Number(b.dataset.day)));
+  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
 }
 
 function renderResume(saved) {
   const n = saved.items.length, done = saved.i + (saved.answered ? 1 : 0);
-  const name = runName(saved);
+  const name = setName(saved.kind, saved.dayNum);
   const head = saved.kind === 'day' ? `Section ${saved.dayNum} of ${TOTAL_DAYS}` : saved.kind === 'redo' ? `Section ${saved.dayNum} again` : name;
   paint(`
     <section class="home">
@@ -292,9 +509,12 @@ function renderResume(saved) {
       <p class="sub">You answered ${done} of ${n} questions. Your answers are saved.</p>
       <button class="btn primary" type="button" id="resumeBtn">Continue where I stopped</button>
       <button class="link" type="button" id="overBtn">Start over from question 1 (this clears these answers)</button>
+      ${disclaimer}
     </section>`, 'h1');
+  onHome = true;
+  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
   $('resumeBtn').onclick = () => { run = saved; renderQuestion(); };
-  $('overBtn').onclick = () => { S.run = null; save(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
+  $('overBtn').onclick = () => { copy.unfinished = S.run = null; saveCopy(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
 }
 
 function start(redoDay) {
@@ -304,7 +524,9 @@ function start(redoDay) {
   else if (ph === 'day') qs = QS.filter(q => q.day === S.day);
   else if (ph === 'review') qs = shuffle(reviewPile()).slice(0, 10);
   else qs = shuffle(QS).slice(0, TEST_LEN);
-  run = { kind: ph, dayNum: redoDay || S.day, items: qs.map(q => ({ q, options: shuffle([q.a, ...q.o]), chosen: null })), i: 0, answered: false };
+  const change = latestChange(copyRecords());
+  run = { kind: ph, dayNum: redoDay || S.day, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), after: change && change.id,
+    items: qs.map(q => ({ q, options: shuffle([q.a, ...q.o]), chosen: null, at: null })), i: 0, answered: false };
   keepRun();
   renderQuestion();
 }
@@ -330,7 +552,7 @@ function renderQuestion(revealFeedback) {
   const done = run.i + (run.answered ? 1 : 0);
   paint(`
     <div class="home">
-      <div class="progress"><span>${runName(run)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${done / n * 100}%"></span></div></div>
+      <div class="progress"><span>${setName(run.kind, run.dayNum)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${done / n * 100}%"></span></div></div>
       <div class="card">
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <h1 class="q" id="qText" tabindex="-1">${esc(q.q)}</h1>
@@ -362,6 +584,7 @@ function choose(k) {
   if (run.answered) return;
   const it = run.items[run.i];
   it.chosen = it.options[k];
+  it.at = new Date().toISOString();
   run.answered = true;
   keepRun();
   renderQuestion(true);
@@ -376,10 +599,17 @@ function next() {
 }
 
 function finish() {
-  const items = run.items, n = items.length, kind = run.kind;
-  items.forEach(it => { S.last[it.q.id] = it.chosen === it.q.a; });
+  const items = run.items, n = items.length, kind = run.kind, before = streak();
   const right = items.filter(it => it.chosen === it.q.a).length;
-  if (kind === 'day' || kind === 'redo') { S.scores = S.scores || {}; S.scores[run.dayNum] = right; }
+  // The finished Set waits in `pending` until the server has it; Progress is worked out again with it.
+  const rec = setRecord(run), mine = copy;
+  copy.pending.push(rec);
+  copy.unfinished = null;
+  saveCopy();
+  workOut();
+  // Once the server has the finished Set, the unfinished one is cleared there too.
+  unfinishedUnsent = true;
+  sendPending().then(() => { if (copy === mine && !mine.pending.includes(rec)) sendUnfinished(); });
   const missed = items.filter(it => it.chosen !== it.q.a);
   const toReview = 'The questions you missed go into review. You will do them before the next practice test.';
   let title, note = '', sign = false;
@@ -387,16 +617,13 @@ function finish() {
     title = `Section ${run.dayNum} done.`;
     note = missed.length ? 'You can do it again now, or another day from "See your section scores".' : 'You got every one right.';
   } else if (kind === 'day') {
-    title = `Section ${S.day} done.`;
+    title = `Section ${run.dayNum} done.`;
     note = missed.length ? `You can do this section again now, or another day from "See your section scores". The questions you missed also come back in review after Section ${TOTAL_DAYS}.` : 'You got every one right.';
-    S.day++;
   } else if (kind === 'review') {
     const left = reviewPile().length;
     title = 'This review set is done.';
     note = left ? `${plural(left, 'question is', 'questions are')} still in review. Questions you missed this time stay in review.` : 'Review is finished. Next: practice tests.';
   } else {
-    const before = streak();
-    S.tests.push(right);
     const st = streak();
     if (st >= READY_STREAK) {
       sign = true;
@@ -414,8 +641,6 @@ function finish() {
   const nextDay = phase() === 'day' && kind === 'day';
   const againDay = run.dayNum;
   run = null;
-  S.run = null;
-  save();
   const list = missed.map(it => `<li><p class="mq">${esc(it.q.q)}</p><p>Right answer: ${esc(it.q.a)}</p><p class="mwhy">${esc(it.q.why)}</p><p class="mpage">Driver manual, page ${it.q.p}</p></li>`).join('');
   paint(`
     <section class="home">
@@ -438,21 +663,686 @@ document.addEventListener('keydown', e => {
   if (k >= 0) { e.preventDefault(); choose(k); }
 });
 
-// Hidden controls: add #restart or #section5 (any number; 13 = review and tests) to the end of the link.
-function confirmRestart() {
-  paint(`<section class="home"><h2 tabindex="-1">Start over from Section 1?</h2><p class="sub">This erases all saved progress on this device.</p><button class="btn primary" type="button" id="yes">Erase my progress and start over</button><button class="btn" type="button" id="no">Keep my progress</button></section>`, 'h2');
-  $('yes').onclick = () => { S = { day: 1, last: {}, tests: [], scores: {} }; save(); history.replaceState(null, '', location.pathname + location.search); renderHome(); };
-  $('no').onclick = () => { history.replaceState(null, '', location.pathname + location.search); renderHome(); };
+// Accounts. `me` is the signed-in account ({id, role, name}) or null. Every call to the
+// server goes through api(): a 401 while signed in means the sign-in has ended, and the
+// page goes back to the sign-in screen without saying why.
+let me = null;
+class SignedOut extends Error {}
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ cache: 'no-store' }, opts));
+  if (r.status === 401 && me) { signedOut(); throw new SignedOut(); }
+  return r;
 }
-function applyHash() {
-  const hash = (location.hash || '').toLowerCase();
-  const jump = hash.match(/^#(?:day|section)(\d+)$/);
-  if (hash === '#restart') return confirmRestart();
-  if (jump) { S.day = Math.min(Math.max(1, Number(jump[1])), TOTAL_DAYS + 1); S.run = null; save(); }
-  renderHome();
+const postJSON = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+// Start-up, and again after each sign-in: who is signed in, then their questions, then their screen.
+// With no connection, the account last signed in on this device is used, and the
+// service worker answers with the questions it kept.
+async function startUp() {
+  const last = rememberedMe();
+  try {
+    // On a weak signal, wait at most 3 seconds when there is an account to fall back on.
+    const r = await fetch('/api/me', { cache: 'no-store', signal: last && AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined });
+    if (r.status === 401) { forgetDevice(); me = null; return renderSignIn(); }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    me = await r.json();
+    rememberMe(me);
+  } catch (e) {
+    if (!last) return couldNotLoad();
+    me = last;
+  }
+  let data;
+  const viaWorker = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  try {
+    const q = await api('questions.json', { cache: 'no-cache' });
+    if (!q.ok) throw new Error('HTTP ' + q.status);
+    data = await q.json();
+  } catch (e) { return e instanceof SignedOut ? undefined : couldNotLoad(); }
+  if (!viaWorker) keepQuestions();
+  begin(data);
 }
-window.addEventListener('hashchange', applyHash);
-applyHash();
+// The service worker keeps the questions it hands the page, but never fetches them itself, so it
+// never asks for them signed out. On the first visit the page fetched them before the worker took
+// control, so once it has, they are fetched again through it, to work with no connection next time.
+function keepQuestions() {
+  const sw = navigator.serviceWorker;
+  if (!sw) return;
+  const again = () => { if (me) fetch('questions.json', { cache: 'no-cache' }).catch(() => {}); };
+  if (sw.controller) again(); else sw.addEventListener('controllerchange', again, { once: true });
+}
+
+// The questions live in questions.json next to the page, not in the page itself.
+function begin(data) {
+  DAYS = data.days; QS = data.qs; TOTAL_DAYS = DAYS.length;
+  BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
+  if (me.role === 'helper') renderHelper();
+  else openLearner();
+}
+
+// The Learner's screen. The device copy shows at once if this device has one; then waiting
+// records are sent, and the server's records replace the copy's (Resets and Moves arrive this
+// way). A first open on this device waits for the server.
+async function openLearner() {
+  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null, rejected: [] };
+  copy = mine;
+  copyFor = me.id;
+  unfinishedUnsent = false;
+  if (saved) { workOut(); renderHome(); }
+  await sendPending();
+  let body;
+  try {
+    const r = await api('/api/records');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    body = await r.json();
+  } catch (e) {
+    if (!saved && !(e instanceof SignedOut) && copy === mine) couldNotLoad();
+    return;
+  }
+  if (copy !== mine) return; // signed out meanwhile
+  const have = new Set(body.records.map(x => x.id));
+  copy.records = body.records;
+  copy.pending = copy.pending.filter(x => !have.has(x.id));
+  // An unfinished Set that is already finished, or that a Reset or Move dropped, is gone. Of the
+  // others, the newest wins: the server's replaces the device's if it was saved later.
+  const recs = copyRecords();
+  const live = u => u && !recs.some(x => x.kind === 'set' && x.data.set_id === u.set_id) && !droppedByChange(u, recs) ? u : null;
+  const theirs = live(body.unfinished), ours = live(copy.unfinished);
+  copy.unfinished = theirs && (!ours || String(theirs.saved_at || '') > String(ours.saved_at || '')) ? theirs : ours;
+  const imported = importOldProgress();
+  saveCopy();
+  if (body.unfinished && !theirs) sendUnfinished(); // the server still holds one that is gone
+  if (imported) sendPending();
+  const shown = JSON.stringify(S);
+  workOut();
+  if (!saved || (onHome && !run && JSON.stringify(S) !== shown)) renderHome();
+}
+// The one-time import: progress saved in this browser before accounts becomes the Learner's
+// Imported record, if the account has no records yet and this device hasn't imported before.
+function importOldProgress() {
+  let state;
+  try {
+    if (localStorage.getItem(IMPORTED_KEY) || copyRecords().length) return false;
+    state = JSON.parse(localStorage.getItem(OLD_KEY));
+  } catch (e) { return false; }
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
+  copy.pending.push({ id: crypto.randomUUID(), kind: 'imported', reset: null, at: new Date().toISOString(), data: { state } });
+  try { localStorage.setItem(IMPORTED_KEY, '1'); } catch (e) {}
+  return true;
+}
+function couldNotLoad() {
+  paint(`<section class="home"><p class="sub">The questions could not be loaded. Check your connection and open the app again.</p></section>`);
+}
+
+function signedOut() {
+  me = null; run = null; S = null; copy = null; copyFor = null;
+  forgetDevice();
+  renderSignIn();
+}
+
+// The account last seen signed in, so the app can open with no connection. Only {id, role, name}.
+const ME_KEY = 'rrtn-me';
+function rememberMe(m) { try { localStorage.setItem(ME_KEY, JSON.stringify({ id: m.id, role: m.role, name: m.name })); } catch (e) {} }
+function rememberedMe() {
+  try {
+    const m = JSON.parse(localStorage.getItem(ME_KEY));
+    return m && (m.role === 'learner' || m.role === 'helper') ? m : null;
+  } catch (e) { return null; }
+}
+// Signed out, the device keeps neither the account nor the questions.
+function forgetDevice() {
+  try { localStorage.removeItem(ME_KEY); } catch (e) {}
+  if (window.caches) caches.open('rrtn-pages').then(c => c.delete('/questions.json')).catch(() => {});
+}
+
+function renderSignIn() {
+  paint(`
+    <section class="signin">
+      <h1 tabindex="-1">Sign in</h1>
+      <p class="sub">Type the name and password you were given.</p>
+      <form id="signInForm" method="post" class="signin">
+        <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
+        <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+        <label class="check"><input type="checkbox" id="showPw">Show password</label>
+        <div id="signInMsg" aria-live="polite"></div>
+        <button class="btn primary" type="submit" id="signInBtn">Sign in</button>
+      </form>
+    </section>`, 'h1');
+  $('showPw').onchange = () => { $('password').type = $('showPw').checked ? 'text' : 'password'; };
+  $('signInForm').onsubmit = e => { e.preventDefault(); signIn(); };
+}
+
+function signInMessage(text) {
+  $('signInMsg').innerHTML = `<p class="warn" tabindex="-1">${esc(text)}</p>`;
+  $('signInMsg').firstChild.focus();
+}
+
+async function signIn() {
+  const btn = $('signInBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  $('signInMsg').textContent = '';
+  let ok = false;
+  try {
+    const r = await postJSON('/api/sign-in', { name: $('name').value, password: $('password').value });
+    ok = r.ok;
+    if (ok) return;
+    if (r.status === 429) {
+      const body = await r.json().catch(() => ({}));
+      const seconds = Math.max(0, Number(body.retry_after) || 0);
+      // Rounded up to the minute, so the time shown is never before the pause ends.
+      const at = new Date(Math.ceil((Date.now() + seconds * 1000) / 60000) * 60000);
+      signInMessage(`Sign-in is paused because of too many tries. You can try again at ${at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`);
+    } else if (r.status === 401) {
+      signInMessage('That name and password do not match. Check them and try again.');
+    } else {
+      signInMessage('Sign-in did not work. Try again later.');
+    }
+  } catch (e) {
+    signInMessage('The app could not be reached. Check your connection and try again.');
+  } finally {
+    if (ok) {
+      // Ask the browser to keep this device's saved progress even when space runs low.
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      startUp();
+    } else btn.disabled = false;
+  }
+}
+
+// Sign out, for the Learner (from the home screen's fine print) and the Helper. `back` repaints where they came from.
+function confirmSignOut(back) {
+  paint(`
+    <section class="home">
+      <h2 tabindex="-1">Sign out?</h2>
+      <p class="sub">You will need your name and password to sign in again.</p>
+      <button class="btn primary" type="button" id="signOutYes">Yes, sign out</button>
+      <button class="btn" type="button" id="signOutNo">No, stay signed in</button>
+    </section>`, 'h2');
+  $('signOutNo').onclick = () => { back(); window.scrollTo(0, 0); };
+  $('signOutYes').onclick = signOut;
+}
+// A Learner's waiting records are sent first, so signing out needs a connection; then that
+// Learner's device copy is deleted.
+async function signOut() {
+  const learner = copy ? copyFor : null;
+  const refuse = text => {
+    if (!$('signOutYes')) return;
+    if ($('signOutMsg')) $('signOutMsg').remove();
+    $('signOutYes').insertAdjacentHTML('beforebegin', `<p class="warn" tabindex="-1" id="signOutMsg">${esc(text)}</p>`);
+    $('signOutMsg').focus();
+  };
+  const offline = 'You are offline. Sign out needs a connection, so that your answers are saved first.';
+  if (learner !== null) {
+    await sendPending();
+    if (!copy) return; // the sign-in ended meanwhile
+    if (copy.pending.length) return refuse(offline);
+  }
+  try { await api('/api/sign-out', { method: 'POST' }); } catch (e) {
+    if (e instanceof SignedOut) return;
+    return refuse(learner !== null ? offline : 'The app could not be reached. Check your connection and try again.');
+  }
+  if (learner !== null) try { localStorage.removeItem(copyKey(learner)); } catch (e) {}
+  signedOut();
+}
+
+// The Helper's view (GLOSSARY.md): the list of Learners, and one Learner's Progress and History.
+// It only reads. Each screen loads fresh from the server when it opens, and Progress is worked
+// out from the records with the same code as the study path (docs/adr/0001-*).
+
+// Where a Learner is now, worded for the Helper.
+function whereNow(p) {
+  const ph = phase(p);
+  if (ph === 'day') return `Section ${p.day} of ${TOTAL_DAYS}`;
+  if (ph === 'review') return `Review: ${plural(reviewPile(p).length, 'question', 'questions')} left`;
+  const st = streak(p);
+  return st >= READY_STREAK ? 'Ready for the test' : `Practice tests: ${st} of ${READY_STREAK} in a row`;
+}
+// The unfinished Set (as the page saves it, see packRun), or null when it can't be read.
+function unfinishedLine(u) {
+  if (!u || typeof u !== 'object' || !Array.isArray(u.items) || !u.items.length) return null;
+  const where = setName(u.kind, u.dayNum);
+  const done = Math.min(u.items.length, (Number(u.i) || 0) + (u.answered ? 1 : 0));
+  return `Unfinished: ${where}, ${done} of ${u.items.length} answered`;
+}
+
+const answerTime = a => { const t = Date.parse(a.at); return Number.isNaN(t) ? 0 : t; };
+const setScore = d => ({ right: d.answers.filter(a => a.right).length, of: d.answers.length });
+// The time of the newest answer in the whole History, or null when there is none.
+function lastStudied(records) {
+  let t = null;
+  for (const r of records) if (r.kind === 'set') for (const a of r.data.answers) t = Math.max(t ?? 0, answerTime(a));
+  return t === null ? null : new Date(t).toISOString();
+}
+
+const SESSION_GAP = 30 * 60 * 1000; // a Study session has no gap longer than 30 minutes between answers
+// Study sessions over the whole History, newest first, with each Reset and Move as a line of its
+// own: {kind: 'session', start, end, sets: [{type, section, right, of}]}, {kind: 'reset', at} or
+// {kind: 'move', at, to}. A Set counts as finished in the Study session that holds its last answer.
+function studySessions(records) {
+  const ordered = orderRecords(records), sets = ordered.filter(r => r.kind === 'set');
+  const times = sets.flatMap(r => r.data.answers.map(answerTime)).sort((a, b) => a - b);
+  const sessions = [];
+  for (const t of times) {
+    const s = sessions[sessions.length - 1];
+    if (s && t - s.end <= SESSION_GAP) s.end = t; else sessions.push({ start: t, end: t, sets: [] });
+  }
+  for (const r of sets) {
+    const last = Math.max(...r.data.answers.map(answerTime));
+    const s = sessions.find(s => s.start <= last && last <= s.end);
+    if (s) s.sets.push({ type: r.data.type, section: r.data.section, ...setScore(r.data) });
+  }
+  const lines = sessions.map(s => [s.end, { kind: 'session', start: new Date(s.start).toISOString(), end: new Date(s.end).toISOString(), sets: s.sets }]);
+  for (const r of ordered) {
+    if (r.kind === 'reset') lines.push([recordTime(r), { kind: 'reset', at: r.at }]);
+    if (r.kind === 'move') lines.push([recordTime(r), { kind: 'move', at: r.at, to: r.data.to }]);
+  }
+  return lines.sort((a, b) => b[0] - a[0]).map(x => x[1]);
+}
+// The line for a Reset or a Move in the list of Study sessions.
+function historyLine(e) {
+  if (e.kind === 'reset') return 'Progress reset by a Helper';
+  if (e.kind === 'move') return e.to > TOTAL_DAYS ? 'Moved to Review and Practice tests' : `Moved to Section ${e.to}`;
+  return null;
+}
+
+// Up to 10 questions missed two or more times since the latest Reset: the most misses first, then
+// the fewest answers, then the order of the study path. `wrong` is the wrong answer chosen most often.
+function missedMost(records) {
+  const tally = new Map();
+  for (const r of countedRecords(records)) if (r.kind === 'set') for (const a of r.data.answers) {
+    if (!BY_ID[a.q]) continue;
+    if (!tally.has(a.q)) tally.set(a.q, { q: a.q, missed: 0, answered: 0, picks: new Map() });
+    const t = tally.get(a.q);
+    t.answered++;
+    if (!a.right) { t.missed++; t.picks.set(a.chosen, (t.picks.get(a.chosen) || 0) + 1); }
+  }
+  const place = Object.fromEntries(QS.map((q, i) => [q.id, i]));
+  const most = picks => [...picks].reduce((best, x) => x[1] > best[1] ? x : best)[0];
+  return [...tally.values()].filter(t => t.missed >= 2)
+    .sort((a, b) => b.missed - a.missed || a.answered - b.answered || place[a.q] - place[b.q])
+    .slice(0, 10)
+    .map(t => ({ q: t.q, missed: t.missed, answered: t.answered, wrong: most(t.picks) }));
+}
+
+// Each Section's Sets since the latest Reset, newest first: [{section, sets: [{at, right, of}]}].
+function sectionHistory(records) {
+  const sets = countedRecords(records).filter(r => r.kind === 'set' && (r.data.type === 'day' || r.data.type === 'redo'));
+  return DAYS.map(d => ({ section: d.day,
+    sets: sets.filter(r => r.data.section === d.day).reverse().map(r => ({ at: r.at, ...setScore(r.data) })) }));
+}
+
+// Times in the Helper's view are shown in the device's own time zone.
+const dayText = iso => new Date(iso).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+const whenText = iso => `${dayText(iso)}, ${new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+function lengthText(ms) {
+  const m = Math.round(ms / 60000), h = Math.floor(m / 60);
+  if (m < 1) return 'Less than 1 minute';
+  return [h ? plural(h, 'hour', 'hours') : '', m % 60 ? plural(m % 60, 'minute', 'minutes') : ''].filter(Boolean).join(' ');
+}
+// A GET for the Helper's view. A failed answer throws an Error with its `status`.
+async function getJSON(path) {
+  const r = await api(path);
+  if (!r.ok) throw Object.assign(new Error('HTTP ' + r.status), { status: r.status });
+  return r.json();
+}
+// Each Helper screen paints at once and then loads. `stillShowing` says whether the screen that
+// asked is still the one on the page, so a late answer never paints over where the Helper went.
+function stillShowing() { const shown = $('stage').firstElementChild; return () => shown.isConnected; }
+
+// A short line at the top of a Helper screen saying what the last action did.
+const noteLine = note => note ? `<p class="note" role="status">${esc(note)}</p>` : '';
+
+// The Helper's first screen: every Learner, one row each, then Add a Learner and Sign out.
+// `note` says what the Helper just did, when the list loads again after an action.
+async function renderHelper(note = '') {
+  const signOutBtn = '<button class="btn" type="button" id="signOutBtn">Sign out</button>';
+  const screen = body => {
+    paint(`<section class="home helper"><h1 tabindex="-1">Learners</h1>${noteLine(note)}${body}${signOutBtn}</section>`, 'h1');
+    $('signOutBtn').onclick = () => confirmSignOut(renderHelper);
+  };
+  screen('<p class="sub">Getting the list of Learners.</p>');
+  const showing = stillShowing();
+  let rows;
+  try {
+    const { learners } = await getJSON('/api/learners');
+    rows = await Promise.all(learners.map(async learner => ({ learner, records: (await getJSON(`/api/learners/${learner.id}/records`)).records })));
+  } catch (e) {
+    if (e instanceof SignedOut || !showing()) return;
+    screen('<p class="warn">The list of Learners could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>');
+    $('retryBtn').onclick = () => renderHelper();
+    return;
+  }
+  if (!showing()) return;
+  const list = rows.map(({ learner, records }, k) => {
+    const last = lastStudied(records);
+    return `<li><button type="button" class="lrow" data-k="${k}"><span class="lname">${esc(learner.name)}</span><span>${esc(whereNow(progressFrom(records)))}</span>` +
+      `<span class="lwhen">${last ? `Last studied ${dayText(last)}` : 'Has not answered any questions yet.'}</span></button></li>`;
+  }).join('');
+  screen((rows.length ? `<ul class="learners">${list}</ul>` : '<p class="sub none">No Learners yet.</p>') +
+    '<button class="btn primary" type="button" id="addBtn">Add a Learner</button>');
+  $('addBtn').onclick = () => { addLearner(); window.scrollTo(0, 0); };
+  document.querySelectorAll('.lrow').forEach(b => b.onclick = () => { openLearnerPage(rows[Number(b.dataset.k)].learner); window.scrollTo(0, 0); });
+}
+
+// One Learner's page, loaded fresh each time it opens. `learner` is a row of GET /api/learners;
+// the list is read again too, for the Learner's name and sign-in pause as they are now.
+// `note` says what the Helper just did; `at: 'manage'` scrolls to Manage this Learner.
+async function openLearnerPage(learner, { note = '', at = '' } = {}) {
+  let name = esc(learner.name);
+  const screen = body => {
+    paint(`<section class="home helper"><button class="link top back" type="button">Back to Learners</button><h1 tabindex="-1">${name}</h1>${body}</section>`, 'h1');
+    document.querySelectorAll('.back').forEach(b => b.onclick = () => { renderHelper(); window.scrollTo(0, 0); });
+  };
+  screen(`<p class="sub">Getting ${name}'s records.</p>`);
+  const showing = stillShowing();
+  let body, now;
+  try {
+    let learners;
+    [{ learners }, body] = await Promise.all([getJSON('/api/learners'), getJSON(`/api/learners/${learner.id}/records`)]);
+    now = learners.find(l => l.id === learner.id);
+    if (!now) throw Object.assign(new Error('no-learner'), { status: 404 });
+  } catch (e) {
+    if (e instanceof SignedOut || !showing()) return;
+    if (e.status === 404) return screen(`<p class="warn">${name} is no longer on the list of Learners.</p>`);
+    screen(`<p class="warn">${name}'s records could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>`);
+    $('retryBtn').onclick = () => openLearnerPage(learner);
+    return;
+  }
+  if (!showing()) return;
+  name = esc(now.name);
+  screen(noteLine(note) + learnerPage(body, now));
+  wireManage(now, progressFrom(body.records));
+  if (at === 'manage') $('manage').scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+// When a sign-in pause ends, in the device's own time format, or null when there is no pause now.
+// Rounded up to the minute, as on the sign-in page, so the time shown is never before the pause ends.
+// A pause that ends on another day says the day too.
+function pausedUntil(iso) {
+  const t = Date.parse(iso);
+  if (!iso || Number.isNaN(t) || t <= Date.now()) return null;
+  const at = new Date(Math.ceil(t / 60000) * 60000);
+  const time = at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return at.toDateString() === new Date().toDateString() ? time : `${dayText(at.toISOString())}, ${time}`;
+}
+
+// The parts of a Learner's page, top to bottom, from GET /api/learners/<id>/records.
+function learnerPage({ records, unfinished }, learner) {
+  const p = progressFrom(records), counted = countedRecords(records), reset = currentReset(records);
+  const part = (cls, title, html) => `<section class="part ${cls}"><h2>${title}</h2>${html}</section>`;
+
+  const done = unfinished && records.some(r => r.kind === 'set' && r.data.set_id === unfinished.set_id);
+  const open = !done && unfinishedLine(unfinished);
+  const until = learner && pausedUntil(learner.paused_until);
+  const now = `<div class="now"><p class="theme">${esc(whereNow(p))}</p>${open ? `<p class="sub">${esc(open)}</p>` : ''}` +
+    (until ? `<p class="paused">Sign-in is paused until ${until} after too many tries.</p>` : '') + '</div>';
+
+  const sections = sectionHistory(records).map(({ section, sets }) => {
+    const title = `<span class="sname">Section ${section}: ${esc(DAYS[section - 1].title)}</span>`;
+    if (!sets.length) {
+      // A score with no Sets came from saved progress brought in from before accounts.
+      const score = p.scores[section] !== undefined ? `Last score: ${p.scores[section]} of 10. Done before the app kept dates.` : 'Not done yet.';
+      return `<li><div>${title}<span class="sscore">${score}</span></div></li>`;
+    }
+    const list = sets.map(s => `<li>${whenText(s.at)}: ${s.right} of ${s.of}</li>`).join('');
+    return `<li><details><summary>${title}<span class="sscore">Last score: ${sets[0].right} of ${sets[0].of}. Done ${plural(sets.length, 'time', 'times')}.</span></summary><ul class="sets">${list}</ul></details></li>`;
+  }).join('');
+
+  const left = reviewPile(p).length;
+  const review = `<p>${left ? `${plural(left, 'question', 'questions')} left.` : 'No questions left.'}${p.day <= TOTAL_DAYS ? ` Review starts after Section ${TOTAL_DAYS}.` : ''}</p>`;
+
+  const tests = counted.filter(r => r.kind === 'set' && r.data.type === 'test').reverse(), st = streak(p);
+  const undated = p.tests.length - tests.length; // brought in from saved progress from before accounts
+  const testList = p.tests.length ? `<p>${st >= READY_STREAK ? `Ready for the test: ${st} in a row` : `In a row so far: ${st} of ${READY_STREAK}`}</p>` +
+    (tests.length ? `<ul>${tests.map(r => `<li>${whenText(r.at)}: ${setScore(r.data).right} of ${setScore(r.data).of}</li>`).join('')}</ul>` : '') +
+    (undated > 0 ? `<p class="sub small">${plural(undated, 'earlier Practice test was', 'earlier Practice tests were')} done before the app kept dates.</p>` : '')
+    : '<p>No Practice tests yet.</p>';
+
+  const missed = missedMost(records);
+  const missedList = missed.length ? (reset ? '<p class="sub small">Only answers since the latest Reset count here.</p>' : '') +
+    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p>` +
+      `<p>Wrong answer chosen most often: ${esc(m.wrong)}</p><p class="mcount">Missed ${m.missed} of ${m.answered} times</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('')}</ul>`
+    : `<p>No question has been missed two or more times${reset ? ' since the latest Reset' : ''}.</p>`;
+
+  const lines = studySessions(records);
+  const history = lines.length ? `<ul class="sessions">${lines.map(e => e.kind === 'session'
+    ? `<li><p class="when">${whenText(e.start)}</p><p>${lengthText(Date.parse(e.end) - Date.parse(e.start))}</p>` +
+      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s.type, s.section)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>No Sets finished.</p>') + '</li>'
+    : `<li><p class="when">${whenText(e.at)}</p><p>${historyLine(e)}</p></li>`).join('')}</ul>`
+    : '<p>No Study sessions yet.</p>';
+
+  const manage = `<section class="part manage" id="manage"><h2>Manage this Learner</h2>` +
+    ['Rename', 'Reset sign-in', 'Reset progress', 'Move', 'Delete'].map((label, k) =>
+      `<button class="btn${label === 'Delete' ? ' bad' : ''}" type="button" data-act="${k}">${label}</button>`).join('') + '</section>';
+
+  return now + part('', 'Sections', `<ul class="sections">${sections}</ul>`) + part('review', 'Review', review) +
+    part('tests', 'Practice tests', testList) + part('missedmost', 'Questions missed most', missedList) +
+    part('history', 'Study sessions', history) + manage + '<button class="btn back" type="button">Back to Learners</button>';
+}
+
+// Managing Learners: Add a Learner, and Rename, Reset sign-in, Reset progress, Move and Delete
+// on a Learner's page. Every action asks first, in literal words, and does nothing on No.
+// Afterwards the list or the Learner's page loads again from the server.
+const NAME_MAX = 64, PASSWORD_MIN = 8, PASSWORD_MAX = 128; // as the server checks them (server/auth.py)
+const MANAGE_ERRORS = {
+  'name-taken': 'Another account already uses that name. Choose a different name.',
+  'bad-name': `The name must be 1 to ${NAME_MAX} characters.`,
+  'bad-password': `The password must be ${PASSWORD_MIN} to ${PASSWORD_MAX} characters.`,
+};
+// Lengths are counted in characters, as the server counts them, not in UTF-16 units.
+const chars = s => [...s].length;
+const nameProblem = s => chars(s.trim()) >= 1 && chars(s.trim()) <= NAME_MAX ? null : 'bad-name';
+const passwordProblem = s => chars(s) >= PASSWORD_MIN && chars(s) <= PASSWORD_MAX ? null : 'bad-password';
+
+// A POST that changes something. A refusal throws an Error with its `status` and the server's
+// error `code`; a good answer gives its JSON, or null when there is none.
+async function change(path, body) {
+  const r = await postJSON(path, body);
+  if (r.ok) return r.status === 204 ? null : r.json();
+  const answer = await r.json().catch(() => ({}));
+  throw Object.assign(new Error('HTTP ' + r.status), { status: r.status, code: answer.error });
+}
+
+// A Helper's form on a screen of its own: `fields` (HTML), the button that goes on to ask first,
+// and Cancel, which runs `cancel`. `submit` gets the form's values when the button is pressed.
+function helperForm({ title, intro, fields, button, cancel, submit, problem }) {
+  paint(`<section class="home helper"><h1 tabindex="-1">${title}</h1>${intro ? `<p class="sub">${intro}</p>` : ''}
+    <form id="helperForm" class="signin" novalidate>${fields}<div id="formMsg" aria-live="polite"></div>
+    <button class="btn primary" type="submit" id="formBtn">${button}</button></form>
+    <button class="btn" type="button" id="cancelBtn">Cancel</button></section>`, 'h1');
+  $('cancelBtn').onclick = () => { cancel(); window.scrollTo(0, 0); };
+  $('helperForm').onsubmit = e => { e.preventDefault(); submit(); };
+  if ($('fShow')) $('fShow').onchange = () => { $('fPassword').type = $('fShow').checked ? 'text' : 'password'; };
+  if (problem) formMessage(MANAGE_ERRORS[problem] || problem);
+}
+function formMessage(text) {
+  $('formMsg').innerHTML = `<p class="warn" tabindex="-1">${esc(text)}</p>`;
+  $('formMsg').firstChild.focus();
+}
+const nameField = (label, value) => `<div class="field"><label for="fName">${label}</label><input id="fName" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false"></div>`;
+const passwordField = (label, value, shown) => `<div class="field"><label for="fPassword">${label}</label><input id="fPassword" type="${shown ? 'text' : 'password'}" value="${esc(value)}" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false"></div>` +
+  `<label class="check"><input type="checkbox" id="fShow"${shown ? ' checked' : ''}>Show password</label>`;
+
+// Ask first. `question` and `detail` are the literal words; Yes runs `act`, No runs `no`.
+// If `act` fails for want of a connection, the question stays with a line saying so.
+function confirmAction({ question, detail, yes, no, act }) {
+  paint(`<section class="home helper"><h2 tabindex="-1">${esc(question)}</h2>${detail ? `<p>${esc(detail)}</p>` : ''}
+    <div id="formMsg" aria-live="polite"></div>
+    <button class="btn primary" type="button" id="confirmYes">${esc(yes)}</button>
+    <button class="btn" type="button" id="confirmNo">No, go back</button></section>`, 'h2');
+  $('confirmNo').onclick = () => { no(); window.scrollTo(0, 0); };
+  $('confirmYes').onclick = async () => {
+    const btn = $('confirmYes');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await act(); window.scrollTo(0, 0); } catch (e) {
+      if (e instanceof SignedOut || !btn.isConnected) return;
+      btn.disabled = false;
+      formMessage('The change could not be made. Check your connection and try again.');
+    }
+  };
+}
+
+// The buttons of Manage this Learner. `learner` is the Learner's row of GET /api/learners, `p` their Progress.
+function wireManage(learner, p) {
+  const back = () => openLearnerPage(learner, { at: 'manage' });
+  const acts = [() => renameLearner(learner, back), () => resetSignIn(learner, back), () => resetProgress(learner, back),
+    () => moveLearner(learner, back, Math.min(p.day, TOTAL_DAYS + 1)), () => deleteLearner(learner, back)];
+  document.querySelectorAll('.manage [data-act]').forEach(b => b.onclick = () => { acts[Number(b.dataset.act)](); window.scrollTo(0, 0); });
+}
+
+// Rename: a new name, with the same rules as Add a Learner. `back` returns to the Learner's page.
+function renameLearner(learner, back, typed = learner.name, problem = null) {
+  helperForm({
+    title: `Rename ${esc(learner.name)}`, problem, fields: nameField('New name', typed), button: 'Rename', cancel: back,
+    submit: () => {
+      const value = $('fName').value, bad = nameProblem(value);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      const name = value.trim();
+      confirmAction({
+        question: `Rename ${learner.name} to ${name}?`, yes: 'Yes, rename', no: () => renameLearner(learner, back, value),
+        act: async () => {
+          let answer;
+          try { answer = await change(`/api/learners/${learner.id}/rename`, { name }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return renameLearner(learner, back, value, e.code);
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage({ ...learner, name: answer.name }, { note: `${learner.name} is renamed ${answer.name}.` });
+        },
+      });
+    },
+  });
+}
+
+// Reset sign-in: a new password. The server ends every sign-in of the Learner and any pause on their name.
+function resetSignIn(learner, back, v = { password: '', shown: false }, problem = null) {
+  const name = learner.name;
+  helperForm({
+    title: `Reset sign-in for ${esc(name)}`, intro: `${esc(name)} will sign in with the new password.`, problem,
+    fields: passwordField('New password', v.password, v.shown), button: 'Set the new password', cancel: back,
+    submit: () => {
+      const typed = { password: $('fPassword').value, shown: $('fShow').checked }, bad = passwordProblem(typed.password);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      confirmAction({
+        question: `Set a new password for ${name}?`,
+        detail: `${name} will be signed out on every device and will need the new password to sign in.`,
+        yes: 'Yes, set the new password', no: () => resetSignIn(learner, back, typed),
+        act: async () => {
+          try { await change(`/api/learners/${learner.id}/reset-sign-in`, { password: typed.password }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return resetSignIn(learner, back, typed, e.code);
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage(learner, { note: `${name}'s new password is set.` });
+        },
+      });
+    },
+  });
+}
+
+// Reset progress: a Reset record. The Learner starts again at Section 1; the History stays.
+function resetProgress(learner, back) {
+  const name = learner.name;
+  confirmAction({
+    question: `Put ${name} back at the start of Section 1?`,
+    detail: 'Scores, Review and Practice tests start over. The History of finished Sets is kept.',
+    yes: 'Yes, reset progress', no: back,
+    act: async () => {
+      try { await change(`/api/learners/${learner.id}/reset-progress`, {}); } catch (e) {
+        if (e.status === 404) return openLearnerPage(learner);
+        throw e;
+      }
+      openLearnerPage(learner, { note: `${name}'s progress is reset to the start of Section 1.` });
+    },
+  });
+}
+
+// Move: a Move record that sets the Learner's next Section, 1 to 12, or 13 for Review and Practice tests.
+const moveChoice = to => to > TOTAL_DAYS ? 'Review and Practice tests' : `Section ${to}`;
+function moveLearner(learner, back, to) {
+  const name = learner.name;
+  const options = Array.from({ length: TOTAL_DAYS + 1 }, (_, k) =>
+    `<option value="${k + 1}"${k + 1 === to ? ' selected' : ''}>${moveChoice(k + 1)}</option>`).join('');
+  helperForm({
+    title: `Move ${esc(name)}`, button: 'Move', cancel: back,
+    fields: `<div class="field"><label for="fTo">Move ${esc(name)} to</label><select id="fTo">${options}</select></div>`,
+    submit: () => {
+      const chosen = Number($('fTo').value), choice = moveChoice(chosen);
+      confirmAction({
+        question: `Move ${name} to ${choice}?`,
+        detail: 'Scores and History are kept. Questions in skipped Sections are not added to Review. Any unfinished Set is dropped.',
+        yes: `Yes, move ${name}`, no: () => moveLearner(learner, back, chosen),
+        act: async () => {
+          try { await change(`/api/learners/${learner.id}/move`, { to: chosen }); } catch (e) {
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage(learner, { note: `${name} is moved to ${choice}.` });
+        },
+      });
+    },
+  });
+}
+
+// Delete: the account and all of its records, for good. The question and the button are on one
+// screen, and the button stays off until the Helper types the Learner's name (matched as at sign-in:
+// capitals ignored, spaces at the start and end trimmed). Afterwards, back to the list.
+function deleteLearner(learner, back) {
+  const name = learner.name, key = s => s.trim().toLowerCase();
+  paint(`<section class="home helper"><h1 tabindex="-1">Delete ${esc(name)}</h1>
+    <p>Delete ${esc(name)} and all of ${esc(name)}'s progress and History? This cannot be undone.</p>
+    <div class="field"><label for="fName">Type ${esc(name)} to delete</label><input id="fName" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div id="formMsg" aria-live="polite"></div>
+    <button class="btn bad primary" type="button" id="deleteBtn" disabled>Delete ${esc(name)}</button>
+    <button class="btn" type="button" id="keepBtn">No, keep ${esc(name)}</button></section>`, 'h1');
+  const btn = $('deleteBtn');
+  $('fName').oninput = () => { btn.disabled = key($('fName').value) !== key(name); };
+  $('keepBtn').onclick = () => { back(); window.scrollTo(0, 0); };
+  btn.onclick = async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await change(`/api/learners/${learner.id}/delete`, { name: $('fName').value }); } catch (e) {
+      if (e instanceof SignedOut || !btn.isConnected) return;
+      if (e.status === 404) return renderHelper();
+      btn.disabled = false;
+      return formMessage(e.code === 'name-mismatch' ? `The name you typed does not match ${name}.`
+        : 'The change could not be made. Check your connection and try again.');
+    }
+    renderHelper(`${name} is deleted.`);
+    window.scrollTo(0, 0);
+  };
+}
+
+// Add a Learner: a name and a password, then back to the list.
+function addLearner(v = { name: '', password: '', shown: false }, problem = null) {
+  helperForm({
+    title: 'Add a Learner', intro: 'The Learner signs in with this name and password.', problem,
+    fields: nameField('Name', v.name) + passwordField('Password', v.password, v.shown),
+    button: 'Add this Learner', cancel: () => renderHelper(),
+    submit: () => {
+      const typed = { name: $('fName').value, password: $('fPassword').value, shown: $('fShow').checked };
+      const bad = nameProblem(typed.name) || passwordProblem(typed.password);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      const name = typed.name.trim();
+      confirmAction({
+        question: `Add a Learner named ${name}?`, yes: `Yes, add ${name}`, no: () => addLearner(typed),
+        act: async () => {
+          try { await change('/api/learners', { name, password: typed.password }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return addLearner(typed, e.code);
+            throw e;
+          }
+          renderHelper(`${name} is added.`);
+        },
+      });
+    },
+  });
+}
+
+startUp();
+// The service worker (sw.js) keeps the page, the questions, the fonts and the icons, so the app opens with no connection.
+window.addEventListener('load', () => {
+  if (navigator.serviceWorker) navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+});
 </script>
 </body>
 </html>

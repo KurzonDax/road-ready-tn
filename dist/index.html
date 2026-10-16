@@ -2,13 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Ready TN</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Overpass:wght@600;800&display=swap">
+<meta name="theme-color" content="#f3f5f2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111814" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-title" content="Road Ready">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
 <style>
+/* Self-hosted fonts, Latin subset (see src/fonts/README.md). Overpass is one variable font for 600 to 800. */
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2") format("woff2"); }
+@font-face { font-family: "Overpass"; font-style: normal; font-weight: 600 800; font-display: swap; src: url("fonts/overpass/overpass-variable.woff2") format("woff2"); }
 /* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. Highway guide-sign palette. */
 :root {
   --bg: #f3f5f2;
@@ -46,7 +52,8 @@ body {
   font-family: var(--font-body); font-size: 18px; line-height: 1.5;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-block: 24px 48px;
+  padding-top: max(24px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(48px, env(safe-area-inset-bottom, 0px));
 }
 ::selection { background: var(--guide); color: var(--guide-ink); }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
@@ -86,6 +93,17 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .btn.slim { width: auto; font-size: 16px; padding: 10px 14px; min-height: 44px; border-radius: 10px; }
 .link { font: inherit; font-size: 16px; background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 10px 8px; min-height: 44px; align-self: center; }
 .fine { font-size: 15px; color: var(--muted); margin: 18px 0 0; border-top: 1.5px solid var(--line); padding-top: 14px; }
+.fine p { margin: 0; }
+.fine .link { font-size: 15px; padding: 10px 0; margin-top: 4px; }
+
+/* Sign-in: one short form, labels above their fields. */
+.signin { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label { font-weight: 700; }
+.field input { font: inherit; font-size: 19px; padding: 12px 14px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); width: 100%; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 17px; cursor: pointer; align-self: flex-start; }
+.check input { width: 22px; height: 22px; margin: 0; accent-color: var(--guide); }
+#signInMsg:empty { display: none; }
 .warn { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--bad-soft); color: var(--ink); font-size: 16px; }
 
 .progress { display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 16px; }
@@ -137,6 +155,33 @@ button.opt { cursor: pointer; }
 .ticks span { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid var(--control-line); background: var(--surface); }
 .ticks span.on { background: var(--guide); border-color: var(--guide); }
 
+/* The Helper's view: a list of Learners, and one Learner's page in plain parts, top to bottom. Long names and answers wrap instead of widening the page. */
+.helper, .helper button { overflow-wrap: anywhere; }
+.learners { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lrow { font: inherit; text-align: left; width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.lrow .lname { font-weight: 700; font-size: 20px; }
+.lrow .lwhen { color: var(--muted); font-size: 16px; }
+.link.top { align-self: flex-start; padding-left: 0; }
+.now { display: flex; flex-direction: column; gap: 4px; }
+.now p, .part p { margin: 0; }
+.part { border-top: 1.5px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.part h2 { font-size: 22px; }
+.part ul { list-style: none; margin: 0; padding: 0; }
+.part > ul > li { border-top: 1px solid var(--line); padding: 10px 0; display: flex; flex-direction: column; gap: 2px; }
+.part > ul > li:first-child { border-top: 0; padding-top: 0; }
+.sections summary { cursor: pointer; min-height: 44px; }
+.sections .sname, .when, .mq { font-weight: 700; }
+.sections .sscore { display: block; color: var(--muted); font-size: 16px; font-variant-numeric: tabular-nums; }
+.part .sets { padding: 6px 0 4px 22px; font-size: 16px; display: flex; flex-direction: column; gap: 4px; }
+.missedmost .mpage, .missedmost .mcount { color: var(--muted); font-size: 16px; }
+/* Managing a Learner: plain buttons at the bottom of their page; each action asks first on a screen of its own. */
+.note { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--guide-soft); color: var(--ink); font-size: 16px; }
+.btn.bad { border-color: var(--bad); color: var(--bad); }
+.btn.bad.primary { background: var(--bad); color: var(--surface); }
+.btn:disabled { cursor: not-allowed; opacity: .5; }
+.field select { font: inherit; font-size: 19px; padding: 12px 14px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); width: 100%; }
+#formMsg:empty { display: none; }
+
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 </head>
@@ -148,7 +193,6 @@ button.opt { cursor: pointer; }
 </div>
 
 <script>
-const DATA = {"days": [{"day": 1, "title": "Signs: shapes and colors"}, {"day": 2, "title": "Signals, arrows, and road lines"}, {"day": 3, "title": "Right of way and intersections"}, {"day": 4, "title": "Speed and following distance"}, {"day": 5, "title": "Stops you must make (school buses, trains, emergency vehicles, stop lines)"}, {"day": 6, "title": "Turning and signaling"}, {"day": 7, "title": "Lanes and passing"}, {"day": 8, "title": "Parking"}, {"day": 9, "title": "Interstate driving"}, {"day": 10, "title": "Night, weather, and emergencies (skids, flooding, breakdowns)"}, {"day": 11, "title": "Alcohol and drugs"}, {"day": 12, "title": "Phones, seat belts, crashes, and sharing the road"}], "qs": [{"id": "a-095", "q": "What does an eight-sided (octagon) sign mean?", "a": "Stop", "o": ["Yield", "Railroad ahead", "No passing"], "why": "The octagon is the only eight-sided sign. It is always red, and it means you must come to a complete stop.", "p": 36, "src": "This sign is the only eight-sided sign on the roadway.", "sign": "octagon", "day": 1}, {"id": "a-099", "q": "What does a triangular (three-sided) sign pointing down mean?", "a": "Slow down and yield to traffic", "o": ["Always come to a complete stop", "Signal and go at regular speed", "Railroad crossing ahead"], "why": "A yield sign means slow down and yield to traffic. If no cars are coming, you do not have to come to a complete stop. If traffic is heavy, always stop.", "p": 36, "src": "you need not come to a complete stop but you must slow down and enter the intersection with caution.", "s": 1, "sign": "triangle", "day": 1}, {"id": "a-085", "q": "What does an orange sign color mean?", "a": "Construction and maintenance warning", "o": ["General warning of hazards on the road ahead", "School zones", "Motorist services"], "why": "Orange is used only for construction and maintenance signs.", "p": 35, "src": "ORANGE is used as a background color for construction and maintenance signs and shall not be used for any other purpose.", "swatch": "#f07c1c", "day": 1}, {"id": "a-084", "q": "What does a yellow sign color mean?", "a": "General warning", "o": ["Construction and maintenance warning", "Guidance and directions", "Public recreation areas"], "why": "Yellow is the background for warning signs (except where orange is used) and school signs.", "p": 35, "src": "YELLOW: General warning.", "swatch": "#f2c230", "day": 1}, {"id": "a-108", "q": "What does a diamond-shaped sign mean?", "a": "A hazardous or unexpected condition ahead", "o": ["A special law or regulation that you must obey", "A railroad crossing is here", "A stop sign is required"], "why": "Diamond signs call for caution and usually a slower speed.", "p": 36, "src": "Diamond Shape — Hazardous Or Unexpected Condition Ahead", "sign": "diamond", "day": 1}, {"id": "a-101", "q": "What does a round (circular) sign mean?", "a": "A railroad crossing is ahead", "o": ["A school zone with children is ahead", "A stop sign is ahead", "A hospital is ahead"], "why": "The round sign always means you are approaching a railroad grade crossing. Slow down and be ready to stop.", "p": 36, "src": "This circular sign always means that you are approaching a railroad grade crossing.", "sign": "circle", "day": 1}, {"id": "a-087", "q": "What does a blue sign color mean?", "a": "Motorist services and information", "o": ["Guidance and directions on interstate highways", "Public recreation areas", "Construction warning"], "why": "Blue is for motorist services, including police services and rest areas.", "p": 35, "src": "BLUE: Motorist services and information", "swatch": "#1f4fa0", "day": 1}, {"id": "a-086", "q": "What does a green sign color mean?", "a": "Guidance (directions)", "o": ["Motorist services", "Public recreation areas", "General warning"], "why": "Green is used for guide signs and mileposts.", "p": 35, "src": "GREEN: Guidance", "swatch": "#1f5f3f", "day": 1}, {"id": "a-109", "q": "What shape are regulatory signs (like speed limits and lane use)?", "a": "Rectangle", "o": ["Diamond", "Circle", "Triangle"], "why": "A regulatory sign is always a rectangle, telling you about laws and regulations.", "p": 35, "src": "a regulatory sign is always a rectangle, telling you about laws and regulations", "day": 1}, {"id": "a-089", "q": "What does a fluorescent yellow-green sign color mean?", "a": "School zones and pedestrian areas", "o": ["Construction and maintenance zones", "Rest areas", "Railroad crossings"], "why": "Fluorescent yellow-green is the color for school zones and pedestrian areas like crosswalks.", "p": 35, "src": "FLUORESCENT YELLOW-GREEN IS THE COLOR FOR SCHOOL ZONES!", "swatch": "#c6e83a", "day": 1}, {"id": "a-147", "q": "What should you do when a steady yellow light appears?", "a": "Slow down and stop, unless you are too close to stop safely", "o": ["Speed up to get through before it turns red", "Keep going at the same speed", "Slam on the brakes, even if you are already in the intersection"], "why": "Yellow means the light is about to turn red. Slow down and stop, unless you are too close to stop safely. Do not speed up to try to get through before the light turns red.", "p": 41, "src": "You must stop if it is safe to do so. Do not speed up to beat the light.", "day": 2}, {"id": "a-156", "q": "What should you do at a flashing red light?", "a": "Come to a complete stop, like a stop sign", "o": ["Slow down and go with caution", "Stop only if you see cross traffic coming toward you", "Treat it as a yield sign"], "why": "Flashing red means a complete stop, the same as a stop sign. Look both ways, yield, and go when safe.", "p": 41, "src": "FLASHING RED Complete stop. Same as stop sign.", "day": 2}, {"id": "a-157", "q": "What should you do at a flashing yellow light?", "a": "Slow down and go through with caution", "o": ["Come to a complete stop, just like at a stop sign", "Speed up to clear the intersection", "Stop and wait for a green light"], "why": "Flashing yellow means slow down and proceed with caution.", "p": 41, "src": "FLASHING YELLOW Slow down and proceed with caution", "day": 2}, {"id": "a-152", "q": "What does a green turn arrow (protected turn) mean?", "a": "You may turn that way, and you have the right-of-way", "o": ["You must yield to all oncoming traffic before you turn", "You may go in any direction", "You must stop, then turn"], "why": "When the arrow is green you have the right of way and may go only in the arrow's direction, after yielding to vehicles and pedestrians already in the intersection.", "p": 41, "src": "When the arrow is green, you have the right-of-way and may drive the vehicle only in the direction of the arrow", "day": 2}, {"id": "a-154", "q": "Your lane has a red arrow, but other lanes have green and the path looks clear. May you turn?", "a": "No, all turns are prohibited", "o": ["Yes, if the path through the intersection is clear", "Yes, after a complete stop", "Yes, if you signal first"], "why": "When the arrow is red or your lane has the red light, all turns are prohibited, even if other lanes have green.", "p": 41, "src": "When the arrow is red or your lane has the red light, all turns are prohibited.", "day": 2}, {"id": "a-153", "q": "What does a yellow left arrow mean?", "a": "Your protected turn is ending, so get ready to yield", "o": ["You may turn left with the right-of-way", "You must stop now and wait for the next green light", "Oncoming traffic must stop for you"], "why": "When the arrow changes to yellow, the protected turn is about to end. Prepare to yield to oncoming traffic.", "p": 41, "src": "When the arrow changes to yellow, prepare to yield to oncoming traffic.", "s": 1, "day": 2}, {"id": "a-155", "q": "What does a flashing yellow arrow mean?", "a": "Turn left after yielding to oncoming cars and pedestrians", "o": ["You have the right-of-way to turn left, and oncoming cars must stop", "You may not turn left at all", "You must stop before turning left"], "why": "A flashing yellow arrow lets you turn left after yielding to all oncoming traffic, bicyclists, and pedestrians. Wait for a safe gap.", "p": 41, "src": "If you see a flashing yellow arrow, you are allowed to turn left after yielding to all oncoming traffic", "day": 2}, {"id": "a-168", "q": "What color lines separate traffic moving in opposite directions?", "a": "Yellow", "o": ["White", "Blue", "Orange"], "why": "Lines separating traffic moving in opposite directions are yellow.", "p": 42, "src": "Lines separating traffic moving in opposite directions are yellow.", "day": 2}, {"id": "a-175", "q": "What color lines separate lanes of traffic going the same direction?", "a": "White", "o": ["Yellow", "Blue", "Orange"], "why": "Multiple lanes of traffic flowing in the same direction are separated by white lane markings.", "p": 43, "src": "Multiple lanes of traffic that flow in the same direction are separated by white lane markings.", "day": 2}, {"id": "a-172", "q": "The center has a solid yellow line and a broken yellow line. The broken line is on your side. What does this mean?", "a": "You may pass when it is safe", "o": ["You are not allowed to pass here, even if no traffic is coming", "You may only make right turns here", "You must drive below the speed limit"], "why": "If the broken yellow line is on your side, you are in the passing zone and may pass when it is safe. If the solid line is on your side, you may not pass.", "p": 43, "src": "If the broken yellow line is on your side, you are in the \"passing zone\" and may pass", "s": 1, "day": 2}, {"id": "a-178", "q": "When must you yield to pedestrians at a crosswalk?", "a": "When they are in or about to enter the crosswalk", "o": ["Only when they are in the middle of the street", "Only at crosswalks that have a WALK signal showing", "Only at marked crosswalks"], "why": "You must yield to pedestrians who are in or about to enter the crosswalk or street. Not all crosswalks are marked.", "p": 43, "src": "yield the right-of-way to pedestrians who are in or are about to enter the crosswalk or street.", "day": 3}, {"id": "d-075", "q": "A pedestrian is using a white cane with a red tip or a guide dog. What must you do?", "a": "Always yield to the pedestrian", "o": ["Honk so the pedestrian knows where you are", "Yield only if the pedestrian is in a marked crosswalk", "Drive around the pedestrian slowly"], "why": "Always yield to blind pedestrians carrying a white or red-tipped white cane or using a guide dog.", "p": 103, "src": "Always yield to blind pedestrians carrying a white, metallic, red tipped white cane or using a guide dog.", "day": 3}, {"id": "b-110", "q": "You are entering a main road from a driveway or parking lot. Who must yield?", "a": "You must yield to all vehicles on the main road", "o": ["Vehicles already on the main road must yield to you", "Whoever is going faster goes first", "Whoever honks first goes first"], "why": "When entering a main road from a driveway, alley, parking lot or roadside, yield to all vehicles already on it.", "p": 53, "src": "When entering a main road from a driveway, alley, parking lot or roadside, you must yield to all vehicles already on the main road.", "day": 3}, {"id": "a-150", "q": "Your light turns green. What must you still do?", "a": "Yield to pedestrians and vehicles still in the intersection", "o": ["Go immediately, because a green light gives you the right of way", "Honk to clear the intersection", "Wait three seconds before moving"], "why": "Green means go IF the intersection is clear. You must still yield to pedestrians and vehicles still in the intersection.", "p": 41, "src": "GREEN: Go IF the intersection is clear. You must yield to pedestrians and vehicles still in the intersection at light change.", "day": 3}, {"id": "b-118", "q": "At an ALL-WAY stop, who goes first?", "a": "The vehicle that got there first", "o": ["The biggest vehicle at the intersection", "The vehicle that is going straight", "The vehicle on the left side"], "why": "At all-way stops, all vehicles stop, and the first to arrive goes first.", "p": 54, "src": "the vehicle reaching the intersection first gets to go first (of course, ALL vehicles must stop).", "day": 3}, {"id": "b-119", "q": "Two vehicles reach an all-way stop at the same time. Who goes first?", "a": "The vehicle on the right", "o": ["The vehicle on the left", "The faster vehicle", "The vehicle turning left"], "why": "If more than one vehicle arrives at the same time, yield to the vehicle on the right.", "p": 54, "src": "If more than one vehicle arrives at the same time, yield the right of way to the vehicle on the right", "day": 3}, {"id": "a-151", "q": "You have a green light (not an arrow) and want to turn left. Who must you yield to?", "a": "Oncoming vehicles", "o": ["No one, because green gives you the right-of-way", "Only vehicles behind you", "Only vehicles turning right"], "why": "The green signal gives permission to go, but you must yield to oncoming vehicles if turning left.", "p": 41, "src": "Yield to oncoming vehicles if you are turning left.", "day": 3}, {"id": "b-121", "q": "At a “T” intersection, your road ends at a main road. Who must yield?", "a": "You must yield to traffic from both directions", "o": ["Main road traffic must yield to you", "Only traffic coming from your left yields", "Whoever reaches the intersection first goes"], "why": "Vehicles on the road that ends must yield to traffic from both directions on the main road.", "p": 54, "src": "the vehicles on the road ending must yield to oncoming traffic from both directions on the main road", "day": 3}, {"id": "a-159", "q": "A traffic signal is not working at all. What does Tennessee law require?", "a": "Treat it as an all-way stop", "o": ["Treat it as a yield for everyone", "Go through if you are on the bigger road", "Treat it like a flashing yellow light"], "why": "If a signal is not working, treat the intersection as an all-way stop.", "p": 41, "src": "if a signal is not working, the intersection is to be treated as if it were a ll-way stop intersection.", "day": 3}, {"id": "b-123", "q": "May you enter an intersection if you cannot get all the way through it without stopping?", "a": "No, wait until traffic ahead clears", "o": ["Yes, if your light is green", "Yes, if you are turning", "Yes, if traffic is moving slowly"], "why": "Do not enter unless you can get through without stopping. Blocking an intersection can get you a ticket.", "p": 54, "src": "Do not enter an intersection unless you can get through it without having to stop.", "day": 3}, {"id": "b-031", "q": "What is the maximum speed set by Tennessee law for interstate highways?", "a": "70 mph", "o": ["65 mph", "75 mph", "80 mph"], "why": "The interstate maximum is 70 mph. Drive that fast only in ideal conditions. Some sections have a lower posted limit.", "p": 47, "src": "The maximum speed set by Tennessee law for interstate highways is 70 m.p.h.", "day": 4}, {"id": "b-054", "q": "Under normal conditions, what is the closest you should follow another vehicle?", "a": "No closer than two seconds", "o": ["No closer than one second", "No closer than one car length", "No closer than five seconds"], "why": "If you reach the fixed point before counting to two seconds, slow down. Repeat until you are at least two seconds behind.", "p": 49, "src": "Repeat this exercise until you are following no closer than two seconds.", "day": 4}, {"id": "b-056", "q": "In bad weather, at night, at higher interstate speeds, or when following a motorcycle, what following distance should you use?", "a": "At least four seconds", "o": ["At least one second", "At least two seconds", "At least three car lengths"], "why": "Increase from two seconds to a minimum of four seconds for better reaction time in these conditions.", "p": 49, "src": "A minimum of four seconds should allow for better reaction time and a safer space cushion under these conditions including following a motorcycle.", "day": 4}, {"id": "b-020", "q": "What does the Basic Speed Rule teach?", "a": "Drive at a speed that is safe for the conditions", "o": ["Always drive at exactly the posted speed limit", "Drive 5 mph under the posted limit", "Drive as fast as the car ahead of you"], "why": "The Basic Speed Rule is a safety principle, not a law. It does not set an exact limit. The conditions decide what speed is safe.", "p": 46, "src": "it teaches that the speed you may drive is limited by current conditions.", "day": 4}, {"id": "b-030", "q": "Unless another speed is posted, what is the speed limit on primary and secondary state and federal highways?", "a": "55 mph", "o": ["45 mph", "60 mph", "65 mph"], "why": "Unless posted otherwise, the limit on these highways is 55 mph.", "p": 47, "src": "Unless otherwise posted, the speed limit on primary and secondary state and federal highways is 55 m.p.h.", "day": 4}, {"id": "b-055", "q": "At what speeds does the two-second rule for following at a safe distance hold true?", "a": "At any speed", "o": ["Only at speeds up to 30 mph", "Only at speeds up to 55 mph", "Only at speeds up to 45 mph"], "why": "The two-second rule works at any speed on state and U.S. highways with moderate speed limits. In bad weather, at night, and at higher interstate speeds, increase it to at least four seconds.", "p": 49, "src": "This principle will hold true at any speed on state and U.S. highways with moderate speed limits.", "s": 1, "day": 4}, {"id": "b-053", "q": "To check your following distance, you watch the car ahead pass a fixed point, like a sign post. What do you do next?", "a": "Count seconds until you reach that spot", "o": ["Count the cars between you and it", "Measure the distance in car lengths instead", "Check your speedometer and mirrors"], "why": "Count “one-thousand and one, one-thousand and two” until you reach the same point.", "p": 48, "src": "count the seconds it takes you to reach the same spot.", "day": 4}, {"id": "b-052", "q": "Most rear-end crashes are caused by drivers who are doing what?", "a": "Tailgating (following too closely)", "o": ["Driving under the speed limit", "Using their turn signals", "Driving with headlights on"], "why": "Rear-end crashes are common, and most are caused by tailgating drivers.", "p": 48, "src": "Rear-end crashes are very common and most of these crashes are caused by drivers who are \"tailgating.\"", "day": 4}, {"id": "b-039", "q": "When are school zone speed limits in effect?", "a": "When children are going to or from school, or at recess", "o": ["Only from 7 a.m. to 9 a.m. on weekdays, all year", "Only when a police officer is parked in the zone", "All day and night, every day of the whole year"], "why": "School zone speed limits are in effect when children are going to or from school, or during a school recess.", "p": 47, "src": "Speed limits in all school zones are regulated when children are going to or from the school or during a school recess hour.", "day": 4}, {"id": "b-046", "q": "With anti-lock brakes (ABS), how should you press the brake pedal to stop?", "a": "Press down firmly and hold it without pumping", "o": ["Pump it quickly several times", "Light taps every second", "Press it, then release, then press again"], "why": "With ABS, keep firm, steady pressure. Pumping the pedal disengages the anti-lock system.", "p": 48, "src": "When slowing or stopping, apply firm, steady pressure to the brake pedal. Never pump the pedal with ABS.", "day": 4}, {"id": "b-064", "q": "At a stop sign with a clearly marked stop line, where must you stop?", "a": "Behind the stop line", "o": ["With your front wheels on the line", "Past the line where you can see", "At the edge of the cross street"], "why": "If there is a white stop line, you must stop your vehicle behind it.", "p": 49, "src": "You must stop your vehicle behind this line.", "day": 5}, {"id": "b-124", "q": "An emergency vehicle with a siren is approaching. What does Tennessee law require you to do?", "a": "Pull to the right edge and stop", "o": ["Speed up to get out of the way", "Stop right where you are in the lane", "Pull to the left edge and keep going"], "why": "Yield, drive as close as possible to the right edge or curb, and stop until it passes or a police officer directs you.", "p": 54, "src": "immediately drive to a position parallel to, and as close as possible to the right hand edge or curb of the roadway stop.", "day": 5}, {"id": "b-084", "q": "A school bus has yellow lights flashing. What does this mean?", "a": "The bus is about to stop, so slow down and get ready to stop", "o": ["The bus is moving, so it is safe to pass it now", "Children are getting on or off the bus right now", "The bus has broken down and needs your help"], "why": "Yellow flashing lights mean the bus is about to stop to load or unload children.", "p": 51, "src": "When the yellow lights on the front and back of the bus are flashing the bus is preparing to stop to load or unload", "day": 5}, {"id": "b-085", "q": "A school bus has red lights flashing and its stop arm out. When may you start driving again?", "a": "When the red lights stop, the stop arm goes in, and the bus starts moving", "o": ["As soon as the children have reached the sidewalk safely", "After you have waited 30 seconds and see no more children", "When the bus driver honks the horn twice to signal you"], "why": "Wait until the red lights turn off, the stop arm is withdrawn, and the bus begins moving.", "p": 51, "src": "Motorists must stop their cars and wait until the red flashing lights are turned off, the stop arm is withdrawn, and the bus begins", "day": 5}, {"id": "b-086", "q": "A school bus is stopped at an intersection loading children. Which drivers must stop?", "a": "Drivers from all directions", "o": ["Only drivers behind the bus", "Only drivers facing the bus", "Only drivers turning right"], "why": "When a school bus is stopped at an intersection to load or unload, drivers from ALL directions must stop.", "p": 51, "src": "drivers from ALL directions are required to stop until the bus resumes motion", "day": 5}, {"id": "a-107", "q": "At a crossing with lights and a gate, when may you go after a train passes?", "a": "When the gates are up and the lights stop flashing", "o": ["As soon as the train passes your car", "When the gates start to rise", "When the lights stop flashing, even if the gates are still down"], "why": "Stop when the lights begin flashing, before the gate comes down. Remain stopped until the gates are raised and the lights stop.", "p": 36, "src": "Remain stopped until the gates are raised and the lights stop flashing.", "day": 5}, {"id": "b-077", "q": "A train is coming. How far from the railroad tracks must you stop?", "a": "Between 15 and 50 feet", "o": ["Between 5 and 10 feet", "Between 50 and 100 feet", "At least 100 feet"], "why": "Stop between 15 and 50 feet from the tracks. Never stop on the tracks.", "p": 50, "src": "When you approach a railroad crossing and a train is coming, you must stop between 15 and 50 feet from the railroad tracks.", "day": 5}, {"id": "b-126", "q": "You are in the middle of an intersection when an emergency vehicle approaches. What should you do?", "a": "Drive on through, then pull over", "o": ["Stop right there in the intersection", "Back up out of the intersection", "Turn left right away to get clear"], "why": "Drive on through the intersection before pulling over, or you may block the emergency vehicle's path.", "p": 54, "src": "If you are in an intersection, drive on through the intersection before pulling over", "day": 5}, {"id": "b-089", "q": "You are on a highway divided by a median that cars cannot drive on. A school bus is stopped on the other side with its red lights flashing. What should you do?", "a": "You don't have to stop, but drive carefully", "o": ["Stop until the bus starts moving again", "Stop for 10 seconds, then go slowly", "Speed up so you pass the bus quickly"], "why": "On a highway divided by a median or barrier that cars cannot drive on, drivers on the other side do not have to stop, but they must drive with caution.", "p": 51, "src": "divided by median space or a barrier not suitable for vehicular traffic, the driver need not stop, but should proceed with caution.", "day": 5}, {"id": "d-138", "q": "How far away from a school bus should children stay?", "a": "Ten feet", "o": ["Two feet", "Five feet", "Fifty feet"], "why": "The Danger Zone is on all sides of the bus. Children should stay ten feet away and NEVER go behind the bus.", "p": 111, "src": "Children should stay ten feet away from the school bus and NEVER go behind the bus.", "day": 5}, {"id": "a-003", "q": "Where should you place your hands on the steering wheel?", "a": "9 o'clock and 3 o'clock", "o": ["11 o'clock and 6 o'clock", "7 o'clock and 5 o'clock", "10 o'clock and 12 o'clock"], "why": "Left hand at 9 o'clock, right hand at 3 o'clock. This position helps avoid injury if the air bag opens.", "p": 28, "src": "place the left hand at the 9 o'clock position and the right hand at 3 o'clock position", "s": 1, "day": 6}, {"id": "b-147", "q": "How far before a turn must you turn on your turn signal?", "a": "At least 50 feet", "o": ["At least 10 feet", "At least 25 feet", "At least 500 feet"], "why": "Turn on your signal at least 50 feet before the turn or lane change.", "p": 56, "src": "At least 50 feet before the turn, you must turn on your turn signal lights.", "day": 6}, {"id": "a-146", "q": "Unless a sign says otherwise, may you turn right on a red light?", "a": "Yes, after a complete stop, if there are no pedestrians or cross traffic", "o": ["No, never on a red light", "Yes, without stopping if the road is clear", "Yes, but only between midnight and 6 a.m. when traffic is light"], "why": "Unless posted otherwise, you may turn right on red after a complete stop when no pedestrians or cross traffic are present.", "p": 41, "src": "you may turn right on red after coming to a complete stop and when no pedestrians or cross traffic are present.", "day": 6}, {"id": "b-139", "q": "Does using your turn signal give you the right-of-way?", "a": "No, signaling does not give you the right-of-way", "o": ["Yes, as soon as you turn your signal on", "Yes, once you have signaled for 50 feet", "Yes, but only when you are driving on two-lane roads"], "why": "Signals tell others your plan, but they do NOT give you the right-of-way.", "p": 55, "src": "However, signaling does NOT give you the rightof-way.", "day": 6}, {"id": "b-169", "q": "When making a right turn, which lane should you turn into?", "a": "The lane closest to the right curb", "o": ["The lane closest to the center line", "Any open lane on the new street", "The lane farthest to the left"], "why": "Get close to the right curb before turning, and turn into the travel lane closest to the right curb.", "p": 58, "src": "Move your vehicle around the corner and into the travel lane closest to the right curb.", "day": 6}, {"id": "b-174", "q": "Who has the right-of-way when you reach a roundabout?", "a": "Vehicles already in the roundabout", "o": ["Vehicles that are entering the roundabout", "The largest vehicle, such as a truck", "Whichever driver honks the horn first"], "why": "Yield to vehicles already circulating. Enter when there is a gap.", "p": 59, "src": "Upon reaching the roundabout, yield to vehicles already within the circulating traffic.", "day": 6}, {"id": "a-004", "q": "About how far back from the steering wheel should your body be?", "a": "10 to 12 inches", "o": ["6 to 8 inches", "18 to 24 inches", "3 to 5 inches"], "why": "Sit about 10 to 12 inches back. At this distance an air bag hits your chest, not your chin or face.", "p": 27, "src": "Your body should be about 10 to 12 inches back from the steering wheel with or without an air bag.", "s": 1, "day": 6}, {"id": "d-097", "q": "A bicyclist holds the left arm out, bent up at the elbow, hand pointing upward. What does this signal mean?", "a": "Right turn", "o": ["Left turn", "Stopping or slowing", "Go ahead and pass"], "why": "Left arm bent upward at 90 degrees means right turn. A rider may also point the right arm straight out to the right.", "p": 105, "src": "Right Turn Extend your left arm out sideways bent at a 90-degree angle at the elbow joint, hand pointing upward", "day": 6}, {"id": "b-159", "q": "Making a left turn from a two-way street onto a two-way street, which lane should you turn into?", "a": "The lane just to the right of the center line", "o": ["The lane closest to the right curb", "Whichever lane has the least traffic", "The center turn lane of the new street, if there is one"], "why": "Turn into the first lane past the center line. Never turn wide into the right lane, because oncoming drivers who are turning right will use that lane.", "p": 57, "src": "be sure to turn into the first lane past the center line.", "day": 6}, {"id": "b-163", "q": "Which lane must you be in before making a left turn from a one-way street?", "a": "The lane nearest the left curb", "o": ["The lane nearest the center of the street", "The lane nearest the right curb", "Any lane, if you signal"], "why": "From a one-way street, approach the turn in the lane nearest the left curb.", "p": 57, "src": "Make your approach in the traffic lane furthermost to the left curb of the street.", "s": 1, "day": 6}, {"id": "b-228", "q": "When you pass a bicycle going the same direction as you, how much space does the law require?", "a": "3 feet", "o": ["1 foot", "2 feet", "6 feet"], "why": "The law requires at least 3 feet between you and the bicycle, kept until you are safely past.", "p": 63, "src": "leave at least a distance between you and the bicycle of not less than 3 feet. It’s the law!", "s": 1, "day": 7}, {"id": "a-176", "q": "What do broken white lines between lanes mean?", "a": "You may change lanes or pass if it is safe", "o": ["You may never change lanes", "Traffic on the other side is going the opposite way", "The lane is ending soon"], "why": "Broken white lines mean you may cross them to pass or change lanes if it is safe.", "p": 43, "src": "Broken white lines between lanes of traffic mean you may cross the lines to pass or change lanes", "day": 7}, {"id": "a-170", "q": "What do two solid yellow lines between lanes mean?", "a": "No passing from either direction", "o": ["Passing allowed from either direction", "Passing allowed only from the left side", "Passing allowed when no cars are coming"], "why": "Two solid yellow lines mean you MAY NOT cross from either direction, even if no oncoming traffic is in view.", "p": 42, "src": "Two solid yellow lines between lanes of traffic mean you MAY NOT cross the lines from either direction", "day": 7}, {"id": "b-207", "q": "Before changing lanes, how do you check your blind spot?", "a": "Turn your head and look over your shoulder", "o": ["Check only your inside rearview mirror", "Check only your outside side mirror", "Honk your horn once and then move over"], "why": "Mirrors alone miss vehicles beside you. Turn your head and look over your shoulder.", "p": 61, "src": "Look over your shoulder in the direction you will be moving.", "day": 7}, {"id": "b-223", "q": "Should you pass when approaching a hill or curve?", "a": "No, do not pass", "o": ["Yes, if you go fast", "Yes, if you honk", "Yes, if the car ahead is slow"], "why": "Do not pass when approaching a hill or curve, because you cannot see oncoming traffic.", "p": 63, "src": "Do not pass when approaching a hill or curve.", "day": 7}, {"id": "a-166", "q": "You have a yellow line on your right and a white line on your left. What does this mean?", "a": "You are going the wrong way", "o": ["You are in the correct lane", "You are in a passing zone", "You are in a turn lane"], "why": "If you find yellow to your right and white to your left, you are going the wrong way.", "p": 42, "src": "If you ever find yourself with yellow to your right and white to your left, you are going the wrong way.", "day": 7}, {"id": "d-106", "q": "May you share a lane with a motorcycle?", "a": "No, a motorcycle has the right to the full lane", "o": ["Yes, if the motorcycle is riding near the edge", "Yes, on roads with a speed limit over 45 mph", "Yes, if you are both going the same speed"], "why": "Motorcycles have the right to use the full lane. You must never try to share a lane with a motorcycle.", "p": 107, "src": "Motorcycles have the right to the use of the full lane.", "day": 7}, {"id": "d-018", "q": "After you pass a vehicle, when is it safest to return to the driving lane?", "a": "When you see both of its headlights in your rearview mirror", "o": ["As soon as your front bumper is past the other car's front bumper", "When the other driver waves you over with a hand signal", "As soon as you are side by side with the other vehicle"], "why": "Do not count on other drivers to make room. Wait until you see both headlights of the car you passed in your rearview mirror.", "p": 94, "src": "until you can see both headlights of the vehicle you just passed in the rearview mirror.", "day": 7}, {"id": "b-215", "q": "On a two-lane road, when may you pass another vehicle on the right?", "a": "When it is turning left, if it is safe", "o": ["Whenever it is going below the limit", "By driving on the paved shoulder", "By using an empty bike lane"], "why": "On a two-lane road, you may pass on the right only when the other vehicle is turning left and it is safe. Never drive on the shoulder to pass.", "p": 62, "src": "When the vehicle overtaken has signaled to make or is about to make a left turn.", "day": 7}, {"id": "d-116", "q": "Where are a truck's blind spots, or No-Zones?", "a": "Right in front, on both sides, and up to 200 feet behind", "o": ["Only directly behind the truck, up to 20 feet", "Only on the left side of the cab, near the driver's door", "Only in front of the truck, up to 500 feet"], "why": "A truck's blind spots are immediately in front, on either side, and up to 200 feet in the rear.", "p": 109, "src": "A truck’s blind spots are immediate in front, on either side of the car and up to 200 feet in the rear.", "day": 7}, {"id": "b-249", "q": "When pulling out of any parking space, including a parallel space, what must you do?", "a": "Look, signal, and yield", "o": ["Honk and pull out", "Pull out fast to merge", "Wait for a car to wave you in"], "why": "A driver must look, signal and yield the right-of-way when coming out of any parking space.", "p": 65, "src": "A driver must look, signal and yield the right-of-way when coming out of any type of parking space, including parallel spaces.", "day": 8}, {"id": "b-256", "q": "Which of these is an illegal place to park?", "a": "On a bridge or in a tunnel", "o": ["In a marked parking space", "20 feet past a fire hydrant", "In a parking lot"], "why": "It is illegal to park on any bridge or in a tunnel.", "p": 65, "src": "Upon any bridge or within a tunnel", "day": 8}, {"id": "b-250", "q": "It is illegal to park within how many feet of a fire hydrant?", "a": "15 feet", "o": ["5 feet", "10 feet", "30 feet"], "why": "No parking within 15 feet of a fire hydrant.", "p": 65, "src": "Within 15 feet of a fire hydrant", "s": 1, "day": 8}, {"id": "b-252", "q": "It is illegal to park within how many feet of a crosswalk?", "a": "20 feet", "o": ["5 feet", "10 feet", "50 feet"], "why": "No parking within 20 feet of a crosswalk or in the crosswalk area.", "p": 65, "src": "Within 20 feet of a crosswalk or in the crosswalk marked area", "day": 8}, {"id": "b-253", "q": "It is illegal to park within how many feet of a traffic signal or stop sign?", "a": "30 feet", "o": ["10 feet", "15 feet", "50 feet"], "why": "No parking within 30 feet of a traffic signal, stop sign or other traffic control device.", "p": 65, "src": "Within 30 feet of a traffic signal, stop sign or any other traffic control device", "day": 8}, {"id": "b-251", "q": "It is illegal to park within how many feet of a railroad crossing?", "a": "50 feet", "o": ["15 feet", "20 feet", "100 feet"], "why": "No parking within 50 feet of a railroad crossing.", "p": 65, "src": "Within 50 feet of a railroad crossing", "s": 1, "day": 8}, {"id": "b-268", "q": "After parallel parking, your car should be no farther than how far from the curb?", "a": "18 inches", "o": ["6 inches", "12 inches", "24 inches"], "why": "When you finish parallel parking, you should be no more than 18 inches from the curb.", "p": 66, "src": "the vehicle should be no farther away from the curb than 18", "day": 8}, {"id": "b-260", "q": "You park facing DOWNHILL next to a curb. Which way should you turn your front wheels?", "a": "Toward the curb", "o": ["Away from the curb", "Straight ahead", "Toward the center of the road"], "why": "Turn the wheels toward the curb and set the parking brake. If the car rolls, it rolls into the curb.", "p": 65, "src": "On a downhill with a curb: Turn the front wheels toward the curb (right) and set the parking brake.", "day": 8}, {"id": "b-261", "q": "You park facing UPHILL next to a curb. Which way should you turn your front wheels?", "a": "Away from the curb", "o": ["Toward the curb", "Straight ahead", "Toward the edge of the road"], "why": "Turn wheels away from the curb. If the car rolls back, it rolls into the curb and stops.", "p": 65, "src": "On an uphill with a curb: Turn the front wheels away", "day": 8}, {"id": "b-262", "q": "You park on a hill with NO curb. Which way should you turn your front wheels?", "a": "Toward the edge of the road", "o": ["Toward the center of the road", "Straight ahead", "Away from the edge of the road"], "why": "With no curb, uphill or downhill, turn the wheels toward the edge of the road (right) so the car rolls away from traffic.", "p": 65, "src": "On a downhill without a curb: Turn the front wheels toward the edge of the roadway (right).", "day": 8}, {"id": "c-024", "q": "You miss your exit on the interstate. What must you do?", "a": "Go on to the next exit", "o": ["Back up on the shoulder to the exit", "Make a U-turn at the median", "Stop on the shoulder and wait"], "why": "It is illegal to back up, make a U-turn, or cross the median on the interstate.", "p": 70, "src": "If you miss your exit, you must proceed to the next exit.", "day": 9}, {"id": "c-010", "q": "You are driving slower than the flow of traffic on the interstate. Which lane must you use?", "a": "The right lane", "o": ["The left lane", "The center lane", "The shoulder"], "why": "Slower traffic must stay in the right lane.", "p": 69, "src": "if you drive at a speed below the flow of traffic, you must use the right lane.", "day": 9}, {"id": "c-001", "q": "When you enter an interstate highway, what should you do?", "a": "Check for cars, speed up to match traffic, and merge when clear", "o": ["Stop at the end of the ramp, check for cars, then enter when it is safe", "Slow down to 25 mph before you enter the traffic lane", "Drive onto the shoulder first, then merge when clear"], "why": "Use the ramp to speed up to the speed of interstate traffic. Then merge when the way is clear.", "p": 68, "src": "You must use the merging or acceleration lane to speed up and merge with fast-moving traffic already on the interstate.", "s": 1, "day": 9}, {"id": "c-004", "q": "You are merging onto the interstate from a ramp. Who must yield the right-of-way?", "a": "You, the driver entering from the ramp", "o": ["The cars already on the interstate", "Whichever car is going slower", "Whichever car is larger"], "why": "Drivers on the interstate should make room if they can, but the entering driver must yield.", "p": 68, "src": "It is your responsibility to yield the right-of-way to other cars on the interstate.", "day": 9}, {"id": "c-021", "q": "When you leave the interstate, when should you start to slow down?", "a": "After you enter the deceleration lane", "o": ["While you are still in the travel lane", "Before you change lanes toward the exit", "Only when you reach the end of the ramp"], "why": "Keep your speed until you are in the deceleration (exit) lane, then slow to the ramp's posted speed.", "p": 69, "src": "Maintain speed until you enter the deceleration lane", "day": 9}, {"id": "b-136", "q": "On a multi-lane road, you approach a stopped emergency vehicle with lights flashing on the roadside. What does the Move Over Law require?", "a": "Move over a lane away from it, or slow down if you can't", "o": ["Stop completely behind it until it drives away", "Honk your horn and keep going at the same speed", "Turn on your high beams and pass it quickly"], "why": "Change to a lane that is not next to the stopped vehicle. If you can't do that safely, slow down and drive with caution.", "p": 55, "src": "you must make a lane change into a lane not adjacent to that of the vehicle, or proceed with caution by reducing the speed", "day": 9}, {"id": "d-155", "q": "When should you merge for a lane closure ahead in a work zone?", "a": "As soon as possible, when you first see the work zone", "o": ["At the very last moment before the lane ends", "Only after you can see the workers on the road", "Only when a flagger tells you to"], "why": "Merge as soon as possible. If you wait until the last moment to merge, you can get a ticket and you can cause a crash.", "p": 112, "src": "You can be ticketed and the cause of an accident for being a last chance merger.", "day": 9}, {"id": "c-002", "q": "Who is allowed to cross an interstate median (use an emergency crossover)?", "a": "Only emergency vehicles and highway maintenance crews", "o": ["Any driver who missed their exit and needs to turn around", "Any driver when no other cars are around", "Trucks and buses that need to turn around"], "why": "Regular drivers may never cross the median. If you miss your exit, go on to the next exit.", "p": 70, "src": "only emergency vehicles and highway maintenance crews may cross an interstate median", "s": 1, "day": 9}, {"id": "c-035", "q": "Your car has trouble on the interstate. What should you do first?", "a": "Move to the right shoulder and turn on your emergency flashers", "o": ["Stop right where you are in your lane and turn on your flashers", "Move to the left shoulder and turn off your lights", "Keep driving slowly in the right lane"], "why": "Get off the road to the right shoulder or emergency stopping area as soon as you can, and warn other traffic.", "p": 72, "src": "If you have vehicle trouble, move to the right shoulder or emergency stopping area as soon as you can. Turn on your emergency flashers", "day": 9}, {"id": "c-003", "q": "Safe interstate driving demands complete awareness of higher speed driving and what else?", "a": "Constant alertness by the driver", "o": ["A vehicle with a large engine", "Driving in the left lane at all times", "Keeping up with the fastest car"], "why": "Interstate driving needs both complete awareness of higher speed driving and constant alertness.", "p": 68, "src": "Safe use of the interstates demands a complete awareness of a higher speed type of driving and constant alertness by the driver.", "s": 1, "day": 9}, {"id": "c-075", "q": "You come to a road covered by flood water. What should you do?", "a": "Turn around and find another way", "o": ["Drive through slowly in low gear", "Drive through quickly to keep momentum", "Follow another car through the water"], "why": "Do not drive into flood water. The water may be deeper than it looks, and the road under it may be washed out.", "p": 76, "src": "TURN AROUND, DON’T DROWN®.", "day": 10}, {"id": "d-167", "q": "Your vehicle stalls on the railroad tracks. What should you do first?", "a": "Get everyone out right away and away from the tracks", "o": ["Keep trying to restart the car until the engine starts", "Stay in the car with your safety belt on", "Push the car off the tracks yourself"], "why": "All occupants should exit immediately and get away from the tracks, even if you do not see a train.", "p": 114, "src": "all occupants should exit the vehicle immediately and get away from the tracks even if you do not see a train.", "day": 10}, {"id": "c-042", "q": "How does driving at night compare to driving in the daytime?", "a": "More dangerous, because your headlights limit how far you can see", "o": ["Safer, because there is less traffic and there are fewer distractions", "Safer, so you can increase your speed", "Just as safe, as long as your lights are on"], "why": "Your range of visibility at night is limited by your headlights, so drive slower.", "p": 74, "src": "considerably more hazardous and difficult than daytime driving because your range of visibility is limited by your headlights.", "s": 1, "day": 10}, {"id": "b-001", "q": "At night, when must your headlights be on?", "a": "From 30 minutes after sunset until 30 minutes before sunrise", "o": ["From sunset until sunrise", "From 1 hour after sunset until 1 hour before sunrise", "From 15 minutes after sunset until 15 minutes before sunrise"], "why": "Tennessee law requires headlights from 30 minutes after sunset until 30 minutes before sunrise.", "p": 45, "src": "Your car headlights must be turned on 30 minutes after sunset until 30 minutes before sunrise.", "day": 10}, {"id": "c-050", "q": "At night, you must dim your high beams when meeting or overtaking a vehicle within how many feet?", "a": "500 feet", "o": ["200 feet", "300 feet", "1,000 feet"], "why": "Dim your lights when meeting or overtaking vehicles within 500 feet.", "p": 74, "src": "Meeting or overtaking vehicles within 500 feet.", "day": 10}, {"id": "c-043", "q": "Why should you use low beams, not high beams, in fog?", "a": "Low beams let you see better and help others see you", "o": ["Low beams make your car harder for others to see", "High beams drain the car battery in fog", "High beams make the fog get thicker"], "why": "In fog or mist, high beam light reflects back into your eyes. Low beams put the light on the road.", "p": 75, "src": "In fog or mist, never put your headlights on high beam because the light will be reflected back into your eyes.", "s": 1, "day": 10}, {"id": "a-032", "q": "How can you tell if carbon monoxide is in your car?", "a": "You can't tell, because it has no taste, smell, or color", "o": ["It has a strong smell like rotten eggs or gasoline", "It looks like a light gray smoke", "It tastes bitter in your mouth"], "why": "Carbon monoxide from an engine can kill. It has no taste, no smell, and cannot be seen.", "p": 29, "src": "Carbon monoxide gas from a car engine can kill (it has not taste, no smell or visibility).", "day": 10}, {"id": "c-063", "q": "Your car starts to hydroplane on a wet road. What should you do?", "a": "Slow down gradually by letting up on the gas", "o": ["Slam on the brakes right away", "Speed up a little so you can push through the water", "Turn the wheel sharply to the side"], "why": "When hydroplaning, your tires lose the grip needed to steer and brake. Don't slam on the brakes.", "p": 76, "src": "If you vehicle starts to hydroplane, slow down gradually by letting up on the gas.", "day": 10}, {"id": "b-045", "q": "Your car does NOT have anti-lock brakes and starts to skid. What is the general rule?", "a": "Ease off the brake and steer in the direction of the skid", "o": ["Press the brake pedal harder and steer away from the skid", "Pump the brake and hold the wheel straight", "Speed up and steer opposite the skid"], "why": "Without ABS, ease off the brake and turn the wheel in the direction of the skid, if you can do so safely.", "p": 48, "src": "if the car starts to skid, take your foot off the brake and turn the steering wheel in the direction of the skid", "day": 10}, {"id": "c-044", "q": "What does continuous hard braking on ice and snow often do?", "a": "Locks the front wheels, so you lose steering control", "o": ["Helps you stop faster on the ice", "Keeps the brakes warm so they do not freeze up in the cold", "Makes the tires grip the road better"], "why": "Keep a safe speed for icy conditions so you don't need hard braking.", "p": 78, "src": "Continuous hard braking on snow and ice can result in the locking of the front brakes causing a loss of steering.", "s": 1, "day": 10}, {"id": "c-096", "q": "What is the only thing that can sober up a person who has been drinking?", "a": "Time", "o": ["Drinking coffee", "Taking a cold shower", "Exercising"], "why": "Coffee, exercise, and cold showers do not speed up how fast the liver removes alcohol.", "p": 79, "src": "Only time can sober a person who’s been drinking.", "day": 11}, {"id": "c-097", "q": "What is the lowest BAC that is always illegal for drivers 21 and older in Tennessee?", "a": "0.08 percent", "o": ["0.10 percent", "0.15 percent", "0.20 percent"], "why": "Lower limits apply to drivers under 21. You can still get a DUI below 0.08 if you are impaired.", "p": 79, "src": "In most states, including Tennessee, .08 is the level of intoxication which is always illegal.", "day": 11}, {"id": "c-091", "q": "As the percentage of alcohol in your blood (BAC) goes up, what do you become?", "a": "More intoxicated", "o": ["More sober", "More coordinated", "More alert"], "why": "The higher the BAC, the more impaired you are.", "p": 79, "src": "As the percentage of alcohol in your blood increases, you become more intoxicated.", "s": 1, "day": 11}, {"id": "c-089", "q": "What penalty does driving under the influence of drugs carry?", "a": "The same penalty as for alcohol", "o": ["A lesser penalty than for alcohol", "No penalty at all", "A penalty only if the drug is illegal"], "why": "The penalties are the same for alcohol and drugs, even prescription or over-the-counter drugs.", "p": 81, "src": "The penalties for a DUI arrest are the same whether the driver was drinking alcohol or taking drugs (even prescription or over-the-counter drugs).", "s": 1, "day": 11}, {"id": "c-121", "q": "What is the lowest BAC at which a driver age 16 to 20 can be convicted of underage driving while impaired?", "a": "0.02 percent", "o": ["0.05 percent", "0.08 percent", "0.10 percent"], "why": "Being under the influence of alcohol or any other intoxicant also counts.", "p": 83, "src": "at least 16, but is not yet 21 years old, and who is found: (1) driving with a BAC of .02 percent", "day": 11}, {"id": "c-126", "q": "How does the alcohol in a 12-ounce beer compare to a 1-ounce shot of whiskey?", "a": "It is about the same", "o": ["The beer has much less", "The beer has much more", "The beer has none"], "why": "A 12-ounce beer has about as much alcohol as a 1-ounce shot of whiskey. Drinking beer instead of whiskey does not make you any safer.", "p": 83, "src": "The amount of alcohol in one (12 ounce) bottle of beer is about equal to that in a (1 ounce) shot of whiskey.", "day": 11}, {"id": "c-093", "q": "Which driving skills are affected by alcohol and drugs?", "a": "Alertness, concentration, reaction time, and coordination", "o": ["Only reaction time", "Only alertness and concentration, but not reaction time or coordination", "None of them, if you feel fine"], "why": "Alcohol also affects judgment and vision, the two most important driving abilities.", "p": 80, "src": "Drinking alcohol impairs a wide range of skills necessary for carrying out these tasks.", "s": 1, "day": 11}, {"id": "c-092", "q": "What does Tennessee's Implied Consent law mean?", "a": "By driving, you agree to be tested for alcohol or drugs if an officer asks", "o": ["Traffic laws apply even without any signs, markings, or signals at an intersection", "The owner of a vehicle will carry proper insurance", "You agree to let police search your car any time"], "why": "The officer must have reasonable grounds to believe you are driving under the influence.", "p": 81, "src": "when you drive in Tennessee, you have given your consent to be tested to determine the alcohol or drug content of your blood.", "s": 1, "day": 11}, {"id": "c-090", "q": "You had three beers in the past hour. About how long will it take for the alcohol to leave your blood?", "a": "About three hours", "o": ["About one hour", "About two hours", "About thirty minutes"], "why": "It takes about one hour to cancel the effects of one drink.", "p": 83, "src": "It takes about three hours to cancel the intoxicating effects of three drinks.", "s": 1, "day": 11}, {"id": "c-134", "q": "Which of these can get a driver license revoked or suspended?", "a": "Fraudulently altering a driver license", "o": ["Renewing your license a week early", "Driving a borrowed car with permission", "Moving to another county in Tennessee"], "why": "Frequent violations that add up to 12 or more points in 12 months can also lead to suspension for adults.", "p": 85, "src": "Allowing unlawful use of a driver license, including fraudulently altering a driver license", "s": 1, "day": 11}, {"id": "a-036", "q": "Under Tennessee's Hands Free law, which is illegal for a driver?", "a": "Holding a phone with any part of your body", "o": ["Listening to the radio while driving", "Talking on the phone in hands-free mode", "Using the car's built-in rear camera"], "why": "It is illegal to hold a phone with any part of your body, to text, to watch video, or to record or broadcast video while driving.", "p": 30, "src": "(a) hold a cellphone or mobile device with any part of their body,", "day": 12}, {"id": "a-044", "q": "Who must wear a safety belt any time the vehicle is moving?", "a": "The driver and all front-seat passengers", "o": ["Only the driver", "Only the driver and passengers who are under 18", "Only passengers in the back seat"], "why": "Safety belts are required for ALL drivers and all front-seat passengers any time the vehicle is in motion.", "p": 31, "src": "Safety belts are required for ALL drivers and all passengers in the FRONT seat, any time the vehicle is in motion.", "day": 12}, {"id": "a-074", "q": "What is the safest place for children 12 and under to ride in a car with air bags?", "a": "The back seat", "o": ["The front seat", "The bed of a pickup truck", "The front seat with the seat moved forward"], "why": "Children ages 12 and under are safer in the back seat. Air bags pose a severe risk to children of that age.", "p": 33, "src": "CHILDREN ages 12 and under are safer in the back seat of a vehicle.", "s": 1, "day": 12}, {"id": "a-001", "q": "What are properly adjusted seat head restraints designed to do?", "a": "Prevent whiplash if you are hit from behind", "o": ["Keep your head straight when you check mirrors", "Hold your head still during a sharp turn", "Protect your head if the air bag opens"], "why": "Head restraints are designed to prevent whiplash if you are hit from behind. Adjust them level with the back of your head.", "p": 27, "src": "Head restraints are designed to prevent whiplash if hit from behind.", "s": 1, "day": 12}, {"id": "a-002", "q": "How high should you adjust the seat head restraint?", "a": "Level with the back of your head", "o": ["Level with the base of your neck", "Level with the top of your shoulders", "Just above the top of your head"], "why": "Adjust the head restraint to a level even with the back of the head.", "p": 27, "src": "Properly adjust seat head restraints to a level even with the back of the head.", "s": 1, "day": 12}, {"id": "c-155", "q": "You are involved in a crash. What does the law require first?", "a": "Stop right away at or near the scene, without blocking traffic", "o": ["Drive to the nearest police station and report the crash in person", "Keep driving if no one looks hurt", "Stop only if the crash was your fault"], "why": "Turn off the ignition of a damaged car to prevent a fire. Never leave the scene.", "p": 89, "src": "stop immediately at the scene, or as close to the scene as possible without obstructing traffic.", "day": 12}, {"id": "c-133", "q": "You are not the first at a crash scene and your help is not needed. What should you do?", "a": "Slowly drive on and do not get in the way", "o": ["Stop and look to satisfy your curiosity", "Slow down to calm your nerves", "Park nearby to watch the rescue"], "why": "Slowing down to look at a crash (“accident gazing”) can cause more crashes and block emergency crews.", "p": 90, "src": "slowly continue on in your vehicle so not to interfere with the arrival of police and emergency medical and fire/rescue services.", "s": 1, "day": 12}, {"id": "a-050", "q": "Which statement about car seats is correct?", "a": "Rear-facing if under 1 year old and under 20 pounds. Forward-facing if 1 through 3 years old and over 20 pounds", "o": ["Forward-facing if under 1 year old and under 20 pounds. Rear-facing if 1 through 3 years old and over 20 pounds", "Rear-facing if under 1 year old and under 20 pounds. Booster seat if 1 through 3 years old and over 20 pounds", "Booster seat if under 1 year old and under 20 pounds. Seat belt only if 1 through 3 years old and over 20 pounds"], "why": "A child under 1 year old, or any child under 20 pounds, must ride rear-facing. Children 1 through 3 years old who weigh more than 20 pounds must ride forward-facing.", "p": 31, "src": "facing the rear of the car... one through three years old, and who weigh more than 20 pounds... facing forward.", "s": 1, "day": 12}, {"id": "a-059", "q": "How should a pregnant woman wear her safety belt?", "a": "Lap belt below the abdomen, shoulder belt above the belly", "o": ["Lap belt across the middle of the belly, shoulder belt under the arm", "Only the lap belt, without the shoulder belt", "Only the shoulder belt, without the lap belt"], "why": "Pregnant women should wear the lap belt below the abdomen and the shoulder belt above the belly.", "p": 31, "src": "Pregnant women should wear the lap belt below the abdomen and the shoulder belt above the belly.", "s": 1, "day": 12}, {"id": "c-132", "q": "After a reportable crash, how long does the driver have to file a crash report with the Department of Safety?", "a": "20 days", "o": ["10 days", "48 hours", "30 days"], "why": "This is required no matter who is to blame.", "p": 89, "src": "must file an Owner/Driver Report of the crash to the Tennessee Department of Safety and Homeland Security within 20 days.", "s": 1, "day": 12}]};
 const SIGNS = {
   octagon: '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="30,4 70,4 96,30 96,70 70,96 30,96 4,70 4,30" fill="#c62828" stroke="#7a1a1a" stroke-width="2"/></svg>',
   triangle: '<svg viewBox="0 0 100 100" aria-hidden="true"><polygon points="4,10 96,10 50,92" fill="#c62828"/><polygon points="20,20 80,20 50,73" fill="#fff"/></svg>',
@@ -158,57 +202,227 @@ const SIGNS = {
   rectangle: '<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="20" y="6" width="60" height="88" rx="4" fill="#fff" stroke="#222" stroke-width="3"/><rect x="30" y="20" width="40" height="6" fill="#222"/><rect x="30" y="36" width="40" height="6" fill="#222"/><rect x="34" y="56" width="32" height="24" fill="#222"/></svg>',
   swatch: c => `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="10" y="22" width="80" height="56" rx="6" fill="${c}" stroke="#555" stroke-width="2"/></svg>`
 };
-const DAYS = DATA.days, QS = DATA.qs, TOTAL_DAYS = DAYS.length;
-const BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
+let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.json when the page starts
 const TEST_LEN = 30, READY_SCORE = 27, READY_STREAK = 3, PASS_SCORE = 24;
-const KEY = 'tn-permit-daily-v1'; // keep this key: changing it would erase saved progress on existing devices
-
-function load() { try { return JSON.parse(localStorage.getItem(KEY)) || null; } catch (e) { return null; } }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
-const canSave = (() => { try { localStorage.setItem(KEY + '-check', '1'); localStorage.removeItem(KEY + '-check'); return true; } catch (e) { return false; } })();
-let S = Object.assign({ day: 1, last: {}, tests: [] }, load() || {});
-let run = null; // the set on screen; a copy is kept in S.run so leaving the page doesn't lose answers
+// The device copy of the signed-in Learner, saved under `rrtn-learner-<account id>`:
+// {records: what the server last handed back, pending: finished Sets not yet stored on the
+// server, unfinished: the Set on screen, so leaving the page doesn't lose answers, rejected:
+// records the server refused as badly shaped, kept aside so they don't hold back the others}.
+let copy = null, copyFor = null; // the copy, and the account id it belongs to
+const copyKey = id => `rrtn-learner-${id}`;
+// The saved state from before accounts. The page only reads it, for the one-time import; it never writes or deletes it.
+const OLD_KEY = 'tn-permit-daily-v1';
+// Set once this device has made an Imported record. It belongs to the device, not to a Learner, so
+// it outlasts sign-out and only the first Learner to sign in here gets the import (decision #7).
+const IMPORTED_KEY = 'rrtn-old-progress-imported';
+const canSave = (() => { try { localStorage.setItem('rrtn-check', '1'); localStorage.removeItem('rrtn-check'); return true; } catch (e) { return false; } })();
+function readCopy(id) {
+  try {
+    const c = JSON.parse(localStorage.getItem(copyKey(id)));
+    if (c && Array.isArray(c.records) && Array.isArray(c.pending)) {
+      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null,
+        rejected: Array.isArray(c.rejected) ? c.rejected : [] };
+    }
+  } catch (e) {}
+  return null;
+}
+function saveCopy() { try { localStorage.setItem(copyKey(copyFor), JSON.stringify(copy)); } catch (e) {} }
+const copyRecords = () => copy.records.concat(copy.pending);
+// S is the Learner's Progress ({day, last, scores, tests}), worked out from every record in the
+// copy, sent or waiting, plus `run`: the unfinished Set as saved.
+let S = null;
+function workOut() { S = Object.assign(progressFrom(copyRecords()), { run: copy.unfinished }); }
+let run = null; // the Set on screen
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-const reviewPile = () => QS.filter(q => S.last[q.id] === false);
-function streak() { let n = 0; for (let i = S.tests.length - 1; i >= 0 && S.tests[i] >= READY_SCORE; i--) n++; return n; }
+// These read the signed-in Learner's Progress `S`, or another Progress passed in (the Helper's view).
+const reviewPile = (p = S) => QS.filter(q => p.last[q.id] === false);
+function streak(p = S) { let n = 0; for (let i = p.tests.length - 1; i >= 0 && p.tests[i] >= READY_SCORE; i--) n++; return n; }
 
-function phase() {
-  if (S.day <= TOTAL_DAYS) return 'day';
-  if (streak() >= READY_STREAK) return 'test';
-  if (reviewPile().length) return 'review';
+function phase(p = S) {
+  if (p.day <= TOTAL_DAYS) return 'day';
+  if (streak(p) >= READY_STREAK) return 'test';
+  if (reviewPile(p).length) return 'review';
   return 'test';
 }
 
-// Saved runs store question ids and the shown option order. A run that no longer matches the questions is dropped.
+// Progress is worked out from a Learner's records (docs/adr/0001-*); it is never saved itself.
+// Records are ordered by finish time, then by the server's arrival number (seq). A record still
+// waiting on the device has no seq and sorts after the sent ones with the same time.
+const recordTime = r => { const t = Date.parse(r.at); return Number.isNaN(t) ? 0 : t; };
+function orderRecords(records) {
+  return records.slice().sort((a, b) => recordTime(a) - recordTime(b) ||
+    (a.seq === undefined ? Infinity : a.seq) - (b.seq === undefined ? Infinity : b.seq) || 0);
+}
+// The id of the latest Reset, or null when there has been none.
+function currentReset(records) {
+  const resets = orderRecords(records).filter(r => r.kind === 'reset');
+  return resets.length ? resets[resets.length - 1].id : null;
+}
+// The latest Reset or Move record, or null when there has been none.
+function latestChange(records) {
+  const changes = orderRecords(records).filter(r => r.kind === 'reset' || r.kind === 'move');
+  return changes.length ? changes[changes.length - 1] : null;
+}
+// A Reset or Move drops any unfinished Set (#24). An unfinished Set names the latest Reset or Move
+// known when it started (`after`), so one this device kept from before a newer one is dropped too.
+// A Set saved without `after` is dropped if a Reset or Move came after it was last saved.
+function droppedByChange(u, records) {
+  const c = latestChange(records);
+  if (u.after === null || typeof u.after === 'string') return u.after !== (c && c.id);
+  return c !== null && recordTime(c) > (Date.parse(u.saved_at) || 0);
+}
+// The records that count toward Progress, in order: those after the latest Reset that name it
+// (or, with no Reset, those that name none). The others stay in the History only.
+function countedRecords(records) {
+  const ordered = orderRecords(records), reset = currentReset(records);
+  const from = reset === null ? 0 : ordered.findIndex(r => r.id === reset) + 1;
+  return ordered.slice(from).filter(r => r.kind !== 'reset' && r.reset === reset);
+}
+// An Imported record's old saved state, keeping only fields of the right type.
+function importedStart(state) {
+  const p = { day: 1, last: {}, scores: {}, tests: [] }, plain = v => v && typeof v === 'object' && !Array.isArray(v);
+  if (!plain(state)) return p;
+  if (Number.isInteger(state.day) && state.day >= 1 && state.day <= TOTAL_DAYS + 1) p.day = state.day;
+  if (plain(state.last)) for (const [q, right] of Object.entries(state.last)) if (typeof right === 'boolean') p.last[q] = right;
+  if (plain(state.scores)) for (const [d, n] of Object.entries(state.scores)) if (Number.isInteger(n) && n >= 0) p.scores[d] = n;
+  if (Array.isArray(state.tests)) p.tests = state.tests.filter(n => Number.isInteger(n) && n >= 0);
+  return p;
+}
+// A Learner's Progress ({day, last, scores, tests}) from their records, by the study rules.
+function progressFrom(records) {
+  let p = { day: 1, last: {}, scores: {}, tests: [] };
+  for (const r of countedRecords(records)) {
+    if (r.kind === 'imported') p = importedStart(r.data.state);
+    else if (r.kind === 'move') p.day = r.data.to;
+    else if (r.kind === 'set') {
+      const d = r.data, right = d.answers.filter(a => a.right).length;
+      d.answers.forEach(a => { p.last[a.q] = a.right; });
+      if (d.type === 'day' || d.type === 'redo') p.scores[d.section] = right;
+      if (d.type === 'day' && d.section === p.day) p.day++; // otherwise it counts as a redo of that Section
+      if (d.type === 'test') p.tests.push(right);
+    }
+  }
+  return p;
+}
+
+// Saved runs store question ids, the shown option order, and when each answer was chosen. A run that no longer matches the questions is dropped.
 function packRun(r) {
-  return { kind: r.kind, dayNum: r.dayNum, i: r.i, answered: r.answered, items: r.items.map(it => ({ id: it.q.id, options: it.options, chosen: it.chosen })) };
+  return { kind: r.kind, dayNum: r.dayNum, i: r.i, answered: r.answered, set_id: r.set_id, started_at: r.started_at, after: r.after,
+    items: r.items.map(it => ({ id: it.q.id, options: it.options, chosen: it.chosen, at: it.at })) };
 }
 function unpackRun(p) {
   try {
     const items = p.items.map(x => {
       const q = BY_ID[x.id];
       if (!q || x.options.slice().sort().join('\n') !== [q.a, ...q.o].sort().join('\n')) throw new Error('changed');
-      return { q, options: x.options, chosen: x.chosen };
+      return { q, options: x.options, chosen: x.chosen, at: x.at || null };
     });
-    if (!items.length || p.i < 0 || p.i >= items.length) return null;
-    return { kind: p.kind, dayNum: p.dayNum, i: p.i, answered: !!p.answered, items };
+    if (!items.length || p.i < 0 || p.i >= items.length || typeof p.set_id !== 'string' || !p.set_id) return null;
+    return { kind: p.kind, dayNum: p.dayNum, i: p.i, answered: !!p.answered, set_id: p.set_id,
+      started_at: p.started_at || new Date().toISOString(), after: p.after, items };
   } catch (e) { return null; }
 }
-function keepRun() { S.run = run ? packRun(run) : null; save(); }
-
-function runName(r) {
-  if (r.kind === 'day') return `Section ${r.dayNum}`;
-  if (r.kind === 'redo') return `Section ${r.dayNum}`;
-  if (r.kind === 'review') return 'Review';
-  return 'Practice test';
+// Saves the Set on screen in the device copy, stamped with saved_at, and sends it to the server.
+function keepRun() {
+  copy.unfinished = S.run = run ? Object.assign(packRun(run), { saved_at: new Date().toISOString() }) : null;
+  saveCopy();
+  sendUnfinished();
 }
 
-let painted = false;
+// A finished Set as a record. It names the latest Reset this device knows about.
+function setRecord(r) {
+  const now = new Date().toISOString();
+  return { id: crypto.randomUUID(), kind: 'set', reset: currentReset(copyRecords()), at: now,
+    data: { set_id: r.set_id, type: r.kind, section: r.kind === 'day' || r.kind === 'redo' ? r.dayNum : null, started_at: r.started_at,
+      answers: r.items.map(it => ({ q: it.q.id, chosen: it.chosen, right: it.chosen === it.q.a, at: it.at || now })) } };
+}
+
+// Sends the records waiting on this device, up to 100 (and under the server's body limit) at a
+// time. Those the server stored, or skipped because it already has them, move from `pending` to
+// `records`. If the server can't be reached they stay in `pending`, and are sent when the app
+// opens, when the device comes back online, after the next finished Set, or before sign-out.
+// One send runs at a time; a call made meanwhile sends again once it ends.
+let sending = null, sendAgain = false;
+function sendPending() {
+  if (sending) { sendAgain = true; return sending; }
+  sendAgain = false;
+  sending = sendWaiting().finally(() => { sending = null; if (sendAgain) sendPending(); });
+  return sending;
+}
+const BATCH_BYTES = 60000; // the server refuses a body over 64 KB
+const jsonBytes = v => new TextEncoder().encode(JSON.stringify(v)).length;
+async function sendWaiting() {
+  const mine = copy;
+  while (mine && copy === mine && mine.pending.length) {
+    const batch = [];
+    let size = 20;
+    for (const x of mine.pending) {
+      const n = jsonBytes(x) + 1;
+      if (batch.length && (batch.length === 100 || size + n > BATCH_BYTES)) break;
+      batch.push(x);
+      size += n;
+    }
+    let r, body;
+    try {
+      r = await postJSON('/api/records', { records: batch });
+      if (r.status === 400) body = await r.json();
+    } catch (e) { return; }
+    if (copy !== mine) return;
+    if (body && body.error === 'bad-record' && batch[body.index]) {
+      // The server will never take a record of that shape; leaving it waiting would hold back every
+      // one after it. It is kept aside rather than deleted.
+      const bad = batch[body.index];
+      mine.pending = mine.pending.filter(x => x.id !== bad.id);
+      mine.rejected.push(bad);
+      saveCopy();
+      continue;
+    }
+    if (!r.ok) return;
+    const sent = new Set(batch.map(x => x.id)), have = new Set(mine.records.map(x => x.id));
+    mine.pending = mine.pending.filter(x => !sent.has(x.id));
+    mine.records = mine.records.concat(batch.filter(x => !have.has(x.id)));
+    saveCopy();
+  }
+}
+
+// Sends the unfinished Set (or null once it is finished) to the server, so the Learner can go on
+// with it on another device. One send at a time, always the latest; `unfinishedUnsent` says the
+// server is behind the device, so it is sent again when the device comes back online.
+let sendingUnfinished = false, unfinishedUnsent = false;
+async function sendUnfinished() {
+  unfinishedUnsent = true;
+  if (sendingUnfinished || !copy) return;
+  sendingUnfinished = true;
+  const mine = copy;
+  try {
+    while (unfinishedUnsent && copy === mine) {
+      unfinishedUnsent = false;
+      const r = await postJSON('/api/unfinished', { set: mine.unfinished });
+      if (!r.ok) { unfinishedUnsent = copy === mine; break; }
+    }
+  } catch (e) {
+    unfinishedUnsent = copy === mine;
+  } finally {
+    sendingUnfinished = false;
+  }
+}
+
+window.addEventListener('online', () => {
+  if (!copy) return;
+  sendPending();
+  if (unfinishedUnsent) sendUnfinished();
+});
+
+// A Set's name from its type ('day', 'redo', 'review' or 'test') and Section number.
+const setName = (type, section) => type === 'review' ? 'Review' : type === 'test' ? 'Practice test' : `Section ${section}`;
+
+let painted = false, onHome = false; // onHome: the Learner's home screen (or its "You stopped partway" form) is showing
 function paint(html, focus) {
+  onHome = false;
   $('stage').innerHTML = html;
   if (painted && focus) { const el = document.querySelector(focus); if (el) el.focus({ preventScroll: true }); }
   painted = true;
@@ -235,12 +449,13 @@ function scoresPanel() {
   return `<details class="scores"><summary>See your section scores</summary><ul>${rows}</ul></details>`;
 }
 
-const disclaimer = `<p class="fine">This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p>`;
+// The fine print at the bottom of the Learner's home screen, with a quiet Sign out beside it.
+const disclaimer = `<footer class="fine"><p>This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p><button class="link" type="button" id="signOutBtn">Sign out</button></footer>`;
 
 function renderHome() {
   run = null;
   const saved = S.run && unpackRun(S.run);
-  if (S.run && !saved) { S.run = null; save(); }
+  if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
   if (saved) return renderResume(saved);
   const ph = phase(), st = streak(), ready = ph === 'test' && st >= READY_STREAK;
   let top, sub = '', btn, extra = '';
@@ -271,19 +486,21 @@ function renderHome() {
       ${top}
       ${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${extra}
-      ${canSave ? '' : '<p class="warn">This browser is not saving your progress. If you close this page, you will start again from Section 1.</p>'}
+      ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
       <button class="btn primary" type="button" id="startBtn">${btn}</button>
       ${roadMarkers()}
       ${scoresPanel()}
       ${disclaimer}
     </section>`, 'h1');
+  onHome = true;
   $('startBtn').onclick = () => start();
   document.querySelectorAll('.redo').forEach(b => b.onclick = () => start(Number(b.dataset.day)));
+  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
 }
 
 function renderResume(saved) {
   const n = saved.items.length, done = saved.i + (saved.answered ? 1 : 0);
-  const name = runName(saved);
+  const name = setName(saved.kind, saved.dayNum);
   const head = saved.kind === 'day' ? `Section ${saved.dayNum} of ${TOTAL_DAYS}` : saved.kind === 'redo' ? `Section ${saved.dayNum} again` : name;
   paint(`
     <section class="home">
@@ -292,9 +509,12 @@ function renderResume(saved) {
       <p class="sub">You answered ${done} of ${n} questions. Your answers are saved.</p>
       <button class="btn primary" type="button" id="resumeBtn">Continue where I stopped</button>
       <button class="link" type="button" id="overBtn">Start over from question 1 (this clears these answers)</button>
+      ${disclaimer}
     </section>`, 'h1');
+  onHome = true;
+  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
   $('resumeBtn').onclick = () => { run = saved; renderQuestion(); };
-  $('overBtn').onclick = () => { S.run = null; save(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
+  $('overBtn').onclick = () => { copy.unfinished = S.run = null; saveCopy(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
 }
 
 function start(redoDay) {
@@ -304,7 +524,9 @@ function start(redoDay) {
   else if (ph === 'day') qs = QS.filter(q => q.day === S.day);
   else if (ph === 'review') qs = shuffle(reviewPile()).slice(0, 10);
   else qs = shuffle(QS).slice(0, TEST_LEN);
-  run = { kind: ph, dayNum: redoDay || S.day, items: qs.map(q => ({ q, options: shuffle([q.a, ...q.o]), chosen: null })), i: 0, answered: false };
+  const change = latestChange(copyRecords());
+  run = { kind: ph, dayNum: redoDay || S.day, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), after: change && change.id,
+    items: qs.map(q => ({ q, options: shuffle([q.a, ...q.o]), chosen: null, at: null })), i: 0, answered: false };
   keepRun();
   renderQuestion();
 }
@@ -330,7 +552,7 @@ function renderQuestion(revealFeedback) {
   const done = run.i + (run.answered ? 1 : 0);
   paint(`
     <div class="home">
-      <div class="progress"><span>${runName(run)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${done / n * 100}%"></span></div></div>
+      <div class="progress"><span>${setName(run.kind, run.dayNum)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${done / n * 100}%"></span></div></div>
       <div class="card">
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <h1 class="q" id="qText" tabindex="-1">${esc(q.q)}</h1>
@@ -362,6 +584,7 @@ function choose(k) {
   if (run.answered) return;
   const it = run.items[run.i];
   it.chosen = it.options[k];
+  it.at = new Date().toISOString();
   run.answered = true;
   keepRun();
   renderQuestion(true);
@@ -376,10 +599,17 @@ function next() {
 }
 
 function finish() {
-  const items = run.items, n = items.length, kind = run.kind;
-  items.forEach(it => { S.last[it.q.id] = it.chosen === it.q.a; });
+  const items = run.items, n = items.length, kind = run.kind, before = streak();
   const right = items.filter(it => it.chosen === it.q.a).length;
-  if (kind === 'day' || kind === 'redo') { S.scores = S.scores || {}; S.scores[run.dayNum] = right; }
+  // The finished Set waits in `pending` until the server has it; Progress is worked out again with it.
+  const rec = setRecord(run), mine = copy;
+  copy.pending.push(rec);
+  copy.unfinished = null;
+  saveCopy();
+  workOut();
+  // Once the server has the finished Set, the unfinished one is cleared there too.
+  unfinishedUnsent = true;
+  sendPending().then(() => { if (copy === mine && !mine.pending.includes(rec)) sendUnfinished(); });
   const missed = items.filter(it => it.chosen !== it.q.a);
   const toReview = 'The questions you missed go into review. You will do them before the next practice test.';
   let title, note = '', sign = false;
@@ -387,16 +617,13 @@ function finish() {
     title = `Section ${run.dayNum} done.`;
     note = missed.length ? 'You can do it again now, or another day from "See your section scores".' : 'You got every one right.';
   } else if (kind === 'day') {
-    title = `Section ${S.day} done.`;
+    title = `Section ${run.dayNum} done.`;
     note = missed.length ? `You can do this section again now, or another day from "See your section scores". The questions you missed also come back in review after Section ${TOTAL_DAYS}.` : 'You got every one right.';
-    S.day++;
   } else if (kind === 'review') {
     const left = reviewPile().length;
     title = 'This review set is done.';
     note = left ? `${plural(left, 'question is', 'questions are')} still in review. Questions you missed this time stay in review.` : 'Review is finished. Next: practice tests.';
   } else {
-    const before = streak();
-    S.tests.push(right);
     const st = streak();
     if (st >= READY_STREAK) {
       sign = true;
@@ -414,8 +641,6 @@ function finish() {
   const nextDay = phase() === 'day' && kind === 'day';
   const againDay = run.dayNum;
   run = null;
-  S.run = null;
-  save();
   const list = missed.map(it => `<li><p class="mq">${esc(it.q.q)}</p><p>Right answer: ${esc(it.q.a)}</p><p class="mwhy">${esc(it.q.why)}</p><p class="mpage">Driver manual, page ${it.q.p}</p></li>`).join('');
   paint(`
     <section class="home">
@@ -438,21 +663,686 @@ document.addEventListener('keydown', e => {
   if (k >= 0) { e.preventDefault(); choose(k); }
 });
 
-// Hidden controls: add #restart or #section5 (any number; 13 = review and tests) to the end of the link.
-function confirmRestart() {
-  paint(`<section class="home"><h2 tabindex="-1">Start over from Section 1?</h2><p class="sub">This erases all saved progress on this device.</p><button class="btn primary" type="button" id="yes">Erase my progress and start over</button><button class="btn" type="button" id="no">Keep my progress</button></section>`, 'h2');
-  $('yes').onclick = () => { S = { day: 1, last: {}, tests: [], scores: {} }; save(); history.replaceState(null, '', location.pathname + location.search); renderHome(); };
-  $('no').onclick = () => { history.replaceState(null, '', location.pathname + location.search); renderHome(); };
+// Accounts. `me` is the signed-in account ({id, role, name}) or null. Every call to the
+// server goes through api(): a 401 while signed in means the sign-in has ended, and the
+// page goes back to the sign-in screen without saying why.
+let me = null;
+class SignedOut extends Error {}
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ cache: 'no-store' }, opts));
+  if (r.status === 401 && me) { signedOut(); throw new SignedOut(); }
+  return r;
 }
-function applyHash() {
-  const hash = (location.hash || '').toLowerCase();
-  const jump = hash.match(/^#(?:day|section)(\d+)$/);
-  if (hash === '#restart') return confirmRestart();
-  if (jump) { S.day = Math.min(Math.max(1, Number(jump[1])), TOTAL_DAYS + 1); S.run = null; save(); }
-  renderHome();
+const postJSON = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+// Start-up, and again after each sign-in: who is signed in, then their questions, then their screen.
+// With no connection, the account last signed in on this device is used, and the
+// service worker answers with the questions it kept.
+async function startUp() {
+  const last = rememberedMe();
+  try {
+    // On a weak signal, wait at most 3 seconds when there is an account to fall back on.
+    const r = await fetch('/api/me', { cache: 'no-store', signal: last && AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined });
+    if (r.status === 401) { forgetDevice(); me = null; return renderSignIn(); }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    me = await r.json();
+    rememberMe(me);
+  } catch (e) {
+    if (!last) return couldNotLoad();
+    me = last;
+  }
+  let data;
+  const viaWorker = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
+  try {
+    const q = await api('questions.json', { cache: 'no-cache' });
+    if (!q.ok) throw new Error('HTTP ' + q.status);
+    data = await q.json();
+  } catch (e) { return e instanceof SignedOut ? undefined : couldNotLoad(); }
+  if (!viaWorker) keepQuestions();
+  begin(data);
 }
-window.addEventListener('hashchange', applyHash);
-applyHash();
+// The service worker keeps the questions it hands the page, but never fetches them itself, so it
+// never asks for them signed out. On the first visit the page fetched them before the worker took
+// control, so once it has, they are fetched again through it, to work with no connection next time.
+function keepQuestions() {
+  const sw = navigator.serviceWorker;
+  if (!sw) return;
+  const again = () => { if (me) fetch('questions.json', { cache: 'no-cache' }).catch(() => {}); };
+  if (sw.controller) again(); else sw.addEventListener('controllerchange', again, { once: true });
+}
+
+// The questions live in questions.json next to the page, not in the page itself.
+function begin(data) {
+  DAYS = data.days; QS = data.qs; TOTAL_DAYS = DAYS.length;
+  BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
+  if (me.role === 'helper') renderHelper();
+  else openLearner();
+}
+
+// The Learner's screen. The device copy shows at once if this device has one; then waiting
+// records are sent, and the server's records replace the copy's (Resets and Moves arrive this
+// way). A first open on this device waits for the server.
+async function openLearner() {
+  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null, rejected: [] };
+  copy = mine;
+  copyFor = me.id;
+  unfinishedUnsent = false;
+  if (saved) { workOut(); renderHome(); }
+  await sendPending();
+  let body;
+  try {
+    const r = await api('/api/records');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    body = await r.json();
+  } catch (e) {
+    if (!saved && !(e instanceof SignedOut) && copy === mine) couldNotLoad();
+    return;
+  }
+  if (copy !== mine) return; // signed out meanwhile
+  const have = new Set(body.records.map(x => x.id));
+  copy.records = body.records;
+  copy.pending = copy.pending.filter(x => !have.has(x.id));
+  // An unfinished Set that is already finished, or that a Reset or Move dropped, is gone. Of the
+  // others, the newest wins: the server's replaces the device's if it was saved later.
+  const recs = copyRecords();
+  const live = u => u && !recs.some(x => x.kind === 'set' && x.data.set_id === u.set_id) && !droppedByChange(u, recs) ? u : null;
+  const theirs = live(body.unfinished), ours = live(copy.unfinished);
+  copy.unfinished = theirs && (!ours || String(theirs.saved_at || '') > String(ours.saved_at || '')) ? theirs : ours;
+  const imported = importOldProgress();
+  saveCopy();
+  if (body.unfinished && !theirs) sendUnfinished(); // the server still holds one that is gone
+  if (imported) sendPending();
+  const shown = JSON.stringify(S);
+  workOut();
+  if (!saved || (onHome && !run && JSON.stringify(S) !== shown)) renderHome();
+}
+// The one-time import: progress saved in this browser before accounts becomes the Learner's
+// Imported record, if the account has no records yet and this device hasn't imported before.
+function importOldProgress() {
+  let state;
+  try {
+    if (localStorage.getItem(IMPORTED_KEY) || copyRecords().length) return false;
+    state = JSON.parse(localStorage.getItem(OLD_KEY));
+  } catch (e) { return false; }
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
+  copy.pending.push({ id: crypto.randomUUID(), kind: 'imported', reset: null, at: new Date().toISOString(), data: { state } });
+  try { localStorage.setItem(IMPORTED_KEY, '1'); } catch (e) {}
+  return true;
+}
+function couldNotLoad() {
+  paint(`<section class="home"><p class="sub">The questions could not be loaded. Check your connection and open the app again.</p></section>`);
+}
+
+function signedOut() {
+  me = null; run = null; S = null; copy = null; copyFor = null;
+  forgetDevice();
+  renderSignIn();
+}
+
+// The account last seen signed in, so the app can open with no connection. Only {id, role, name}.
+const ME_KEY = 'rrtn-me';
+function rememberMe(m) { try { localStorage.setItem(ME_KEY, JSON.stringify({ id: m.id, role: m.role, name: m.name })); } catch (e) {} }
+function rememberedMe() {
+  try {
+    const m = JSON.parse(localStorage.getItem(ME_KEY));
+    return m && (m.role === 'learner' || m.role === 'helper') ? m : null;
+  } catch (e) { return null; }
+}
+// Signed out, the device keeps neither the account nor the questions.
+function forgetDevice() {
+  try { localStorage.removeItem(ME_KEY); } catch (e) {}
+  if (window.caches) caches.open('rrtn-pages').then(c => c.delete('/questions.json')).catch(() => {});
+}
+
+function renderSignIn() {
+  paint(`
+    <section class="signin">
+      <h1 tabindex="-1">Sign in</h1>
+      <p class="sub">Type the name and password you were given.</p>
+      <form id="signInForm" method="post" class="signin">
+        <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
+        <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+        <label class="check"><input type="checkbox" id="showPw">Show password</label>
+        <div id="signInMsg" aria-live="polite"></div>
+        <button class="btn primary" type="submit" id="signInBtn">Sign in</button>
+      </form>
+    </section>`, 'h1');
+  $('showPw').onchange = () => { $('password').type = $('showPw').checked ? 'text' : 'password'; };
+  $('signInForm').onsubmit = e => { e.preventDefault(); signIn(); };
+}
+
+function signInMessage(text) {
+  $('signInMsg').innerHTML = `<p class="warn" tabindex="-1">${esc(text)}</p>`;
+  $('signInMsg').firstChild.focus();
+}
+
+async function signIn() {
+  const btn = $('signInBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  $('signInMsg').textContent = '';
+  let ok = false;
+  try {
+    const r = await postJSON('/api/sign-in', { name: $('name').value, password: $('password').value });
+    ok = r.ok;
+    if (ok) return;
+    if (r.status === 429) {
+      const body = await r.json().catch(() => ({}));
+      const seconds = Math.max(0, Number(body.retry_after) || 0);
+      // Rounded up to the minute, so the time shown is never before the pause ends.
+      const at = new Date(Math.ceil((Date.now() + seconds * 1000) / 60000) * 60000);
+      signInMessage(`Sign-in is paused because of too many tries. You can try again at ${at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`);
+    } else if (r.status === 401) {
+      signInMessage('That name and password do not match. Check them and try again.');
+    } else {
+      signInMessage('Sign-in did not work. Try again later.');
+    }
+  } catch (e) {
+    signInMessage('The app could not be reached. Check your connection and try again.');
+  } finally {
+    if (ok) {
+      // Ask the browser to keep this device's saved progress even when space runs low.
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      startUp();
+    } else btn.disabled = false;
+  }
+}
+
+// Sign out, for the Learner (from the home screen's fine print) and the Helper. `back` repaints where they came from.
+function confirmSignOut(back) {
+  paint(`
+    <section class="home">
+      <h2 tabindex="-1">Sign out?</h2>
+      <p class="sub">You will need your name and password to sign in again.</p>
+      <button class="btn primary" type="button" id="signOutYes">Yes, sign out</button>
+      <button class="btn" type="button" id="signOutNo">No, stay signed in</button>
+    </section>`, 'h2');
+  $('signOutNo').onclick = () => { back(); window.scrollTo(0, 0); };
+  $('signOutYes').onclick = signOut;
+}
+// A Learner's waiting records are sent first, so signing out needs a connection; then that
+// Learner's device copy is deleted.
+async function signOut() {
+  const learner = copy ? copyFor : null;
+  const refuse = text => {
+    if (!$('signOutYes')) return;
+    if ($('signOutMsg')) $('signOutMsg').remove();
+    $('signOutYes').insertAdjacentHTML('beforebegin', `<p class="warn" tabindex="-1" id="signOutMsg">${esc(text)}</p>`);
+    $('signOutMsg').focus();
+  };
+  const offline = 'You are offline. Sign out needs a connection, so that your answers are saved first.';
+  if (learner !== null) {
+    await sendPending();
+    if (!copy) return; // the sign-in ended meanwhile
+    if (copy.pending.length) return refuse(offline);
+  }
+  try { await api('/api/sign-out', { method: 'POST' }); } catch (e) {
+    if (e instanceof SignedOut) return;
+    return refuse(learner !== null ? offline : 'The app could not be reached. Check your connection and try again.');
+  }
+  if (learner !== null) try { localStorage.removeItem(copyKey(learner)); } catch (e) {}
+  signedOut();
+}
+
+// The Helper's view (GLOSSARY.md): the list of Learners, and one Learner's Progress and History.
+// It only reads. Each screen loads fresh from the server when it opens, and Progress is worked
+// out from the records with the same code as the study path (docs/adr/0001-*).
+
+// Where a Learner is now, worded for the Helper.
+function whereNow(p) {
+  const ph = phase(p);
+  if (ph === 'day') return `Section ${p.day} of ${TOTAL_DAYS}`;
+  if (ph === 'review') return `Review: ${plural(reviewPile(p).length, 'question', 'questions')} left`;
+  const st = streak(p);
+  return st >= READY_STREAK ? 'Ready for the test' : `Practice tests: ${st} of ${READY_STREAK} in a row`;
+}
+// The unfinished Set (as the page saves it, see packRun), or null when it can't be read.
+function unfinishedLine(u) {
+  if (!u || typeof u !== 'object' || !Array.isArray(u.items) || !u.items.length) return null;
+  const where = setName(u.kind, u.dayNum);
+  const done = Math.min(u.items.length, (Number(u.i) || 0) + (u.answered ? 1 : 0));
+  return `Unfinished: ${where}, ${done} of ${u.items.length} answered`;
+}
+
+const answerTime = a => { const t = Date.parse(a.at); return Number.isNaN(t) ? 0 : t; };
+const setScore = d => ({ right: d.answers.filter(a => a.right).length, of: d.answers.length });
+// The time of the newest answer in the whole History, or null when there is none.
+function lastStudied(records) {
+  let t = null;
+  for (const r of records) if (r.kind === 'set') for (const a of r.data.answers) t = Math.max(t ?? 0, answerTime(a));
+  return t === null ? null : new Date(t).toISOString();
+}
+
+const SESSION_GAP = 30 * 60 * 1000; // a Study session has no gap longer than 30 minutes between answers
+// Study sessions over the whole History, newest first, with each Reset and Move as a line of its
+// own: {kind: 'session', start, end, sets: [{type, section, right, of}]}, {kind: 'reset', at} or
+// {kind: 'move', at, to}. A Set counts as finished in the Study session that holds its last answer.
+function studySessions(records) {
+  const ordered = orderRecords(records), sets = ordered.filter(r => r.kind === 'set');
+  const times = sets.flatMap(r => r.data.answers.map(answerTime)).sort((a, b) => a - b);
+  const sessions = [];
+  for (const t of times) {
+    const s = sessions[sessions.length - 1];
+    if (s && t - s.end <= SESSION_GAP) s.end = t; else sessions.push({ start: t, end: t, sets: [] });
+  }
+  for (const r of sets) {
+    const last = Math.max(...r.data.answers.map(answerTime));
+    const s = sessions.find(s => s.start <= last && last <= s.end);
+    if (s) s.sets.push({ type: r.data.type, section: r.data.section, ...setScore(r.data) });
+  }
+  const lines = sessions.map(s => [s.end, { kind: 'session', start: new Date(s.start).toISOString(), end: new Date(s.end).toISOString(), sets: s.sets }]);
+  for (const r of ordered) {
+    if (r.kind === 'reset') lines.push([recordTime(r), { kind: 'reset', at: r.at }]);
+    if (r.kind === 'move') lines.push([recordTime(r), { kind: 'move', at: r.at, to: r.data.to }]);
+  }
+  return lines.sort((a, b) => b[0] - a[0]).map(x => x[1]);
+}
+// The line for a Reset or a Move in the list of Study sessions.
+function historyLine(e) {
+  if (e.kind === 'reset') return 'Progress reset by a Helper';
+  if (e.kind === 'move') return e.to > TOTAL_DAYS ? 'Moved to Review and Practice tests' : `Moved to Section ${e.to}`;
+  return null;
+}
+
+// Up to 10 questions missed two or more times since the latest Reset: the most misses first, then
+// the fewest answers, then the order of the study path. `wrong` is the wrong answer chosen most often.
+function missedMost(records) {
+  const tally = new Map();
+  for (const r of countedRecords(records)) if (r.kind === 'set') for (const a of r.data.answers) {
+    if (!BY_ID[a.q]) continue;
+    if (!tally.has(a.q)) tally.set(a.q, { q: a.q, missed: 0, answered: 0, picks: new Map() });
+    const t = tally.get(a.q);
+    t.answered++;
+    if (!a.right) { t.missed++; t.picks.set(a.chosen, (t.picks.get(a.chosen) || 0) + 1); }
+  }
+  const place = Object.fromEntries(QS.map((q, i) => [q.id, i]));
+  const most = picks => [...picks].reduce((best, x) => x[1] > best[1] ? x : best)[0];
+  return [...tally.values()].filter(t => t.missed >= 2)
+    .sort((a, b) => b.missed - a.missed || a.answered - b.answered || place[a.q] - place[b.q])
+    .slice(0, 10)
+    .map(t => ({ q: t.q, missed: t.missed, answered: t.answered, wrong: most(t.picks) }));
+}
+
+// Each Section's Sets since the latest Reset, newest first: [{section, sets: [{at, right, of}]}].
+function sectionHistory(records) {
+  const sets = countedRecords(records).filter(r => r.kind === 'set' && (r.data.type === 'day' || r.data.type === 'redo'));
+  return DAYS.map(d => ({ section: d.day,
+    sets: sets.filter(r => r.data.section === d.day).reverse().map(r => ({ at: r.at, ...setScore(r.data) })) }));
+}
+
+// Times in the Helper's view are shown in the device's own time zone.
+const dayText = iso => new Date(iso).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+const whenText = iso => `${dayText(iso)}, ${new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+function lengthText(ms) {
+  const m = Math.round(ms / 60000), h = Math.floor(m / 60);
+  if (m < 1) return 'Less than 1 minute';
+  return [h ? plural(h, 'hour', 'hours') : '', m % 60 ? plural(m % 60, 'minute', 'minutes') : ''].filter(Boolean).join(' ');
+}
+// A GET for the Helper's view. A failed answer throws an Error with its `status`.
+async function getJSON(path) {
+  const r = await api(path);
+  if (!r.ok) throw Object.assign(new Error('HTTP ' + r.status), { status: r.status });
+  return r.json();
+}
+// Each Helper screen paints at once and then loads. `stillShowing` says whether the screen that
+// asked is still the one on the page, so a late answer never paints over where the Helper went.
+function stillShowing() { const shown = $('stage').firstElementChild; return () => shown.isConnected; }
+
+// A short line at the top of a Helper screen saying what the last action did.
+const noteLine = note => note ? `<p class="note" role="status">${esc(note)}</p>` : '';
+
+// The Helper's first screen: every Learner, one row each, then Add a Learner and Sign out.
+// `note` says what the Helper just did, when the list loads again after an action.
+async function renderHelper(note = '') {
+  const signOutBtn = '<button class="btn" type="button" id="signOutBtn">Sign out</button>';
+  const screen = body => {
+    paint(`<section class="home helper"><h1 tabindex="-1">Learners</h1>${noteLine(note)}${body}${signOutBtn}</section>`, 'h1');
+    $('signOutBtn').onclick = () => confirmSignOut(renderHelper);
+  };
+  screen('<p class="sub">Getting the list of Learners.</p>');
+  const showing = stillShowing();
+  let rows;
+  try {
+    const { learners } = await getJSON('/api/learners');
+    rows = await Promise.all(learners.map(async learner => ({ learner, records: (await getJSON(`/api/learners/${learner.id}/records`)).records })));
+  } catch (e) {
+    if (e instanceof SignedOut || !showing()) return;
+    screen('<p class="warn">The list of Learners could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>');
+    $('retryBtn').onclick = () => renderHelper();
+    return;
+  }
+  if (!showing()) return;
+  const list = rows.map(({ learner, records }, k) => {
+    const last = lastStudied(records);
+    return `<li><button type="button" class="lrow" data-k="${k}"><span class="lname">${esc(learner.name)}</span><span>${esc(whereNow(progressFrom(records)))}</span>` +
+      `<span class="lwhen">${last ? `Last studied ${dayText(last)}` : 'Has not answered any questions yet.'}</span></button></li>`;
+  }).join('');
+  screen((rows.length ? `<ul class="learners">${list}</ul>` : '<p class="sub none">No Learners yet.</p>') +
+    '<button class="btn primary" type="button" id="addBtn">Add a Learner</button>');
+  $('addBtn').onclick = () => { addLearner(); window.scrollTo(0, 0); };
+  document.querySelectorAll('.lrow').forEach(b => b.onclick = () => { openLearnerPage(rows[Number(b.dataset.k)].learner); window.scrollTo(0, 0); });
+}
+
+// One Learner's page, loaded fresh each time it opens. `learner` is a row of GET /api/learners;
+// the list is read again too, for the Learner's name and sign-in pause as they are now.
+// `note` says what the Helper just did; `at: 'manage'` scrolls to Manage this Learner.
+async function openLearnerPage(learner, { note = '', at = '' } = {}) {
+  let name = esc(learner.name);
+  const screen = body => {
+    paint(`<section class="home helper"><button class="link top back" type="button">Back to Learners</button><h1 tabindex="-1">${name}</h1>${body}</section>`, 'h1');
+    document.querySelectorAll('.back').forEach(b => b.onclick = () => { renderHelper(); window.scrollTo(0, 0); });
+  };
+  screen(`<p class="sub">Getting ${name}'s records.</p>`);
+  const showing = stillShowing();
+  let body, now;
+  try {
+    let learners;
+    [{ learners }, body] = await Promise.all([getJSON('/api/learners'), getJSON(`/api/learners/${learner.id}/records`)]);
+    now = learners.find(l => l.id === learner.id);
+    if (!now) throw Object.assign(new Error('no-learner'), { status: 404 });
+  } catch (e) {
+    if (e instanceof SignedOut || !showing()) return;
+    if (e.status === 404) return screen(`<p class="warn">${name} is no longer on the list of Learners.</p>`);
+    screen(`<p class="warn">${name}'s records could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>`);
+    $('retryBtn').onclick = () => openLearnerPage(learner);
+    return;
+  }
+  if (!showing()) return;
+  name = esc(now.name);
+  screen(noteLine(note) + learnerPage(body, now));
+  wireManage(now, progressFrom(body.records));
+  if (at === 'manage') $('manage').scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+// When a sign-in pause ends, in the device's own time format, or null when there is no pause now.
+// Rounded up to the minute, as on the sign-in page, so the time shown is never before the pause ends.
+// A pause that ends on another day says the day too.
+function pausedUntil(iso) {
+  const t = Date.parse(iso);
+  if (!iso || Number.isNaN(t) || t <= Date.now()) return null;
+  const at = new Date(Math.ceil(t / 60000) * 60000);
+  const time = at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return at.toDateString() === new Date().toDateString() ? time : `${dayText(at.toISOString())}, ${time}`;
+}
+
+// The parts of a Learner's page, top to bottom, from GET /api/learners/<id>/records.
+function learnerPage({ records, unfinished }, learner) {
+  const p = progressFrom(records), counted = countedRecords(records), reset = currentReset(records);
+  const part = (cls, title, html) => `<section class="part ${cls}"><h2>${title}</h2>${html}</section>`;
+
+  const done = unfinished && records.some(r => r.kind === 'set' && r.data.set_id === unfinished.set_id);
+  const open = !done && unfinishedLine(unfinished);
+  const until = learner && pausedUntil(learner.paused_until);
+  const now = `<div class="now"><p class="theme">${esc(whereNow(p))}</p>${open ? `<p class="sub">${esc(open)}</p>` : ''}` +
+    (until ? `<p class="paused">Sign-in is paused until ${until} after too many tries.</p>` : '') + '</div>';
+
+  const sections = sectionHistory(records).map(({ section, sets }) => {
+    const title = `<span class="sname">Section ${section}: ${esc(DAYS[section - 1].title)}</span>`;
+    if (!sets.length) {
+      // A score with no Sets came from saved progress brought in from before accounts.
+      const score = p.scores[section] !== undefined ? `Last score: ${p.scores[section]} of 10. Done before the app kept dates.` : 'Not done yet.';
+      return `<li><div>${title}<span class="sscore">${score}</span></div></li>`;
+    }
+    const list = sets.map(s => `<li>${whenText(s.at)}: ${s.right} of ${s.of}</li>`).join('');
+    return `<li><details><summary>${title}<span class="sscore">Last score: ${sets[0].right} of ${sets[0].of}. Done ${plural(sets.length, 'time', 'times')}.</span></summary><ul class="sets">${list}</ul></details></li>`;
+  }).join('');
+
+  const left = reviewPile(p).length;
+  const review = `<p>${left ? `${plural(left, 'question', 'questions')} left.` : 'No questions left.'}${p.day <= TOTAL_DAYS ? ` Review starts after Section ${TOTAL_DAYS}.` : ''}</p>`;
+
+  const tests = counted.filter(r => r.kind === 'set' && r.data.type === 'test').reverse(), st = streak(p);
+  const undated = p.tests.length - tests.length; // brought in from saved progress from before accounts
+  const testList = p.tests.length ? `<p>${st >= READY_STREAK ? `Ready for the test: ${st} in a row` : `In a row so far: ${st} of ${READY_STREAK}`}</p>` +
+    (tests.length ? `<ul>${tests.map(r => `<li>${whenText(r.at)}: ${setScore(r.data).right} of ${setScore(r.data).of}</li>`).join('')}</ul>` : '') +
+    (undated > 0 ? `<p class="sub small">${plural(undated, 'earlier Practice test was', 'earlier Practice tests were')} done before the app kept dates.</p>` : '')
+    : '<p>No Practice tests yet.</p>';
+
+  const missed = missedMost(records);
+  const missedList = missed.length ? (reset ? '<p class="sub small">Only answers since the latest Reset count here.</p>' : '') +
+    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p>` +
+      `<p>Wrong answer chosen most often: ${esc(m.wrong)}</p><p class="mcount">Missed ${m.missed} of ${m.answered} times</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('')}</ul>`
+    : `<p>No question has been missed two or more times${reset ? ' since the latest Reset' : ''}.</p>`;
+
+  const lines = studySessions(records);
+  const history = lines.length ? `<ul class="sessions">${lines.map(e => e.kind === 'session'
+    ? `<li><p class="when">${whenText(e.start)}</p><p>${lengthText(Date.parse(e.end) - Date.parse(e.start))}</p>` +
+      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s.type, s.section)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>No Sets finished.</p>') + '</li>'
+    : `<li><p class="when">${whenText(e.at)}</p><p>${historyLine(e)}</p></li>`).join('')}</ul>`
+    : '<p>No Study sessions yet.</p>';
+
+  const manage = `<section class="part manage" id="manage"><h2>Manage this Learner</h2>` +
+    ['Rename', 'Reset sign-in', 'Reset progress', 'Move', 'Delete'].map((label, k) =>
+      `<button class="btn${label === 'Delete' ? ' bad' : ''}" type="button" data-act="${k}">${label}</button>`).join('') + '</section>';
+
+  return now + part('', 'Sections', `<ul class="sections">${sections}</ul>`) + part('review', 'Review', review) +
+    part('tests', 'Practice tests', testList) + part('missedmost', 'Questions missed most', missedList) +
+    part('history', 'Study sessions', history) + manage + '<button class="btn back" type="button">Back to Learners</button>';
+}
+
+// Managing Learners: Add a Learner, and Rename, Reset sign-in, Reset progress, Move and Delete
+// on a Learner's page. Every action asks first, in literal words, and does nothing on No.
+// Afterwards the list or the Learner's page loads again from the server.
+const NAME_MAX = 64, PASSWORD_MIN = 8, PASSWORD_MAX = 128; // as the server checks them (server/auth.py)
+const MANAGE_ERRORS = {
+  'name-taken': 'Another account already uses that name. Choose a different name.',
+  'bad-name': `The name must be 1 to ${NAME_MAX} characters.`,
+  'bad-password': `The password must be ${PASSWORD_MIN} to ${PASSWORD_MAX} characters.`,
+};
+// Lengths are counted in characters, as the server counts them, not in UTF-16 units.
+const chars = s => [...s].length;
+const nameProblem = s => chars(s.trim()) >= 1 && chars(s.trim()) <= NAME_MAX ? null : 'bad-name';
+const passwordProblem = s => chars(s) >= PASSWORD_MIN && chars(s) <= PASSWORD_MAX ? null : 'bad-password';
+
+// A POST that changes something. A refusal throws an Error with its `status` and the server's
+// error `code`; a good answer gives its JSON, or null when there is none.
+async function change(path, body) {
+  const r = await postJSON(path, body);
+  if (r.ok) return r.status === 204 ? null : r.json();
+  const answer = await r.json().catch(() => ({}));
+  throw Object.assign(new Error('HTTP ' + r.status), { status: r.status, code: answer.error });
+}
+
+// A Helper's form on a screen of its own: `fields` (HTML), the button that goes on to ask first,
+// and Cancel, which runs `cancel`. `submit` gets the form's values when the button is pressed.
+function helperForm({ title, intro, fields, button, cancel, submit, problem }) {
+  paint(`<section class="home helper"><h1 tabindex="-1">${title}</h1>${intro ? `<p class="sub">${intro}</p>` : ''}
+    <form id="helperForm" class="signin" novalidate>${fields}<div id="formMsg" aria-live="polite"></div>
+    <button class="btn primary" type="submit" id="formBtn">${button}</button></form>
+    <button class="btn" type="button" id="cancelBtn">Cancel</button></section>`, 'h1');
+  $('cancelBtn').onclick = () => { cancel(); window.scrollTo(0, 0); };
+  $('helperForm').onsubmit = e => { e.preventDefault(); submit(); };
+  if ($('fShow')) $('fShow').onchange = () => { $('fPassword').type = $('fShow').checked ? 'text' : 'password'; };
+  if (problem) formMessage(MANAGE_ERRORS[problem] || problem);
+}
+function formMessage(text) {
+  $('formMsg').innerHTML = `<p class="warn" tabindex="-1">${esc(text)}</p>`;
+  $('formMsg').firstChild.focus();
+}
+const nameField = (label, value) => `<div class="field"><label for="fName">${label}</label><input id="fName" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false"></div>`;
+const passwordField = (label, value, shown) => `<div class="field"><label for="fPassword">${label}</label><input id="fPassword" type="${shown ? 'text' : 'password'}" value="${esc(value)}" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false"></div>` +
+  `<label class="check"><input type="checkbox" id="fShow"${shown ? ' checked' : ''}>Show password</label>`;
+
+// Ask first. `question` and `detail` are the literal words; Yes runs `act`, No runs `no`.
+// If `act` fails for want of a connection, the question stays with a line saying so.
+function confirmAction({ question, detail, yes, no, act }) {
+  paint(`<section class="home helper"><h2 tabindex="-1">${esc(question)}</h2>${detail ? `<p>${esc(detail)}</p>` : ''}
+    <div id="formMsg" aria-live="polite"></div>
+    <button class="btn primary" type="button" id="confirmYes">${esc(yes)}</button>
+    <button class="btn" type="button" id="confirmNo">No, go back</button></section>`, 'h2');
+  $('confirmNo').onclick = () => { no(); window.scrollTo(0, 0); };
+  $('confirmYes').onclick = async () => {
+    const btn = $('confirmYes');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await act(); window.scrollTo(0, 0); } catch (e) {
+      if (e instanceof SignedOut || !btn.isConnected) return;
+      btn.disabled = false;
+      formMessage('The change could not be made. Check your connection and try again.');
+    }
+  };
+}
+
+// The buttons of Manage this Learner. `learner` is the Learner's row of GET /api/learners, `p` their Progress.
+function wireManage(learner, p) {
+  const back = () => openLearnerPage(learner, { at: 'manage' });
+  const acts = [() => renameLearner(learner, back), () => resetSignIn(learner, back), () => resetProgress(learner, back),
+    () => moveLearner(learner, back, Math.min(p.day, TOTAL_DAYS + 1)), () => deleteLearner(learner, back)];
+  document.querySelectorAll('.manage [data-act]').forEach(b => b.onclick = () => { acts[Number(b.dataset.act)](); window.scrollTo(0, 0); });
+}
+
+// Rename: a new name, with the same rules as Add a Learner. `back` returns to the Learner's page.
+function renameLearner(learner, back, typed = learner.name, problem = null) {
+  helperForm({
+    title: `Rename ${esc(learner.name)}`, problem, fields: nameField('New name', typed), button: 'Rename', cancel: back,
+    submit: () => {
+      const value = $('fName').value, bad = nameProblem(value);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      const name = value.trim();
+      confirmAction({
+        question: `Rename ${learner.name} to ${name}?`, yes: 'Yes, rename', no: () => renameLearner(learner, back, value),
+        act: async () => {
+          let answer;
+          try { answer = await change(`/api/learners/${learner.id}/rename`, { name }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return renameLearner(learner, back, value, e.code);
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage({ ...learner, name: answer.name }, { note: `${learner.name} is renamed ${answer.name}.` });
+        },
+      });
+    },
+  });
+}
+
+// Reset sign-in: a new password. The server ends every sign-in of the Learner and any pause on their name.
+function resetSignIn(learner, back, v = { password: '', shown: false }, problem = null) {
+  const name = learner.name;
+  helperForm({
+    title: `Reset sign-in for ${esc(name)}`, intro: `${esc(name)} will sign in with the new password.`, problem,
+    fields: passwordField('New password', v.password, v.shown), button: 'Set the new password', cancel: back,
+    submit: () => {
+      const typed = { password: $('fPassword').value, shown: $('fShow').checked }, bad = passwordProblem(typed.password);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      confirmAction({
+        question: `Set a new password for ${name}?`,
+        detail: `${name} will be signed out on every device and will need the new password to sign in.`,
+        yes: 'Yes, set the new password', no: () => resetSignIn(learner, back, typed),
+        act: async () => {
+          try { await change(`/api/learners/${learner.id}/reset-sign-in`, { password: typed.password }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return resetSignIn(learner, back, typed, e.code);
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage(learner, { note: `${name}'s new password is set.` });
+        },
+      });
+    },
+  });
+}
+
+// Reset progress: a Reset record. The Learner starts again at Section 1; the History stays.
+function resetProgress(learner, back) {
+  const name = learner.name;
+  confirmAction({
+    question: `Put ${name} back at the start of Section 1?`,
+    detail: 'Scores, Review and Practice tests start over. The History of finished Sets is kept.',
+    yes: 'Yes, reset progress', no: back,
+    act: async () => {
+      try { await change(`/api/learners/${learner.id}/reset-progress`, {}); } catch (e) {
+        if (e.status === 404) return openLearnerPage(learner);
+        throw e;
+      }
+      openLearnerPage(learner, { note: `${name}'s progress is reset to the start of Section 1.` });
+    },
+  });
+}
+
+// Move: a Move record that sets the Learner's next Section, 1 to 12, or 13 for Review and Practice tests.
+const moveChoice = to => to > TOTAL_DAYS ? 'Review and Practice tests' : `Section ${to}`;
+function moveLearner(learner, back, to) {
+  const name = learner.name;
+  const options = Array.from({ length: TOTAL_DAYS + 1 }, (_, k) =>
+    `<option value="${k + 1}"${k + 1 === to ? ' selected' : ''}>${moveChoice(k + 1)}</option>`).join('');
+  helperForm({
+    title: `Move ${esc(name)}`, button: 'Move', cancel: back,
+    fields: `<div class="field"><label for="fTo">Move ${esc(name)} to</label><select id="fTo">${options}</select></div>`,
+    submit: () => {
+      const chosen = Number($('fTo').value), choice = moveChoice(chosen);
+      confirmAction({
+        question: `Move ${name} to ${choice}?`,
+        detail: 'Scores and History are kept. Questions in skipped Sections are not added to Review. Any unfinished Set is dropped.',
+        yes: `Yes, move ${name}`, no: () => moveLearner(learner, back, chosen),
+        act: async () => {
+          try { await change(`/api/learners/${learner.id}/move`, { to: chosen }); } catch (e) {
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage(learner, { note: `${name} is moved to ${choice}.` });
+        },
+      });
+    },
+  });
+}
+
+// Delete: the account and all of its records, for good. The question and the button are on one
+// screen, and the button stays off until the Helper types the Learner's name (matched as at sign-in:
+// capitals ignored, spaces at the start and end trimmed). Afterwards, back to the list.
+function deleteLearner(learner, back) {
+  const name = learner.name, key = s => s.trim().toLowerCase();
+  paint(`<section class="home helper"><h1 tabindex="-1">Delete ${esc(name)}</h1>
+    <p>Delete ${esc(name)} and all of ${esc(name)}'s progress and History? This cannot be undone.</p>
+    <div class="field"><label for="fName">Type ${esc(name)} to delete</label><input id="fName" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div id="formMsg" aria-live="polite"></div>
+    <button class="btn bad primary" type="button" id="deleteBtn" disabled>Delete ${esc(name)}</button>
+    <button class="btn" type="button" id="keepBtn">No, keep ${esc(name)}</button></section>`, 'h1');
+  const btn = $('deleteBtn');
+  $('fName').oninput = () => { btn.disabled = key($('fName').value) !== key(name); };
+  $('keepBtn').onclick = () => { back(); window.scrollTo(0, 0); };
+  btn.onclick = async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await change(`/api/learners/${learner.id}/delete`, { name: $('fName').value }); } catch (e) {
+      if (e instanceof SignedOut || !btn.isConnected) return;
+      if (e.status === 404) return renderHelper();
+      btn.disabled = false;
+      return formMessage(e.code === 'name-mismatch' ? `The name you typed does not match ${name}.`
+        : 'The change could not be made. Check your connection and try again.');
+    }
+    renderHelper(`${name} is deleted.`);
+    window.scrollTo(0, 0);
+  };
+}
+
+// Add a Learner: a name and a password, then back to the list.
+function addLearner(v = { name: '', password: '', shown: false }, problem = null) {
+  helperForm({
+    title: 'Add a Learner', intro: 'The Learner signs in with this name and password.', problem,
+    fields: nameField('Name', v.name) + passwordField('Password', v.password, v.shown),
+    button: 'Add this Learner', cancel: () => renderHelper(),
+    submit: () => {
+      const typed = { name: $('fName').value, password: $('fPassword').value, shown: $('fShow').checked };
+      const bad = nameProblem(typed.name) || passwordProblem(typed.password);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      const name = typed.name.trim();
+      confirmAction({
+        question: `Add a Learner named ${name}?`, yes: `Yes, add ${name}`, no: () => addLearner(typed),
+        act: async () => {
+          try { await change('/api/learners', { name, password: typed.password }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return addLearner(typed, e.code);
+            throw e;
+          }
+          renderHelper(`${name} is added.`);
+        },
+      });
+    },
+  });
+}
+
+startUp();
+// The service worker (sw.js) keeps the page, the questions, the fonts and the icons, so the app opens with no connection.
+window.addEventListener('load', () => {
+  if (navigator.serviceWorker) navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+});
 </script>
 </body>
 </html>
