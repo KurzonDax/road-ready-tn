@@ -24,7 +24,11 @@ of the old tn-permit-daily-v1 state (once, never for a Helper, the old key left
 alone), and sign-out refusing offline, sending waiting records first and deleting
 that Learner's device copy. The Helper's view: studySessions(), missedMost() and sectionHistory()
 on fixtures, the wording of where a Learner is, and, on a 375 px wide phone, the list of
-Learners and one Learner's page with nothing scrolling sideways. Also the Home Screen pieces: the
+Learners and one Learner's page with nothing scrolling sideways. Managing Learners: Add a Learner
+and its errors, then signing in as them; Rename; Reset sign-in, after which the old password fails;
+Reset progress and Move, which the Learner's next app open shows; Delete, turned off until the name
+is typed; the paused line after 10 failed sign-ins; and each action asking first and doing nothing
+on No. Also the Home Screen pieces: the
 manifest, the icon sizes, the page head, the safe-area padding, and that the page
 loads its fonts and everything else from its own origin. The service worker, on an
 Instance run from a copy of the project so its dist/ can be rebuilt: opening the
@@ -36,7 +40,9 @@ checks the sentence shown when questions.json can't be loaded.
 
 Set CHROMIUM_PATH to use an installed Chromium instead of Playwright's download.
 """
+import datetime
 import json
+import math
 import os
 import pathlib
 import re
@@ -48,6 +54,7 @@ import sys
 import tempfile
 import time
 import urllib.request
+import zoneinfo
 
 from playwright.sync_api import TimeoutError as PlaywrightTimeout, sync_playwright
 
@@ -729,8 +736,8 @@ def check_helper_view(browser):
         open_page(pg, inst.url)
         sign_in(pg, *HELPER)
         pg.wait_for_selector("#stage .learners, #stage .none")
-        check(stage_text(pg) == "Learners No Learners yet. Sign out",
-              "with no Learners, the list says No Learners yet., with Sign out below", stage_text(pg))
+        check(stage_text(pg) == "Learners No Learners yet. Add a Learner Sign out",
+              "with no Learners, the list says No Learners yet., with Add a Learner and Sign out below", stage_text(pg))
 
         qs = {q["id"]: q for q in pg.evaluate("QS")}
         ids = pg.evaluate("Object.fromEntries(DAYS.map(d => [d.day, QS.filter(q => q.day === d.day).map(q => q.id)]))")
@@ -802,7 +809,7 @@ def check_helper_view(browser):
             "Study sessions, newest first, cover the whole History with the Reset and the Move as lines",
             texts(pg, ".sessions > li"))
         heads = texts(pg, "#stage h2")
-        check(heads == ["Sections", "Review", "Practice tests", "Questions missed most", "Study sessions"],
+        check(heads == ["Sections", "Review", "Practice tests", "Questions missed most", "Study sessions", "Manage this Learner"],
               "the Learner's page is in the decided order", heads)
         pg.eval_on_selector_all("#stage details", "els => els.forEach(d => d.open = true)")
         check(no_sideways_scroll(pg), "at 375 px wide, nothing on the Learner's page scrolls sideways")
@@ -820,6 +827,274 @@ def check_helper_view(browser):
               [texts(pg, ".now p"), texts(pg, ".history p"), texts(pg, ".tests p"), texts(pg, ".missedmost p")])
         pg.get_by_role("button", name="Back to Learners").first.click()
         pg.wait_for_selector("#stage .learners")
+        ctx.close()
+
+
+def learner_names(pg):
+    """The names on the Learner list, once it has loaded."""
+    pg.wait_for_selector("#stage .learners, #stage .none")
+    return texts(pg, ".lrow .lname")
+
+
+def form_message(pg):
+    """The error shown on a Helper's form, or None."""
+    el = pg.query_selector("#formMsg .warn")
+    return " ".join(el.inner_text().split()) if el else None
+
+
+def submit_form(pg, button):
+    """Press a form's button, then wait for the confirm question or an error."""
+    pg.get_by_role("button", name=button, exact=True).click()
+    pg.wait_for_selector("#confirmYes, #formMsg .warn")
+
+
+def open_learner(pg, name):
+    """From the Learner list, open one Learner's page and wait for it to load."""
+    pg.wait_for_selector("#stage .learners")
+    pg.locator(".lrow", has=pg.locator(".lname", has_text=name)).click()
+    pg.wait_for_selector("#stage .manage")
+
+
+def check_manage_learner(browser):
+    """The Helper adds a Learner and manages one: each action asks first, in literal words."""
+    print("\n[Manage Learners]")
+    with Instance() as inst:
+        inst.add_helper(*HELPER)
+        casey = inst.add_learner("Casey", "casey password")
+        ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True,
+                                  locale="en-US", timezone_id="America/Chicago")
+        pg = ctx.new_page()
+        pg.on("pageerror", lambda e: failures.append(f"page error while managing Learners: {e}"))
+        open_page(pg, inst.url)
+        sign_in(pg, *HELPER)
+        check(learner_names(pg) == ["Casey"], "the list starts with one Learner", learner_names(pg))
+        buttons = texts(pg, "#stage button:not(.lrow)")
+        check(buttons == ["Add a Learner", "Sign out"], "Add a Learner sits between the list and Sign out", buttons)
+
+        # Add a Learner: a name and a password, with Show password.
+        pg.get_by_role("button", name="Add a Learner").click()
+        pg.wait_for_selector("#stage form")
+        check(h1(pg) == "Add a Learner", "Add a Learner opens its own screen", h1(pg))
+        check(no_sideways_scroll(pg), "at 375 px wide, the Add a Learner screen doesn't scroll sideways")
+        pw = pg.get_by_label("Password", exact=True)
+        check(pw.get_attribute("type") == "password", "the password is hidden at first")
+        pg.get_by_label("Show password").check()
+        check(pw.get_attribute("type") == "text", "Show password shows it")
+        for name, password, want in [
+                ("", "new password", "The name must be 1 to 64 characters."),
+                ("   ", "new password", "The name must be 1 to 64 characters."),
+                ("x" * 65, "new password", "The name must be 1 to 64 characters."),
+                ("Jordan", "short", "The password must be 8 to 128 characters."),
+                ("Jordan", "p" * 129, "The password must be 8 to 128 characters."),
+                (" casey ", "new password", "Another account already uses that name. Choose a different name."),
+                ("randy", "new password", "Another account already uses that name. Choose a different name.")]:
+            pg.get_by_label("Name", exact=True).fill(name)
+            pw.fill(password)
+            submit_form(pg, "Add this Learner")
+            if pg.query_selector("#confirmYes"):
+                pg.click("#confirmYes")
+                pg.wait_for_selector("#formMsg .warn, #stage .learners")
+            check(form_message(pg) == want, f"adding {name[:12]!r} with a {len(password)}-character password says {want!r}",
+                  form_message(pg))
+        pg.get_by_label("Name", exact=True).fill("Jordan")
+        pw.fill("jordan password")
+        submit_form(pg, "Add this Learner")
+        check(stage_text(pg).startswith("Add a Learner named Jordan?"), "Add asks first", stage_text(pg))
+        pg.click("#confirmNo")
+        pg.wait_for_selector("#stage form")
+        check(pg.get_by_label("Name", exact=True).input_value() == "Jordan",
+              "saying no goes back to the form with what was typed")
+        pg.get_by_role("button", name="Cancel").click()
+        check(learner_names(pg) == ["Casey"], "saying no adds nobody", learner_names(pg))
+
+        pg.get_by_role("button", name="Add a Learner").click()
+        pg.get_by_label("Name", exact=True).fill("Jordan")
+        pg.get_by_label("Password", exact=True).fill("jordan password")
+        submit_form(pg, "Add this Learner")
+        pg.click("#confirmYes")
+        pg.wait_for_selector("#stage .learners")
+        check(learner_names(pg) == ["Casey", "Jordan"], "after Add, the list is loaded again with the new Learner",
+              learner_names(pg))
+        lctx = browser.new_context()
+        lpg = lctx.new_page()
+        open_page(lpg, inst.url)
+        sign_in(lpg, "Jordan", "jordan password")
+        check(h1(lpg) == "Section 1 of 12", "the new Learner can sign in, and starts at Section 1", h1(lpg))
+
+        # Manage this Learner: its own part at the bottom of the Learner's page.
+        open_learner(pg, "Casey")
+        heads = texts(pg, "#stage h2")
+        check(heads[-2:] == ["Study sessions", "Manage this Learner"], "Manage this Learner comes after Study sessions", heads)
+        manage = texts(pg, ".manage button")
+        check(manage == ["Rename", "Reset sign-in", "Reset progress", "Move", "Delete"],
+              "Manage this Learner has Rename, Reset sign-in, Reset progress, Move and Delete", manage)
+        last = pg.evaluate("[...document.querySelectorAll('#stage button')].pop()?.textContent")
+        check(last == "Back to Learners", "Back to Learners is still the last button on the Learner's page", last)
+        check(no_sideways_scroll(pg), "at 375 px wide, Manage this Learner doesn't scroll sideways")
+
+        # Rename, with the same errors as Add a Learner.
+        pg.get_by_role("button", name="Rename", exact=True).click()
+        pg.wait_for_selector("#stage form")
+        check(pg.get_by_label("New name").input_value() == "Casey", "Rename starts from the Learner's name")
+        for name, want in [("", "The name must be 1 to 64 characters."),
+                           ("y" * 65, "The name must be 1 to 64 characters."),
+                           ("JORDAN", "Another account already uses that name. Choose a different name.")]:
+            pg.get_by_label("New name").fill(name)
+            submit_form(pg, "Rename")
+            if pg.query_selector("#confirmYes"):
+                pg.click("#confirmYes")
+                pg.wait_for_selector("#formMsg .warn, #stage .manage")
+            check(form_message(pg) == want, f"renaming to {name[:12]!r} says {want!r}", form_message(pg))
+        pg.get_by_label("New name").fill(" Casey Lee ")
+        submit_form(pg, "Rename")
+        check(stage_text(pg).startswith("Rename Casey to Casey Lee?"), "Rename asks first", stage_text(pg))
+        pg.click("#confirmNo")
+        pg.get_by_role("button", name="Cancel").click()
+        pg.wait_for_selector("#stage .manage")
+        check(h1(pg) == "Casey", "saying no keeps the name", h1(pg))
+        pg.get_by_role("button", name="Rename", exact=True).click()
+        pg.get_by_label("New name").fill(" Casey Lee ")
+        submit_form(pg, "Rename")
+        pg.click("#confirmYes")
+        pg.wait_for_function("() => document.querySelector('.home h1')?.textContent === 'Casey Lee' && document.querySelector('#stage .manage')")
+        check(h1(pg) == "Casey Lee", "after Rename, the Learner's page loads again with the new name", h1(pg))
+        pg.get_by_role("button", name="Back to Learners").first.click()
+        check(learner_names(pg) == ["Casey Lee", "Jordan"], "the list has the new name", learner_names(pg))
+
+        # Reset sign-in, and the paused line. Jordan is signed in on a device of their own.
+        open_learner(pg, "Jordan")
+        check(not pg.query_selector(".now .paused"), "with no pause, there is no paused line")
+        pg.get_by_role("button", name="Reset sign-in").click()
+        pg.wait_for_selector("#stage form")
+        new_pw = pg.get_by_label("New password", exact=True)
+        new_pw.fill("short")
+        submit_form(pg, "Set the new password")
+        check(form_message(pg) == "The password must be 8 to 128 characters.",
+              "a new password that is too short says so", form_message(pg))
+        new_pw.fill("jordan new password")
+        submit_form(pg, "Set the new password")
+        want = ("Set a new password for Jordan? Jordan will be signed out on every device and will need "
+                "the new password to sign in.")
+        check(stage_text(pg).startswith(want), "Reset sign-in asks first, in the decided words", stage_text(pg))
+        pg.click("#confirmNo")
+        pg.get_by_role("button", name="Cancel").click()
+        pg.wait_for_selector("#stage .manage")
+        check(me_status(lpg) == 200, "saying no to Reset sign-in leaves the Learner signed in")
+
+        tries = browser.new_context()
+        tpg = tries.new_page()
+        open_page(tpg, inst.url)
+        sign_in_status = "pw => fetch('/api/sign-in', {method: 'POST', headers: {'Content-Type': 'application/json'}, " \
+                         "body: JSON.stringify({name: 'Jordan', password: pw})}).then(r => r.status)"
+        statuses = [tpg.evaluate(sign_in_status, "wrong password") for _ in range(10)]
+        check(statuses == [401] * 10, "ten failed sign-ins for Jordan through the API", statuses)
+        conn = db.connect(inst.dir)
+        try:
+            until = conn.execute("SELECT paused_until FROM sign_in_limits WHERE key = 'name:jordan'").fetchone()[0]
+        finally:
+            conn.close()
+        shown = datetime.datetime.fromtimestamp(math.ceil(until / 60) * 60, zoneinfo.ZoneInfo("America/Chicago"))
+        want = f"Sign-in is paused until {shown.strftime('%I:%M %p').lstrip('0')} after too many tries."
+        pg.get_by_role("button", name="Back to Learners").first.click()
+        open_learner(pg, "Jordan")
+        paused = texts(pg, ".now p")
+        check(paused == ["Section 1 of 12", want], "under where they are now, the paused line says until when", paused)
+
+        pg.get_by_role("button", name="Reset sign-in").click()
+        pg.get_by_label("New password", exact=True).fill("jordan new password")
+        submit_form(pg, "Set the new password")
+        pg.click("#confirmYes")
+        pg.wait_for_selector("#stage .manage")
+        check(texts(pg, ".now p") == ["Section 1 of 12"], "after Reset sign-in, the paused line is gone", texts(pg, ".now p"))
+        check(texts(pg, ".note") == ["Jordan's new password is set."], "the Learner's page says the new password is set",
+              texts(pg, ".note"))
+        check(me_status(lpg) == 401, "Reset sign-in signs the Learner out on their device")
+        check(tpg.evaluate(sign_in_status, "jordan password") == 401, "after Reset sign-in, the old password fails")
+        tries.close()
+        open_page(lpg, inst.url)
+        sign_in(lpg, "Jordan", "jordan new password")
+        check(h1(lpg) == "Section 1 of 12", "the new password signs the Learner in", h1(lpg))
+        lctx.close()
+
+        # Reset progress. Casey Lee has finished Sections 1 and 2 and is signed in on a device of their own.
+        ids = pg.evaluate("Object.fromEntries(DAYS.map(d => [d.day, QS.filter(q => q.day === d.day).map(q => q.id)]))")
+        store_history(inst, casey, [set_record(1, "day", 1, 0, [(q, True) for q in ids["1"]]),
+                                    set_record(2, "day", 2, 20, [(q, i > 0) for i, q in enumerate(ids["2"])])])
+        cctx = browser.new_context()
+        cpg = cctx.new_page()
+        open_page(cpg, inst.url)
+        sign_in(cpg, "Casey Lee", "casey password")
+        check(h1(cpg) == "Section 3 of 12", "Casey Lee's study path is at Section 3", h1(cpg))
+        pg.get_by_role("button", name="Back to Learners").first.click()
+        open_learner(pg, "Casey Lee")
+        pg.get_by_role("button", name="Reset progress").click()
+        want = ("Put Casey Lee back at the start of Section 1? Scores, Review and Practice tests start over. "
+                "The History of finished Sets is kept.")
+        check(stage_text(pg).startswith(want), "Reset progress asks first, in the decided words", stage_text(pg))
+        pg.click("#confirmNo")
+        pg.wait_for_selector("#stage .manage")
+        check(texts(pg, ".now p") == ["Section 3 of 12"], "saying no to Reset progress changes nothing", texts(pg, ".now p"))
+        pg.get_by_role("button", name="Reset progress").click()
+        pg.click("#confirmYes")
+        pg.wait_for_selector("#stage .manage")
+        check(texts(pg, ".now p") == ["Section 1 of 12"], "after Reset progress, the Learner's page says Section 1",
+              texts(pg, ".now p"))
+        sessions = texts(pg, ".sessions > li")
+        check(len(sessions) == 2 and sessions[0].endswith("Progress reset by a Helper")
+              and sessions[1].endswith("Section 1: 10 of 10 Section 2: 9 of 10"),
+              "Study sessions still shows the old Sets, under a Progress reset by a Helper line", sessions)
+        reload(cpg)
+        check(wait_for_h1(cpg, "Section 1 of 12") == "Section 1 of 12",
+              "the Learner's next app open shows Section 1", h1(cpg))
+
+        # Move: Section 1 to 12, or Review and Practice tests.
+        pg.get_by_role("button", name="Move", exact=True).click()
+        pg.wait_for_selector("#stage form")
+        choices = texts(pg, "#fTo option")
+        check(choices == [f"Section {n}" for n in range(1, 13)] + ["Review and Practice tests"],
+              "Move offers Section 1 to Section 12, and Review and Practice tests", choices)
+        pg.get_by_label("Move Casey Lee to").select_option(label="Section 4")
+        submit_form(pg, "Move")
+        want = ("Move Casey Lee to Section 4? Scores and History are kept. Questions in skipped Sections are not added "
+                "to Review. Any unfinished Set is dropped.")
+        check(stage_text(pg).startswith(want), "Move asks first, in the decided words", stage_text(pg))
+        pg.click("#confirmNo")
+        pg.get_by_role("button", name="Cancel").click()
+        pg.wait_for_selector("#stage .manage")
+        check(texts(pg, ".now p") == ["Section 1 of 12"], "saying no to Move changes nothing", texts(pg, ".now p"))
+        pg.get_by_role("button", name="Move", exact=True).click()
+        pg.get_by_label("Move Casey Lee to").select_option(label="Section 4")
+        submit_form(pg, "Move")
+        pg.click("#confirmYes")
+        pg.wait_for_selector("#stage .manage")
+        check(texts(pg, ".now p") == ["Section 4 of 12"], "after Move, the Learner's page says Section 4", texts(pg, ".now p"))
+        check(texts(pg, ".sessions > li")[0].endswith("Moved to Section 4"), "Study sessions has a Moved to Section 4 line",
+              texts(pg, ".sessions > li"))
+        reload(cpg)
+        check(wait_for_h1(cpg, "Section 4 of 12") == "Section 4 of 12", "the Learner's next app open shows Section 4", h1(cpg))
+        cctx.close()
+
+        # Delete: the Helper types the Learner's name to turn on the button.
+        pg.get_by_role("button", name="Delete", exact=True).click()
+        pg.wait_for_selector("#deleteBtn")
+        want = "Delete Casey Lee and all of Casey Lee's progress and History? This cannot be undone."
+        check(want in stage_text(pg), "Delete asks first, in the decided words", stage_text(pg))
+        delete = pg.get_by_role("button", name="Delete Casey Lee")
+        check(delete.is_disabled(), "Delete is turned off until the name is typed")
+        typed = pg.get_by_label("Type Casey Lee to delete")
+        for wrong in ("Casey", "Casey Le", "Jordan", "CaseyLee"):
+            typed.fill(wrong)
+            check(delete.is_disabled(), f"typing {wrong!r} leaves Delete turned off")
+        typed.fill("  casey LEE ")
+        check(delete.is_enabled(), "the name typed with other capitals and spaces at the start and end turns Delete on")
+        pg.get_by_role("button", name="No, keep Casey Lee").click()
+        pg.wait_for_selector("#stage .manage")
+        check(h1(pg) == "Casey Lee", "saying no keeps the Learner", h1(pg))
+        pg.get_by_role("button", name="Delete", exact=True).click()
+        pg.get_by_label("Type Casey Lee to delete").fill("Casey Lee")
+        pg.get_by_role("button", name="Delete Casey Lee").click()
+        check(learner_names(pg) == ["Jordan"], "after Delete, the list loads again without the Learner", learner_names(pg))
+        check(texts(pg, ".note") == ["Casey Lee is deleted."], "the list says the Learner is deleted", texts(pg, ".note"))
         ctx.close()
 
 
@@ -1190,6 +1465,7 @@ def main():
         check_offline_and_sync(browser, inst)
         check_helper_helpers(browser, inst)
         check_helper_view(browser)
+        check_manage_learner(browser)
 
         print("\n[page head, fonts, own origin]")
         ctx = browser.new_context()

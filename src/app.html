@@ -174,6 +174,13 @@ button.opt { cursor: pointer; }
 .sections .sscore { display: block; color: var(--muted); font-size: 16px; font-variant-numeric: tabular-nums; }
 .part .sets { padding: 6px 0 4px 22px; font-size: 16px; display: flex; flex-direction: column; gap: 4px; }
 .missedmost .mpage, .missedmost .mcount { color: var(--muted); font-size: 16px; }
+/* Managing a Learner: plain buttons at the bottom of their page; each action asks first on a screen of its own. */
+.note { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--guide-soft); color: var(--ink); font-size: 16px; }
+.btn.bad { border-color: var(--bad); color: var(--bad); }
+.btn.bad.primary { background: var(--bad); color: var(--surface); }
+.btn:disabled { cursor: not-allowed; opacity: .5; }
+.field select { font: inherit; font-size: 19px; padding: 12px 14px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); width: 100%; }
+#formMsg:empty { display: none; }
 
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
@@ -952,11 +959,15 @@ async function getJSON(path) {
 // asked is still the one on the page, so a late answer never paints over where the Helper went.
 function stillShowing() { const shown = $('stage').firstElementChild; return () => shown.isConnected; }
 
-// The Helper's first screen: every Learner, one row each, then Sign out.
-async function renderHelper() {
+// A short line at the top of a Helper screen saying what the last action did.
+const noteLine = note => note ? `<p class="note" role="status">${esc(note)}</p>` : '';
+
+// The Helper's first screen: every Learner, one row each, then Add a Learner and Sign out.
+// `note` says what the Helper just did, when the list loads again after an action.
+async function renderHelper(note = '') {
   const signOutBtn = '<button class="btn" type="button" id="signOutBtn">Sign out</button>';
   const screen = body => {
-    paint(`<section class="home helper"><h1 tabindex="-1">Learners</h1>${body}${signOutBtn}</section>`, 'h1');
+    paint(`<section class="home helper"><h1 tabindex="-1">Learners</h1>${noteLine(note)}${body}${signOutBtn}</section>`, 'h1');
     $('signOutBtn').onclick = () => confirmSignOut(renderHelper);
   };
   screen('<p class="sub">Getting the list of Learners.</p>');
@@ -968,7 +979,7 @@ async function renderHelper() {
   } catch (e) {
     if (e instanceof SignedOut || !showing()) return;
     screen('<p class="warn">The list of Learners could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>');
-    $('retryBtn').onclick = renderHelper;
+    $('retryBtn').onclick = () => renderHelper();
     return;
   }
   if (!showing()) return;
@@ -977,39 +988,64 @@ async function renderHelper() {
     return `<li><button type="button" class="lrow" data-k="${k}"><span class="lname">${esc(learner.name)}</span><span>${esc(whereNow(progressFrom(records)))}</span>` +
       `<span class="lwhen">${last ? `Last studied ${dayText(last)}` : 'Has not answered any questions yet.'}</span></button></li>`;
   }).join('');
-  // "Add a Learner" goes between the list and Sign out.
-  screen(rows.length ? `<ul class="learners">${list}</ul>` : '<p class="sub none">No Learners yet.</p>');
+  screen((rows.length ? `<ul class="learners">${list}</ul>` : '<p class="sub none">No Learners yet.</p>') +
+    '<button class="btn primary" type="button" id="addBtn">Add a Learner</button>');
+  $('addBtn').onclick = () => { addLearner(); window.scrollTo(0, 0); };
   document.querySelectorAll('.lrow').forEach(b => b.onclick = () => { openLearnerPage(rows[Number(b.dataset.k)].learner); window.scrollTo(0, 0); });
 }
 
-// One Learner's page, loaded fresh each time it opens. `learner` is a row of GET /api/learners.
-async function openLearnerPage(learner) {
-  const name = esc(learner.name);
+// One Learner's page, loaded fresh each time it opens. `learner` is a row of GET /api/learners;
+// the list is read again too, for the Learner's name and sign-in pause as they are now.
+// `note` says what the Helper just did; `at: 'manage'` scrolls to Manage this Learner.
+async function openLearnerPage(learner, { note = '', at = '' } = {}) {
+  let name = esc(learner.name);
   const screen = body => {
     paint(`<section class="home helper"><button class="link top back" type="button">Back to Learners</button><h1 tabindex="-1">${name}</h1>${body}</section>`, 'h1');
     document.querySelectorAll('.back').forEach(b => b.onclick = () => { renderHelper(); window.scrollTo(0, 0); });
   };
   screen(`<p class="sub">Getting ${name}'s records.</p>`);
   const showing = stillShowing();
-  let body;
-  try { body = await getJSON(`/api/learners/${learner.id}/records`); } catch (e) {
+  let body, now;
+  try {
+    let learners;
+    [{ learners }, body] = await Promise.all([getJSON('/api/learners'), getJSON(`/api/learners/${learner.id}/records`)]);
+    now = learners.find(l => l.id === learner.id);
+    if (!now) throw Object.assign(new Error('no-learner'), { status: 404 });
+  } catch (e) {
     if (e instanceof SignedOut || !showing()) return;
     if (e.status === 404) return screen(`<p class="warn">${name} is no longer on the list of Learners.</p>`);
     screen(`<p class="warn">${name}'s records could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>`);
     $('retryBtn').onclick = () => openLearnerPage(learner);
     return;
   }
-  if (showing()) screen(learnerPage(body));
+  if (!showing()) return;
+  name = esc(now.name);
+  screen(noteLine(note) + learnerPage(body, now));
+  wireManage(now, progressFrom(body.records));
+  if (at === 'manage') $('manage').scrollIntoView({ block: 'start', behavior: 'instant' });
+}
+
+// When a sign-in pause ends, in the device's own time format, or null when there is no pause now.
+// Rounded up to the minute, as on the sign-in page, so the time shown is never before the pause ends.
+// A pause that ends on another day says the day too.
+function pausedUntil(iso) {
+  const t = Date.parse(iso);
+  if (!iso || Number.isNaN(t) || t <= Date.now()) return null;
+  const at = new Date(Math.ceil(t / 60000) * 60000);
+  const time = at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  return at.toDateString() === new Date().toDateString() ? time : `${dayText(at.toISOString())}, ${time}`;
 }
 
 // The parts of a Learner's page, top to bottom, from GET /api/learners/<id>/records.
-function learnerPage({ records, unfinished }) {
+function learnerPage({ records, unfinished }, learner) {
   const p = progressFrom(records), counted = countedRecords(records), reset = currentReset(records);
   const part = (cls, title, html) => `<section class="part ${cls}"><h2>${title}</h2>${html}</section>`;
 
   const done = unfinished && records.some(r => r.kind === 'set' && r.data.set_id === unfinished.set_id);
   const open = !done && unfinishedLine(unfinished);
-  const now = `<div class="now"><p class="theme">${esc(whereNow(p))}</p>${open ? `<p class="sub">${esc(open)}</p>` : ''}</div>`;
+  const until = learner && pausedUntil(learner.paused_until);
+  const now = `<div class="now"><p class="theme">${esc(whereNow(p))}</p>${open ? `<p class="sub">${esc(open)}</p>` : ''}` +
+    (until ? `<p class="paused">Sign-in is paused until ${until} after too many tries.</p>` : '') + '</div>';
 
   const sections = sectionHistory(records).map(({ section, sets }) => {
     const title = `<span class="sname">Section ${section}: ${esc(DAYS[section - 1].title)}</span>`;
@@ -1045,10 +1081,232 @@ function learnerPage({ records, unfinished }) {
     : `<li><p class="when">${whenText(e.at)}</p><p>${historyLine(e)}</p></li>`).join('')}</ul>`
     : '<p>No Study sessions yet.</p>';
 
-  // "Manage this Learner" goes after Study sessions, above the last Back to Learners.
+  const manage = `<section class="part manage" id="manage"><h2>Manage this Learner</h2>` +
+    ['Rename', 'Reset sign-in', 'Reset progress', 'Move', 'Delete'].map((label, k) =>
+      `<button class="btn${label === 'Delete' ? ' bad' : ''}" type="button" data-act="${k}">${label}</button>`).join('') + '</section>';
+
   return now + part('', 'Sections', `<ul class="sections">${sections}</ul>`) + part('review', 'Review', review) +
     part('tests', 'Practice tests', testList) + part('missedmost', 'Questions missed most', missedList) +
-    part('history', 'Study sessions', history) + '<button class="btn back" type="button">Back to Learners</button>';
+    part('history', 'Study sessions', history) + manage + '<button class="btn back" type="button">Back to Learners</button>';
+}
+
+// Managing Learners: Add a Learner, and Rename, Reset sign-in, Reset progress, Move and Delete
+// on a Learner's page. Every action asks first, in literal words, and does nothing on No.
+// Afterwards the list or the Learner's page loads again from the server.
+const NAME_MAX = 64, PASSWORD_MIN = 8, PASSWORD_MAX = 128; // as the server checks them (server/auth.py)
+const MANAGE_ERRORS = {
+  'name-taken': 'Another account already uses that name. Choose a different name.',
+  'bad-name': `The name must be 1 to ${NAME_MAX} characters.`,
+  'bad-password': `The password must be ${PASSWORD_MIN} to ${PASSWORD_MAX} characters.`,
+};
+// Lengths are counted in characters, as the server counts them, not in UTF-16 units.
+const chars = s => [...s].length;
+const nameProblem = s => chars(s.trim()) >= 1 && chars(s.trim()) <= NAME_MAX ? null : 'bad-name';
+const passwordProblem = s => chars(s) >= PASSWORD_MIN && chars(s) <= PASSWORD_MAX ? null : 'bad-password';
+
+// A POST that changes something. A refusal throws an Error with its `status` and the server's
+// error `code`; a good answer gives its JSON, or null when there is none.
+async function change(path, body) {
+  const r = await postJSON(path, body);
+  if (r.ok) return r.status === 204 ? null : r.json();
+  const answer = await r.json().catch(() => ({}));
+  throw Object.assign(new Error('HTTP ' + r.status), { status: r.status, code: answer.error });
+}
+
+// A Helper's form on a screen of its own: `fields` (HTML), the button that goes on to ask first,
+// and Cancel, which runs `cancel`. `submit` gets the form's values when the button is pressed.
+function helperForm({ title, intro, fields, button, cancel, submit, problem }) {
+  paint(`<section class="home helper"><h1 tabindex="-1">${title}</h1>${intro ? `<p class="sub">${intro}</p>` : ''}
+    <form id="helperForm" class="signin" novalidate>${fields}<div id="formMsg" aria-live="polite"></div>
+    <button class="btn primary" type="submit" id="formBtn">${button}</button></form>
+    <button class="btn" type="button" id="cancelBtn">Cancel</button></section>`, 'h1');
+  $('cancelBtn').onclick = () => { cancel(); window.scrollTo(0, 0); };
+  $('helperForm').onsubmit = e => { e.preventDefault(); submit(); };
+  if ($('fShow')) $('fShow').onchange = () => { $('fPassword').type = $('fShow').checked ? 'text' : 'password'; };
+  if (problem) formMessage(MANAGE_ERRORS[problem] || problem);
+}
+function formMessage(text) {
+  $('formMsg').innerHTML = `<p class="warn" tabindex="-1">${esc(text)}</p>`;
+  $('formMsg').firstChild.focus();
+}
+const nameField = (label, value) => `<div class="field"><label for="fName">${label}</label><input id="fName" type="text" value="${esc(value)}" autocomplete="off" autocapitalize="words" autocorrect="off" spellcheck="false"></div>`;
+const passwordField = (label, value, shown) => `<div class="field"><label for="fPassword">${label}</label><input id="fPassword" type="${shown ? 'text' : 'password'}" value="${esc(value)}" autocomplete="new-password" autocapitalize="none" autocorrect="off" spellcheck="false"></div>` +
+  `<label class="check"><input type="checkbox" id="fShow"${shown ? ' checked' : ''}>Show password</label>`;
+
+// Ask first. `question` and `detail` are the literal words; Yes runs `act`, No runs `no`.
+// If `act` fails for want of a connection, the question stays with a line saying so.
+function confirmAction({ question, detail, yes, no, act }) {
+  paint(`<section class="home helper"><h2 tabindex="-1">${esc(question)}</h2>${detail ? `<p>${esc(detail)}</p>` : ''}
+    <div id="formMsg" aria-live="polite"></div>
+    <button class="btn primary" type="button" id="confirmYes">${esc(yes)}</button>
+    <button class="btn" type="button" id="confirmNo">No, go back</button></section>`, 'h2');
+  $('confirmNo').onclick = () => { no(); window.scrollTo(0, 0); };
+  $('confirmYes').onclick = async () => {
+    const btn = $('confirmYes');
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await act(); window.scrollTo(0, 0); } catch (e) {
+      if (e instanceof SignedOut || !btn.isConnected) return;
+      btn.disabled = false;
+      formMessage('The change could not be made. Check your connection and try again.');
+    }
+  };
+}
+
+// The buttons of Manage this Learner. `learner` is the Learner's row of GET /api/learners, `p` their Progress.
+function wireManage(learner, p) {
+  const back = () => openLearnerPage(learner, { at: 'manage' });
+  const acts = [() => renameLearner(learner, back), () => resetSignIn(learner, back), () => resetProgress(learner, back),
+    () => moveLearner(learner, back, Math.min(p.day, TOTAL_DAYS + 1)), () => deleteLearner(learner, back)];
+  document.querySelectorAll('.manage [data-act]').forEach(b => b.onclick = () => { acts[Number(b.dataset.act)](); window.scrollTo(0, 0); });
+}
+
+// Rename: a new name, with the same rules as Add a Learner. `back` returns to the Learner's page.
+function renameLearner(learner, back, typed = learner.name, problem = null) {
+  helperForm({
+    title: `Rename ${esc(learner.name)}`, problem, fields: nameField('New name', typed), button: 'Rename', cancel: back,
+    submit: () => {
+      const value = $('fName').value, bad = nameProblem(value);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      const name = value.trim();
+      confirmAction({
+        question: `Rename ${learner.name} to ${name}?`, yes: 'Yes, rename', no: () => renameLearner(learner, back, value),
+        act: async () => {
+          let answer;
+          try { answer = await change(`/api/learners/${learner.id}/rename`, { name }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return renameLearner(learner, back, value, e.code);
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage({ ...learner, name: answer.name }, { note: `${learner.name} is renamed ${answer.name}.` });
+        },
+      });
+    },
+  });
+}
+
+// Reset sign-in: a new password. The server ends every sign-in of the Learner and any pause on their name.
+function resetSignIn(learner, back, v = { password: '', shown: false }, problem = null) {
+  const name = learner.name;
+  helperForm({
+    title: `Reset sign-in for ${esc(name)}`, intro: `${esc(name)} will sign in with the new password.`, problem,
+    fields: passwordField('New password', v.password, v.shown), button: 'Set the new password', cancel: back,
+    submit: () => {
+      const typed = { password: $('fPassword').value, shown: $('fShow').checked }, bad = passwordProblem(typed.password);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      confirmAction({
+        question: `Set a new password for ${name}?`,
+        detail: `${name} will be signed out on every device and will need the new password to sign in.`,
+        yes: 'Yes, set the new password', no: () => resetSignIn(learner, back, typed),
+        act: async () => {
+          try { await change(`/api/learners/${learner.id}/reset-sign-in`, { password: typed.password }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return resetSignIn(learner, back, typed, e.code);
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage(learner, { note: `${name}'s new password is set.` });
+        },
+      });
+    },
+  });
+}
+
+// Reset progress: a Reset record. The Learner starts again at Section 1; the History stays.
+function resetProgress(learner, back) {
+  const name = learner.name;
+  confirmAction({
+    question: `Put ${name} back at the start of Section 1?`,
+    detail: 'Scores, Review and Practice tests start over. The History of finished Sets is kept.',
+    yes: 'Yes, reset progress', no: back,
+    act: async () => {
+      try { await change(`/api/learners/${learner.id}/reset-progress`, {}); } catch (e) {
+        if (e.status === 404) return openLearnerPage(learner);
+        throw e;
+      }
+      openLearnerPage(learner, { note: `${name}'s progress is reset to the start of Section 1.` });
+    },
+  });
+}
+
+// Move: a Move record that sets the Learner's next Section, 1 to 12, or 13 for Review and Practice tests.
+const moveChoice = to => to > TOTAL_DAYS ? 'Review and Practice tests' : `Section ${to}`;
+function moveLearner(learner, back, to) {
+  const name = learner.name;
+  const options = Array.from({ length: TOTAL_DAYS + 1 }, (_, k) =>
+    `<option value="${k + 1}"${k + 1 === to ? ' selected' : ''}>${moveChoice(k + 1)}</option>`).join('');
+  helperForm({
+    title: `Move ${esc(name)}`, button: 'Move', cancel: back,
+    fields: `<div class="field"><label for="fTo">Move ${esc(name)} to</label><select id="fTo">${options}</select></div>`,
+    submit: () => {
+      const chosen = Number($('fTo').value), choice = moveChoice(chosen);
+      confirmAction({
+        question: `Move ${name} to ${choice}?`,
+        detail: 'Scores and History are kept. Questions in skipped Sections are not added to Review. Any unfinished Set is dropped.',
+        yes: `Yes, move ${name}`, no: () => moveLearner(learner, back, chosen),
+        act: async () => {
+          try { await change(`/api/learners/${learner.id}/move`, { to: chosen }); } catch (e) {
+            if (e.status === 404) return openLearnerPage(learner);
+            throw e;
+          }
+          openLearnerPage(learner, { note: `${name} is moved to ${choice}.` });
+        },
+      });
+    },
+  });
+}
+
+// Delete: the account and all of its records, for good. The question and the button are on one
+// screen, and the button stays off until the Helper types the Learner's name (matched as at sign-in:
+// capitals ignored, spaces at the start and end trimmed). Afterwards, back to the list.
+function deleteLearner(learner, back) {
+  const name = learner.name, key = s => s.trim().toLowerCase();
+  paint(`<section class="home helper"><h1 tabindex="-1">Delete ${esc(name)}</h1>
+    <p>Delete ${esc(name)} and all of ${esc(name)}'s progress and History? This cannot be undone.</p>
+    <div class="field"><label for="fName">Type ${esc(name)} to delete</label><input id="fName" type="text" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+    <div id="formMsg" aria-live="polite"></div>
+    <button class="btn bad primary" type="button" id="deleteBtn" disabled>Delete ${esc(name)}</button>
+    <button class="btn" type="button" id="keepBtn">No, keep ${esc(name)}</button></section>`, 'h1');
+  const btn = $('deleteBtn');
+  $('fName').oninput = () => { btn.disabled = key($('fName').value) !== key(name); };
+  $('keepBtn').onclick = () => { back(); window.scrollTo(0, 0); };
+  btn.onclick = async () => {
+    if (btn.disabled) return;
+    btn.disabled = true;
+    try { await change(`/api/learners/${learner.id}/delete`, { name: $('fName').value }); } catch (e) {
+      if (e instanceof SignedOut || !btn.isConnected) return;
+      if (e.status === 404) return renderHelper();
+      btn.disabled = false;
+      return formMessage(e.code === 'name-mismatch' ? `The name you typed does not match ${name}.`
+        : 'The change could not be made. Check your connection and try again.');
+    }
+    renderHelper(`${name} is deleted.`);
+    window.scrollTo(0, 0);
+  };
+}
+
+// Add a Learner: a name and a password, then back to the list.
+function addLearner(v = { name: '', password: '', shown: false }, problem = null) {
+  helperForm({
+    title: 'Add a Learner', intro: 'The Learner signs in with this name and password.', problem,
+    fields: nameField('Name', v.name) + passwordField('Password', v.password, v.shown),
+    button: 'Add this Learner', cancel: () => renderHelper(),
+    submit: () => {
+      const typed = { name: $('fName').value, password: $('fPassword').value, shown: $('fShow').checked };
+      const bad = nameProblem(typed.name) || passwordProblem(typed.password);
+      if (bad) return formMessage(MANAGE_ERRORS[bad]);
+      const name = typed.name.trim();
+      confirmAction({
+        question: `Add a Learner named ${name}?`, yes: `Yes, add ${name}`, no: () => addLearner(typed),
+        act: async () => {
+          try { await change('/api/learners', { name, password: typed.password }); } catch (e) {
+            if (MANAGE_ERRORS[e.code]) return addLearner(typed, e.code);
+            throw e;
+          }
+          renderHelper(`${name} is added.`);
+        },
+      });
+    },
+  });
 }
 
 startUp();
