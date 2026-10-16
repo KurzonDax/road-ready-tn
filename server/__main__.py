@@ -94,7 +94,7 @@ def main():
     sys.path.insert(0, str(VENDOR))
     import waitress
 
-    logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
+    logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s", stream=sys.stdout)
     warn_if_no_helper(config.dir)
     waitress.serve(
         app.make_app(dist=DIST, instance_dir=config.dir, origin=config.origin),

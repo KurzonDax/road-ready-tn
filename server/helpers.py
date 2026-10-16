@@ -6,7 +6,7 @@ nothing about which Helper did what.
 """
 import re
 
-from . import auth, records
+from . import auth, limits, records
 from .app import HTTPError, Response, json_response, route
 from .records import iso_time
 
@@ -50,10 +50,17 @@ def _learner(req):
 @route("GET", "/api/learners")
 @auth.require("helper")
 def list_learners(req):
-    rows = req.db.execute("SELECT id, name, created_at FROM accounts WHERE role = 'learner' "
+    rows = req.db.execute("SELECT id, name, name_key, created_at FROM accounts WHERE role = 'learner' "
                           "ORDER BY name_key, id").fetchall()
+    paused = limits.paused_names(req.db, req.now())
+
+    def paused_until(row):
+        until = paused.get(limits.name(row["name_key"]))
+        return None if until is None else iso_time(until)
+
     return json_response({"learners": [{"id": row["id"], "name": row["name"],
-                                        "created_at": iso_time(row["created_at"])} for row in rows]})
+                                        "created_at": iso_time(row["created_at"]),
+                                        "paused_until": paused_until(row)} for row in rows]})
 
 
 @route("POST", "/api/learners")
@@ -93,7 +100,7 @@ def rename_learner(req):
 @route("POST", "/api/learners/<id>/reset-sign-in")
 @auth.require("helper")
 def reset_sign_in(req):
-    """A new password for the Learner. Every one of their sessions ends."""
+    """A new password for the Learner. Every one of their sessions ends, and any sign-in pause on their name."""
     learner = _learner(req)
     password = _string(_body(req), "password", "bad-password")
     try:
