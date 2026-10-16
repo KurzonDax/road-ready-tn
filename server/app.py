@@ -296,4 +296,4 @@ def make_app(dist, instance_dir, origin, routes=None, clock=None):
 
 
 # Route modules register into ROUTES when imported.
-from . import auth  # noqa: E402
+from . import auth, records  # noqa: E402,F401

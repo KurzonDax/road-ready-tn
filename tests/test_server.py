@@ -1,5 +1,5 @@
-"""Tests for the server: startup checks, the WSGI app, static files and headers, and
-accounts, sign-in sessions and the Helper command.
+"""Tests for the server: startup checks, the WSGI app, static files and headers,
+accounts, sign-in sessions, the Helper command, and Learner records.
 
 Most tests call the WSGI app directly, with no network. The startup tests run
 `python -m server` as a program, the way an Instance starts it.
@@ -1082,6 +1082,429 @@ class HelperCommand(AccountsTestCase):
                 code, out, _ = self.manage(command, "Nobody", passwords=["new password"] * 2)
                 self.assertNotEqual(code, 0)
                 self.assertIn("no Helper", out)
+
+
+def a_set(id="set-record-000001", set_id="set-000001", type="day", section=1, answers=None, **extra):
+    """A finished-Set record that passes every shape rule. Tests change one field to break one rule."""
+    record = {
+        "id": id, "kind": "set", "reset": None, "at": "2026-10-16T14:05:00.000Z",
+        "data": {
+            "set_id": set_id, "type": type, "section": section, "started_at": "2026-10-16T14:00:00.000Z",
+            "answers": answers if answers is not None else [
+                {"q": "q-001", "chosen": "b", "right": True, "at": "2026-10-16T14:01:00.000Z"},
+            ],
+        },
+    }
+    record.update(extra)
+    return record
+
+
+def an_import(id="import-record-0001", state=None):
+    return {"id": id, "kind": "imported", "reset": None, "at": "2026-10-16T13:00:00Z",
+            "data": {"state": state if state is not None else {"day": 3, "scores": {}}}}
+
+
+class RecordsTestCase(AccountsTestCase):
+    """A Learner's records and unfinished Set, through the routes the page uses."""
+
+    def setUp(self):
+        super().setUp()
+        self.sam = self.learner_token("Sam")
+
+    def learner_token(self, name):
+        self.add_learner(name, "learner pass")
+        return cookie_from(self.sign_in(name, "learner pass"))
+
+    def post(self, path, value, token=None):
+        import json
+        body = json.dumps(value).encode()
+        return call(self.app, "POST", path,
+                    {**JSON, "Origin": ORIGIN, "Cookie": f"__Host-rrtn={token or self.sam}"}, body)
+
+    def send(self, *records, token=None):
+        return self.post("/api/records", {"records": list(records)}, token)
+
+    def save_unfinished(self, value, token=None):
+        return self.post("/api/unfinished", {"set": value}, token)
+
+    def fetch(self, token=None):
+        import json
+        r = self.get("/api/records", token or self.sam)
+        self.assertEqual(r.status, 200, r.body)
+        return json.loads(r.body)
+
+    def ids(self, token=None):
+        return [rec["id"] for rec in self.fetch(token)["records"]]
+
+    def assert_bad_record(self, r, index=0):
+        import json
+        self.assertEqual(r.status, 400, r.body)
+        self.assertEqual(json.loads(r.body), {"error": "bad-record", "index": index})
+
+
+class RecordRoutesAreForLearners(RecordsTestCase):
+    def test_a_new_learner_has_no_records_and_no_unfinished_set(self):
+        self.assertEqual(self.fetch(), {"records": [], "unfinished": None})
+
+    def test_a_helper_gets_403_and_signed_out_gets_401_on_every_route(self):
+        import json
+        self.add_helper("Randy", "correct horse")
+        helper = cookie_from(self.sign_in("Randy", "correct horse"))
+        for token, status, error in ((helper, 403, "wrong-role"), ("not-a-session", 401, "signed-out")):
+            answers = [self.get("/api/records", token), self.send(a_set(), token=token),
+                       self.save_unfinished({"set_id": "x"}, token=token)]
+            for r in answers:
+                self.assertEqual((r.status, json.loads(r.body)), (status, {"error": error}))
+        self.assertEqual(self.fetch(), {"records": [], "unfinished": None})
+
+    def test_record_answers_are_never_cached(self):
+        for r in (self.get("/api/records", self.sam), self.send(a_set()), self.save_unfinished(None)):
+            self.assertEqual(r.headers["cache-control"], "no-store")
+
+
+class StoringRecords(RecordsTestCase):
+    def test_a_finished_set_is_stored_and_handed_back_with_seq_and_received_at(self):
+        import json
+        r = self.send(a_set())
+        self.assertEqual((r.status, json.loads(r.body)), (200, {"stored": 1, "skipped": 0}))
+        [stored] = self.fetch()["records"]
+        self.assertEqual(stored, {**a_set(), "seq": stored["seq"], "received_at": "2027-01-15T08:00:00Z"})
+        self.assertIsInstance(stored["seq"], int)
+
+    def test_a_finished_set_posted_twice_is_stored_once_and_the_second_is_skipped(self):
+        import json
+        self.send(a_set())
+        self.now += 60
+        r = self.send(a_set())
+        self.assertEqual((r.status, json.loads(r.body)), (200, {"stored": 0, "skipped": 1}))
+        [stored] = self.fetch()["records"]
+        self.assertEqual(stored["received_at"], "2027-01-15T08:00:00Z")
+
+    def test_the_same_id_twice_in_one_request_counts_once(self):
+        import json
+        r = self.send(a_set(), a_set())
+        self.assertEqual(json.loads(r.body), {"stored": 1, "skipped": 1})
+        self.assertEqual(len(self.fetch()["records"]), 1)
+
+    def test_records_come_back_in_arrival_order_not_by_their_times(self):
+        later = a_set(id="set-record-later01", at="2026-10-17T09:00:00Z")
+        earlier = a_set(id="set-record-earlier", at="2026-10-01T09:00:00Z")
+        self.send(later)
+        self.send(earlier, an_import())
+        records = self.fetch()["records"]
+        self.assertEqual([rec["id"] for rec in records],
+                         ["set-record-later01", "set-record-earlier", "import-record-0001"])
+        seqs = [rec["seq"] for rec in records]
+        self.assertEqual(seqs, sorted(seqs))
+        self.assertEqual(len(set(seqs)), 3)
+
+    def test_up_to_100_records_go_in_one_request_and_101_is_refused(self):
+        import json
+        many = [a_set(id=f"set-record-{n:06d}") for n in range(101)]
+        r = self.send(*many)
+        self.assertEqual(r.status, 400)
+        self.assertEqual(self.ids(), [])
+        r = self.send(*many[:100])
+        self.assertEqual(json.loads(r.body), {"stored": 100, "skipped": 0})
+
+    def test_an_empty_list_stores_nothing(self):
+        import json
+        self.assertEqual(json.loads(self.send().body), {"stored": 0, "skipped": 0})
+
+    def test_a_body_without_a_list_of_records_is_400(self):
+        for body in ({}, {"records": {}}, [], {"records": "x"}, None):
+            self.assertEqual(self.post("/api/records", body).status, 400, body)
+
+    def test_one_bad_record_refuses_the_whole_request_and_names_its_index(self):
+        bad = a_set(id="short")
+        r = self.send(a_set(id="set-record-good01"), an_import(), bad, a_set(id="set-record-good02"))
+        self.assert_bad_record(r, index=2)
+        self.assertEqual(self.ids(), [])
+
+    def test_a_second_imported_record_is_skipped(self):
+        import json
+        self.send(an_import(id="import-record-0001"))
+        r = self.send(an_import(id="import-record-0002"), a_set())
+        self.assertEqual(json.loads(r.body), {"stored": 1, "skipped": 1})
+        self.assertEqual(self.ids(), ["import-record-0001", "set-record-000001"])
+
+    def test_two_imported_records_in_one_request_keep_only_the_first(self):
+        import json
+        r = self.send(an_import(id="import-record-0001"), an_import(id="import-record-0002"))
+        self.assertEqual(json.loads(r.body), {"stored": 1, "skipped": 1})
+        self.assertEqual(self.ids(), ["import-record-0001"])
+
+    def test_a_learner_cannot_store_a_reset_or_a_move(self):
+        reset = {"id": "reset-record-00001", "kind": "reset", "reset": None,
+                 "at": "2026-10-16T14:05:00Z", "data": {}}
+        move = {"id": "move-record-000001", "kind": "move", "reset": None,
+                "at": "2026-10-16T14:05:00Z", "data": {"to": 5}}
+        for record in (reset, move):
+            self.assert_bad_record(self.send(record))
+            self.assert_bad_record(self.send(a_set(), record), index=1)
+        self.assertEqual(self.ids(), [])
+
+
+def changed(record, **fields):
+    """A copy of a record with fields set; a value of DROP removes the field. `data__x` reaches into data."""
+    import copy
+    record = copy.deepcopy(record)
+    for key, value in fields.items():
+        target, name = (record["data"], key[6:]) if key.startswith("data__") else (record, key)
+        if value is DROP:
+            del target[name]
+        else:
+            target[name] = value
+    return record
+
+
+DROP = object()
+AN_ANSWER = {"q": "q-001", "chosen": "b", "right": True, "at": "2026-10-16T14:01:00.000Z"}
+
+
+def answers_with(**fields):
+    return [changed(AN_ANSWER, **fields)]
+
+
+class RecordShape(RecordsTestCase):
+    """Each rule in the record table, accepted and refused. A bad record is 400 bad-record."""
+
+    def assert_accepted(self, *records):
+        import json
+        for n, record in enumerate(records):
+            with self.subTest(record=record):
+                r = self.send(changed(record, id=f"accepted-record-{n:04d}"))
+                self.assertEqual((r.status, json.loads(r.body)), (200, {"stored": 1, "skipped": 0}))
+
+    def assert_refused(self, *records):
+        for record in records:
+            with self.subTest(record=record):
+                self.assert_bad_record(self.send(record))
+        self.assertEqual(self.ids(), [])
+
+    def test_a_record_is_an_object(self):
+        self.assert_refused([], "set", None, 7)
+
+    def test_id_is_16_to_64_characters_from_letters_digits_underscore_and_dash(self):
+        self.assert_refused(changed(a_set(), id=DROP), changed(a_set(), id=None), changed(a_set(), id=12345678901234567),
+                            changed(a_set(), id="a" * 15), changed(a_set(), id="a" * 65),
+                            changed(a_set(), id="has a space in it!"), changed(a_set(), id="dots.are.not.allowed"),
+                            changed(a_set(), id="accented-letter-é"), changed(a_set(), id="slash/is/not/allowed"))
+        import json
+        for good in ("a" * 16, "Z" * 64, "AZaz09_-AZaz09_-"):
+            r = self.send(changed(a_set(), id=good))
+            self.assertEqual(json.loads(r.body), {"stored": 1, "skipped": 0}, good)
+
+    def test_kind_is_set_reset_move_or_imported(self):
+        self.assert_refused(changed(a_set(), kind=DROP), changed(a_set(), kind="sets"),
+                            changed(a_set(), kind="SET"), changed(a_set(), kind=None))
+
+    def test_reset_is_a_record_id_or_null(self):
+        self.assert_refused(changed(a_set(), reset=DROP), changed(a_set(), reset=7), changed(a_set(), reset=""),
+                            changed(a_set(), reset="short"), changed(a_set(), reset={}))
+        self.assert_accepted(changed(a_set(), reset="reset-record-00001"), changed(a_set(), reset=None))
+
+    def test_at_is_an_iso_8601_utc_time(self):
+        self.assert_refused(*(changed(a_set(), at=value) for value in (
+            DROP, None, 1760623500, "", "yesterday", "2026-10-16", "2026-10-16T14:05:00",
+            "2026-10-16T14:05:00+02:00", "2026-10-16 14:05:00Z", "2026-13-01T00:00:00Z",
+            "2026-02-30T00:00:00Z", "2026-10-16T25:00:00Z", "2026-10-16T14:05:00.Z")))
+        self.assert_accepted(changed(a_set(), at="2026-10-16T14:05:00Z"),
+                             changed(a_set(), at="2026-10-16T14:05:00.123Z"),
+                             changed(a_set(), at="2026-10-16T14:05:00+00:00"))
+
+    def test_data_is_an_object(self):
+        self.assert_refused(changed(a_set(), data=DROP), changed(a_set(), data=None),
+                            changed(a_set(), data=[]), changed(a_set(), data="x"))
+
+    def test_a_record_has_no_other_fields_so_seq_and_received_at_stay_the_servers(self):
+        self.assert_refused(changed(a_set(), seq=1), changed(a_set(), received_at="2026-10-16T14:05:00Z"),
+                            changed(a_set(), extra=True))
+
+    def test_a_set_has_a_string_set_id(self):
+        self.assert_refused(changed(a_set(), data__set_id=DROP), changed(a_set(), data__set_id=7),
+                            changed(a_set(), data__set_id=None), changed(a_set(), data__set_id=""))
+
+    def test_a_set_type_is_day_redo_review_or_test(self):
+        self.assert_refused(changed(a_set(), data__type=DROP), changed(a_set(), data__type="practice"),
+                            changed(a_set(), data__type="Day"), changed(a_set(), data__type=None))
+        self.assert_accepted(a_set(type="day", section=1), a_set(type="redo", section=12),
+                             a_set(type="review", section=None), a_set(type="test", section=None))
+
+    def test_a_section_is_1_to_12_for_day_and_redo_and_null_otherwise(self):
+        self.assert_refused(*(a_set(type=t, section=s) for t in ("day", "redo")
+                              for s in (None, 0, 13, "3", 1.0, 1.5, True)),
+                            changed(a_set(), data__section=DROP),
+                            a_set(type="review", section=3), a_set(type="test", section=1))
+        self.assert_accepted(*(a_set(type=t, section=s) for t in ("day", "redo") for s in (1, 6, 12)))
+
+    def test_started_at_is_an_iso_8601_time(self):
+        self.assert_refused(changed(a_set(), data__started_at=DROP), changed(a_set(), data__started_at=None),
+                            changed(a_set(), data__started_at="this morning"),
+                            changed(a_set(), data__started_at="2026-10-16T14:00:00"))
+
+    def test_answers_are_a_list_of_1_to_50(self):
+        self.assert_refused(changed(a_set(), data__answers=DROP), a_set(answers=[]),
+                            a_set(answers=[AN_ANSWER] * 51), changed(a_set(), data__answers=AN_ANSWER),
+                            changed(a_set(), data__answers=None))
+        self.assert_accepted(a_set(answers=[AN_ANSWER] * 50), a_set(answers=[AN_ANSWER] * 30),
+                             a_set(answers=[AN_ANSWER] * 10))
+
+    def test_each_answer_has_a_string_q_and_chosen_a_boolean_right_and_an_iso_at(self):
+        self.assert_refused(
+            a_set(answers=["q-001"]), a_set(answers=[None]),
+            a_set(answers=answers_with(q=DROP)), a_set(answers=answers_with(q=1)),
+            a_set(answers=answers_with(chosen=DROP)), a_set(answers=answers_with(chosen=2)),
+            a_set(answers=answers_with(right=DROP)), a_set(answers=answers_with(right=1)),
+            a_set(answers=answers_with(right="true")), a_set(answers=answers_with(at=DROP)),
+            a_set(answers=answers_with(at="14:01")), a_set(answers=answers_with(extra=1)),
+            a_set(answers=[AN_ANSWER, changed(AN_ANSWER, right=None)]))
+        self.assert_accepted(a_set(answers=answers_with(right=False, chosen="")))
+
+    def test_set_data_has_no_other_fields(self):
+        self.assert_refused(changed(a_set(), data__score=10))
+
+    def test_an_imported_record_holds_a_state_object(self):
+        self.assert_refused(changed(an_import(), data__state=DROP), changed(an_import(), data__state=None),
+                            changed(an_import(), data__state=[]), changed(an_import(), data__state="{}"),
+                            changed(an_import(), data__other=1))
+        self.assert_accepted(an_import(state={"day": 5, "scores": {"1": 9}, "last": [], "tests": []}))
+
+
+class HelperRecordShape(AccountsTestCase):
+    """Reset and Move records go through the same store a Helper API will call (store_records)."""
+
+    def store(self, *records):
+        from server import db, records as rec
+        conn = db.connect(self.instance)
+        try:
+            return rec.store_records(conn, self.learner, list(records), self.now, kinds=rec.KINDS)
+        finally:
+            conn.close()
+
+    def setUp(self):
+        super().setUp()
+        self.learner = self.add_learner()
+
+    def reset(self, **fields):
+        return changed({"id": "reset-record-00001", "kind": "reset", "reset": None,
+                        "at": "2026-10-16T14:05:00Z", "data": {}}, **fields)
+
+    def move(self, to, **fields):
+        return changed({"id": "move-record-" + str(to).rjust(6, "0"), "kind": "move",
+                        "reset": None, "at": "2026-10-16T14:05:00Z", "data": {"to": to}}, **fields)
+
+    def assert_refused(self, *records):
+        from server import records as rec
+        for record in records:
+            with self.subTest(record=record), self.assertRaises(rec.RecordError):
+                self.store(record)
+
+    def test_a_reset_has_empty_data(self):
+        self.assert_refused(self.reset(data={"to": 1}), self.reset(data=None), self.reset(data=[]))
+        self.assertEqual(self.store(self.reset()), (1, 0))
+
+    def test_a_move_goes_to_1_to_13(self):
+        self.assert_refused(*(self.move(to) for to in (0, 14, "5", 5.0, True, None)),
+                            self.move(5, data={}), self.move(5, data__extra=1))
+        self.assertEqual(self.store(self.move(1), self.move(12), self.move(13)), (3, 0))
+
+
+class UnfinishedSet(RecordsTestCase):
+    PAGE_SHAPE = {"set_id": "set-000001", "kind": "day", "dayNum": 3, "i": 2, "answered": 2,
+                  "items": [{"id": "q-001", "options": ["b", "a", "c"], "chosen": "b"}]}
+
+    def unfinished(self, token=None):
+        return self.fetch(token)["unfinished"]
+
+    def test_it_is_handed_back_exactly_as_sent(self):
+        r = self.save_unfinished(self.PAGE_SHAPE)
+        self.assertEqual(r.status, 204)
+        self.assertEqual(self.unfinished(), self.PAGE_SHAPE)
+
+    def test_the_newest_one_wins(self):
+        self.save_unfinished({"set_id": "set-000001", "i": 1})
+        self.now += 60
+        self.save_unfinished({"set_id": "set-000001", "i": 2})
+        self.save_unfinished({"set_id": "set-000002", "i": 0})
+        self.assertEqual(self.unfinished(), {"set_id": "set-000002", "i": 0})
+
+    def test_null_clears_it(self):
+        self.save_unfinished(self.PAGE_SHAPE)
+        self.assertEqual(self.save_unfinished(None).status, 204)
+        self.assertIsNone(self.unfinished())
+
+    def test_it_must_be_an_object_with_a_string_set_id_or_null(self):
+        import json
+        self.save_unfinished(self.PAGE_SHAPE)
+        for body in ({}, {"set": []}, {"set": "x"}, {"set": 1}, {"set": {}}, {"set": {"set_id": 7}},
+                     {"set": {"set_id": None}}, [], None, {"unfinished": self.PAGE_SHAPE}):
+            r = self.post("/api/unfinished", body)
+            self.assertEqual((r.status, json.loads(r.body)), (400, {"error": "bad-set"}), body)
+        self.assertEqual(self.unfinished(), self.PAGE_SHAPE)
+
+    def test_its_json_may_be_16_kb_and_no_more(self):
+        # {"set_id":"x","pad":""} is 23 bytes written compactly.
+        self.assertEqual(self.save_unfinished({"set_id": "x", "pad": "a" * (16 * 1024 - 23)}).status, 204)
+        r = self.save_unfinished({"set_id": "y", "pad": "a" * (16 * 1024 - 22)})
+        self.assertEqual(r.status, 400)
+        self.assertEqual(self.unfinished()["set_id"], "x")
+
+    def test_it_is_dropped_when_its_finished_set_arrives(self):
+        self.save_unfinished(dict(self.PAGE_SHAPE, set_id="set-000007"))
+        self.send(a_set(set_id="set-000007"))
+        self.assertIsNone(self.unfinished())
+
+    def test_a_finished_set_with_another_set_id_leaves_it_in_place(self):
+        self.save_unfinished(dict(self.PAGE_SHAPE, set_id="set-000008"))
+        self.send(a_set(set_id="set-000007"), an_import())
+        self.assertEqual(self.unfinished()["set_id"], "set-000008")
+
+    def test_a_finished_set_sent_again_still_drops_an_unfinished_one_saved_since(self):
+        self.send(a_set(set_id="set-000007"))
+        self.save_unfinished(dict(self.PAGE_SHAPE, set_id="set-000007"))
+        self.send(a_set(set_id="set-000007"))
+        self.assertIsNone(self.unfinished())
+
+    def test_a_bad_request_leaves_it_in_place(self):
+        self.save_unfinished(dict(self.PAGE_SHAPE, set_id="set-000007"))
+        self.assert_bad_record(self.send(a_set(set_id="set-000007"), a_set(id="short")), index=1)
+        self.assertEqual(self.unfinished()["set_id"], "set-000007")
+
+
+class RecordsAreKeptApartPerLearner(RecordsTestCase):
+    def test_each_learner_gets_back_only_their_own_records_and_unfinished_set(self):
+        alex = self.learner_token("Alex")
+        self.send(a_set(id="sams-record-000001"))
+        self.send(a_set(id="alexs-record-00001"), token=alex)
+        self.save_unfinished({"set_id": "sams-unfinished"})
+        self.save_unfinished({"set_id": "alexs-unfinished"}, token=alex)
+        self.assertEqual(self.ids(), ["sams-record-000001"])
+        self.assertEqual(self.ids(alex), ["alexs-record-00001"])
+        self.assertEqual(self.fetch()["unfinished"], {"set_id": "sams-unfinished"})
+        self.assertEqual(self.fetch(alex)["unfinished"], {"set_id": "alexs-unfinished"})
+
+    def test_one_learners_imported_record_does_not_block_anothers(self):
+        alex = self.learner_token("Alex")
+        self.send(an_import(id="sams-import-000001"))
+        self.send(an_import(id="alexs-import-00001"), token=alex)
+        self.assertEqual(self.ids(alex), ["alexs-import-00001"])
+
+    def test_deleting_a_learner_leaves_no_records_or_unfinished_set_behind(self):
+        from server import db
+        alex = self.learner_token("Alex")
+        self.send(a_set(), an_import())
+        self.save_unfinished({"set_id": "set-000002"})
+        self.send(a_set(id="alexs-record-00001"), token=alex)
+        conn = db.connect(self.instance)
+        try:
+            conn.execute("DELETE FROM accounts WHERE name = 'Sam'")
+            left = conn.execute("SELECT account_id FROM records UNION ALL "
+                                "SELECT account_id FROM unfinished_sets").fetchall()
+            alex_id = conn.execute("SELECT id FROM accounts WHERE name = 'Alex'").fetchone()[0]
+        finally:
+            conn.close()
+        self.assertEqual([row[0] for row in left], [alex_id])
 
 
 NO_HELPER_LINE = "No Helper account exists. Run: python -m server.manage add <name>"
