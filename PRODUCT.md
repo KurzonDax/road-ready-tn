@@ -10,9 +10,9 @@ web
 
 The primary user is one specific learner preparing for the Tennessee Class D driver license knowledge test. They read literally, find tests stressful, and do best with one thing on screen at a time. They study on their own, without anyone helping, on a phone or a laptop.
 
-After that learner, the app is meant to be shared publicly with any Tennessee permit learner who wants a structured path instead of a question dump, especially those with similar needs.
+After that learner, the app is for any Tennessee permit learner who wants a structured path instead of a question dump, especially those with similar needs. The repo is public so that others can run their own Instance. An Instance is private to the people its Helper gives access to.
 
-A second, minor audience is whoever manages the device. They have hidden URL controls (`#restart`, `#sectionN`) but are never addressed by anything on the page.
+A second, minor audience is the Helper, who sets the app up for a Learner and manages Learners from the Helper's view. There a Helper adds, renames and deletes Learners, gives a Learner a new password, follows each Learner's Progress and History, and makes a Reset or a Move. Nothing on the Learner's pages is addressed to the Helper.
 
 ## Product Purpose
 
@@ -26,26 +26,26 @@ A calm, guided path rather than a question bank. There's no menu, no topic list,
 
 ## Operating Context
 
-- Short, self-directed study sittings on a phone or laptop with no helper present. The app has to explain itself without outside instruction.
-- Distributed as one self-contained file (`dist/index.html`) that works offline and needs no server. It can also be served from any static host.
-- Progress is saved in the browser on that device only, under the key `tn-permit-daily-v1`. There are no accounts and no sync, so switching devices starts over.
+- Short, self-directed Study sessions on a phone or laptop with no Helper present. The app has to explain itself without outside instruction.
+- Served by an Instance: a small server (`python -m server`) in one container, behind HTTPS. The page can be installed as a Home Screen app, and after one visit online it opens and works offline. Finished Sets wait on the device and are sent when it is back online. Signing in and signing out need a connection.
+- Each Learner and each Helper has an account with a name and a password. Progress is stored on the Instance, so it follows the Learner across devices. Each device keeps a working copy of the signed-in Learner's records.
 - The source of truth is the manual PDF from tn.gov/safety (edition dated July 1, 2022). When the app and the current manual disagree, the manual is right.
 
 ## Capabilities and Constraints
 
 - **Flow:** 12 sections of 10 questions each, easiest first the first time through. Then Review, 10 missed questions at a time. Then Practice tests of 30 questions drawn from all 120.
-- **Scoring:** a finished section is colored by its latest score: green for 10 of 10, yellow for 7 to 9, red for under 7. Tapping a finished section redoes it in a new order. Getting a missed question right on a redo removes it from review.
+- **Scoring:** every finished section shows green on the progress track, whatever its score. "See your section scores" on the home screen lists each finished section's latest score, with a button to do that section again in a new order. Getting a missed question right on a redo removes it from review.
 - **Order:** redos and review shuffle the questions. Answer choices are shuffled every time.
 - **Content:** 120 app questions chosen from a bank of 803 (`data/questions.json`, `data/sections.json`), including all 29 of the manual's sample questions. Each has exactly one right answer and three wrong ones, an explanation, a page, and a quote under 25 words. Sign or color pictures appear only when they don't give the answer away.
-- **Stack:** a single HTML page (`src/app.html`) with inline styles and script. `build.py` validates the data and writes the page (`dist/index.html`), its questions (`dist/questions.json`, fetched when the page starts) and the inline script's CSP hash (`dist/csp.json`). Tests are in Python (`tests/`), and the browser test uses Playwright.
-- **Fixed:** question ids and the saved progress key never change, because progress is keyed by them.
+- **Stack:** a single HTML page (`src/app.html`) with inline styles and script, used by both the Learner and the Helper. `build.py` validates the data and writes the page (`dist/index.html`), its questions (`dist/questions.json`, fetched when the page starts and served only to someone signed in), the inline script's CSP hash (`dist/csp.json`), the Home Screen files and the service worker (`dist/sw.js`). The server (`server/`) is the Python standard library plus waitress (vendored in `vendor/`), with SQLite in the Instance folder. It stores accounts and each Learner's records, and the page works out Progress from those records (`docs/adr/0001-server-stores-records-page-works-out-progress.md`). Tests are in Python (`tests/`), and the browser test uses Playwright.
+- **Fixed:** question ids never change, because the Learner's records refer to them. The old progress key `tn-permit-daily-v1` is only read, once, to import progress saved before accounts.
 - **Terminology:** "Section", "Review", "Practice test", "Ready for the test".
 
 ## Brand Commitments
 
 - Name: **Road Ready TN**.
 - Voice: plain, calm, literal. Use "you", active voice, short words, and complete rules. Rules with conditions state both cases. No hedging, shorthand, or telegraphic fragments. The full standard is in `docs/QUESTIONS.md`.
-- Every word on the page is addressed to the learner. Instructions for helpers belong outside the app.
+- Every word on the Learner's pages is addressed to the Learner. The Helper's view speaks to the Helper in the same plain style. Instructions for running an Instance belong outside the app (`docs/self-hosting.md`).
 - Not affiliated with the Tennessee Department of Safety and Homeland Security, and must never imply that it is.
 
 ## Evidence on Hand
@@ -61,7 +61,7 @@ A calm, guided path rather than a question bank. There's no menu, no topic list,
 2. **Literal and complete.** Every sentence has to be correct read word for word. A clipped or hedged answer counts as a wrong answer.
 3. **Calm over pressure.** No timers, streaks, or alarming feedback. Scores inform; they don't punish. The ready bar sits above the real test's to absorb nerves.
 4. **The manual is the authority.** Every fact traces to a quoted, page-cited line. Ambiguous facts are left out, not guessed.
-5. **Works alone, anywhere.** One offline file, no account, no helper required.
+5. **Works alone, anywhere.** The Learner studies alone, online or offline, with nothing to set up. No Helper has to be present.
 
 ## Accessibility & Inclusion
 
