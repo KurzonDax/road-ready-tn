@@ -5,7 +5,7 @@
 //   use the network's answer and keep a copy in rrtn-pages, else use the kept copy.
 // - Fonts, icons and the manifest: cache first, in rrtn-static-<version>.
 // - Everything else, every /api/ request among it, goes to the network and is never kept.
-const VERSION = 'df2e6a852088';
+const VERSION = '9474ce1339f7';
 const STATIC_FILES = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2", "fonts/overpass/overpass-variable.woff2", "icon-192.png", "icon-512.png", "manifest.webmanifest"];
 const PAGES = 'rrtn-pages';
 const STATIC = 'rrtn-static-' + VERSION;

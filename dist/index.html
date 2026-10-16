@@ -206,18 +206,20 @@ let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.jso
 const TEST_LEN = 30, READY_SCORE = 27, READY_STREAK = 3, PASS_SCORE = 24;
 // The device copy of the signed-in Learner, saved under `rrtn-learner-<account id>`:
 // {records: what the server last handed back, pending: finished Sets not yet stored on the
-// server, unfinished: the Set on screen, so leaving the page doesn't lose answers,
-// imported_done: true once this device has made the Learner's Imported record}.
+// server, unfinished: the Set on screen, so leaving the page doesn't lose answers}.
 let copy = null, copyFor = null; // the copy, and the account id it belongs to
 const copyKey = id => `rrtn-learner-${id}`;
 // The saved state from before accounts. The page only reads it, for the one-time import; it never writes or deletes it.
 const OLD_KEY = 'tn-permit-daily-v1';
+// Set once this device has made an Imported record. It belongs to the device, not to a Learner, so
+// it outlasts sign-out and only the first Learner to sign in here gets the import (decision #7).
+const IMPORTED_KEY = 'rrtn-old-progress-imported';
 const canSave = (() => { try { localStorage.setItem('rrtn-check', '1'); localStorage.removeItem('rrtn-check'); return true; } catch (e) { return false; } })();
 function readCopy(id) {
   try {
     const c = JSON.parse(localStorage.getItem(copyKey(id)));
     if (c && Array.isArray(c.records) && Array.isArray(c.pending)) {
-      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null, imported_done: c.imported_done === true };
+      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null };
     }
   } catch (e) {}
   return null;
@@ -696,7 +698,7 @@ function begin(data) {
 // records are sent, and the server's records replace the copy's (Resets and Moves arrive this
 // way). A first open on this device waits for the server.
 async function openLearner() {
-  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null, imported_done: false };
+  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null };
   copy = mine;
   copyFor = me.id;
   unfinishedUnsent = false;
@@ -730,12 +732,14 @@ async function openLearner() {
 // The one-time import: progress saved in this browser before accounts becomes the Learner's
 // Imported record, if the account has no records yet and this device hasn't imported before.
 function importOldProgress() {
-  if (copy.imported_done || copyRecords().length) return false;
   let state;
-  try { state = JSON.parse(localStorage.getItem(OLD_KEY)); } catch (e) { return false; }
+  try {
+    if (localStorage.getItem(IMPORTED_KEY) || copyRecords().length) return false;
+    state = JSON.parse(localStorage.getItem(OLD_KEY));
+  } catch (e) { return false; }
   if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
   copy.pending.push({ id: crypto.randomUUID(), kind: 'imported', reset: null, at: new Date().toISOString(), data: { state } });
-  copy.imported_done = true;
+  try { localStorage.setItem(IMPORTED_KEY, '1'); } catch (e) {}
   return true;
 }
 function couldNotLoad() {

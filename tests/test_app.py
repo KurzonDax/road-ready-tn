@@ -1384,8 +1384,6 @@ def check_offline_and_sync(browser, inst):
     got = wait_until(lambda: db_state(inst, ash)[0])
     check(len(got) == 1 and got[0]["kind"] == "imported" and got[0]["data"] == {"state": old_state},
           "the old progress becomes one imported record holding the old saved state", got)
-    check(json.loads(local_item(pg, copy_key(ash))).get("imported_done") is True,
-          "the device copy remembers that the import is done")
     reload(pg)
     check(h1(pg) == "Section 5 of 12", "the imported progress stays after a reload")
 
@@ -1425,6 +1423,17 @@ def check_offline_and_sync(browser, inst):
     calls = [c for c in pg.evaluate("window.oldKeyCalls") if c != "getItem"]
     check(calls == [], f"the page never writes or deletes tn-permit-daily-v1 (calls: {calls})")
     check(local_item(pg, OLD_KEY) == old, "the old saved state under tn-permit-daily-v1 is unchanged")
+
+    # The device remembers the import is done, so a second Learner with no records gets none.
+    pg.get_by_role("button", name="Sign out").click()
+    pg.get_by_role("button", name="Yes, sign out").click()
+    pg.wait_for_selector("#signInForm")
+    cy = inst.add_learner("Cy", "second import password")
+    sign_in(pg, "Cy", "second import password")
+    check(h1(pg) == "Section 1 of 12", "a second Learner signing in on that device starts at Section 1", h1(pg))
+    time.sleep(0.5)
+    imports = [r for body in posts for r in body["records"] if r["kind"] == "imported"]
+    check(len(imports) == 1 and db_state(inst, cy)[0] == [], "and the old progress is not imported for them", imports)
     ctx.close()
 
     print("\n[an import that has to wait]")
