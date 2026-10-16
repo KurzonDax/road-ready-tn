@@ -3,16 +3,20 @@
 
 Needs Playwright with Chromium:  pip install playwright && playwright install chromium
 Run after building:              python3 build.py && python3 tests/test_app.py
+Before committing, also run:     python3 tests/check_dist.py  (fails if dist/ is out of date)
 
 Covers the whole path the student takes: all 12 sections, redoing a section,
 section scores, review of missed questions, practice tests, the "ready" screen,
 the hidden #restart / #sectionN links, saving progress across a reload, picking
-up a half-finished section, and the phone layout.
+up a half-finished section, and the phone layout. The page is served over HTTP
+with the script-src hash from dist/csp.json, so a wrong hash stops the page, and
+one run checks the sentence shown when questions.json can't be loaded.
 
 Set CHROMIUM_PATH to use an installed Chromium instead of Playwright's download.
 """
 import functools
 import http.server
+import json
 import os
 import pathlib
 import threading
@@ -30,9 +34,20 @@ def check(cond, msg):
         failures.append(msg)
 
 
+class Handler(http.server.SimpleHTTPRequestHandler):
+    """Serve dist/ with only the page's own inline script allowed, as the Instance does."""
+    csp = "script-src '" + json.loads((DIST / "csp.json").read_text())["script"] + "'"
+
+    def end_headers(self):
+        self.send_header("Content-Security-Policy", self.csp)
+        super().end_headers()
+
+    def log_message(self, *a):
+        pass
+
+
 def serve():
-    handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=str(DIST))
-    handler.log_message = lambda *a: None
+    handler = functools.partial(Handler, directory=str(DIST))
     srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), handler)
     threading.Thread(target=srv.serve_forever, daemon=True).start()
     return srv, f"http://127.0.0.1:{srv.server_address[1]}/index.html"
@@ -65,6 +80,17 @@ def answer_one(pg):
             return
 
 
+def open_page(pg, url):
+    """Open the page and wait until it has its questions and shows something."""
+    pg.goto(url)
+    pg.wait_for_selector("#stage section")
+
+
+def reload(pg):
+    pg.reload()
+    pg.wait_for_selector("#stage section")
+
+
 def h1(pg):
     return pg.inner_text(".home h1")
 
@@ -75,10 +101,20 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
 
+        print("\n[questions.json missing]")
+        ctx = browser.new_context()
+        ctx.route("**/questions.json", lambda route: route.fulfill(status=404, body="Not found"))
+        pg = ctx.new_page()
+        open_page(pg, url)
+        check(pg.inner_text("#stage") ==
+              "The questions could not be loaded. Check your connection and open the app again.",
+              "with questions.json missing, the page says the questions could not be loaded")
+        ctx.close()
+
         # A real phone lays the page out at its own width, not a shrunken desktop page.
         phone = browser.new_context(viewport={"width": 390, "height": 844}, is_mobile=True, has_touch=True)
         pg = phone.new_page()
-        pg.goto(url)
+        open_page(pg, url)
         print("\n[phone]")
         check(pg.evaluate("document.compatMode") == "CSS1Compat", "page runs in standards mode")
         check(pg.evaluate("innerWidth") == 390, "phone lays the page out at the phone's width")
@@ -95,7 +131,8 @@ def main():
             ctx = browser.new_context(viewport={"width": 400, "height": 900}, color_scheme=scheme)
             pg = ctx.new_page()
             pg.on("pageerror", lambda e: errors.append(str(e)))
-            pg.goto(url)
+            pg.on("console", lambda m: errors.append(m.text) if "Content Security Policy" in m.text else None)
+            open_page(pg, url)
 
             check(h1(pg) == "Section 1 of 12", "starts at Section 1 of 12")
             check(not pg.query_selector("details") and "parent" not in pg.inner_text("body").lower(),
@@ -138,7 +175,7 @@ def main():
             pg.click("#quitBtn")
             check(pg.query_selector("#resumeBtn") is not None and "answered 2 of 10" in pg.inner_text(".home"),
                   "stopping partway shows how far you got")
-            pg.reload()
+            reload(pg)
             check(pg.query_selector("#resumeBtn") is not None, "a half-finished section survives a reload")
             pg.click("#resumeBtn")
             check(pg.evaluate("run.i") == 1 and pg.query_selector("#nextBtn") is not None,
@@ -150,7 +187,7 @@ def main():
             pg.click("#homeBtn")
 
             # Progress survives a reload.
-            pg.reload()
+            reload(pg)
             check(h1(pg) == "Section 5 of 12", "progress is saved across a reload")
 
             # Finish the rest, missing 2 in each.
@@ -174,7 +211,7 @@ def main():
             # Hidden links.
             pg.goto(url + "#section5")
             check(h1(pg) == "Section 5 of 12", "#section5 jumps to Section 5")
-            pg.goto(url + "?r=1#restart")
+            open_page(pg, url + "?r=1#restart")
             check("Start over" in pg.inner_text("h2"), "#restart asks before erasing")
             pg.click("#yes")
             check(h1(pg) == "Section 1 of 12", "restart goes back to Section 1")

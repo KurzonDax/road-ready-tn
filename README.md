@@ -27,7 +27,7 @@ The 120 questions cover the rules the test asks about, including all 29 of the m
 
 ## Using it
 
-Open `dist/index.html` in any browser. It's one self-contained file that needs no server, and it works offline (fonts fall back to system fonts). To put it online, serve `dist/` from any static host, such as GitHub Pages.
+Serve the `dist/` folder over HTTP, for example `python3 -m http.server -d dist`, and open the address it prints. The page fetches its questions from `dist/questions.json`, so opening `dist/index.html` straight from disk shows "The questions could not be loaded" instead.
 
 ## Project layout
 
@@ -36,13 +36,17 @@ data/
   questions.json         803 questions: answer, wrong answers, explanation, manual page and quote
   sections.json          the 12 study sections (10 question ids each)
   manual/sections-b-c.txt  text of manual Sections B and C, marked by printed page
-src/app.html             the page (styles and script), with a __DATA__ placeholder
-build.py                 checks the data, then writes dist/index.html
-dist/index.html          the built app
+src/app.html             the page (styles and script); it fetches questions.json when it starts
+build.py                 checks the data, then writes dist/
+dist/index.html          the built page, with no questions in it
+dist/questions.json      the 120 app questions and 12 sections the page loads
+dist/csp.json            SHA-256 hash of the page's one inline script, for the server's CSP header
 tests/
   validate_data.py       data rules (also run by build.py)
   check_quotes.py        every manual_quote appears on its page
   test_app.py            clicks through the whole app in a headless browser
+  test_build.py          what build.py writes and refuses
+  check_dist.py          fails if the committed dist/ is out of date
 tools/extract_manual.py  rebuilds the manual text from the PDF
 docs/
   QUESTIONS.md           how questions are written, checked, and worded
@@ -53,7 +57,8 @@ docs/
 
 1. Edit `data/questions.json` or `data/sections.json`. Keep ids unchanged, since saved progress is keyed by id.
 2. Run `python3 build.py`. It refuses to build if a rule in `tests/validate_data.py` is broken.
-3. Run `python3 tests/check_quotes.py` and `python3 tests/test_app.py`.
+3. Run `python3 tests/check_quotes.py`, `python3 tests/test_build.py` and `python3 tests/test_app.py`.
+4. Before committing, run `python3 tests/check_dist.py`. It fails if `dist/` doesn't match a fresh build.
 
 The browser test needs Playwright: `pip install playwright && playwright install chromium`. To use an installed Chromium instead, set `CHROMIUM_PATH` (for example `CHROMIUM_PATH=/usr/bin/chromium`). Rebuilding the manual text needs `pdftotext` (poppler-utils) and the manual PDF from [tn.gov/safety](https://www.tn.gov/safety).
 
