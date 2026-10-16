@@ -206,7 +206,8 @@ let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.jso
 const TEST_LEN = 30, READY_SCORE = 27, READY_STREAK = 3, PASS_SCORE = 24;
 // The device copy of the signed-in Learner, saved under `rrtn-learner-<account id>`:
 // {records: what the server last handed back, pending: finished Sets not yet stored on the
-// server, unfinished: the Set on screen, so leaving the page doesn't lose answers}.
+// server, unfinished: the Set on screen, so leaving the page doesn't lose answers, rejected:
+// records the server refused as badly shaped, kept aside so they don't hold back the others}.
 let copy = null, copyFor = null; // the copy, and the account id it belongs to
 const copyKey = id => `rrtn-learner-${id}`;
 // The saved state from before accounts. The page only reads it, for the one-time import; it never writes or deletes it.
@@ -219,7 +220,8 @@ function readCopy(id) {
   try {
     const c = JSON.parse(localStorage.getItem(copyKey(id)));
     if (c && Array.isArray(c.records) && Array.isArray(c.pending)) {
-      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null };
+      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null,
+        rejected: Array.isArray(c.rejected) ? c.rejected : [] };
     }
   } catch (e) {}
   return null;
@@ -371,9 +373,11 @@ async function sendWaiting() {
     } catch (e) { return; }
     if (copy !== mine) return;
     if (body && body.error === 'bad-record' && batch[body.index]) {
-      // The server will never take a record of that shape; keeping it would hold back every one after it.
-      const bad = batch[body.index].id;
-      mine.pending = mine.pending.filter(x => x.id !== bad);
+      // The server will never take a record of that shape; leaving it waiting would hold back every
+      // one after it. It is kept aside rather than deleted.
+      const bad = batch[body.index];
+      mine.pending = mine.pending.filter(x => x.id !== bad.id);
+      mine.rejected.push(bad);
       saveCopy();
       continue;
     }
@@ -723,7 +727,7 @@ function begin(data) {
 // records are sent, and the server's records replace the copy's (Resets and Moves arrive this
 // way). A first open on this device waits for the server.
 async function openLearner() {
-  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null };
+  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null, rejected: [] };
   copy = mine;
   copyFor = me.id;
   unfinishedUnsent = false;

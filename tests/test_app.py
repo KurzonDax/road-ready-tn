@@ -1374,7 +1374,12 @@ def check_offline_and_sync(browser, inst):
     check(got and [r["id"] for r in got[1:]] == [t["id"] for t in tests],
           "a long wait is sent in several requests, all stored once and in order", len(got or []))
     left = wait_until(lambda: json.loads(local_item(pg, copy_key(kit)))["pending"] == [], 5)
-    check(left, "a record the server refuses is dropped, so it doesn't hold back the others")
+    check(left, "a record the server refuses no longer waits, so it doesn't hold back the others")
+    kept = json.loads(local_item(pg, copy_key(kit))).get("rejected")
+    check(kept == [bad], "but it is kept aside in the device copy, not deleted", kept)
+    reload(pg)
+    kept = json.loads(local_item(pg, copy_key(kit))).get("rejected")
+    check(kept == [bad] and h1(pg) == "Section 2 of 12", "and stays kept aside when the app opens again", kept)
     ctx.close()
 
     print("\n[an unfinished Set on two devices]")
