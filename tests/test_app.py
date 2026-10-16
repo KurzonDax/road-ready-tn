@@ -22,7 +22,9 @@ Set finished offline sent once on reconnecting, a long wait sent in parts, an
 unfinished Set continued on a second device (the newest wins), the one-time import
 of the old tn-permit-daily-v1 state (once, never for a Helper, the old key left
 alone), and sign-out refusing offline, sending waiting records first and deleting
-that Learner's device copy. Also the Home Screen pieces: the
+that Learner's device copy. The Helper's view: studySessions(), missedMost() and sectionHistory()
+on fixtures, the wording of where a Learner is, and, on a 375 px wide phone, the list of
+Learners and one Learner's page with nothing scrolling sideways. Also the Home Screen pieces: the
 manifest, the icon sizes, the page head, the safe-area padding, and that the page
 loads its fonts and everything else from its own origin. The service worker, on an
 Instance run from a copy of the project so its dist/ can be rebuilt: opening the
@@ -562,6 +564,265 @@ def check_progress_from(browser, inst):
     ctx.close()
 
 
+def timed_set(n, kind, section, answers, reset=None, seq=None):
+    """A finished Set whose answers each have their own time. `answers` is a list of
+    (question id, chosen, right, minute); the Set starts at its first answer and finishes at its last."""
+    minutes = [a[3] for a in answers]
+    return record(n, "set", max(minutes), {
+        "set_id": f"set-{n}", "type": kind, "section": section, "started_at": at(min(minutes)),
+        "answers": [{"q": q, "chosen": chosen, "right": right, "at": at(m)} for q, chosen, right, m in answers]},
+        reset, seq)
+
+
+def check_helper_helpers(browser, inst):
+    """The Helper's view's pure helpers on fixtures, run in the page itself: studySessions(),
+    missedMost(), sectionHistory(), and the wording of where a Learner is."""
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, *HELPER)
+    ids = pg.evaluate("Object.fromEntries(DAYS.map(d => [d.day, QS.filter(q => q.day === d.day).map(q => q.id)]))")
+    qs = pg.evaluate("QS.map(q => q.id)")
+    s1, s2, s4 = ids["1"], ids["2"], ids["4"]
+
+    def run(fn, arg):
+        return pg.evaluate(f"x => {fn}(x)", arg)
+
+    print("\n[Helper's view: Study sessions]")
+    # A gap of 29 minutes keeps one Study session; a gap of 31 starts a new one. A Set whose
+    # answers fall in two Study sessions counts as finished in the later one.
+    got = run("studySessions", [
+        timed_set(1, "day", 1, [(s1[0], "x", True, 0), (s1[1], "x", True, 1), (s1[2], "x", False, 2)], seq=1),
+        timed_set(2, "day", 2, [(s2[0], "x", True, 31), (s2[1], "x", True, 32)], seq=2),
+        timed_set(3, "redo", 1, [(s1[0], "x", True, 63)], seq=3),
+        timed_set(4, "review", None, [(s1[2], "x", True, 100), (s1[2], "x", True, 200)], seq=4)])
+    check(got == [
+        {"kind": "session", "start": at(200), "end": at(200), "sets": [{"type": "review", "section": None, "right": 2, "of": 2}]},
+        {"kind": "session", "start": at(100), "end": at(100), "sets": []},
+        {"kind": "session", "start": at(63), "end": at(63), "sets": [{"type": "redo", "section": 1, "right": 1, "of": 1}]},
+        {"kind": "session", "start": at(0), "end": at(32), "sets": [{"type": "day", "section": 1, "right": 2, "of": 3},
+                                                                    {"type": "day", "section": 2, "right": 2, "of": 2}]}],
+        "Study sessions, newest first, split by a 31-minute gap but not by a 29-minute one", got)
+    check(run("studySessions", []) == [], "no records is no Study sessions")
+
+    # A Reset and Moves are lines of their own; Study sessions cover the whole History while
+    # Progress counts only from after the Reset.
+    reset = "record-000000000002"
+    history = [timed_set(1, "day", 1, [(s1[0], "x", True, 0)], seq=1), record(2, "reset", 40, {}, seq=2),
+               record(3, "move", 50, {"to": 4}, reset=reset, seq=3),
+               timed_set(4, "day", 4, [(s4[0], "x", False, 80)], reset=reset, seq=4),
+               record(5, "move", 90, {"to": 13}, reset=reset, seq=5)]
+    got = run("studySessions", history)
+    check(got == [{"kind": "move", "at": at(90), "to": 13},
+                  {"kind": "session", "start": at(80), "end": at(80), "sets": [{"type": "day", "section": 4, "right": 0, "of": 1}]},
+                  {"kind": "move", "at": at(50), "to": 4},
+                  {"kind": "reset", "at": at(40)},
+                  {"kind": "session", "start": at(0), "end": at(0), "sets": [{"type": "day", "section": 1, "right": 1, "of": 1}]}],
+          "Study sessions keep the Sets from before a Reset, with the Reset and each Move as its own line", got)
+    got = run("progressFrom", history)
+    check(got == {"day": 13, "last": {s4[0]: False}, "scores": {"4": 0}, "tests": []},
+          "while Progress counts only the records after the Reset", got)
+    got = pg.evaluate("h => studySessions(h).map(historyLine)", history)
+    check(got[0] == "Moved to Review and Practice tests" and got[2] == "Moved to Section 4"
+          and got[3] == "Progress reset by a Helper",
+          "a Move and a Reset are worded as decided", got)
+
+    print("\n[Helper's view: Questions missed most]")
+    # Since the Reset: qs[0] missed 4 of 5, qs[1] 3 of 3, qs[2] 3 of 6, qs[3] to qs[10] 2 of 2,
+    # qs[11] once. Before it, qs[11] and qs[12] were missed many times.
+    reset = "record-000000000001"
+    plan = {qs[0]: ["W1", "W1", "W2", "W1", None], qs[1]: ["W3"] * 3, qs[2]: ["W4", "W5", "W5", None, None, None],
+            **{q: ["X", "X"] for q in qs[3:11]}, qs[11]: ["Y", None]}
+    recs = [timed_set(90, "review", None, [(qs[11], "Y", False, m) for m in range(5)]
+                      + [(qs[12], "Z", False, m) for m in range(3)], seq=0),
+            record(1, "reset", 10, {}, seq=1)]
+    for n, (q, picks) in enumerate(plan.items(), start=2):
+        recs.append(timed_set(n, "review", None, [(q, c or "right", c is None, 20 + n + i) for i, c in enumerate(picks)],
+                              reset=reset, seq=n))
+    got = run("missedMost", recs)
+    want = [{"q": qs[0], "missed": 4, "answered": 5, "wrong": "W1"},
+            {"q": qs[1], "missed": 3, "answered": 3, "wrong": "W3"},
+            {"q": qs[2], "missed": 3, "answered": 6, "wrong": "W5"}] + \
+           [{"q": q, "missed": 2, "answered": 2, "wrong": "X"} for q in qs[3:10]]
+    check(got == want, "Questions missed most: most misses first, then fewer answers, then path order; "
+                       "at most 10; only since the latest Reset; none missed only once", got)
+    check(run("missedMost", recs[:2]) == [], "with only answers from before the Reset, nothing is listed")
+
+    print("\n[Helper's view: Section history]")
+    reset = "record-000000000002"
+    got = run("sectionHistory", [
+        timed_set(1, "day", 1, [(s1[0], "x", True, 0), (s1[1], "x", False, 1)], seq=1), record(2, "reset", 5, {}, seq=2),
+        timed_set(3, "day", 1, [(s1[0], "x", False, 10), (s1[1], "x", True, 11)], reset=reset, seq=3),
+        timed_set(4, "redo", 1, [(s1[0], "x", True, 20), (s1[1], "x", True, 21)], reset=reset, seq=4),
+        timed_set(5, "review", None, [(s1[0], "x", True, 30)], reset=reset, seq=5),
+        timed_set(6, "day", 2, [(s2[0], "x", True, 40)], reset=reset, seq=6)])
+    want = [{"section": 1, "sets": [{"at": at(21), "right": 2, "of": 2}, {"at": at(11), "right": 1, "of": 2}]},
+            {"section": 2, "sets": [{"at": at(40), "right": 1, "of": 1}]}] + \
+           [{"section": n, "sets": []} for n in range(3, 13)]
+    check(got == want, "sectionHistory lists every Section's Sets since the Reset, newest first", got)
+
+    print("\n[Helper's view: wording]")
+    review = [(q, "x", False, 20) for q in s1 + ids["2"][:4]]
+    tests_all = s1 + s2 + ids["3"]
+
+    def practice(n, minute, right):
+        return timed_set(n, "test", None, [(q, "x", i < right, minute) for i, q in enumerate(tests_all)], seq=n)
+
+    for records, want in (
+            ([record(1, "move", 10, {"to": 5}, seq=1)], "Section 5 of 12"),
+            ([record(1, "move", 10, {"to": 13}, seq=1), timed_set(2, "review", None, review, seq=2)],
+             "Review: 14 questions left"),
+            ([record(1, "move", 10, {"to": 13}, seq=1), timed_set(2, "review", None, review[:1], seq=2)],
+             "Review: 1 question left"),
+            ([record(1, "move", 10, {"to": 13}, seq=1), practice(2, 20, 30), practice(3, 30, 30)],
+             "Practice tests: 2 of 3 in a row"),
+            ([record(1, "move", 10, {"to": 13}, seq=1), practice(2, 20, 28), practice(3, 30, 27), practice(4, 40, 29)],
+             "Ready for the test")):
+        got = pg.evaluate("r => whereNow(progressFrom(r))", records)
+        check(got == want, f"where the Learner is reads {want!r}", got)
+
+    def unfinished(kind, day, n, i, answered):
+        return {"kind": kind, "dayNum": day, "i": i, "answered": answered, "set_id": "u", "started_at": at(0),
+                "items": [{"id": qs[k], "options": [], "chosen": "x" if k < i + answered else None, "at": None}
+                          for k in range(n)]}
+
+    for u, want in ((unfinished("day", 6, 10, 3, True), "Unfinished: Section 6, 4 of 10 answered"),
+                    (unfinished("redo", 2, 10, 0, False), "Unfinished: Section 2, 0 of 10 answered"),
+                    (unfinished("review", 13, 10, 3, True), "Unfinished: Review, 4 of 10 answered"),
+                    (unfinished("test", 13, 30, 4, False), "Unfinished: Practice test, 4 of 30 answered")):
+        got = run("unfinishedLine", u)
+        check(got == want, f"an unfinished Set reads {want!r}", got)
+    ctx.close()
+
+
+def store_history(inst, learner_id, recs, unfinished=None):
+    """Put records (any kind) and an unfinished Set straight into the database for a Learner."""
+    conn = db.connect(inst.dir)
+    try:
+        records_api.store_records(conn, learner_id, recs, time.time(), kinds=records_api.KINDS)
+        if unfinished is not None:
+            with db.transaction(conn):
+                records_api.save_unfinished(conn, learner_id, unfinished, time.time())
+    finally:
+        conn.close()
+
+
+def no_sideways_scroll(pg, width=375):
+    """True when nothing on the page is wider than `width`. (On a phone, innerWidth itself grows
+    to fit content that is too wide, so the width is given rather than read.)"""
+    return pg.evaluate("w => document.documentElement.scrollWidth <= w && innerWidth === w", width)
+
+
+def texts(pg, selector):
+    return [" ".join(t.replace(" ", " ").split()) for t in pg.eval_on_selector_all(selector, "els => els.map(e => e.innerText)")]
+
+
+def check_helper_view(browser):
+    """A Helper sees the list of Learners and opens one Learner's page, on a 375 px wide phone."""
+    print("\n[Helper's view]")
+    with Instance() as inst:
+        inst.add_helper(*HELPER)
+        ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True,
+                                  locale="en-US", timezone_id="America/Chicago")
+        pg = ctx.new_page()
+        pg.on("pageerror", lambda e: failures.append(f"page error on the Helper's view: {e}"))
+        open_page(pg, inst.url)
+        sign_in(pg, *HELPER)
+        pg.wait_for_selector("#stage .learners, #stage .none")
+        check(stage_text(pg) == "Learners No Learners yet. Sign out",
+              "with no Learners, the list says No Learners yet., with Sign out below", stage_text(pg))
+
+        qs = {q["id"]: q for q in pg.evaluate("QS")}
+        ids = pg.evaluate("Object.fromEntries(DAYS.map(d => [d.day, QS.filter(q => q.day === d.day).map(q => q.id)]))")
+        s1, s2 = ids["1"], ids["2"]
+        casey = inst.add_learner("Casey", "casey password")
+        inst.add_learner("Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft", "long name password")
+
+        def section(n, kind, number, start, wrong=(), reset=None):
+            """A Section Set with one answer a minute from `start`; questions at the `wrong` places get a wrong answer."""
+            return timed_set(n, kind, number, [(q, qs[q]["o"][0] if i in wrong else qs[q]["a"], i not in wrong, start + i)
+                                               for i, q in enumerate(ids[str(number)])], reset=reset)
+
+        reset = "record-000000000002"
+        tests = ids["5"] + ids["6"] + ids["7"]
+        store_history(inst, casey, [
+            section(1, "day", 1, 0),                                   # 7:00 AM, before the Reset
+            record(2, "reset", 30, {}),                                # 7:30 AM
+            section(3, "day", 1, 60, wrong=(0,), reset=reset),         # 8:00 AM
+            section(4, "day", 2, 75, wrong=(0, 1), reset=reset),       # 8:15 AM, same Study session
+            record(5, "move", 100, {"to": 4}, reset=reset),            # 8:40 AM
+            section(6, "redo", 1, 200, wrong=(0, 1), reset=reset),     # 10:20 AM
+            timed_set(7, "test", None, [(q, qs[q]["o"][1] if i >= 28 else qs[q]["a"], i < 28, 300)
+                                        for i, q in enumerate(tests)], reset=reset)],  # 12:00 PM
+            unfinished={"kind": "day", "dayNum": 4, "i": 3, "answered": True, "set_id": "unfinished-set",
+                        "started_at": at(400),
+                        "items": [{"id": q, "options": [qs[q]["a"], *qs[q]["o"]], "chosen": qs[q]["a"] if i < 4 else None,
+                                   "at": at(400) if i < 4 else None} for i, q in enumerate(ids["4"])]})
+        reload(pg)
+        pg.wait_for_selector("#stage .learners")
+        rows = texts(pg, ".learners li")
+        check(rows == ["Casey Section 4 of 12 Last studied October 1, 2026",
+                       "Wolfeschlegelsteinhausenbergerdorffvoralternwarengewissenhaft Section 1 of 12 Has not answered any questions yet."],
+              "one row per Learner: the name, where they are, and the date they last studied", rows)
+        last = pg.evaluate("[...document.querySelectorAll('#stage button')].pop()?.textContent")
+        check(last == "Sign out", "Sign out is still the last button on the list")
+        check(no_sideways_scroll(pg), "at 375 px wide, nothing on the list scrolls sideways")
+
+        pg.get_by_role("button", name="Casey").click()
+        pg.wait_for_selector("#stage .part")
+        check(pg.inner_text("#stage h1") == "Casey", "the Learner's page opens with the Learner's name")
+        check(texts(pg, ".now p") == ["Section 4 of 12", "Unfinished: Section 4, 4 of 10 answered"],
+              "where they are now, and the unfinished Set", texts(pg, ".now p"))
+        sections = texts(pg, ".sections > li")
+        check(len(sections) == 12, "Sections has 12 rows", len(sections))
+        check(sections[:3] == [f"Section 1: {pg.evaluate('DAYS[0].title')} Last score: 8 of 10. Done 2 times.",
+                               f"Section 2: {pg.evaluate('DAYS[1].title')} Last score: 8 of 10. Done 1 time.",
+                               f"Section 3: {pg.evaluate('DAYS[2].title')} Not done yet."],
+              "each Section row has its latest score and how many times it was done, since the Reset", sections[:3])
+        pg.click(".sections > li:first-child summary")
+        check(texts(pg, ".sections > li:first-child .sets li") == ["October 1, 2026, 10:29 AM: 8 of 10",
+                                                                    "October 1, 2026, 8:09 AM: 9 of 10"],
+              "opening a Section row lists each Set with its date and score", texts(pg, ".sections > li:first-child .sets li"))
+        check(texts(pg, ".review p") == ["6 questions left. Review starts after Section 12."],
+              "Review says how many questions are left", texts(pg, ".review p"))
+        check(texts(pg, ".tests p, .tests li") == ["In a row so far: 1 of 3", "October 1, 2026, 12:00 PM: 28 of 30"],
+              "Practice tests lists each test with its date and score, and the count in a row", texts(pg, ".tests p, .tests li"))
+        q = qs[s1[0]]
+        check(texts(pg, ".missedmost li") == [f"{q['q']} Right answer: {q['a']} Wrong answer chosen most often: {q['o'][0]} "
+                                              f"Missed 2 of 2 times Driver manual, page {q['p']}"],
+              "Questions missed most counts only since the Reset and shows the question, answers, count and page",
+              texts(pg, ".missedmost li"))
+        check(texts(pg, ".sessions > li") == [
+            "October 1, 2026, 12:00 PM Less than 1 minute Practice test: 28 of 30",
+            "October 1, 2026, 10:20 AM 9 minutes Section 1: 8 of 10",
+            "October 1, 2026, 8:40 AM Moved to Section 4",
+            "October 1, 2026, 8:00 AM 24 minutes Section 1: 9 of 10 Section 2: 8 of 10",
+            "October 1, 2026, 7:30 AM Progress reset by a Helper",
+            "October 1, 2026, 7:00 AM 9 minutes Section 1: 10 of 10"],
+            "Study sessions, newest first, cover the whole History with the Reset and the Move as lines",
+            texts(pg, ".sessions > li"))
+        heads = texts(pg, "#stage h2")
+        check(heads == ["Sections", "Review", "Practice tests", "Questions missed most", "Study sessions"],
+              "the Learner's page is in the decided order", heads)
+        pg.eval_on_selector_all("#stage details", "els => els.forEach(d => d.open = true)")
+        check(no_sideways_scroll(pg), "at 375 px wide, nothing on the Learner's page scrolls sideways")
+
+        pg.get_by_role("button", name="Back to Learners").last.click()
+        pg.wait_for_selector("#stage .learners")
+        check(pg.inner_text("#stage h1") == "Learners", "Back to Learners returns to the list")
+        pg.get_by_role("button", name="Wolfeschlegel").click()
+        pg.wait_for_selector("#stage .part")
+        check(no_sideways_scroll(pg), "a long name doesn't make the Learner's page scroll sideways")
+        check(texts(pg, ".now p") == ["Section 1 of 12"] and texts(pg, ".history p") == ["No Study sessions yet."]
+              and texts(pg, ".tests p") == ["No Practice tests yet."]
+              and texts(pg, ".missedmost p") == ["No question has been missed two or more times."],
+              "a Learner with no records has a page that says so",
+              [texts(pg, ".now p"), texts(pg, ".history p"), texts(pg, ".tests p"), texts(pg, ".missedmost p")])
+        pg.get_by_role("button", name="Back to Learners").first.click()
+        pg.wait_for_selector("#stage .learners")
+        ctx.close()
+
+
 OLD_KEY = "tn-permit-daily-v1"  # the saved state from before accounts; this page must leave it alone
 # Logs every localStorage call that names the old key, from before the page's own script runs.
 WATCH_OLD_KEY = """(() => { window.oldKeyCalls = [];
@@ -927,6 +1188,8 @@ def main():
         check_progress_from(browser, inst)
         check_records_on_server(browser, inst)
         check_offline_and_sync(browser, inst)
+        check_helper_helpers(browser, inst)
+        check_helper_view(browser)
 
         print("\n[page head, fonts, own origin]")
         ctx = browser.new_context()

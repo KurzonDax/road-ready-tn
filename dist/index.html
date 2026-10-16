@@ -155,6 +155,26 @@ button.opt { cursor: pointer; }
 .ticks span { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid var(--control-line); background: var(--surface); }
 .ticks span.on { background: var(--guide); border-color: var(--guide); }
 
+/* The Helper's view: a list of Learners, and one Learner's page in plain parts, top to bottom. Long names and answers wrap instead of widening the page. */
+.helper, .helper button { overflow-wrap: anywhere; }
+.learners { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lrow { font: inherit; text-align: left; width: 100%; display: flex; flex-direction: column; gap: 2px; padding: 14px 16px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.lrow .lname { font-weight: 700; font-size: 20px; }
+.lrow .lwhen { color: var(--muted); font-size: 16px; }
+.link.top { align-self: flex-start; padding-left: 0; }
+.now { display: flex; flex-direction: column; gap: 4px; }
+.now p, .part p { margin: 0; }
+.part { border-top: 1.5px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.part h2 { font-size: 22px; }
+.part ul { list-style: none; margin: 0; padding: 0; }
+.part > ul > li { border-top: 1px solid var(--line); padding: 10px 0; display: flex; flex-direction: column; gap: 2px; }
+.part > ul > li:first-child { border-top: 0; padding-top: 0; }
+.sections summary { cursor: pointer; min-height: 44px; }
+.sections .sname, .when, .mq { font-weight: 700; }
+.sections .sscore { display: block; color: var(--muted); font-size: 16px; font-variant-numeric: tabular-nums; }
+.part .sets { padding: 6px 0 4px 22px; font-size: 16px; display: flex; flex-direction: column; gap: 4px; }
+.missedmost .mpage, .missedmost .mcount { color: var(--muted); font-size: 16px; }
+
 @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
 </style>
 </head>
@@ -826,14 +846,209 @@ async function signOut() {
   signedOut();
 }
 
-// The Helper's screen. The Helper's view fills this in.
-function renderHelper() {
-  paint(`
-    <section class="home">
-      <h1 tabindex="-1">Learners</h1>
-      <button class="btn" type="button" id="signOutBtn">Sign out</button>
-    </section>`, 'h1');
-  $('signOutBtn').onclick = () => confirmSignOut(renderHelper);
+// The Helper's view (GLOSSARY.md): the list of Learners, and one Learner's Progress and History.
+// It only reads. Each screen loads fresh from the server when it opens, and Progress is worked
+// out from the records with the same code as the study path (docs/adr/0001-*).
+
+// Where a Learner is now, worded for the Helper.
+function whereNow(p) {
+  const ph = phase(p);
+  if (ph === 'day') return `Section ${p.day} of ${TOTAL_DAYS}`;
+  if (ph === 'review') return `Review: ${plural(reviewPile(p).length, 'question', 'questions')} left`;
+  const st = streak(p);
+  return st >= READY_STREAK ? 'Ready for the test' : `Practice tests: ${st} of ${READY_STREAK} in a row`;
+}
+// The unfinished Set (as the page saves it, see packRun), or null when it can't be read.
+function unfinishedLine(u) {
+  if (!u || typeof u !== 'object' || !Array.isArray(u.items) || !u.items.length) return null;
+  const where = u.kind === 'review' ? 'Review' : u.kind === 'test' ? 'Practice test' : `Section ${u.dayNum}`;
+  const done = Math.min(u.items.length, (Number(u.i) || 0) + (u.answered ? 1 : 0));
+  return `Unfinished: ${where}, ${done} of ${u.items.length} answered`;
+}
+
+const answerTime = a => { const t = Date.parse(a.at); return Number.isNaN(t) ? 0 : t; };
+const setScore = d => ({ right: d.answers.filter(a => a.right).length, of: d.answers.length });
+// The time of the newest answer in the whole History, or null when there is none.
+function lastStudied(records) {
+  let t = null;
+  for (const r of records) if (r.kind === 'set') for (const a of r.data.answers) t = Math.max(t ?? 0, answerTime(a));
+  return t === null ? null : new Date(t).toISOString();
+}
+
+const SESSION_GAP = 30 * 60 * 1000; // a Study session has no gap longer than 30 minutes between answers
+// Study sessions over the whole History, newest first, with each Reset and Move as a line of its
+// own: {kind: 'session', start, end, sets: [{type, section, right, of}]}, {kind: 'reset', at} or
+// {kind: 'move', at, to}. A Set counts as finished in the Study session that holds its last answer.
+function studySessions(records) {
+  const ordered = orderRecords(records), sets = ordered.filter(r => r.kind === 'set');
+  const times = sets.flatMap(r => r.data.answers.map(answerTime)).sort((a, b) => a - b);
+  const sessions = [];
+  for (const t of times) {
+    const s = sessions[sessions.length - 1];
+    if (s && t - s.end <= SESSION_GAP) s.end = t; else sessions.push({ start: t, end: t, sets: [] });
+  }
+  for (const r of sets) {
+    const last = Math.max(...r.data.answers.map(answerTime));
+    const s = sessions.find(s => s.start <= last && last <= s.end);
+    if (s) s.sets.push({ type: r.data.type, section: r.data.section, ...setScore(r.data) });
+  }
+  const lines = sessions.map(s => [s.end, { kind: 'session', start: new Date(s.start).toISOString(), end: new Date(s.end).toISOString(), sets: s.sets }]);
+  for (const r of ordered) {
+    if (r.kind === 'reset') lines.push([recordTime(r), { kind: 'reset', at: r.at }]);
+    if (r.kind === 'move') lines.push([recordTime(r), { kind: 'move', at: r.at, to: r.data.to }]);
+  }
+  return lines.sort((a, b) => b[0] - a[0]).map(x => x[1]);
+}
+// The line for a Reset or a Move in the list of Study sessions.
+function historyLine(e) {
+  if (e.kind === 'reset') return 'Progress reset by a Helper';
+  if (e.kind === 'move') return e.to > TOTAL_DAYS ? 'Moved to Review and Practice tests' : `Moved to Section ${e.to}`;
+  return null;
+}
+
+// Up to 10 questions missed two or more times since the latest Reset: the most misses first, then
+// the fewest answers, then the order of the study path. `wrong` is the wrong answer chosen most often.
+function missedMost(records) {
+  const tally = new Map();
+  for (const r of countedRecords(records)) if (r.kind === 'set') for (const a of r.data.answers) {
+    if (!BY_ID[a.q]) continue;
+    if (!tally.has(a.q)) tally.set(a.q, { q: a.q, missed: 0, answered: 0, picks: new Map() });
+    const t = tally.get(a.q);
+    t.answered++;
+    if (!a.right) { t.missed++; t.picks.set(a.chosen, (t.picks.get(a.chosen) || 0) + 1); }
+  }
+  const place = Object.fromEntries(QS.map((q, i) => [q.id, i]));
+  const most = picks => [...picks].reduce((best, x) => x[1] > best[1] ? x : best)[0];
+  return [...tally.values()].filter(t => t.missed >= 2)
+    .sort((a, b) => b.missed - a.missed || a.answered - b.answered || place[a.q] - place[b.q])
+    .slice(0, 10)
+    .map(t => ({ q: t.q, missed: t.missed, answered: t.answered, wrong: most(t.picks) }));
+}
+
+// Each Section's Sets since the latest Reset, newest first: [{section, sets: [{at, right, of}]}].
+function sectionHistory(records) {
+  const sets = countedRecords(records).filter(r => r.kind === 'set' && (r.data.type === 'day' || r.data.type === 'redo'));
+  return DAYS.map(d => ({ section: d.day,
+    sets: sets.filter(r => r.data.section === d.day).reverse().map(r => ({ at: r.at, ...setScore(r.data) })) }));
+}
+
+// Times in the Helper's view are shown in the device's own time zone.
+const dayText = iso => new Date(iso).toLocaleDateString([], { year: 'numeric', month: 'long', day: 'numeric' });
+const whenText = iso => `${dayText(iso)}, ${new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`;
+function lengthText(ms) {
+  const m = Math.round(ms / 60000), h = Math.floor(m / 60);
+  if (m < 1) return 'Less than 1 minute';
+  return [h ? plural(h, 'hour', 'hours') : '', m % 60 ? plural(m % 60, 'minute', 'minutes') : ''].filter(Boolean).join(' ');
+}
+const setName = s => s.type === 'review' ? 'Review' : s.type === 'test' ? 'Practice test' : `Section ${s.section}`;
+
+// A GET for the Helper's view. A failed answer throws an Error with its `status`.
+async function getJSON(path) {
+  const r = await api(path);
+  if (!r.ok) throw Object.assign(new Error('HTTP ' + r.status), { status: r.status });
+  return r.json();
+}
+// Each Helper screen paints at once and then loads. `stillShowing` says whether the screen that
+// asked is still the one on the page, so a late answer never paints over where the Helper went.
+function stillShowing() { const shown = $('stage').firstElementChild; return () => shown.isConnected; }
+
+// The Helper's first screen: every Learner, one row each, then Sign out.
+async function renderHelper() {
+  const signOutBtn = '<button class="btn" type="button" id="signOutBtn">Sign out</button>';
+  const screen = body => {
+    paint(`<section class="home helper"><h1 tabindex="-1">Learners</h1>${body}${signOutBtn}</section>`, 'h1');
+    $('signOutBtn').onclick = () => confirmSignOut(renderHelper);
+  };
+  screen('<p class="sub">Getting the list of Learners.</p>');
+  const showing = stillShowing();
+  let rows;
+  try {
+    const { learners } = await getJSON('/api/learners');
+    rows = await Promise.all(learners.map(async learner => ({ learner, records: (await getJSON(`/api/learners/${learner.id}/records`)).records })));
+  } catch (e) {
+    if (e instanceof SignedOut || !showing()) return;
+    screen('<p class="warn">The list of Learners could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>');
+    $('retryBtn').onclick = renderHelper;
+    return;
+  }
+  if (!showing()) return;
+  const list = rows.map(({ learner, records }, k) => {
+    const last = lastStudied(records);
+    return `<li><button type="button" class="lrow" data-k="${k}"><span class="lname">${esc(learner.name)}</span><span>${esc(whereNow(progressFrom(records)))}</span>` +
+      `<span class="lwhen">${last ? `Last studied ${dayText(last)}` : 'Has not answered any questions yet.'}</span></button></li>`;
+  }).join('');
+  // "Add a Learner" goes between the list and Sign out.
+  screen(rows.length ? `<ul class="learners">${list}</ul>` : '<p class="sub none">No Learners yet.</p>');
+  document.querySelectorAll('.lrow').forEach(b => b.onclick = () => { openLearnerPage(rows[Number(b.dataset.k)].learner); window.scrollTo(0, 0); });
+}
+
+// One Learner's page, loaded fresh each time it opens. `learner` is a row of GET /api/learners.
+async function openLearnerPage(learner) {
+  const name = esc(learner.name);
+  const screen = body => {
+    paint(`<section class="home helper"><button class="link top back" type="button">Back to Learners</button><h1 tabindex="-1">${name}</h1>${body}</section>`, 'h1');
+    document.querySelectorAll('.back').forEach(b => b.onclick = () => { renderHelper(); window.scrollTo(0, 0); });
+  };
+  screen(`<p class="sub">Getting ${name}'s records.</p>`);
+  const showing = stillShowing();
+  let body;
+  try { body = await getJSON(`/api/learners/${learner.id}/records`); } catch (e) {
+    if (e instanceof SignedOut || !showing()) return;
+    if (e.status === 404) return screen(`<p class="warn">${name} is no longer on the list of Learners.</p>`);
+    screen(`<p class="warn">${name}'s records could not be loaded. Check your connection and try again.</p><button class="btn primary" type="button" id="retryBtn">Try again</button>`);
+    $('retryBtn').onclick = () => openLearnerPage(learner);
+    return;
+  }
+  if (showing()) screen(learnerPage(body));
+}
+
+// The parts of a Learner's page, top to bottom, from GET /api/learners/<id>/records.
+function learnerPage({ records, unfinished }) {
+  const p = progressFrom(records), counted = countedRecords(records), reset = currentReset(records);
+  const part = (cls, title, html) => `<section class="part ${cls}"><h2>${title}</h2>${html}</section>`;
+
+  const done = unfinished && records.some(r => r.kind === 'set' && r.data.set_id === unfinished.set_id);
+  const open = !done && unfinishedLine(unfinished);
+  const now = `<div class="now"><p class="theme">${esc(whereNow(p))}</p>${open ? `<p class="sub">${esc(open)}</p>` : ''}</div>`;
+
+  const sections = sectionHistory(records).map(({ section, sets }) => {
+    const title = `<span class="sname">Section ${section}: ${esc(DAYS[section - 1].title)}</span>`;
+    if (!sets.length) {
+      // A score with no Sets came from saved progress brought in from before accounts.
+      const score = p.scores[section] !== undefined ? `Last score: ${p.scores[section]} of 10. Done before the app kept dates.` : 'Not done yet.';
+      return `<li><div>${title}<span class="sscore">${score}</span></div></li>`;
+    }
+    const list = sets.map(s => `<li>${whenText(s.at)}: ${s.right} of ${s.of}</li>`).join('');
+    return `<li><details><summary>${title}<span class="sscore">Last score: ${sets[0].right} of ${sets[0].of}. Done ${plural(sets.length, 'time', 'times')}.</span></summary><ul class="sets">${list}</ul></details></li>`;
+  }).join('');
+
+  const left = reviewPile(p).length;
+  const review = `<p>${left ? `${plural(left, 'question', 'questions')} left.` : 'No questions left.'}${p.day <= TOTAL_DAYS ? ` Review starts after Section ${TOTAL_DAYS}.` : ''}</p>`;
+
+  const tests = counted.filter(r => r.kind === 'set' && r.data.type === 'test').reverse(), st = streak(p);
+  const undated = p.tests.length - tests.length; // brought in from saved progress from before accounts
+  const testList = p.tests.length ? `<p>${st >= READY_STREAK ? `Ready for the test: ${st} in a row` : `In a row so far: ${st} of ${READY_STREAK}`}</p>` +
+    (tests.length ? `<ul>${tests.map(r => `<li>${whenText(r.at)}: ${setScore(r.data).right} of ${setScore(r.data).of}</li>`).join('')}</ul>` : '') +
+    (undated > 0 ? `<p class="sub small">${plural(undated, 'earlier Practice test was', 'earlier Practice tests were')} done before the app kept dates.</p>` : '')
+    : '<p>No Practice tests yet.</p>';
+
+  const missed = missedMost(records);
+  const missedList = missed.length ? (reset ? '<p class="sub small">Only answers since the latest Reset count here.</p>' : '') +
+    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p>` +
+      `<p>Wrong answer chosen most often: ${esc(m.wrong)}</p><p class="mcount">Missed ${m.missed} of ${m.answered} times</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('')}</ul>`
+    : `<p>No question has been missed two or more times${reset ? ' since the latest Reset' : ''}.</p>`;
+
+  const lines = studySessions(records);
+  const history = lines.length ? `<ul class="sessions">${lines.map(e => e.kind === 'session'
+    ? `<li><p class="when">${whenText(e.start)}</p><p>${lengthText(Date.parse(e.end) - Date.parse(e.start))}</p>` +
+      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>No Sets finished.</p>') + '</li>'
+    : `<li><p class="when">${whenText(e.at)}</p><p>${historyLine(e)}</p></li>`).join('')}</ul>`
+    : '<p>No Study sessions yet.</p>';
+
+  // "Manage this Learner" goes after Study sessions, above the last Back to Learners.
+  return now + part('', 'Sections', `<ul class="sections">${sections}</ul>`) + part('review', 'Review', review) +
+    part('tests', 'Practice tests', testList) + part('missedmost', 'Questions missed most', missedList) +
+    part('history', 'Study sessions', history) + '<button class="btn back" type="button">Back to Learners</button>';
 }
 
 startUp();
