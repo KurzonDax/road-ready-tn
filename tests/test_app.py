@@ -483,16 +483,13 @@ def wait_for_h1(pg, text):
     return h1(pg)
 
 
-def store_for(inst, learner_id, kind, data, reset=None):
-    """Put a reset or move record straight into the database, as the Helper API will. Returns its id."""
-    rec = {"id": "helper-" + os.urandom(8).hex(), "kind": kind, "reset": reset,
-           "at": time.strftime("%Y-%m-%dT%H:%M:%S.000Z", time.gmtime()), "data": data}
+def store_for(inst, learner_id, kind, data):
+    """Put a reset or move record straight into the database, as the Helper API does. Returns its id."""
     conn = db.connect(inst.dir)
     try:
-        records_api.store_records(conn, learner_id, [rec], time.time(), kinds=records_api.KINDS)
+        return records_api.helper_record(conn, learner_id, kind, data, time.time())["id"]
     finally:
         conn.close()
-    return rec["id"]
 
 
 def check_records_on_server(browser, inst):
@@ -542,7 +539,7 @@ def check_records_on_server(browser, inst):
     check(wait_for_h1(pg, "Section 1 of 12") == "Section 1 of 12",
           "a Reset put into the database shows on the Learner's next app open")
     check(not pg.query_selector(".scores"), "after the Reset no Section scores are left")
-    store_for(inst, learner, "move", {"to": 4}, reset=reset)
+    store_for(inst, learner, "move", {"to": 4})
     reload(pg)
     check(wait_for_h1(pg, "Section 4 of 12") == "Section 4 of 12",
           "a Move to Section 4 put into the database shows on the Learner's next app open")
