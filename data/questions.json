@@ -1243,7 +1243,7 @@
       "page": 35,
       "manual_quote": "RED: Stop, yield, do not enter or wrong way.",
       "manual_sample": false,
-      "color": "#c62828"
+      "color": "#ed3929"
     },
     {
       "id": "a-084",
@@ -1259,7 +1259,7 @@
       "page": 35,
       "manual_quote": "YELLOW: General warning.",
       "manual_sample": false,
-      "color": "#ffdc00"
+      "color": "#faee1a"
     },
     {
       "id": "a-085",
@@ -1275,7 +1275,7 @@
       "page": 35,
       "manual_quote": "ORANGE is used as a background color for construction and maintenance signs and shall not be used for any other purpose.",
       "manual_sample": false,
-      "color": "#f07c1c"
+      "color": "#f27423"
     },
     {
       "id": "a-086",
@@ -1291,7 +1291,7 @@
       "page": 35,
       "manual_quote": "GREEN: Guidance",
       "manual_sample": false,
-      "color": "#1f5f3f"
+      "color": "#12a850"
     },
     {
       "id": "a-087",
@@ -1307,7 +1307,7 @@
       "page": 35,
       "manual_quote": "BLUE: Motorist services and information",
       "manual_sample": false,
-      "color": "#1f4fa0"
+      "color": "#0777be"
     },
     {
       "id": "a-088",
@@ -1323,7 +1323,7 @@
       "page": 35,
       "manual_quote": "BROWN: Public recreation areas",
       "manual_sample": false,
-      "color": "#6b4423"
+      "color": "#40371a"
     },
     {
       "id": "a-089",
@@ -1339,7 +1339,7 @@
       "page": 35,
       "manual_quote": "FLUORESCENT YELLOW-GREEN IS THE COLOR FOR SCHOOL ZONES!",
       "manual_sample": false,
-      "color": "#c6e83a"
+      "color": "#c3d53c"
     },
     {
       "id": "a-090",
@@ -1386,7 +1386,7 @@
       "page": 35,
       "manual_quote": "related to motorist services (including police services and rest areas)",
       "manual_sample": false,
-      "color": "#1f4fa0"
+      "color": "#0777be"
     },
     {
       "id": "a-093",
@@ -6746,7 +6746,7 @@
       "page": 66,
       "manual_quote": "Stop only long enough to load or unload. Stay with your car.",
       "manual_sample": false,
-      "color": "#ffdc00"
+      "color": "#fff000"
     },
     {
       "id": "b-265",
@@ -6762,7 +6762,7 @@
       "page": 66,
       "manual_quote": "Do not stop, stand or park in this space under any condition.",
       "manual_sample": false,
-      "color": "#c62828"
+      "color": "#ef3829"
     },
     {
       "id": "b-266",
