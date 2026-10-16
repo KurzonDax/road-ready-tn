@@ -54,7 +54,7 @@ def list_learners(req):
     paused = limits.paused_names(req.db, req.now())
 
     def paused_until(row):
-        until = paused.get(limits.name(row["name_key"]))
+        until = paused.get(limits.key_for_name(row["name_key"]))
         return None if until is None else db.iso_time(until)
 
     return json_response({"learners": [{"id": row["id"], "name": row["name"],

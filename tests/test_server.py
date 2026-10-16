@@ -2110,6 +2110,12 @@ class PausingAnIP(SignInLimitsTestCase):
         self.now += HOUR
         self.assertEqual(self.sign_in("Avery", "correct horse").status, 200)
 
+    def test_every_ip_pause_is_an_hour_it_does_not_double(self):
+        for _ in range(3):
+            self.fail_across_names(50)
+            self.assert_paused(self.sign_in("Sam", "learner pass"), HOUR)
+            self.now += HOUR
+
     def test_failures_more_than_an_hour_apart_do_not_add_up(self):
         self.fail_across_names(49)
         self.now += HOUR

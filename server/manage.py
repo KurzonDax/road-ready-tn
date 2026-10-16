@@ -26,7 +26,8 @@ class Refused(Exception):
     """Something the command won't do. The message is printed and the command exits 1."""
 
 
-def checked(password):
+def checked_password(password):
+    """The password if it keeps the rules, else Refused."""
     try:
         return auth.check_password(password)
     except auth.AccountError as e:
@@ -38,12 +39,12 @@ def ask_password():
     second = getpass.getpass("Type it again: ")
     if first != second:
         raise Refused("The two passwords are not the same. Nothing was changed.")
-    return checked(first)
+    return checked_password(first)
 
 
 def read_password():
     """The password as one line from standard input (`--password-stdin`, for tests)."""
-    return checked(sys.stdin.readline().rstrip("\r\n"))
+    return checked_password(sys.stdin.readline().rstrip("\r\n"))
 
 
 def find_helper(conn, name):

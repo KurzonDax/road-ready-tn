@@ -301,7 +301,7 @@ def sign_in(req):
         raise HTTPError(400, "send a name and a password")
     conn, now, address, key = req.db, req.now(), req.environ.get("REMOTE_ADDR"), name_key(name)
     limits.prune(conn, now)
-    wait = limits.seconds_left(conn, (limits.name(key), limits.ip(address)), now)
+    wait = limits.seconds_left(conn, (limits.key_for_name(key), limits.key_for_ip(address)), now)
     if wait:
         _log_sign_in(now, address, name, "paused")
         return json_response({"error": "paused", "retry_after": wait}, 429)
