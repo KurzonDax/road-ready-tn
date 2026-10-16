@@ -855,6 +855,29 @@ def open_learner(pg, name):
     pg.wait_for_selector("#stage .manage")
 
 
+def stop_partway(pg, inst, learner_id, stop=True):
+    """The Learner answers 2 questions of the next Set (and stops); wait until the server has that unfinished Set."""
+    pg.click("#startBtn")
+    answer_one(pg)
+    pg.click("#nextBtn")
+    answer_one(pg)
+    if stop:
+        pg.click("#quitBtn")
+        pg.wait_for_selector("#resumeBtn")
+    wait_until(lambda: (db_state(inst, learner_id)[1] or {}).get("i") == 1)
+
+
+def check_set_dropped(pg, inst, learner_id, what):
+    """After a Reset or Move, the Set the Learner's device stopped partway through is gone, there and on the server."""
+    check(pg.query_selector("#resumeBtn") is None and "stopped partway" not in stage_text(pg),
+          f"after {what}, the Learner's device no longer offers the Set it stopped partway through", stage_text(pg))
+    time.sleep(0.5)
+    reload(pg)
+    check(pg.query_selector("#resumeBtn") is None, "not after another app open either")
+    check(db_state(inst, learner_id)[1] is None, "and the server doesn't keep that Set",
+          db_state(inst, learner_id)[1])
+
+
 def check_manage_learner(browser):
     """The Helper adds a Learner and manages one: each action asks first, in literal words."""
     print("\n[Manage Learners]")
@@ -1025,6 +1048,7 @@ def check_manage_learner(browser):
         open_page(cpg, inst.url)
         sign_in(cpg, "Casey Lee", "casey password")
         check(h1(cpg) == "Section 3 of 12", "Casey Lee's study path is at Section 3", h1(cpg))
+        stop_partway(cpg, inst, casey)
         pg.get_by_role("button", name="Back to Learners").first.click()
         open_learner(pg, "Casey Lee")
         pg.get_by_role("button", name="Reset progress").click()
@@ -1033,7 +1057,8 @@ def check_manage_learner(browser):
         check(stage_text(pg).startswith(want), "Reset progress asks first, in the decided words", stage_text(pg))
         pg.click("#confirmNo")
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["Section 3 of 12"], "saying no to Reset progress changes nothing", texts(pg, ".now p"))
+        check(texts(pg, ".now p") == ["Section 3 of 12", "Unfinished: Section 3, 2 of 10 answered"],
+              "saying no to Reset progress changes nothing", texts(pg, ".now p"))
         pg.get_by_role("button", name="Reset progress").click()
         pg.click("#confirmYes")
         pg.wait_for_selector("#stage .manage")
@@ -1046,6 +1071,9 @@ def check_manage_learner(browser):
         reload(cpg)
         check(wait_for_h1(cpg, "Section 1 of 12") == "Section 1 of 12",
               "the Learner's next app open shows Section 1", h1(cpg))
+        check_set_dropped(cpg, inst, casey, "Reset progress")
+        # This time the Set is still on the Learner's screen when the Helper moves them.
+        stop_partway(cpg, inst, casey, stop=False)
 
         # Move: Section 1 to 12, or Review and Practice tests.
         pg.get_by_role("button", name="Move", exact=True).click()
@@ -1061,7 +1089,8 @@ def check_manage_learner(browser):
         pg.click("#confirmNo")
         pg.get_by_role("button", name="Cancel").click()
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["Section 1 of 12"], "saying no to Move changes nothing", texts(pg, ".now p"))
+        check(texts(pg, ".now p") == ["Section 1 of 12", "Unfinished: Section 1, 2 of 10 answered"],
+              "saying no to Move changes nothing", texts(pg, ".now p"))
         pg.get_by_role("button", name="Move", exact=True).click()
         pg.get_by_label("Move Casey Lee to").select_option(label="Section 4")
         submit_form(pg, "Move")
@@ -1070,8 +1099,13 @@ def check_manage_learner(browser):
         check(texts(pg, ".now p") == ["Section 4 of 12"], "after Move, the Learner's page says Section 4", texts(pg, ".now p"))
         check(texts(pg, ".sessions > li")[0].endswith("Moved to Section 4"), "Study sessions has a Moved to Section 4 line",
               texts(pg, ".sessions > li"))
+        cpg.click("#nextBtn")
+        answer_one(cpg)
+        check(wait_until(lambda: (db_state(inst, casey)[1] or {}).get("i") == 2),
+              "an answer given after the Move sends that Set to the server again")
         reload(cpg)
         check(wait_for_h1(cpg, "Section 4 of 12") == "Section 4 of 12", "the Learner's next app open shows Section 4", h1(cpg))
+        check_set_dropped(cpg, inst, casey, "Move")
         cctx.close()
 
         # Delete: the Helper types the Learner's name to turn on the button.

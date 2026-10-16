@@ -260,6 +260,19 @@ function currentReset(records) {
   const resets = orderRecords(records).filter(r => r.kind === 'reset');
   return resets.length ? resets[resets.length - 1].id : null;
 }
+// The latest Reset or Move record, or null when there has been none.
+function latestChange(records) {
+  const changes = orderRecords(records).filter(r => r.kind === 'reset' || r.kind === 'move');
+  return changes.length ? changes[changes.length - 1] : null;
+}
+// A Reset or Move drops any unfinished Set (#24). An unfinished Set names the latest Reset or Move
+// known when it started (`after`), so one this device kept from before a newer one is dropped too.
+// A Set saved without `after` is dropped if a Reset or Move came after it was last saved.
+function droppedByChange(u, records) {
+  const c = latestChange(records);
+  if (u.after === null || typeof u.after === 'string') return u.after !== (c && c.id);
+  return c !== null && recordTime(c) > (Date.parse(u.saved_at) || 0);
+}
 // The records that count toward Progress, in order: those after the latest Reset that name it
 // (or, with no Reset, those that name none). The others stay in the History only.
 function countedRecords(records) {
@@ -296,7 +309,7 @@ function progressFrom(records) {
 
 // Saved runs store question ids, the shown option order, and when each answer was chosen. A run that no longer matches the questions is dropped.
 function packRun(r) {
-  return { kind: r.kind, dayNum: r.dayNum, i: r.i, answered: r.answered, set_id: r.set_id, started_at: r.started_at,
+  return { kind: r.kind, dayNum: r.dayNum, i: r.i, answered: r.answered, set_id: r.set_id, started_at: r.started_at, after: r.after,
     items: r.items.map(it => ({ id: it.q.id, options: it.options, chosen: it.chosen, at: it.at })) };
 }
 function unpackRun(p) {
@@ -308,7 +321,7 @@ function unpackRun(p) {
     });
     if (!items.length || p.i < 0 || p.i >= items.length || typeof p.set_id !== 'string' || !p.set_id) return null;
     return { kind: p.kind, dayNum: p.dayNum, i: p.i, answered: !!p.answered, set_id: p.set_id,
-      started_at: p.started_at || new Date().toISOString(), items };
+      started_at: p.started_at || new Date().toISOString(), after: p.after, items };
   } catch (e) { return null; }
 }
 // Saves the Set on screen in the device copy, stamped with saved_at, and sends it to the server.
@@ -511,7 +524,8 @@ function start(redoDay) {
   else if (ph === 'day') qs = QS.filter(q => q.day === S.day);
   else if (ph === 'review') qs = shuffle(reviewPile()).slice(0, 10);
   else qs = shuffle(QS).slice(0, TEST_LEN);
-  run = { kind: ph, dayNum: redoDay || S.day, set_id: crypto.randomUUID(), started_at: new Date().toISOString(),
+  const change = latestChange(copyRecords());
+  run = { kind: ph, dayNum: redoDay || S.day, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), after: change && change.id,
     items: qs.map(q => ({ q, options: shuffle([q.a, ...q.o]), chosen: null, at: null })), i: 0, answered: false };
   keepRun();
   renderQuestion();
@@ -717,13 +731,15 @@ async function openLearner() {
   const have = new Set(body.records.map(x => x.id));
   copy.records = body.records;
   copy.pending = copy.pending.filter(x => !have.has(x.id));
-  // The newest unfinished Set wins: the server's replaces the device's if it was saved later.
-  const theirs = body.unfinished, ours = copy.unfinished;
-  if (theirs && (!ours || String(theirs.saved_at || '') > String(ours.saved_at || ''))) copy.unfinished = theirs;
-  const u = copy.unfinished;
-  if (u && copyRecords().some(x => x.kind === 'set' && x.data.set_id === u.set_id)) copy.unfinished = null; // already finished
+  // An unfinished Set that is already finished, or that a Reset or Move dropped, is gone. Of the
+  // others, the newest wins: the server's replaces the device's if it was saved later.
+  const recs = copyRecords();
+  const live = u => u && !recs.some(x => x.kind === 'set' && x.data.set_id === u.set_id) && !droppedByChange(u, recs) ? u : null;
+  const theirs = live(body.unfinished), ours = live(copy.unfinished);
+  copy.unfinished = theirs && (!ours || String(theirs.saved_at || '') > String(ours.saved_at || '')) ? theirs : ours;
   const imported = importOldProgress();
   saveCopy();
+  if (body.unfinished && !theirs) sendUnfinished(); // the server still holds one that is gone
   if (imported) sendPending();
   const shown = JSON.stringify(S);
   workOut();
