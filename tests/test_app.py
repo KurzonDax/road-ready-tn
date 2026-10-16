@@ -8,7 +8,9 @@ Before committing, also run:     python3 tests/check_dist.py  (fails if dist/ is
 Covers the whole path the student takes: all 12 sections, redoing a section,
 section scores, review of missed questions, practice tests, the "ready" screen,
 the hidden #restart / #sectionN links, saving progress across a reload, picking
-up a half-finished section, and the phone layout. The page is served over HTTP
+up a half-finished section, and the phone layout. Also the Home Screen pieces:
+the manifest, the icon sizes, the page head, the safe-area padding, and that the
+page loads its fonts and everything else from its own origin. The page is served over HTTP
 with the script-src hash from dist/csp.json, so a wrong hash stops the page, and
 one run checks the sentence shown when questions.json can't be loaded.
 
@@ -19,7 +21,9 @@ import http.server
 import json
 import os
 import pathlib
+import struct
 import threading
+import urllib.request
 
 from playwright.sync_api import sync_playwright
 
@@ -95,11 +99,88 @@ def h1(pg):
     return pg.inner_text(".home h1")
 
 
+def fetch(base, path):
+    with urllib.request.urlopen(base + path) as r:
+        return r.read()
+
+
+def check_manifest(base):
+    m = json.loads(fetch(base, "manifest.webmanifest"))
+    want = {"name": "Road Ready TN", "short_name": "Road Ready", "id": "/", "start_url": "/", "scope": "/",
+            "display": "standalone", "background_color": "#f3f5f2", "theme_color": "#f3f5f2", "lang": "en"}
+    check({k: m.get(k) for k in want} == want, "the manifest names the app and opens it standalone at /")
+    check("orientation" not in m, "the manifest doesn't lock the orientation")
+    icons = sorted((i.get("src"), i.get("sizes"), i.get("purpose", "any")) for i in m.get("icons", []))
+    check(icons == [("icon-192.png", "192x192", "any"), ("icon-512.png", "512x512", "any"),
+                    ("icon-512.png", "512x512", "maskable")],
+          f"the manifest lists the 192 and 512 icons, and the 512 again as maskable (got {icons})")
+
+
+def png_header(data):
+    """Width, height and color type from a PNG's IHDR chunk, or None if it isn't a PNG."""
+    if data[:8] != b"\x89PNG\r\n\x1a\n" or data[12:16] != b"IHDR":
+        return None
+    width, height, _depth, color = struct.unpack(">IIBB", data[16:26])
+    return width, height, color
+
+
+def check_icons(base):
+    for name, size in (("apple-touch-icon.png", 180), ("icon-192.png", 192), ("icon-512.png", 512)):
+        try:
+            data = fetch(base, name)
+        except OSError:
+            data = b""
+        head = png_header(data)
+        check(head is not None and head[:2] == (size, size), f"{name} is a {size}x{size} PNG (got {head})")
+        if name == "apple-touch-icon.png":
+            # Color type 2 is RGB with no alpha channel; a tRNS chunk would add transparency back.
+            check(head is not None and head[2] == 2 and b"tRNS" not in data,
+                  "apple-touch-icon.png has no transparency")
+
+
 def main():
     srv, url = serve()
+    base = url.rsplit("/", 1)[0] + "/"
     errors = []
+    print("\n[Home Screen files]")
+    check_manifest(base)
+    check_icons(base)
     with sync_playwright() as p:
         browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
+
+        print("\n[page head, fonts, own origin]")
+        ctx = browser.new_context()
+        pg = ctx.new_page()
+        requested = []
+        pg.on("request", lambda r: requested.append(r.url))
+        open_page(pg, url)
+        pg.evaluate("document.fonts.ready")
+        outside = [u for u in requested if not u.startswith(base)]
+        check(requested and not outside, f"the page loads nothing from another origin (got {outside})")
+        for face in ('400 18px "Atkinson Hyperlegible"', '700 18px "Atkinson Hyperlegible"',
+                     '600 18px "Overpass"', '800 18px "Overpass"'):
+            loaded = pg.evaluate("async f => (await document.fonts.load(f)).length > 0 && document.fonts.check(f)", face)
+            check(loaded, f"text can render in {face}")
+        head = pg.evaluate("""() => ({
+            viewport: document.querySelector('meta[name=viewport]')?.content,
+            themes: [...document.querySelectorAll('meta[name=theme-color]')].map(m => [m.media, m.content]),
+            title: document.querySelector('meta[name=apple-mobile-web-app-title]')?.content,
+            links: [...document.querySelectorAll('link')].map(l => [l.rel, l.getAttribute('href')]),
+            odd: [...document.querySelectorAll('meta[name^="claude:"], meta[name=apple-mobile-web-app-status-bar-style]')].length,
+        })""")
+        check(head["viewport"] == "width=device-width, initial-scale=1, viewport-fit=cover",
+              "the viewport covers the whole screen, with zoom left on")
+        check(sorted(head["themes"]) == [["(prefers-color-scheme: dark)", "#111814"],
+                                         ["(prefers-color-scheme: light)", "#f3f5f2"]],
+              f"theme-color is set for light and dark (got {head['themes']})")
+        check(head["title"] == "Road Ready", "the Home Screen label is Road Ready")
+        check(sorted(head["links"]) == [["apple-touch-icon", "apple-touch-icon.png"], ["icon", "icon-192.png"],
+                                        ["manifest", "manifest.webmanifest"]],
+              f"the head links the manifest and icons, and nothing else (got {head['links']})")
+        check(head["odd"] == 0, "no claude: meta and no status-bar-style meta")
+        fonts = sorted(u[len(base):] for u in requested if u.endswith(".woff2"))
+        check(fonts and all(f.startswith("fonts/") for f in fonts), f"the fonts come from the Instance's fonts/ (got {fonts})")
+        ctx.close()
 
         print("\n[questions.json missing]")
         ctx = browser.new_context()
@@ -125,6 +206,17 @@ def main():
         check(box is not None and 0 <= box["y"] < 844, "after answering, the verdict is on screen")
         nb = pg.query_selector("#nextBtn").bounding_box()
         check(nb is not None and nb["y"] + nb["height"] <= 844, "after answering, Next is on screen")
+
+        # An iPhone with a notch reports a 44px top inset and a 34px bottom one in standalone mode.
+        def padding():
+            return pg.evaluate("[getComputedStyle(document.body).paddingTop, getComputedStyle(document.body).paddingBottom]"
+                               ".map(parseFloat)")
+        check(padding() == [24, 48], "with no insets the page keeps its 24px top and 48px bottom padding")
+        cdp = phone.new_cdp_session(pg)
+        cdp.send("Emulation.setSafeAreaInsetsOverride", {"insets": {"top": 44, "bottom": 60}})
+        top, bottom = padding()
+        check(top >= 44, f"with a 44px top inset, the top of the page is padded at least 44px (got {top})")
+        check(bottom >= 60, f"with a 60px bottom inset, the bottom of the page is padded at least 60px (got {bottom})")
         phone.close()
         for scheme in ("light", "dark"):
             print(f"\n[{scheme} mode]")

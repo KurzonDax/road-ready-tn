@@ -2,12 +2,19 @@
 """Build the study app.
 
 Reads the question bank (data/questions.json) and the 12-section study plan
-(data/sections.json), checks them, and writes three files to dist/:
+(data/sections.json), checks them, and writes to dist/:
 
-- index.html      the page, with no questions in it
+- index.html      the page (src/app.html), with no questions in it
 - questions.json  the questions the page fetches when it starts
 - csp.json        the SHA-256 hash of the page's one inline script, for the
                   server's Content-Security-Policy header
+
+and copies the Home Screen files from src/ as they are:
+
+- manifest.webmanifest                 from src/manifest.webmanifest
+- apple-touch-icon.png, icon-192.png,  from src/icons/, drawn by
+  icon-512.png                         tools/make_icons.py
+- fonts/                               from src/fonts/, without its README
 
 The page needs a web server: opened as a file it can't fetch questions.json
 and shows "The questions could not be loaded." There is no guest mode.
@@ -22,9 +29,11 @@ import html.parser
 import json
 import pathlib
 import re
+import shutil
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent
+SRC = ROOT / "src"
 sys.path.insert(0, str(ROOT / "tests"))
 from validate_data import validate  # noqa: E402
 
@@ -120,7 +129,13 @@ def main():
     (out / "index.html").write_text(page, encoding="utf-8")
     (out / "questions.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
     (out / "csp.json").write_text(json.dumps(csp) + "\n", encoding="utf-8")
-    print(f"Wrote {out}: index.html, csp.json, questions.json ({len(data['qs'])} questions in {len(data['days'])} sections)")
+    shutil.copyfile(SRC / "manifest.webmanifest", out / "manifest.webmanifest")
+    for icon in sorted((SRC / "icons").glob("*.png")):
+        shutil.copyfile(icon, out / icon.name)
+    shutil.rmtree(out / "fonts", ignore_errors=True)
+    shutil.copytree(SRC / "fonts", out / "fonts", ignore=shutil.ignore_patterns("README.md"))
+    print(f"Wrote {out}: index.html, csp.json, questions.json ({len(data['qs'])} questions in {len(data['days'])} sections),"
+          " manifest.webmanifest, icons, fonts/")
 
 
 if __name__ == "__main__":
