@@ -5,7 +5,7 @@
 //   use the network's answer and keep a copy in rrtn-pages, else use the kept copy.
 // - Fonts, icons and the manifest: cache first, in rrtn-static-<version>.
 // - Everything else, every /api/ request among it, goes to the network and is never kept.
-const VERSION = '81a153d58129';
+const VERSION = '3030be46eb42';
 const STATIC_FILES = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2", "fonts/overpass/overpass-variable.woff2", "icon-192.png", "icon-512.png", "manifest.webmanifest"];
 const PAGES = 'rrtn-pages';
 const STATIC = 'rrtn-static-' + VERSION;
@@ -56,15 +56,12 @@ self.addEventListener('install', event => {
   event.waitUntil(caches.open(STATIC).then(c => c.addAll(STATIC_FILES)));
 });
 
-// The page that registered this worker loaded before it did, so its copies of the page and the
-// questions weren't kept. Keep whichever is missing, so the next open works with no connection.
-// questions.json is kept only when signed in. This runs after clients.claim(): any request the
-// page made before that came before this one, with the same sign-in.
-function keepMissing() {
-  return Promise.all(['/', '/questions.json'].map(async key => {
-    if (await caches.match(key, { cacheName: PAGES })) return;
-    await keep(key, await fetch(key, { cache: 'no-cache' }));
-  }));
+// The page that registered this worker loaded before it did, so its copy wasn't kept. Keep it if
+// it is missing, so the next open works with no connection. questions.json is never fetched here:
+// that would ask for it signed out (#20). The page fetches it again once this worker controls it.
+async function keepPage() {
+  if (await caches.match('/', { cacheName: PAGES })) return;
+  await keep('/', await fetch('/', { cache: 'no-cache' }));
 }
 
 self.addEventListener('activate', event => {
@@ -75,7 +72,7 @@ self.addEventListener('activate', event => {
   })();
   event.waitUntil(ready);
   // Not part of activating: requests wait until activating ends.
-  ready.then(keepMissing).catch(() => {});
+  ready.then(keepPage).catch(() => {});
 });
 
 self.addEventListener('fetch', event => {

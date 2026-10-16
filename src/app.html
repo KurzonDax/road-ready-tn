@@ -692,12 +692,23 @@ async function startUp() {
     me = last;
   }
   let data;
+  const viaWorker = !!(navigator.serviceWorker && navigator.serviceWorker.controller);
   try {
     const q = await api('questions.json', { cache: 'no-cache' });
     if (!q.ok) throw new Error('HTTP ' + q.status);
     data = await q.json();
   } catch (e) { return e instanceof SignedOut ? undefined : couldNotLoad(); }
+  if (!viaWorker) keepQuestions();
   begin(data);
+}
+// The service worker keeps the questions it hands the page, but never fetches them itself, so it
+// never asks for them signed out. On the first visit the page fetched them before the worker took
+// control, so once it has, they are fetched again through it, to work with no connection next time.
+function keepQuestions() {
+  const sw = navigator.serviceWorker;
+  if (!sw) return;
+  const again = () => { if (me) fetch('questions.json', { cache: 'no-cache' }).catch(() => {}); };
+  if (sw.controller) again(); else sw.addEventListener('controllerchange', again, { once: true });
 }
 
 // The questions live in questions.json next to the page, not in the page itself.

@@ -258,11 +258,14 @@ def check_sign_in(browser, inst):
     ctx = browser.new_context()
     pg = ctx.new_page()
     requested = []
-    pg.on("request", lambda r: requested.append(r.url))
+    ctx.on("request", lambda r: requested.append(r.url))  # the context also sees the service worker's requests
     open_page(pg, url)
     check(stage_text(pg) == "Sign in Type the name and password you were given. Name Password Show password Sign in",
           f"signed out, the page shows only the sign-in screen, worded as decided (got {stage_text(pg)!r})")
-    check(not any(u.endswith("questions.json") for u in requested), "signed out, the page never asks for questions.json")
+    pg.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=10000)
+    time.sleep(1)  # time for the service worker to fetch anything it would after taking control
+    check(any(u.endswith("/sw.js") for u in requested) and not any(u.endswith("questions.json") for u in requested),
+          "signed out, neither the page nor its service worker asks for questions.json", requested)
     form = pg.evaluate("""() => { const f = document.querySelector('#stage form');
         return f && { method: f.getAttribute('method'),
                       fields: [...f.querySelectorAll('input:not([type=checkbox])')].map(i => [i.type, i.autocomplete]) }; }""")
@@ -430,6 +433,26 @@ def check_offline(browser):
         names = sorted({k[0] for k in kept})
         check(names == ["rrtn-pages", f"rrtn-static-{v1}"],
               f"the fonts, icons and manifest are kept under this build's version (got {names})")
+
+        print("\n[signed in before the service worker takes control]")
+        ctx2 = browser.new_context()
+        held = []
+        ctx2.route("**/sw.js", lambda route: held.append(route))  # the worker script waits until the Learner has signed in
+        pg2 = ctx2.new_page()
+        asked = []
+        ctx2.on("request", lambda r: asked.append(r.url) if r.url.endswith("questions.json") else None)
+        open_page(pg2, inst.url)
+        sign_in(pg2, *LEARNER)
+        check(held and len(asked) == 1 and not pg2.evaluate("!!navigator.serviceWorker.controller"),
+              "the page got its questions before any service worker controlled it", asked)
+        held[0].continue_()
+        pg2.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=10000)
+        wait_until(lambda: ["rrtn-pages", "/questions.json"] in cached(pg2), 5)
+        ctx2.set_offline(True)
+        reload(pg2)
+        check(stage_text(pg2).startswith("Section 2 of 12"), "with no connection, the next open still shows the study path",
+              stage_text(pg2))
+        ctx2.close()
 
         print("\n[a new build]")
         v2 = rebuild(inst.root, lambda page: page.replace("This is a practice app.", "This is a practice app, new build."))

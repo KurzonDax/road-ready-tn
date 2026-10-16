@@ -56,15 +56,12 @@ self.addEventListener('install', event => {
   event.waitUntil(caches.open(STATIC).then(c => c.addAll(STATIC_FILES)));
 });
 
-// The page that registered this worker loaded before it did, so its copies of the page and the
-// questions weren't kept. Keep whichever is missing, so the next open works with no connection.
-// questions.json is kept only when signed in. This runs after clients.claim(): any request the
-// page made before that came before this one, with the same sign-in.
-function keepMissing() {
-  return Promise.all(['/', '/questions.json'].map(async key => {
-    if (await caches.match(key, { cacheName: PAGES })) return;
-    await keep(key, await fetch(key, { cache: 'no-cache' }));
-  }));
+// The page that registered this worker loaded before it did, so its copy wasn't kept. Keep it if
+// it is missing, so the next open works with no connection. questions.json is never fetched here:
+// that would ask for it signed out (#20). The page fetches it again once this worker controls it.
+async function keepPage() {
+  if (await caches.match('/', { cacheName: PAGES })) return;
+  await keep('/', await fetch('/', { cache: 'no-cache' }));
 }
 
 self.addEventListener('activate', event => {
@@ -75,7 +72,7 @@ self.addEventListener('activate', event => {
   })();
   event.waitUntil(ready);
   // Not part of activating: requests wait until activating ends.
-  ready.then(keepMissing).catch(() => {});
+  ready.then(keepPage).catch(() => {});
 });
 
 self.addEventListener('fetch', event => {
