@@ -8,6 +8,7 @@ Usage:
 """
 import json
 import pathlib
+import re
 import shutil
 import subprocess
 import sys
@@ -43,8 +44,9 @@ def test_build_writes_page_questions_and_csp(tmp):
             "fonts/atkinson-hyperlegible/OFL.txt", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2",
             "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2",
             "fonts/overpass/OFL.txt", "fonts/overpass/overpass-variable.woff2",
-            "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "questions.json"]
-    check(names == want, "build writes the page, questions, CSP hash, manifest, icons, and fonts with their licenses"
+            "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "questions.json", "sw.js"]
+    check(names == want, "build writes the page, questions, CSP hash, manifest, icons, fonts with their licenses,"
+          " and the service worker"
           + (f" (got {names})" if names != want else ""))
     if not {"csp.json", "index.html", "questions.json"} <= set(names):
         return
@@ -77,9 +79,50 @@ def test_build_refuses_pages_that_break_the_csp(tmp):
     check(r.returncode == 0, "build accepts the real page")
 
 
-def copy_repo(tmp):
+def sw_version(folder):
+    """The build version written into folder/sw.js, or None."""
+    try:
+        m = re.search(r"const VERSION = '([^']*)';", (folder / "sw.js").read_text())
+    except OSError:
+        return None
+    return m and m.group(1)
+
+
+def test_sw_carries_a_build_version(tmp):
+    first, again = tmp / "v1", tmp / "v1-again"
+    build_into(first)
+    build_into(again)
+    v1 = sw_version(first)
+    check(v1 is not None and re.fullmatch(r"[0-9a-f]{12}", v1) is not None,
+          f"sw.js carries a 12-hex-character build version (got {v1!r})")
+    check("__" not in (first / "sw.js").read_text(), "sw.js has no placeholder left")
+    check(sw_version(again) == v1, "building the same sources again gives the same version")
+    static = re.search(r"const STATIC_FILES = (\[.*?\]);", (first / "sw.js").read_text(), re.S)
+    listed = sorted(json.loads(static.group(1))) if static else None
+    want = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2",
+            "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2", "fonts/overpass/overpass-variable.woff2",
+            "icon-192.png", "icon-512.png", "manifest.webmanifest"]
+    check(listed == want, "sw.js lists the fonts, icons and manifest to keep" + ("" if listed == want else f" (got {listed})"))
+
+    repo = copy_repo(tmp, "sw-repo")
+    changes = {
+        "a page change": (repo / "src" / "app.html", lambda b: b.replace(b"Road Ready TN", b"Road Ready Tennessee")),
+        "a font change": (repo / "src" / "fonts" / "overpass" / "overpass-variable.woff2", lambda b: b + b"\0"),
+        "a question change": (repo / "data" / "sections.json", lambda b: b.replace(b'"title": "', b'"title": "The ', 1)),
+    }
+    seen = {v1}
+    for name, (file, change) in changes.items():
+        file.write_bytes(change(file.read_bytes()))
+        out = tmp / ("after " + name)
+        r = run("build.py", "--out", out, cwd=repo)
+        v = sw_version(out)
+        check(r.returncode == 0 and v not in seen, f"{name} gives sw.js a new version" + (f": {r.stderr}" if r.returncode else ""))
+        seen.add(v)
+
+
+def copy_repo(tmp, name="repo"):
     """A copy of the project to build and change without touching the real one."""
-    repo = tmp / "repo"
+    repo = tmp / name
     for name in ("build.py", "data", "src", "tests", "dist"):
         src = ROOT / name
         if src.is_dir():
@@ -123,6 +166,8 @@ def main():
         tmp = pathlib.Path(t)
         print("[build]")
         test_build_writes_page_questions_and_csp(tmp)
+        print("\n[service worker]")
+        test_sw_carries_a_build_version(tmp)
         print("\n[refusals]")
         test_build_refuses_pages_that_break_the_csp(tmp)
         print("\n[check_dist]")
