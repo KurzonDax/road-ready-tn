@@ -199,15 +199,19 @@ let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.jso
 const TEST_LEN = 30, READY_SCORE = 27, READY_STREAK = 3, PASS_SCORE = 24;
 // The device copy of the signed-in Learner, saved under `rrtn-learner-<account id>`:
 // {records: what the server last handed back, pending: finished Sets not yet stored on the
-// server, unfinished: the Set on screen, so leaving the page doesn't lose answers}.
-// The page never reads or writes the saved state from before accounts (`tn-permit-daily-v1`).
+// server, unfinished: the Set on screen, so leaving the page doesn't lose answers,
+// imported_done: true once this device has made the Learner's Imported record}.
 let copy = null, copyFor = null; // the copy, and the account id it belongs to
 const copyKey = id => `rrtn-learner-${id}`;
+// The saved state from before accounts. The page only reads it, for the one-time import; it never writes or deletes it.
+const OLD_KEY = 'tn-permit-daily-v1';
 const canSave = (() => { try { localStorage.setItem('rrtn-check', '1'); localStorage.removeItem('rrtn-check'); return true; } catch (e) { return false; } })();
 function readCopy(id) {
   try {
     const c = JSON.parse(localStorage.getItem(copyKey(id)));
-    if (c && Array.isArray(c.records) && Array.isArray(c.pending)) return { records: c.records, pending: c.pending, unfinished: c.unfinished || null };
+    if (c && Array.isArray(c.records) && Array.isArray(c.pending)) {
+      return { records: c.records, pending: c.pending, unfinished: c.unfinished || null, imported_done: c.imported_done === true };
+    }
   } catch (e) {}
   return null;
 }
@@ -298,7 +302,12 @@ function unpackRun(p) {
       started_at: p.started_at || new Date().toISOString(), items };
   } catch (e) { return null; }
 }
-function keepRun() { copy.unfinished = S.run = run ? packRun(run) : null; saveCopy(); }
+// Saves the Set on screen in the device copy, stamped with saved_at, and sends it to the server.
+function keepRun() {
+  copy.unfinished = S.run = run ? Object.assign(packRun(run), { saved_at: new Date().toISOString() }) : null;
+  saveCopy();
+  sendUnfinished();
+}
 
 // A finished Set as a record. It names the latest Reset this device knows about.
 function setRecord(r) {
@@ -308,23 +317,79 @@ function setRecord(r) {
       answers: r.items.map(it => ({ q: it.q.id, chosen: it.chosen, right: it.chosen === it.q.a, at: it.at || now })) } };
 }
 
-// Sends the records waiting on this device. Those stored move from `pending` to `records`; if the
-// server can't be reached they stay in `pending` and are sent the next time the app opens.
-async function sendPending() {
+// Sends the records waiting on this device, up to 100 (and under the server's body limit) at a
+// time. Those the server stored, or skipped because it already has them, move from `pending` to
+// `records`. If the server can't be reached they stay in `pending`, and are sent when the app
+// opens, when the device comes back online, after the next finished Set, or before sign-out.
+// One send runs at a time; a call made meanwhile sends again once it ends.
+let sending = null, sendAgain = false;
+function sendPending() {
+  if (sending) { sendAgain = true; return sending; }
+  sendAgain = false;
+  sending = sendWaiting().finally(() => { sending = null; if (sendAgain) sendPending(); });
+  return sending;
+}
+const BATCH_BYTES = 60000; // the server refuses a body over 64 KB
+const jsonBytes = v => new TextEncoder().encode(JSON.stringify(v)).length;
+async function sendWaiting() {
   const mine = copy;
   while (mine && copy === mine && mine.pending.length) {
-    const batch = mine.pending.slice(0, 100);
+    const batch = [];
+    let size = 20;
+    for (const x of mine.pending) {
+      const n = jsonBytes(x) + 1;
+      if (batch.length && (batch.length === 100 || size + n > BATCH_BYTES)) break;
+      batch.push(x);
+      size += n;
+    }
+    let r, body;
     try {
-      const r = await postJSON('/api/records', { records: batch });
-      if (!r.ok) return;
+      r = await postJSON('/api/records', { records: batch });
+      if (r.status === 400) body = await r.json();
     } catch (e) { return; }
     if (copy !== mine) return;
+    if (body && body.error === 'bad-record' && batch[body.index]) {
+      // The server will never take a record of that shape; keeping it would hold back every one after it.
+      const bad = batch[body.index].id;
+      mine.pending = mine.pending.filter(x => x.id !== bad);
+      saveCopy();
+      continue;
+    }
+    if (!r.ok) return;
     const sent = new Set(batch.map(x => x.id)), have = new Set(mine.records.map(x => x.id));
     mine.pending = mine.pending.filter(x => !sent.has(x.id));
     mine.records = mine.records.concat(batch.filter(x => !have.has(x.id)));
     saveCopy();
   }
 }
+
+// Sends the unfinished Set (or null once it is finished) to the server, so the Learner can go on
+// with it on another device. One send at a time, always the latest; `unfinishedUnsent` says the
+// server is behind the device, so it is sent again when the device comes back online.
+let sendingUnfinished = false, unfinishedUnsent = false;
+async function sendUnfinished() {
+  unfinishedUnsent = true;
+  if (sendingUnfinished || !copy) return;
+  sendingUnfinished = true;
+  const mine = copy;
+  try {
+    while (unfinishedUnsent && copy === mine) {
+      unfinishedUnsent = false;
+      const r = await postJSON('/api/unfinished', { set: mine.unfinished });
+      if (!r.ok) { unfinishedUnsent = copy === mine; break; }
+    }
+  } catch (e) {
+    unfinishedUnsent = copy === mine;
+  } finally {
+    sendingUnfinished = false;
+  }
+}
+
+window.addEventListener('online', () => {
+  if (!copy) return;
+  sendPending();
+  if (unfinishedUnsent) sendUnfinished();
+});
 
 function runName(r) {
   if (r.kind === 'day') return `Section ${r.dayNum}`;
@@ -399,7 +464,7 @@ function renderHome() {
       ${top}
       ${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${extra}
-      ${canSave ? '' : '<p class="warn">This browser is not saving your progress. If you close this page, you will start again from Section 1.</p>'}
+      ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
       <button class="btn primary" type="button" id="startBtn">${btn}</button>
       ${roadMarkers()}
       ${scoresPanel()}
@@ -514,11 +579,14 @@ function finish() {
   const items = run.items, n = items.length, kind = run.kind, before = streak();
   const right = items.filter(it => it.chosen === it.q.a).length;
   // The finished Set waits in `pending` until the server has it; Progress is worked out again with it.
-  copy.pending.push(setRecord(run));
+  const rec = setRecord(run), mine = copy;
+  copy.pending.push(rec);
   copy.unfinished = null;
   saveCopy();
   workOut();
-  sendPending();
+  // Once the server has the finished Set, the unfinished one is cleared there too.
+  unfinishedUnsent = true;
+  sendPending().then(() => { if (copy === mine && !mine.pending.includes(rec)) sendUnfinished(); });
   const missed = items.filter(it => it.chosen !== it.q.a);
   const toReview = 'The questions you missed go into review. You will do them before the next practice test.';
   let title, note = '', sign = false;
@@ -621,9 +689,10 @@ function begin(data) {
 // records are sent, and the server's records replace the copy's (Resets and Moves arrive this
 // way). A first open on this device waits for the server.
 async function openLearner() {
-  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null };
+  const saved = readCopy(me.id), mine = saved || { records: [], pending: [], unfinished: null, imported_done: false };
   copy = mine;
   copyFor = me.id;
+  unfinishedUnsent = false;
   if (saved) { workOut(); renderHome(); }
   await sendPending();
   let body;
@@ -639,14 +708,28 @@ async function openLearner() {
   const have = new Set(body.records.map(x => x.id));
   copy.records = body.records;
   copy.pending = copy.pending.filter(x => !have.has(x.id));
-  // The page doesn't send its unfinished Set to the server yet, so the server's replaces it only when there is one.
-  if (body.unfinished) copy.unfinished = body.unfinished;
+  // The newest unfinished Set wins: the server's replaces the device's if it was saved later.
+  const theirs = body.unfinished, ours = copy.unfinished;
+  if (theirs && (!ours || String(theirs.saved_at || '') > String(ours.saved_at || ''))) copy.unfinished = theirs;
   const u = copy.unfinished;
   if (u && copyRecords().some(x => x.kind === 'set' && x.data.set_id === u.set_id)) copy.unfinished = null; // already finished
+  const imported = importOldProgress();
   saveCopy();
+  if (imported) sendPending();
   const shown = JSON.stringify(S);
   workOut();
   if (!saved || (onHome && !run && JSON.stringify(S) !== shown)) renderHome();
+}
+// The one-time import: progress saved in this browser before accounts becomes the Learner's
+// Imported record, if the account has no records yet and this device hasn't imported before.
+function importOldProgress() {
+  if (copy.imported_done || copyRecords().length) return false;
+  let state;
+  try { state = JSON.parse(localStorage.getItem(OLD_KEY)); } catch (e) { return false; }
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
+  copy.pending.push({ id: crypto.randomUUID(), kind: 'imported', reset: null, at: new Date().toISOString(), data: { state } });
+  copy.imported_done = true;
+  return true;
 }
 function couldNotLoad() {
   paint(`<section class="home"><p class="sub">The questions could not be loaded. Check your connection and open the app again.</p></section>`);
@@ -739,13 +822,27 @@ function confirmSignOut(back) {
   $('signOutNo').onclick = () => { back(); window.scrollTo(0, 0); };
   $('signOutYes').onclick = signOut;
 }
+// A Learner's waiting records are sent first, so signing out needs a connection; then that
+// Learner's device copy is deleted.
 async function signOut() {
+  const learner = copy ? copyFor : null;
+  const refuse = text => {
+    if (!$('signOutYes')) return;
+    if ($('signOutMsg')) $('signOutMsg').remove();
+    $('signOutYes').insertAdjacentHTML('beforebegin', `<p class="warn" tabindex="-1" id="signOutMsg">${esc(text)}</p>`);
+    $('signOutMsg').focus();
+  };
+  const offline = 'You are offline. Sign out needs a connection, so that your answers are saved first.';
+  if (learner !== null) {
+    await sendPending();
+    if (!copy) return; // the sign-in ended meanwhile
+    if (copy.pending.length) return refuse(offline);
+  }
   try { await api('/api/sign-out', { method: 'POST' }); } catch (e) {
     if (e instanceof SignedOut) return;
-    if ($('signOutMsg')) $('signOutMsg').remove();
-    $('signOutYes').insertAdjacentHTML('beforebegin', '<p class="warn" tabindex="-1" id="signOutMsg">The app could not be reached. Check your connection and try again.</p>');
-    return $('signOutMsg').focus();
+    return refuse(learner !== null ? offline : 'The app could not be reached. Check your connection and try again.');
   }
+  if (learner !== null) try { localStorage.removeItem(copyKey(learner)); } catch (e) {}
   signedOut();
 }
 
