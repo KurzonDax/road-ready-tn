@@ -19,6 +19,24 @@ STEPS = [
         value TEXT NOT NULL
     ) STRICT;
     """,
+    # 2: accounts and their sign-in sessions. Times are whole seconds since 1970 (UTC).
+    """
+    CREATE TABLE accounts (
+        id            INTEGER PRIMARY KEY,
+        role          TEXT NOT NULL CHECK (role IN ('helper', 'learner')),
+        name          TEXT NOT NULL,
+        name_key      TEXT NOT NULL UNIQUE,  -- the name trimmed and lowercased
+        password_hash TEXT NOT NULL,         -- scrypt$N$r$p$salt$hash, see server/auth.py
+        created_at    INTEGER NOT NULL
+    ) STRICT;
+    CREATE TABLE sessions (
+        token_hash       TEXT PRIMARY KEY,   -- SHA-256 of the cookie's token, never the token
+        account_id       INTEGER NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+        expires_at       INTEGER NOT NULL,
+        last_extended_at INTEGER NOT NULL
+    ) STRICT;
+    CREATE INDEX sessions_by_account ON sessions (account_id);
+    """,
 ]
 
 

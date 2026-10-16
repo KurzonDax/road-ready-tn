@@ -1,4 +1,5 @@
-"""Tests for the server core: startup checks, the WSGI app, static files and headers.
+"""Tests for the server: startup checks, the WSGI app, static files and headers, and
+accounts, sign-in sessions and the Helper command.
 
 Most tests call the WSGI app directly, with no network. The startup tests run
 `python -m server` as a program, the way an Instance starts it.
@@ -39,6 +40,8 @@ class RunningServer:
             urllib.request.urlopen(srv.url + "/healthz")
     """
 
+    output = None
+
     def __init__(self, instance_dir, origin="https://permit.example.org", trusted_proxy="127.0.0.1"):
         self.port = free_port()
         self.url = f"http://127.0.0.1:{self.port}"
@@ -64,13 +67,13 @@ class RunningServer:
         raise RuntimeError("server did not answer /healthz in time")
 
     def __exit__(self, *exc):
+        """Stop the server. What it wrote to stdout and stderr is then in `self.output`."""
         self.proc.terminate()
         try:
-            self.proc.wait(timeout=5)
+            self.output = self.proc.communicate(timeout=5)[0]
         except subprocess.TimeoutExpired:
             self.proc.kill()
-            self.proc.wait()
-        self.proc.stdout.close()
+            self.output = self.proc.communicate()[0]
 
 
 class RunningTheServer(unittest.TestCase):
@@ -197,6 +200,18 @@ class AppTestCase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
+    def signed_in(self, role="learner", name=None, password="a good password"):
+        """Headers carrying a session cookie for a new account, made directly with server.auth."""
+        import time
+        from server import auth, db
+        conn = db.connect(self.instance)
+        try:
+            account_id = auth.create_account(conn, role, name or f"{role} {time.time_ns()}", password, now=time.time())
+            token = auth.start_session(conn, auth.get_account(conn, account_id), now=time.time())
+        finally:
+            conn.close()
+        return {"Cookie": f"__Host-rrtn={token}"}
+
 
 class StaticFiles(AppTestCase):
     def test_the_page_is_served_at_the_root_with_no_cache_and_an_etag(self):
@@ -212,7 +227,7 @@ class StaticFiles(AppTestCase):
         self.assertEqual((r.status, r.body, r.headers["cache-control"]), (200, PAGE, "no-cache"))
 
     def test_questions_are_served_private_no_cache_with_an_etag(self):
-        r = call(self.app, "GET", "/questions.json")
+        r = call(self.app, "GET", "/questions.json", self.signed_in())
         self.assertEqual(r.status, 200)
         self.assertEqual(r.body, QUESTIONS)
         self.assertTrue(r.headers["content-type"].startswith("application/json"))
@@ -220,10 +235,11 @@ class StaticFiles(AppTestCase):
         self.assertTrue(r.headers.get("etag"))
 
     def test_a_matching_if_none_match_gets_304_with_no_body(self):
+        cookie = self.signed_in()
         for path in ("/", "/questions.json"):
             with self.subTest(path=path):
-                tag = call(self.app, "GET", path).headers["etag"]
-                r = call(self.app, "GET", path, {"If-None-Match": tag})
+                tag = call(self.app, "GET", path, cookie).headers["etag"]
+                r = call(self.app, "GET", path, {**cookie, "If-None-Match": tag})
                 self.assertEqual(r.status, 304)
                 self.assertEqual(r.body, b"")
                 self.assertEqual(r.headers["etag"], tag)
@@ -563,6 +579,524 @@ class Database(unittest.TestCase):
         with self.assertRaises(sqlite3.Error):
             db.connect(self.dir)
         self.assertFalse((self.dir / "rrtn.db").exists())
+
+
+def run_manage(instance, *args, passwords=()):
+    """Run `python -m server.manage <args>` in-process against an Instance folder, typing `passwords`."""
+    import contextlib
+    import io
+    from unittest import mock
+    from server import manage
+    out, err = io.StringIO(), io.StringIO()
+    with mock.patch("getpass.getpass", side_effect=list(passwords)) as prompt, \
+            contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        code = manage.main(list(args), {"RRTN_DIR": str(instance)})
+    return code, out.getvalue() + err.getvalue(), prompt.call_count
+
+
+def cookie_from(r):
+    """The __Host-rrtn token a response sets, or None."""
+    value = r.headers.get("set-cookie", "")
+    if not value.startswith("__Host-rrtn="):
+        return None
+    return value.split(";")[0].split("=", 1)[1]
+
+
+def cookie_attributes(r):
+    parts = [p.strip() for p in r.headers["set-cookie"].split(";")[1:]]
+    return {p.split("=", 1)[0].lower(): (p.split("=", 1)[1] if "=" in p else True) for p in parts}
+
+
+DAY = 86400
+T0 = 1_800_000_000  # a fixed "now" for the fake clock
+
+
+class AccountsTestCase(AppTestCase):
+    """The real routes, with a fake clock the test moves with `self.now`."""
+
+    def setUp(self):
+        super().setUp()
+        from server import app
+        self.now = T0
+        self.app = app.make_app(dist=self.dist, instance_dir=self.instance, origin=ORIGIN,
+                                clock=lambda: self.now)
+
+    def add_helper(self, name="Randy", password="correct horse"):
+        code, out, _ = run_manage(self.instance, "add", name, passwords=[password, password])
+        self.assertEqual(code, 0, out)
+
+    def add_learner(self, name="Sam", password="learner pass"):
+        from server import auth, db
+        conn = db.connect(self.instance)
+        try:
+            return auth.create_account(conn, "learner", name, password, now=self.now)
+        finally:
+            conn.close()
+
+    def sign_in(self, name, password):
+        import json
+        body = json.dumps({"name": name, "password": password}).encode()
+        return call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": ORIGIN}, body)
+
+    def get(self, path, token=None):
+        headers = {"Cookie": f"__Host-rrtn={token}"} if token else {}
+        return call(self.app, "GET", path, headers)
+
+
+class SigningIn(AccountsTestCase):
+    def test_a_helper_made_with_manage_add_can_sign_in_and_is_a_helper(self):
+        import json
+        self.add_helper("Randy", "correct horse")
+        r = self.sign_in("Randy", "correct horse")
+        self.assertEqual(r.status, 200)
+        self.assertEqual(json.loads(r.body), {"role": "helper", "name": "Randy"})
+        me = self.get("/api/me", cookie_from(r))
+        self.assertEqual(me.status, 200)
+        body = json.loads(me.body)
+        self.assertEqual((body["role"], body["name"]), ("helper", "Randy"))
+        self.assertIsInstance(body["id"], int)
+
+    def test_a_learner_can_sign_in_and_is_a_learner(self):
+        import json
+        self.add_learner("Sam", "learner pass")
+        r = self.sign_in("Sam", "learner pass")
+        self.assertEqual((r.status, json.loads(r.body)), (200, {"role": "learner", "name": "Sam"}))
+        self.assertEqual(json.loads(self.get("/api/me", cookie_from(r)).body)["role"], "learner")
+
+    def test_an_unknown_name_and_a_wrong_password_get_the_same_401(self):
+        self.add_helper("Randy", "correct horse")
+        unknown = self.sign_in("Nobody", "correct horse")
+        wrong = self.sign_in("Randy", "wrong horse!")
+        for r in (unknown, wrong):
+            self.assertEqual(r.status, 401)
+            self.assertEqual(r.body, b'{"error": "mismatch"}')
+            self.assertEqual(r.headers["content-type"], "application/json")
+            self.assertIsNone(cookie_from(r))
+
+    def test_names_match_ignoring_capitals_and_outer_spaces(self):
+        self.add_helper("Randy Willis", "correct horse")
+        for typed in ("randy willis", "  RANDY WILLIS ", "Randy Willis\t"):
+            with self.subTest(typed=typed):
+                self.assertEqual(self.sign_in(typed, "correct horse").status, 200)
+        self.assertEqual(self.sign_in("Randy  Willis", "correct horse").status, 401)
+
+    def test_passwords_match_exactly(self):
+        self.add_helper("Randy", "correct horse")
+        for typed in ("Correct horse", "correct horse ", " correct horse", "correct hors"):
+            with self.subTest(typed=typed):
+                self.assertEqual(self.sign_in("Randy", typed).status, 401)
+
+    def test_a_name_over_64_or_a_password_over_128_is_a_mismatch(self):
+        self.add_helper("Randy", "correct horse")
+        self.assertEqual(self.sign_in("R" * 65, "correct horse").body, b'{"error": "mismatch"}')
+        self.assertEqual(self.sign_in("Randy", "x" * 129).body, b'{"error": "mismatch"}')
+
+    def test_a_sign_in_without_a_name_or_password_is_400(self):
+        import json
+        for body in ({}, {"name": "Randy"}, {"name": "Randy", "password": 12345678}, ["Randy", "pw"]):
+            with self.subTest(body=body):
+                r = call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": ORIGIN}, json.dumps(body).encode())
+                self.assertEqual(r.status, 400)
+
+    def test_sign_in_needs_the_instance_origin(self):
+        self.add_helper("Randy", "correct horse")
+        body = b'{"name": "Randy", "password": "correct horse"}'
+        r = call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": "https://evil.example.com"}, body)
+        self.assertEqual(r.status, 403)
+        self.assertIsNone(cookie_from(r))
+
+    def test_account_answers_are_never_cached(self):
+        self.add_helper("Randy", "correct horse")
+        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        for r in (self.sign_in("Randy", "correct horse"), self.sign_in("Randy", "nope nope"),
+                  self.get("/api/me", token), self.get("/api/me")):
+            self.assertEqual(r.headers["cache-control"], "no-store")
+
+
+class SessionCookie(AccountsTestCase):
+    def test_the_cookie_is_host_prefixed_http_only_secure_and_lax(self):
+        self.add_helper("Randy", "correct horse")
+        r = self.sign_in("Randy", "correct horse")
+        self.assertTrue(r.headers["set-cookie"].startswith("__Host-rrtn="))
+        attrs = cookie_attributes(r)
+        self.assertIs(attrs["httponly"], True)
+        self.assertIs(attrs["secure"], True)
+        self.assertEqual(attrs["samesite"], "Lax")
+        self.assertEqual(attrs["path"], "/")
+        self.assertNotIn("domain", attrs)
+
+    def test_max_age_is_400_days_for_a_learner_and_30_days_for_a_helper(self):
+        self.add_helper("Randy", "correct horse")
+        self.add_learner("Sam", "learner pass")
+        self.assertEqual(cookie_attributes(self.sign_in("Sam", "learner pass"))["max-age"], "34560000")
+        self.assertEqual(cookie_attributes(self.sign_in("Randy", "correct horse"))["max-age"], "2592000")
+
+    def test_each_sign_in_gets_a_new_long_token(self):
+        self.add_helper("Randy", "correct horse")
+        a = cookie_from(self.sign_in("Randy", "correct horse"))
+        b = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.assertNotEqual(a, b)
+        self.assertGreaterEqual(len(a), 43)  # 32 random bytes in base64url
+
+
+class SessionLifetime(AccountsTestCase):
+    def setUp(self):
+        super().setUp()
+        self.add_helper("Randy", "correct horse")
+        self.add_learner("Sam", "learner pass")
+
+    def session_count(self):
+        from server import db
+        conn = db.connect(self.instance)
+        try:
+            return conn.execute("SELECT count(*) FROM sessions").fetchone()[0]
+        finally:
+            conn.close()
+
+    def test_signed_out_and_unknown_tokens_get_401_signed_out(self):
+        for token in (None, "not-a-real-token"):
+            with self.subTest(token=token):
+                r = self.get("/api/me", token)
+                self.assertEqual((r.status, r.body), (401, b'{"error": "signed-out"}'))
+
+    def test_a_helper_session_ends_after_30_days_and_is_deleted(self):
+        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.now = T0 + 29 * DAY
+        self.assertEqual(self.get("/api/me", token).status, 200)  # moves the expiry to now + 30 days
+        self.now += 30 * DAY - 1
+        self.assertEqual(self.get("/api/me", token).status, 200)  # and again
+        self.now += 30 * DAY
+        r = self.get("/api/me", token)
+        self.assertEqual(r.status, 401)
+        self.assertEqual(cookie_attributes(r)["max-age"], "0")
+        self.assertEqual(self.session_count(), 0)
+
+    def test_a_session_not_used_for_its_whole_lifetime_ends(self):
+        helper = cookie_from(self.sign_in("Randy", "correct horse"))
+        learner = cookie_from(self.sign_in("Sam", "learner pass"))
+        unused_learner = cookie_from(self.sign_in("Sam", "learner pass"))
+        self.now = T0 + 30 * DAY
+        self.assertEqual(self.get("/api/me", helper).status, 401)
+        self.assertEqual(self.get("/api/me", learner).status, 200)
+        self.now = T0 + 400 * DAY
+        self.assertEqual(self.get("/api/me", unused_learner).status, 401)
+
+    def test_the_expiry_moves_forward_at_most_once_a_day(self):
+        token = cookie_from(self.sign_in("Sam", "learner pass"))
+        self.now = T0 + DAY - 1
+        self.assertNotIn("set-cookie", self.get("/api/me", token).headers)
+        self.now = T0 + DAY
+        renewed = self.get("/api/me", token)
+        self.assertEqual(cookie_from(renewed), token)
+        self.assertEqual(cookie_attributes(renewed)["max-age"], "34560000")
+        self.now = T0 + DAY + 60
+        self.assertNotIn("set-cookie", self.get("/api/me", token).headers)
+        # The new expiry counts from the day it moved, not from sign-in.
+        self.now = T0 + DAY + 400 * DAY - 1
+        self.assertEqual(self.get("/api/me", token).status, 200)
+
+    def test_a_session_used_only_within_a_day_keeps_its_first_expiry(self):
+        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        for hours in (1, 5, 23):
+            self.now = T0 + hours * 3600
+            self.assertEqual(self.get("/api/me", token).status, 200)
+        self.now = T0 + 30 * DAY
+        self.assertEqual(self.get("/api/me", token).status, 401)
+
+    def test_sign_out_ends_that_session_and_clears_the_cookie(self):
+        token = cookie_from(self.sign_in("Sam", "learner pass"))
+        other = cookie_from(self.sign_in("Sam", "learner pass"))
+        r = call(self.app, "POST", "/api/sign-out", {"Origin": ORIGIN, "Cookie": f"__Host-rrtn={token}"})
+        self.assertEqual((r.status, r.body), (204, b""))
+        self.assertTrue(r.headers["set-cookie"].startswith("__Host-rrtn=;"))
+        self.assertEqual(cookie_attributes(r)["max-age"], "0")
+        self.assertEqual(r.headers["cache-control"], "no-store")
+        self.assertEqual(self.get("/api/me", token).status, 401)
+        self.assertEqual(self.get("/api/me", other).status, 200)
+
+    def test_sign_out_when_signed_out_still_answers_204(self):
+        self.assertEqual(call(self.app, "POST", "/api/sign-out", {"Origin": ORIGIN}).status, 204)
+
+    def test_sign_out_needs_the_instance_origin(self):
+        token = cookie_from(self.sign_in("Sam", "learner pass"))
+        r = call(self.app, "POST", "/api/sign-out", {"Cookie": f"__Host-rrtn={token}"})
+        self.assertEqual(r.status, 403)
+        self.assertEqual(self.get("/api/me", token).status, 200)
+
+    def test_deleting_an_account_deletes_its_sessions(self):
+        from server import auth, db
+        token = cookie_from(self.sign_in("Sam", "learner pass"))
+        self.sign_in("Randy", "correct horse")
+        conn = db.connect(self.instance)
+        try:
+            auth.delete_account(conn, auth.find_account(conn, "Sam")["id"])
+        finally:
+            conn.close()
+        self.assertEqual(self.get("/api/me", token).status, 401)
+        self.assertEqual(self.session_count(), 1)
+
+
+class QuestionsNeedSignIn(AccountsTestCase):
+    def test_questions_are_401_signed_out_and_200_for_either_role(self):
+        self.add_helper("Randy", "correct horse")
+        self.add_learner("Sam", "learner pass")
+        for method in ("GET", "HEAD"):
+            with self.subTest(method=method):
+                r = call(self.app, method, "/questions.json")
+                self.assertEqual(r.status, 401)
+        self.assertEqual(call(self.app, "GET", "/questions.json").body, b'{"error": "signed-out"}')
+        for name, password in (("Randy", "correct horse"), ("Sam", "learner pass")):
+            with self.subTest(name=name):
+                r = self.get("/questions.json", cookie_from(self.sign_in(name, password)))
+                self.assertEqual((r.status, r.body), (200, QUESTIONS))
+
+    def test_an_ended_session_cannot_fetch_questions(self):
+        self.add_helper("Randy", "correct horse")
+        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.now = T0 + 30 * DAY
+        self.assertEqual(self.get("/questions.json", token).status, 401)
+
+    def test_the_sign_in_page_and_its_files_stay_open(self):
+        (self.dist / "fonts").mkdir()
+        (self.dist / "fonts" / "body.woff2").write_bytes(b"font")
+        (self.dist / "app.webmanifest").write_text("{}")
+        for path in ("/", "/index.html", "/robots.txt", "/healthz", "/fonts/body.woff2", "/app.webmanifest",
+                     "/csp.json"):
+            with self.subTest(path=path):
+                self.assertEqual(call(self.app, "GET", path).status, 200)
+
+
+class WhatTheDatabaseHolds(AccountsTestCase):
+    def all_values(self):
+        from server import db
+        conn = db.connect(self.instance)
+        try:
+            return "\n".join(conn.iterdump())
+        finally:
+            conn.close()
+
+    def test_no_raw_token_and_no_raw_password_is_stored(self):
+        self.add_helper("Randy", "correct horse")
+        self.add_learner("Sam", "learner pass")
+        tokens = [cookie_from(self.sign_in("Randy", "correct horse")),
+                  cookie_from(self.sign_in("Sam", "learner pass"))]
+        dump = self.all_values()
+        self.assertIn("Randy", dump)
+        for secret in ["correct horse", "learner pass", *tokens]:
+            self.assertNotIn(secret, dump)
+        for f in self.instance.iterdir():
+            for secret in [b"correct horse", b"learner pass", *(t.encode() for t in tokens)]:
+                self.assertNotIn(secret, f.read_bytes(), f.name)
+
+    def test_each_hash_carries_its_scrypt_settings(self):
+        self.add_helper("Randy", "correct horse")
+        dump = self.all_values()
+        self.assertIn("scrypt$32768$8$3$", dump)
+
+    def test_a_hash_made_with_older_settings_is_redone_at_sign_in(self):
+        from server import auth, db
+        conn = db.connect(self.instance)
+        try:
+            conn.execute("INSERT INTO accounts (role, name, name_key, password_hash, created_at) "
+                         "VALUES ('learner', 'Old', 'old', ?, ?)", (auth.hash_password("old password", n=2 ** 12), T0))
+        finally:
+            conn.close()
+        self.assertNotIn("scrypt$32768$", self.all_values())
+        self.assertEqual(self.sign_in("Old", "old password").status, 200)
+        self.assertIn("scrypt$32768$8$3$", self.all_values())
+        self.assertEqual(self.sign_in("Old", "old password").status, 200)
+
+
+class NameAndPasswordRules(AccountsTestCase):
+    def create(self, name, password="a good password", role="learner"):
+        from server import auth, db
+        conn = db.connect(self.instance)
+        try:
+            return auth.create_account(conn, role, name, password, now=self.now)
+        finally:
+            conn.close()
+
+    def assert_refused(self, code, name, password="a good password"):
+        from server import auth
+        with self.assertRaises(auth.AccountError) as e:
+            self.create(name, password)
+        self.assertEqual(e.exception.code, code)
+
+    def test_passwords_must_be_8_to_128_characters(self):
+        self.assert_refused("password-length", "Seven", "x" * 7)
+        self.assert_refused("password-length", "Long", "x" * 129)
+        self.create("Eight", "x" * 8)
+        self.create("Max", "x" * 128)
+
+    def test_names_must_be_1_to_64_characters_after_trimming(self):
+        self.assert_refused("name-length", "x" * 65)
+        self.assert_refused("name-length", "")
+        self.assert_refused("name-length", "   ")
+        self.create("y" * 64)
+        self.create("  " + "z" * 64 + "  ")
+
+    def test_a_name_is_stored_trimmed(self):
+        self.create("  Sam Jones  ", "learner pass")
+        import json
+        r = self.sign_in("sam jones", "learner pass")
+        self.assertEqual(json.loads(r.body)["name"], "Sam Jones")
+
+    def test_names_are_unique_ignoring_capitals_across_both_roles(self):
+        self.create("Sam")
+        self.assert_refused("name-taken", "sam")
+        self.assert_refused("name-taken", " SAM ")
+        from server import auth
+        with self.assertRaises(auth.AccountError):
+            self.create("SAM", role="helper")
+
+    def test_a_new_password_follows_the_same_rules(self):
+        from server import auth, db
+        account_id = self.create("Sam")
+        conn = db.connect(self.instance)
+        try:
+            for bad in ("x" * 7, "x" * 129):
+                with self.assertRaises(auth.AccountError):
+                    auth.set_password(conn, account_id, bad)
+        finally:
+            conn.close()
+
+
+class Roles(AccountsTestCase):
+    """auth.require, which later routes use to let in only one role."""
+
+    def setUp(self):
+        super().setUp()
+        from server import app, auth
+        routes = dict(app.ROUTES)
+
+        @app.route("GET", "/helpers-only", table=routes)
+        @auth.require("helper")
+        def helpers_only(req):
+            return app.json_response({"hello": req.account["name"]})
+
+        self.app = app.make_app(dist=self.dist, instance_dir=self.instance, origin=ORIGIN, routes=routes,
+                                clock=lambda: self.now)
+        self.add_helper("Randy", "correct horse")
+        self.add_learner("Sam", "learner pass")
+
+    def test_the_role_gets_in_the_other_role_gets_403_and_signed_out_gets_401(self):
+        helper = self.get("/helpers-only", cookie_from(self.sign_in("Randy", "correct horse")))
+        self.assertEqual((helper.status, helper.body), (200, b'{"hello": "Randy"}'))
+        learner = self.get("/helpers-only", cookie_from(self.sign_in("Sam", "learner pass")))
+        self.assertEqual((learner.status, learner.body), (403, b'{"error": "wrong-role"}'))
+        self.assertEqual(self.get("/helpers-only").status, 401)
+
+
+class HelperCommand(AccountsTestCase):
+    def manage(self, *args, passwords=()):
+        return run_manage(self.instance, *args, passwords=passwords)
+
+    def test_add_asks_for_the_password_twice_and_makes_a_helper(self):
+        code, out, prompts = self.manage("add", "Randy", passwords=["correct horse", "correct horse"])
+        self.assertEqual((code, prompts), (0, 2))
+        self.assertIn("Randy", out)
+        self.assertEqual(self.sign_in("randy", "correct horse").status, 200)
+
+    def test_add_works_on_an_instance_folder_that_has_no_database_yet(self):
+        fresh = pathlib.Path(self.tmp.name) / "fresh"
+        fresh.mkdir()
+        code, _, _ = run_manage(fresh, "add", "Randy", passwords=["correct horse"] * 2)
+        self.assertEqual(code, 0)
+        self.assertTrue((fresh / "rrtn.db").is_file())
+
+    def test_add_refuses_two_different_passwords(self):
+        code, out, _ = self.manage("add", "Randy", passwords=["correct horse", "correct house"])
+        self.assertNotEqual(code, 0)
+        self.assertIn("not the same", out)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 401)
+
+    def test_add_refuses_a_password_of_7_or_129_characters(self):
+        for bad in ("x" * 7, "x" * 129):
+            with self.subTest(length=len(bad)):
+                code, out, _ = self.manage("add", "Randy", passwords=[bad, bad])
+                self.assertNotEqual(code, 0)
+                self.assertIn("8 to 128", out)
+        self.assertEqual(self.sign_in("Randy", "x" * 7).status, 401)
+
+    def test_add_refuses_a_65_character_name_or_a_name_taken_ignoring_capitals(self):
+        code, out, prompts = self.manage("add", "R" * 65, passwords=["correct horse"] * 2)
+        self.assertNotEqual(code, 0)
+        self.assertIn("1 to 64", out)
+        self.add_learner("Sam", "learner pass")
+        code, out, prompts = self.manage("add", "SAM", passwords=["correct horse"] * 2)
+        self.assertNotEqual(code, 0)
+        self.assertIn("taken", out)
+        self.assertEqual(prompts, 0)  # refused before asking for a password
+
+    def test_a_password_is_never_taken_as_an_argument(self):
+        import contextlib
+        import io
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
+            self.manage("add", "Randy", "correct horse")
+        self.assertNotEqual(e.exception.code, 0)
+
+    def test_password_sets_a_new_one_and_ends_that_helpers_sessions(self):
+        self.add_helper("Randy", "correct horse")
+        self.add_helper("Alex", "another helper")
+        randy = [cookie_from(self.sign_in("Randy", "correct horse")) for _ in range(2)]
+        alex = cookie_from(self.sign_in("Alex", "another helper"))
+        code, out, prompts = self.manage("password", "randy", passwords=["battery staple", "battery staple"])
+        self.assertEqual((code, prompts), (0, 2))
+        for token in randy:
+            self.assertEqual(self.get("/api/me", token).status, 401)
+        self.assertEqual(self.get("/api/me", alex).status, 200)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 401)
+        self.assertEqual(self.sign_in("Randy", "battery staple").status, 200)
+
+    def test_password_refuses_a_bad_new_password_and_keeps_the_old_one(self):
+        self.add_helper("Randy", "correct horse")
+        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        code, _, _ = self.manage("password", "Randy", passwords=["short", "short"])
+        self.assertNotEqual(code, 0)
+        self.assertEqual(self.get("/api/me", token).status, 200)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+
+    def test_remove_deletes_the_helper_and_their_sessions(self):
+        self.add_helper("Randy", "correct horse")
+        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        code, out, prompts = self.manage("remove", "Randy")
+        self.assertEqual((code, prompts), (0, 0))
+        self.assertEqual(self.get("/api/me", token).status, 401)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 401)
+
+    def test_the_command_never_touches_a_learner(self):
+        self.add_learner("Sam", "learner pass")
+        token = cookie_from(self.sign_in("Sam", "learner pass"))
+        for args in (("password", "Sam"), ("remove", "sam")):
+            with self.subTest(args=args):
+                code, out, prompts = self.manage(*args, passwords=["new password"] * 2)
+                self.assertNotEqual(code, 0)
+                self.assertIn("Learner", out)
+                self.assertEqual(prompts, 0)
+        self.assertEqual(self.get("/api/me", token).status, 200)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_an_unknown_name_is_refused(self):
+        for command in ("password", "remove"):
+            with self.subTest(command=command):
+                code, out, _ = self.manage(command, "Nobody", passwords=["new password"] * 2)
+                self.assertNotEqual(code, 0)
+                self.assertIn("no Helper", out)
+
+
+NO_HELPER_LINE = "No Helper account exists. Run: python -m server.manage add <name>"
+
+
+class NoHelperYet(unittest.TestCase):
+    def test_the_log_names_the_command_only_while_no_helper_exists(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            with RunningServer(tmp) as srv:
+                pass
+            self.assertEqual(srv.output.count(NO_HELPER_LINE), 1, srv.output)
+            run_manage(tmp, "add", "Randy", passwords=["correct horse"] * 2)
+            with RunningServer(tmp) as srv:
+                pass
+            self.assertNotIn("No Helper", srv.output)
 
 
 if __name__ == "__main__":
