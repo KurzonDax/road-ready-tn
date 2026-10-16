@@ -17,7 +17,7 @@ across a reload, picking up a half-finished section, and the phone layout. Progr
 is worked out from the Learner's records on the server: progressFrom() on fixtures,
 finished Sets stored as records and shown again in a fresh browser, a Reset and a
 Move put straight into the database, a record that waits when the server can't be
-reached, and #restart / #sectionN doing nothing. Offline (context.set_offline): a
+reached, and the removed #restart / #sectionN links doing nothing. Offline (context.set_offline): a
 Set finished offline sent once on reconnecting, a long wait sent in parts, an
 unfinished Set continued on a second device (the newest wins), the one-time import
 of the old tn-permit-daily-v1 state (once, never for a Helper, the old key left
