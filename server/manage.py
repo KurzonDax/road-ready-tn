@@ -56,6 +56,7 @@ def find_helper(conn, name):
 
 
 def add(conn, name, new_password):
+    # The name is checked before the password is asked for, so a bad or taken name is said at once.
     try:
         name = auth.check_name(name)
     except auth.AccountError as e:
@@ -134,7 +135,7 @@ def main(argv=None, environ=None):
         command_parser.add_argument("--password-stdin", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
-    folder = pathlib.Path(environ.get("RRTN_DIR", "").strip() or "/var/lib/rrtn")
+    folder = db.instance_dir(environ)
     try:
         db.migrate(folder)
         conn = db.connect(folder)

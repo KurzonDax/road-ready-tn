@@ -9,6 +9,7 @@ A route that needs someone signed in uses `require`:
 
 Signed out gets 401 {"error": "signed-out"}; the wrong role gets 403 {"error": "wrong-role"}.
 """
+import contextlib
 import functools
 import hashlib
 import hmac
@@ -103,18 +104,25 @@ def needs_rehash(stored):
 
 # Accounts
 
+@contextlib.contextmanager
+def _name_free():
+    """Turns the database refusing a second account with the same name_key into AccountError."""
+    try:
+        yield
+    except sqlite3.IntegrityError:
+        raise AccountError("name-taken", "That name is already taken.") from None
+
+
 def create_account(conn, role, name, password, now):
     """Add an account and return its id. AccountError if the name or password breaks the rules."""
     if role not in ROLES:
         raise ValueError(f"role must be one of {ROLES}")
     name = check_name(name)
     check_password(password)
-    try:
+    with _name_free():
         cur = conn.execute(
             "INSERT INTO accounts (role, name, name_key, password_hash, created_at) VALUES (?, ?, ?, ?, ?)",
             (role, name, name_key(name), hash_password(password), int(now)))
-    except sqlite3.IntegrityError:
-        raise AccountError("name-taken", "That name is already taken.") from None
     return cur.lastrowid
 
 
@@ -130,10 +138,8 @@ def get_account(conn, account_id):
 def rename_account(conn, account_id, name):
     """Give an account a new name and return it as stored. AccountError if it breaks the rules."""
     name = check_name(name)
-    try:
+    with _name_free():
         conn.execute("UPDATE accounts SET name = ?, name_key = ? WHERE id = ?", (name, name_key(name), account_id))
-    except sqlite3.IntegrityError:
-        raise AccountError("name-taken", "That name is already taken.") from None
     return name
 
 
@@ -282,7 +288,7 @@ def require(*roles):
 
 def _log_sign_in(now, address, name, outcome):
     """One line per sign-in: time, client IP, name and outcome. Never the password."""
-    limits.log.info("%s sign-in ip=%s name=%s outcome=%s", limits.iso(now), limits.log_text(address or "unknown"),
+    limits.log.info("%s sign-in ip=%s name=%s outcome=%s", db.iso_time(now), limits.log_text(address or "unknown"),
                     limits.log_text(name, NAME_MAX), outcome)
 
 

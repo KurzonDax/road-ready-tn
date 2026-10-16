@@ -15,7 +15,6 @@ Counted in the sign_in_limits table, one row per key (`name:<name_key>` or `ip:<
 
 Times are whole seconds since 1970 (UTC). Every function takes `now`, so tests use a fake clock.
 """
-import datetime
 import logging
 
 from . import db
@@ -43,10 +42,6 @@ def name(name_key):
 
 def ip(address):
     return "ip:" + (address or "unknown")
-
-
-def iso(seconds):
-    return datetime.datetime.fromtimestamp(int(seconds), datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def log_text(value, limit=None):
@@ -105,7 +100,7 @@ def _count(conn, key, now, limit, pause_for, window=None):
         "level = excluded.level, updated_at = excluded.updated_at",
         (key, failures, start, paused_until, level, now))
     if pause is not None:
-        log.info("%s pause key=%s seconds=%d until=%s", iso(now), log_text(key), pause, iso(now + pause))
+        log.info("%s pause key=%s seconds=%d until=%s", db.iso_time(now), log_text(key), pause, db.iso_time(now + pause))
     return pause
 
 
