@@ -1036,6 +1036,39 @@ class HelperCommand(AccountsTestCase):
             self.manage("add", "Randy", "correct horse")
         self.assertNotEqual(e.exception.code, 0)
 
+    def test_password_stdin_reads_one_line_for_tests_and_asks_nothing(self):
+        import contextlib
+        import io
+        from unittest import mock
+        from server import manage
+        with mock.patch("sys.stdin", io.StringIO("correct horse\n")), \
+                mock.patch("getpass.getpass", side_effect=AssertionError("prompted")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            code = manage.main(["add", "Randy", "--password-stdin"], {"RRTN_DIR": str(self.instance)})
+        self.assertEqual(code, 0)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+
+    def test_password_stdin_still_checks_the_length(self):
+        import contextlib
+        import io
+        from unittest import mock
+        from server import manage
+        err = io.StringIO()
+        with mock.patch("sys.stdin", io.StringIO("short\n")), \
+                contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
+            code = manage.main(["add", "Randy", "--password-stdin"], {"RRTN_DIR": str(self.instance)})
+        self.assertNotEqual(code, 0)
+        self.assertIn("8 to 128", err.getvalue())
+
+    def test_the_command_runs_as_python_m_server_manage(self):
+        # A fresh interpreter imports server.auth before server.app, unlike the tests above.
+        env = {k: v for k, v in os.environ.items() if not k.startswith("RRTN_")}
+        env["RRTN_DIR"] = str(self.instance)
+        done = subprocess.run([sys.executable, "-m", "server.manage", "add", "Randy", "--password-stdin"],
+                              cwd=ROOT, env=env, input="correct horse\n", capture_output=True, text=True)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+
     def test_password_sets_a_new_one_and_ends_that_helpers_sessions(self):
         self.add_helper("Randy", "correct horse")
         self.add_helper("Alex", "another helper")

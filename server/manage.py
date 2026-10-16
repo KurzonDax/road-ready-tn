@@ -3,6 +3,9 @@
 Run it inside the container, where RRTN_DIR names the Instance folder (default
 /var/lib/rrtn). Passwords are typed at a prompt, twice, and never taken as an
 argument. Learner accounts are managed from the Helper's view, not here.
+
+`--password-stdin` (hidden, for tests) reads the password as one line from
+standard input instead of asking for it.
 """
 import argparse
 import getpass
@@ -21,15 +24,24 @@ class Refused(Exception):
     """Something the command won't do. The message is printed and the command exits 1."""
 
 
+def checked(password):
+    try:
+        return auth.check_password(password)
+    except auth.AccountError as e:
+        raise Refused(f"{e} Nothing was changed.") from None
+
+
 def ask_password():
     first = getpass.getpass("New password: ")
     second = getpass.getpass("Type it again: ")
     if first != second:
         raise Refused("The two passwords are not the same. Nothing was changed.")
-    try:
-        return auth.check_password(first)
-    except auth.AccountError as e:
-        raise Refused(f"{e} Nothing was changed.") from None
+    return checked(first)
+
+
+def read_password():
+    """The password as one line from standard input (`--password-stdin`, for tests)."""
+    return checked(sys.stdin.readline().rstrip("\r\n"))
 
 
 def find_helper(conn, name):
@@ -41,7 +53,7 @@ def find_helper(conn, name):
     return account
 
 
-def add(conn, name):
+def add(conn, name, new_password):
     try:
         name = auth.check_name(name)
     except auth.AccountError as e:
@@ -49,19 +61,19 @@ def add(conn, name):
     if auth.find_account(conn, name) is not None:
         raise Refused("That name is already taken.")
     try:
-        auth.create_account(conn, "helper", name, ask_password(), now=time.time())
+        auth.create_account(conn, "helper", name, new_password(), now=time.time())
     except auth.AccountError as e:
         raise Refused(str(e)) from None
     return f"Added the Helper {name!r}."
 
 
-def password(conn, name):
+def password(conn, name, new_password):
     account = find_helper(conn, name)
-    auth.set_password(conn, account["id"], ask_password())
+    auth.set_password(conn, account["id"], new_password())
     return f"Set a new password for {account['name']!r}. Their sign-ins have ended."
 
 
-def remove(conn, name):
+def remove(conn, name, new_password):
     account = find_helper(conn, name)
     auth.delete_account(conn, account["id"])
     return f"Removed the Helper {account['name']!r}."
@@ -80,7 +92,9 @@ def main(argv=None, environ=None):
     parser = argparse.ArgumentParser(prog=PROG, description="Manage Helper accounts.")
     sub = parser.add_subparsers(dest="command", required=True)
     for command, (_, help_text) in COMMANDS.items():
-        sub.add_parser(command, help=help_text).add_argument("name")
+        command_parser = sub.add_parser(command, help=help_text)
+        command_parser.add_argument("name")
+        command_parser.add_argument("--password-stdin", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
     folder = pathlib.Path(environ.get("RRTN_DIR", "").strip() or "/var/lib/rrtn")
@@ -91,7 +105,8 @@ def main(argv=None, environ=None):
         print(f"{PROG}: can't open the database {db.path(folder)} ({e})", file=sys.stderr)
         return 2
     try:
-        print(COMMANDS[args.command][0](conn, args.name))
+        new_password = read_password if args.password_stdin else ask_password
+        print(COMMANDS[args.command][0](conn, args.name, new_password))
         return 0
     except Refused as e:
         print(f"{PROG}: {e}", file=sys.stderr)
