@@ -20,7 +20,11 @@ Move put straight into the database, a record that waits when the server can't b
 reached, the old tn-permit-daily-v1 state left alone, and #restart / #sectionN
 doing nothing. Also the Home Screen pieces: the
 manifest, the icon sizes, the page head, the safe-area padding, and that the page
-loads its fonts and everything else from its own origin. The server sends the
+loads its fonts and everything else from its own origin. The service worker, on an
+Instance run from a copy of the project so its dist/ can be rebuilt: opening the
+app and answering a Set with no connection, no /api/ answer in any cache, a new
+build reaching the next reload and replacing the old build's cache, and sign-out
+dropping the kept questions.json. The server sends the
 script-src hash from dist/csp.json, so a wrong hash stops the page, and one run
 checks the sentence shown when questions.json can't be loaded.
 
@@ -29,6 +33,8 @@ Set CHROMIUM_PATH to use an installed Chromium instead of Playwright's download.
 import json
 import os
 import pathlib
+import re
+import shutil
 import socket
 import struct
 import subprocess
@@ -37,7 +43,7 @@ import tempfile
 import time
 import urllib.request
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import TimeoutError as PlaywrightTimeout, sync_playwright
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -66,6 +72,9 @@ class Instance:
             page.goto(inst.url)
     """
 
+    def __init__(self, root=ROOT):
+        self.root = root  # the project folder the server runs from and serves dist/ of
+
     def __enter__(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.dir = pathlib.Path(self.tmp.name)
@@ -77,7 +86,7 @@ class Instance:
         self.env.update(RRTN_DIR=str(self.dir), RRTN_PORT=str(self.port),
                         RRTN_ORIGIN=f"http://127.0.0.1:{self.port}", RRTN_TRUSTED_PROXY="127.0.0.1")
         self.log = open(self.dir / "server.log", "w+")
-        self.proc = subprocess.Popen([sys.executable, "-m", "server"], cwd=ROOT, env=self.env,
+        self.proc = subprocess.Popen([sys.executable, "-m", "server"], cwd=self.root, env=self.env,
                                      stdout=self.log, stderr=subprocess.STDOUT)
         deadline = time.monotonic() + 15
         while True:
@@ -105,7 +114,7 @@ class Instance:
     def add_helper(self, name, password):
         """A Helper, made the way the self-host docs say: with server.manage."""
         subprocess.run([sys.executable, "-m", "server.manage", "add", name, "--password-stdin"],
-                       cwd=ROOT, env=self.env, input=password + "\n", text=True, check=True,
+                       cwd=self.root, env=self.env, input=password + "\n", text=True, check=True,
                        capture_output=True)
 
     def add_learner(self, name, password):
@@ -333,6 +342,108 @@ def check_sign_in(browser, inst):
         check(pg.evaluate("document.activeElement === document.querySelector('#signInMsg p')"),
               "focus moves to the pause message")
     ctx.close()
+
+
+def copy_project(folder):
+    """A copy of what the server and build.py need, to rebuild dist/ without touching the real one."""
+    for name in ("build.py", "data", "dist", "server", "src", "tests", "vendor"):
+        src = ROOT / name
+        if src.is_dir():
+            shutil.copytree(src, folder / name, ignore=shutil.ignore_patterns("__pycache__"))
+        else:
+            shutil.copy2(src, folder / name)
+    return folder
+
+
+def rebuild(project, change):
+    """Rebuild project/dist/ from project/src/app.html with change(text) applied. Returns the new sw.js version."""
+    app = project / "src" / "app.html"
+    app.write_text(change(app.read_text(encoding="utf-8")), encoding="utf-8")
+    subprocess.run([sys.executable, "build.py"], cwd=project, check=True, capture_output=True)
+    return sw_version(project / "dist")
+
+
+def sw_version(dist):
+    return re.search(r"const VERSION = '([0-9a-f]{12})';", (dist / "sw.js").read_text()).group(1)
+
+
+def cached(pg):
+    """Every [cache name, path] that Cache Storage holds for the page's origin."""
+    return pg.evaluate("""async () => { const all = [];
+        for (const name of await caches.keys())
+            for (const r of await (await caches.open(name)).keys()) all.push([name, new URL(r.url).pathname]);
+        return all; }""")
+
+
+def check_offline(browser):
+    """The service worker, on its own Instance run from a copy of the project, so dist/ can be rebuilt."""
+    print("\n[offline]")
+    with tempfile.TemporaryDirectory() as t, Instance(copy_project(pathlib.Path(t))) as inst:
+        inst.add_learner(*LEARNER)
+        v1 = sw_version(inst.root / "dist")
+        ctx = browser.new_context()
+        pg = ctx.new_page()
+        errors = []
+        pg.on("pageerror", lambda e: errors.append(str(e)))
+        open_page(pg, inst.url)
+        sign_in(pg, *LEARNER)
+        check(h1(pg) == "Section 1 of 12", "online, the Learner signs in and sees Section 1")
+        try:
+            pg.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=10000)
+        except PlaywrightTimeout:
+            check(False, "the page registers a service worker that takes control of it")
+            return
+
+        ctx.set_offline(True)
+        reload(pg)
+        check(h1(pg) == "Section 1 of 12", "with no connection, opening the app again shows the study path")
+        pg.click("#startBtn")
+        check(answer_set(pg, miss=1) == 10 and pg.inner_text(".score") == "9 of 10",
+              "with no connection, a whole Set can be answered")
+        pg.click("#homeBtn")
+        check(h1(pg) == "Section 2 of 12", "and the home screen moves on to Section 2")
+        fonts = pg.evaluate("""document.fonts.check('800 18px Overpass')
+                               && document.fonts.check('400 18px "Atkinson Hyperlegible"')""")
+        check(fonts, "with no connection, the page still has its fonts")
+
+        ctx.set_offline(False)
+        reload(pg)
+        pg.evaluate("fetch('/api/me').then(r => r.status)")
+        kept = cached(pg)
+        api = [k for k in kept if k[1].startswith("/api/")]
+        check(kept and not api, f"no /api/ answer is in any cache (got {api})")
+        pages = sorted(k[1] for k in kept if k[0] == "rrtn-pages")
+        check(pages == ["/", "/questions.json"], f"rrtn-pages keeps only the page and questions.json (got {pages})")
+        names = sorted({k[0] for k in kept})
+        check(names == ["rrtn-pages", f"rrtn-static-{v1}"],
+              f"the fonts, icons and manifest are kept under this build's version (got {names})")
+
+        print("\n[a new build]")
+        v2 = rebuild(inst.root, lambda page: page.replace("This is a practice app.", "This is a practice app, new build."))
+        check(v2 != v1, "the rebuild gives sw.js a new version")
+        reload(pg)
+        check("This is a practice app, new build." in stage_text(pg), "after a rebuild, the next reload online shows the change")
+        deadline = time.monotonic() + 10
+        while True:  # the new worker installs and activates in the background
+            names = pg.evaluate("caches.keys()")
+            if f"rrtn-static-{v1}" not in names or time.monotonic() > deadline:
+                break
+            time.sleep(0.1)
+        check(f"rrtn-static-{v1}" not in names and f"rrtn-static-{v2}" in names,
+              f"the new build's service worker deletes the old version's cache (got {names})")
+
+        print("\n[sign-out]")
+        pg.get_by_role("button", name="Sign out").click()
+        pg.get_by_role("button", name="Yes, sign out").click()
+        pg.wait_for_selector("#signInForm")
+        left = pg.evaluate("caches.open('rrtn-pages').then(c => c.match('/questions.json')).then(r => !!r)")
+        check(not left, "after sign-out, questions.json is not kept in rrtn-pages")
+        ctx.set_offline(True)
+        reload(pg)
+        check(not pg.query_selector("#startBtn") and not pg.evaluate("me"),
+              "after sign-out, opening the app with no connection doesn't open the study path")
+        check(not errors, "no page errors offline or across the new build" + (f": {errors}" if errors else ""))
+        ctx.close()
 
 
 def at(minute):
@@ -592,6 +703,7 @@ def main():
         check_icons(base)
         browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
         check_sign_in(browser, inst)
+        check_offline(browser)
         check_progress_from(browser, inst)
         check_records_on_server(browser, inst)
 
@@ -631,7 +743,8 @@ def main():
         ctx.close()
 
         print("\n[questions.json missing]")
-        ctx = browser.new_context()
+        # Requests a service worker makes are not routed, so this one runs without it.
+        ctx = browser.new_context(service_workers="block")
         ctx.route("**/questions.json", lambda route: route.fulfill(status=404, body="Not found"))
         pg = ctx.new_page()
         open_page(pg, url)
