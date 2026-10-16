@@ -45,7 +45,8 @@ def main():
         if r.returncode:
             print("build.py failed:\n" + r.stdout + r.stderr)
             raise SystemExit(1)
-        names = sorted({p.name for p in fresh.iterdir()} | {p.name for p in DIST.iterdir()})
+        names = sorted({str(p.relative_to(folder)) for folder in (fresh, DIST)
+                        for p in folder.rglob("*") if p.is_file()})
         for name in names:
             built, committed = fresh / name, DIST / name
             if not committed.exists():

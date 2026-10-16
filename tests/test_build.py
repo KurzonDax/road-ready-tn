@@ -38,9 +38,15 @@ def test_build_writes_page_questions_and_csp(tmp):
     out = tmp / "out"
     r = build_into(out)
     check(r.returncode == 0, "build succeeds" + (f": {r.stderr}" if r.returncode else ""))
-    names = sorted(p.name for p in out.iterdir()) if out.exists() else []
-    check(names == ["csp.json", "index.html", "questions.json"], f"build writes the page, questions and CSP hash (got {names})")
-    if names != ["csp.json", "index.html", "questions.json"]:
+    names = sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file()) if out.exists() else []
+    want = ["apple-touch-icon.png", "csp.json",
+            "fonts/atkinson-hyperlegible/OFL.txt", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2",
+            "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2",
+            "fonts/overpass/OFL.txt", "fonts/overpass/overpass-variable.woff2",
+            "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "questions.json"]
+    check(names == want, "build writes the page, questions, CSP hash, manifest, icons, and fonts with their licenses"
+          + (f" (got {names})" if names != want else ""))
+    if not {"csp.json", "index.html", "questions.json"} <= set(names):
         return
     bank = json.loads((ROOT / "data" / "questions.json").read_text())
     page = (out / "index.html").read_text()
@@ -96,6 +102,13 @@ def test_check_dist_catches_a_stale_dist(tmp):
     r = run("tests/check_dist.py", cwd=repo)
     check(r.returncode != 0 and "index.html" in r.stdout + r.stderr,
           "check_dist fails, naming index.html, after src/app.html changes without a rebuild")
+
+    run("build.py", cwd=repo)
+    font = repo / "src" / "fonts" / "overpass" / "overpass-variable.woff2"
+    font.write_bytes(font.read_bytes() + b"\0")
+    r = run("tests/check_dist.py", cwd=repo)
+    check(r.returncode != 0 and "dist/fonts/overpass/overpass-variable.woff2 is out of date" in r.stdout,
+          "check_dist fails, naming the font, after a font in src/fonts/ changes without a rebuild")
 
     run("build.py", cwd=repo)
     csp = repo / "dist" / "csp.json"
