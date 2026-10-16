@@ -14,12 +14,14 @@ The server adds "seq" (arrival number) and "received_at" when handing records ba
 import datetime
 import json
 import re
+import secrets
 
 from . import auth, db
 from .app import HTTPError, Response, json_response, route
 
 KINDS = ("set", "reset", "move", "imported")
 LEARNER_KINDS = ("set", "imported")  # reset and move come only from a Helper
+HELPER_KINDS = ("reset", "move")     # made by the server when a Helper asks (helper_record)
 MAX_RECORDS = 100  # per request
 MAX_UNFINISHED = 16 * 1024  # bytes of an unfinished Set's compact JSON
 
@@ -121,7 +123,8 @@ def check_record(record, kinds=KINDS):
     CHECK_DATA[record["kind"]](record["data"])
 
 
-def _iso(seconds):
+def iso_time(seconds):
+    """A time the server keeps (whole seconds) as ISO 8601 UTC."""
     return datetime.datetime.fromtimestamp(int(seconds), datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -140,20 +143,48 @@ def store_records(conn, account_id, records, now, kinds=LEARNER_KINDS):
             raise RecordError(index, str(e)) from None
     stored = skipped = 0
     with db.transaction(conn):
-        seq = conn.execute("SELECT COALESCE(MAX(seq), 0) FROM records").fetchone()[0]
         for record in records:
             if record["kind"] == "set":
                 _drop_unfinished(conn, account_id, record["data"]["set_id"])
             if _already_have(conn, account_id, record):
                 skipped += 1
                 continue
-            seq += 1
-            conn.execute("INSERT INTO records (id, account_id, kind, record, seq, received_at) "
-                         "VALUES (?, ?, ?, ?, ?, ?)",
-                         (record["id"], account_id, record["kind"],
-                          _compact(record), seq, int(now)))
+            _insert(conn, account_id, record, now)
             stored += 1
     return stored, skipped
+
+
+def _insert(conn, account_id, record, now):
+    """Store one record with the next arrival number, inside a transaction. Returns the seq."""
+    seq = conn.execute("SELECT COALESCE(MAX(seq), 0) + 1 FROM records").fetchone()[0]
+    conn.execute("INSERT INTO records (id, account_id, kind, record, seq, received_at) "
+                 "VALUES (?, ?, ?, ?, ?, ?)",
+                 (record["id"], account_id, record["kind"], _compact(record), seq, int(now)))
+    return seq
+
+
+def helper_record(conn, account_id, kind, data, now):
+    """Make and store a `reset` or `move` record for a Learner, and drop their unfinished Set.
+
+    The server makes the record itself: a new random id, `reset` naming the Learner's latest
+    Reset (or null), and `at` now in the page's own time format. Returns the record as
+    learner_records() hands it back. ValueError if `data` breaks the shape rules.
+    """
+    with db.transaction(conn):
+        latest = conn.execute("SELECT id FROM records WHERE account_id = ? AND kind = 'reset' "
+                              "ORDER BY seq DESC LIMIT 1", (account_id,)).fetchone()
+        record = {"id": secrets.token_urlsafe(18), "kind": kind,
+                  "reset": None if latest is None else latest["id"], "at": page_time(now), "data": data}
+        check_record(record, HELPER_KINDS)
+        seq = _insert(conn, account_id, record, now)
+        save_unfinished(conn, account_id, None, now)
+    return {**record, "seq": seq, "received_at": iso_time(now)}
+
+
+def page_time(seconds):
+    """A time as the page's Date.toISOString() writes it: UTC, to the millisecond."""
+    moment = datetime.datetime.fromtimestamp(seconds, datetime.UTC)
+    return moment.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
 def _already_have(conn, account_id, record):
@@ -204,7 +235,7 @@ def learner_records(conn, account_id):
     """Every record a Learner has, in arrival (seq) order, each with seq and received_at added."""
     rows = conn.execute("SELECT record, seq, received_at FROM records WHERE account_id = ? ORDER BY seq",
                         (account_id,)).fetchall()
-    return [{**json.loads(row["record"]), "seq": row["seq"], "received_at": _iso(row["received_at"])}
+    return [{**json.loads(row["record"]), "seq": row["seq"], "received_at": iso_time(row["received_at"])}
             for row in rows]
 
 

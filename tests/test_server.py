@@ -1,5 +1,6 @@
 """Tests for the server: startup checks, the WSGI app, static files and headers,
-accounts, sign-in sessions, the Helper command, and Learner records.
+accounts, sign-in sessions, the Helper command, Learner records, and the
+Helper's routes for managing Learners.
 
 Most tests call the WSGI app directly, with no network. The startup tests run
 `python -m server` as a program, the way an Instance starts it.
@@ -1505,6 +1506,333 @@ class RecordsAreKeptApartPerLearner(RecordsTestCase):
         finally:
             conn.close()
         self.assertEqual([row[0] for row in left], [alex_id])
+
+
+class HelperTestCase(RecordsTestCase):
+    """The Helper's routes, called by a signed-in Helper (Randy) about a Learner (Sam)."""
+
+    def setUp(self):
+        super().setUp()
+        self.add_helper("Randy", "correct horse")
+        self.helper = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.sam_id = self.account_id("Sam")
+
+    def account_id(self, name):
+        from server import auth, db
+        conn = db.connect(self.instance)
+        try:
+            account = auth.find_account(conn, name)
+            return None if account is None else account["id"]
+        finally:
+            conn.close()
+
+    def as_helper(self, method, path, value=None):
+        """Call a route with the Helper's cookie. Returns (status, parsed JSON or None)."""
+        import json
+        if method == "GET":
+            r = self.get(path, self.helper)
+        else:
+            r = self.post(path, {} if value is None else value, self.helper)
+        return r.status, (json.loads(r.body) if r.body else None)
+
+
+class HelperRoutesAreForHelpers(HelperTestCase):
+    def requests(self):
+        """(method, path, body) for every Helper route, each one valid for a Helper."""
+        sam = f"/api/learners/{self.sam_id}"
+        return [("GET", "/api/learners", None),
+                ("GET", f"{sam}/records", None),
+                ("POST", "/api/learners", {"name": "Alex", "password": "a good password"}),
+                ("POST", f"{sam}/rename", {"name": "Samantha"}),
+                ("POST", f"{sam}/reset-sign-in", {"password": "a new password"}),
+                ("POST", f"{sam}/reset-progress", {}),
+                ("POST", f"{sam}/move", {"to": 4}),
+                ("POST", f"{sam}/delete", {"name": "Samantha"})]  # renamed two lines up
+
+    def call_route(self, method, path, body, token, origin=ORIGIN):
+        import json
+        headers = {"Cookie": f"__Host-rrtn={token}"}
+        if method == "GET":
+            return call(self.app, "GET", path, headers)
+        return call(self.app, "POST", path, {**JSON, **headers, "Origin": origin}, json.dumps(body).encode())
+
+    def assert_nothing_changed(self):
+        self.assertEqual(self.as_helper("GET", "/api/learners")[1]["learners"],
+                         [{"id": self.sam_id, "name": "Sam", "created_at": "2027-01-15T08:00:00Z"}])
+        self.assertEqual(self.as_helper("GET", f"/api/learners/{self.sam_id}/records")[1],
+                         {"records": [], "unfinished": {"set_id": "set-000002"}})
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_a_learner_gets_403_and_signed_out_gets_401_on_every_route_and_nothing_changes(self):
+        import json
+        self.save_unfinished({"set_id": "set-000002"})
+        for token, status, error in ((self.sam, 403, "wrong-role"), ("not-a-session", 401, "signed-out")):
+            for method, path, body in self.requests():
+                with self.subTest(token=token, path=path, method=method):
+                    r = self.call_route(method, path, body, token)
+                    self.assertEqual((r.status, json.loads(r.body)), (status, {"error": error}))
+        self.assert_nothing_changed()
+
+    def test_every_post_needs_the_instance_origin(self):
+        self.save_unfinished({"set_id": "set-000002"})
+        for method, path, body in self.requests():
+            if method == "POST":
+                with self.subTest(path=path):
+                    self.assertEqual(self.call_route(method, path, body, self.helper, "https://evil.example").status,
+                                     403)
+        self.assert_nothing_changed()
+
+    def test_every_answer_is_never_cached(self):
+        for method, path, body in self.requests():
+            with self.subTest(path=path):
+                r = self.call_route(method, path, body, self.helper)
+                self.assertLess(r.status, 300, r.body)
+                self.assertEqual(r.headers["cache-control"], "no-store")
+
+    def test_nothing_stored_names_the_helper_who_acted(self):
+        import json
+        for method, path, body in self.requests()[:-1]:
+            self.call_route(method, path, body, self.helper)
+        from server import db
+        conn = db.connect(self.instance)
+        try:
+            stored = [row[0] for row in conn.execute("SELECT record FROM records")]
+        finally:
+            conn.close()
+        self.assertEqual(len(stored), 2)
+        for text in stored:
+            self.assertNotIn("Randy", text)
+            self.assertEqual(set(json.loads(text)), {"id", "kind", "reset", "at", "data"})
+
+
+class LearnerList(HelperTestCase):
+    def test_the_helper_gets_every_learner_sorted_by_name_ignoring_capitals(self):
+        self.add_learner("alex", "learner pass")
+        self.add_learner("Zoe", "learner pass")
+        status, body = self.as_helper("GET", "/api/learners")
+        self.assertEqual(status, 200)
+        self.assertEqual([l["name"] for l in body["learners"]], ["alex", "Sam", "Zoe"])
+        self.assertEqual(body["learners"][1], {"id": self.sam_id, "name": "Sam",
+                                               "created_at": "2027-01-15T08:00:00Z"})
+
+
+class AddingALearner(HelperTestCase):
+    def test_a_learner_added_by_the_helper_can_sign_in_with_that_password(self):
+        status, body = self.as_helper("POST", "/api/learners", {"name": "  Alex ", "password": "alex pass 1"})
+        self.assertEqual(status, 201)
+        self.assertEqual(body, {"id": self.account_id("Alex"), "name": "Alex"})
+        r = self.sign_in("alex", "alex pass 1")
+        self.assertEqual(r.status, 200, r.body)
+        self.assertEqual(r.body, b'{"role": "learner", "name": "Alex"}')
+
+    def test_a_name_in_use_by_a_learner_or_a_helper_ignoring_capitals_is_409(self):
+        for name in ("sam", "RANDY"):
+            with self.subTest(name=name):
+                self.assertEqual(self.as_helper("POST", "/api/learners", {"name": name, "password": "a good password"}),
+                                 (409, {"error": "name-taken"}))
+
+    def test_a_broken_name_or_password_rule_is_400(self):
+        cases = [({"name": "", "password": "a good password"}, "bad-name"),
+                 ({"name": "x" * 65, "password": "a good password"}, "bad-name"),
+                 ({"name": 7, "password": "a good password"}, "bad-name"),
+                 ({"password": "a good password"}, "bad-name"),
+                 ({"name": "Alex", "password": "7 chars"}, "bad-password"),
+                 ({"name": "Alex", "password": "x" * 129}, "bad-password"),
+                 ({"name": "Alex"}, "bad-password")]
+        for value, error in cases:
+            with self.subTest(value=value):
+                self.assertEqual(self.as_helper("POST", "/api/learners", value), (400, {"error": error}))
+        self.assertIsNone(self.account_id("Alex"))
+
+
+class ALearnersRecords(HelperTestCase):
+    def test_the_helper_gets_the_same_answer_the_learner_gets(self):
+        self.send(a_set(), an_import())
+        self.save_unfinished({"set_id": "set-000002"})
+        status, body = self.as_helper("GET", f"/api/learners/{self.sam_id}/records")
+        self.assertEqual(status, 200)
+        self.assertEqual(body, self.fetch())
+        self.assertEqual(body["unfinished"], {"set_id": "set-000002"})
+        self.assertEqual([r["id"] for r in body["records"]], ["set-record-000001", "import-record-0001"])
+
+    def test_an_unknown_id_a_helpers_id_or_a_word_is_404(self):
+        arabic_one = "١".encode().decode("latin-1")  # as WSGI hands a UTF-8 path over
+        for learner in (self.sam_id + 100, self.account_id("Randy"), "sam", "0", "-1", "1.0", arabic_one):
+            with self.subTest(learner=learner):
+                self.assertEqual(self.as_helper("GET", f"/api/learners/{learner}/records")[0], 404)
+
+    def test_a_post_to_the_records_of_a_learner_is_405(self):
+        r = self.post(f"/api/learners/{self.sam_id}/records", {"records": []}, self.helper)
+        self.assertEqual((r.status, r.headers["allow"]), (405, "GET, HEAD"))
+
+
+class RenamingALearner(HelperTestCase):
+    def rename(self, name, learner=None):
+        return self.as_helper("POST", f"/api/learners/{learner or self.sam_id}/rename", {"name": name})
+
+    def test_the_learner_signs_in_with_the_new_name_and_keeps_their_session(self):
+        self.assertEqual(self.rename(" Samantha "), (200, {"id": self.sam_id, "name": "Samantha"}))
+        self.assertEqual(self.sign_in("samantha", "learner pass").status, 200)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 401)
+        self.assertEqual(self.get("/api/me", self.sam).status, 200)
+
+    def test_changing_only_the_capitals_of_their_own_name_is_allowed(self):
+        self.assertEqual(self.rename("SAM"), (200, {"id": self.sam_id, "name": "SAM"}))
+
+    def test_the_same_name_rules_apply(self):
+        self.add_learner("Alex", "learner pass")
+        self.assertEqual(self.rename("alex"), (409, {"error": "name-taken"}))
+        self.assertEqual(self.rename("randy"), (409, {"error": "name-taken"}))
+        for name in ("  ", "x" * 65, None):
+            with self.subTest(name=name):
+                self.assertEqual(self.rename(name), (400, {"error": "bad-name"}))
+        self.assertEqual(self.as_helper("GET", "/api/learners")[1]["learners"][1]["name"], "Sam")
+
+    def test_an_unknown_learner_is_404(self):
+        self.assertEqual(self.rename("Zed", self.sam_id + 100)[0], 404)
+
+
+class ResettingSignIn(HelperTestCase):
+    def reset_sign_in(self, password, learner=None):
+        return self.as_helper("POST", f"/api/learners/{learner or self.sam_id}/reset-sign-in",
+                              {"password": password})
+
+    def test_every_old_session_ends_and_only_the_new_password_works(self):
+        laptop = cookie_from(self.sign_in("Sam", "learner pass"))
+        self.assertEqual(self.reset_sign_in("a new password")[0], 200)
+        for token in (self.sam, laptop):
+            self.assertEqual(self.get("/api/me", token).status, 401)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 401)
+        self.assertEqual(self.sign_in("Sam", "a new password").status, 200)
+
+    def test_the_helpers_own_session_is_untouched(self):
+        self.reset_sign_in("a new password")
+        self.assertEqual(self.get("/api/me", self.helper).status, 200)
+
+    def test_a_bad_password_is_400_and_changes_nothing(self):
+        for password in ("7 chars", "x" * 129, None):
+            with self.subTest(password=password):
+                self.assertEqual(self.reset_sign_in(password), (400, {"error": "bad-password"}))
+        self.assertEqual(self.get("/api/me", self.sam).status, 200)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_an_unknown_learner_is_404(self):
+        self.assertEqual(self.reset_sign_in("a new password", self.sam_id + 100)[0], 404)
+
+
+class ResettingProgress(HelperTestCase):
+    def reset_progress(self, learner=None):
+        return self.as_helper("POST", f"/api/learners/{learner or self.sam_id}/reset-progress", {})
+
+    def test_it_adds_a_reset_record_the_learner_sees_and_keeps_the_history(self):
+        import re
+        self.send(a_set())
+        self.now = T0 + 90.5
+        status, body = self.reset_progress()
+        self.assertEqual(status, 200)
+        record = body["record"]
+        self.assertRegex(record.pop("id"), r"^[A-Za-z0-9_-]{16,64}$")
+        self.assertEqual(record, {"kind": "reset", "reset": None, "at": "2027-01-15T08:01:30.500Z", "data": {},
+                                  "seq": 2, "received_at": "2027-01-15T08:01:30Z"})
+        mine = self.fetch()["records"]
+        self.assertEqual([r["kind"] for r in mine], ["set", "reset"])
+        self.assertEqual(mine[1], {**record, "id": mine[1]["id"]})
+        self.assertTrue(re.fullmatch(r"[A-Za-z0-9_-]{16,64}", mine[1]["id"]))
+
+    def test_a_later_reset_names_the_latest_reset_before_it(self):
+        first = self.reset_progress()[1]["record"]["id"]
+        second = self.reset_progress()[1]["record"]
+        third = self.reset_progress()[1]["record"]
+        self.assertEqual((second["reset"], third["reset"]), (first, second["id"]))
+        self.assertEqual(len({first, second["id"], third["id"]}), 3)
+
+    def test_it_drops_the_unfinished_set(self):
+        self.save_unfinished({"set_id": "set-000002"})
+        self.reset_progress()
+        self.assertIsNone(self.fetch()["unfinished"])
+
+    def test_an_unknown_learner_is_404(self):
+        self.assertEqual(self.reset_progress(self.sam_id + 100)[0], 404)
+
+
+class MovingALearner(HelperTestCase):
+    def move(self, value, learner=None):
+        return self.as_helper("POST", f"/api/learners/{learner or self.sam_id}/move", value)
+
+    def test_it_adds_a_move_record_the_learner_sees_and_drops_the_unfinished_set(self):
+        self.send(a_set())
+        self.save_unfinished({"set_id": "set-000002"})
+        status, body = self.move({"to": 4})
+        self.assertEqual(status, 200)
+        record = body["record"]
+        self.assertEqual((record["kind"], record["reset"], record["at"], record["data"]),
+                         ("move", None, "2027-01-15T08:00:00.000Z", {"to": 4}))
+        self.assertEqual(self.fetch(), {"records": [self.fetch()["records"][0], record], "unfinished": None})
+
+    def test_a_move_names_the_latest_reset(self):
+        reset = self.as_helper("POST", f"/api/learners/{self.sam_id}/reset-progress", {})[1]["record"]
+        self.assertEqual(self.move({"to": 13})[1]["record"]["reset"], reset["id"])
+
+    def test_to_must_be_1_to_13_and_a_bad_one_changes_nothing(self):
+        self.save_unfinished({"set_id": "set-000002"})
+        for value in ({"to": 0}, {"to": 14}, {"to": "5"}, {"to": 5.0}, {"to": True}, {"to": None}, {}):
+            with self.subTest(value=value):
+                self.assertEqual(self.move(value), (400, {"error": "bad-move"}))
+        self.assertEqual(self.fetch(), {"records": [], "unfinished": {"set_id": "set-000002"}})
+        self.assertEqual([self.move({"to": to})[0] for to in (1, 12, 13)], [200, 200, 200])
+
+    def test_an_unknown_learner_is_404(self):
+        self.assertEqual(self.move({"to": 4}, self.sam_id + 100)[0], 404)
+
+
+class DeletingALearner(HelperTestCase):
+    def setUp(self):
+        super().setUp()
+        self.alex = self.learner_token("Alex")
+        self.send(a_set(), an_import())
+        self.as_helper("POST", f"/api/learners/{self.sam_id}/move", {"to": 3})
+        self.save_unfinished({"set_id": "set-000002"})
+        self.send(a_set(id="alexs-record-00001"), token=self.alex)
+
+    def delete(self, value, learner=None):
+        return self.as_helper("POST", f"/api/learners/{learner or self.sam_id}/delete", value)
+
+    def rows_for(self, account_id):
+        """How many rows each table holds for this account."""
+        from server import db
+        conn = db.connect(self.instance)
+        try:
+            return {table: conn.execute(f"SELECT COUNT(*) FROM {table} WHERE {column} = ?",
+                                        (account_id,)).fetchone()[0]
+                    for table, column in (("accounts", "id"), ("sessions", "account_id"),
+                                          ("records", "account_id"), ("unfinished_sets", "account_id"))}
+        finally:
+            conn.close()
+
+    def test_a_name_that_does_not_match_changes_nothing(self):
+        before = self.rows_for(self.sam_id)
+        for value in ({"name": "Samuel"}, {"name": "S am"}, {"name": ""}, {"name": None}, {}):
+            with self.subTest(value=value):
+                self.assertEqual(self.delete(value), (400, {"error": "name-mismatch"}))
+        self.assertEqual(self.rows_for(self.sam_id), before)
+        self.assertEqual(before, {"accounts": 1, "sessions": 1, "records": 3, "unfinished_sets": 1})
+        self.assertEqual(self.get("/api/me", self.sam).status, 200)
+
+    def test_the_matching_name_ignoring_capitals_and_outer_spaces_removes_every_row(self):
+        self.assertEqual(self.delete({"name": "  sAM "}), (204, None))
+        self.assertEqual(self.rows_for(self.sam_id),
+                         {"accounts": 0, "sessions": 0, "records": 0, "unfinished_sets": 0})
+        self.assertEqual(self.get("/api/me", self.sam).status, 401)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 401)
+        self.assertEqual(self.as_helper("GET", f"/api/learners/{self.sam_id}/records")[0], 404)
+
+    def test_other_learners_are_untouched(self):
+        self.delete({"name": "Sam"})
+        self.assertEqual(self.ids(self.alex), ["alexs-record-00001"])
+        self.assertEqual([l["name"] for l in self.as_helper("GET", "/api/learners")[1]["learners"]], ["Alex"])
+
+    def test_an_unknown_learner_is_404(self):
+        self.assertEqual(self.delete({"name": "Sam"}, self.sam_id + 100)[0], 404)
 
 
 NO_HELPER_LINE = "No Helper account exists. Run: python -m server.manage add <name>"
