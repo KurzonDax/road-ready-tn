@@ -1,4 +1,5 @@
 """The WSGI app: a small route table, JSON helpers and the static files from dist/."""
+import functools
 import hashlib
 import http
 import json
@@ -151,6 +152,7 @@ class Request:
         self._db = None
         self._body = None
         self.cookie = None  # a Set-Cookie value to send with the response
+        self.params = {}  # the <name> parts of a route path, see route()
 
     def now(self):
         """The time now, in seconds since 1970, from the app's clock."""
@@ -208,11 +210,38 @@ ROUTES = {}
 
 
 def route(method, path, table=ROUTES):
-    """Register a handler: `@route("POST", "/api/thing")`."""
+    """Register a handler: `@route("POST", "/api/thing")`.
+
+    A path part written `<name>` matches any one part, which the handler reads as
+    `req.params["name"]` (a string): `@route("GET", "/api/learners/<id>/records")`.
+    """
     def register(handler):
         table[(method.upper(), path)] = handler
         return handler
     return register
+
+
+@functools.lru_cache(maxsize=None)
+def _path_pattern(path):
+    """A regex for a route path with <name> parts, or None for a plain path."""
+    if "<" not in path:
+        return None
+    parts = (f"(?P<{p[1:-1]}>[^/]+)" if p.startswith("<") and p.endswith(">") else re.escape(p)
+             for p in path.split("/"))
+    return re.compile("/".join(parts))
+
+
+def find_routes(routes, path):
+    """{method: (handler, params)} for every route whose path matches. A plain path wins."""
+    found = {}
+    for (method, route_path), handler in routes.items():
+        if route_path == path:
+            found[method] = (handler, {})
+        elif method not in found and (pattern := _path_pattern(route_path)):
+            match = pattern.fullmatch(path)
+            if match:
+                found[method] = (handler, match.groupdict())
+    return found
 
 
 @route("GET", "/robots.txt")
@@ -248,8 +277,9 @@ class App:
         if req.content_length() > MAX_BODY:
             return json_error(413, f"the body is over {MAX_BODY // 1024} KB")
         method = "GET" if req.method == "HEAD" else req.method
-        handler = self.routes.get((method, req.path))
-        if handler is not None:
+        routes = find_routes(self.routes, req.path)
+        if method in routes:
+            handler, req.params = routes[method]
             return handler(req)
         file = find_static(self.dist, req.path)
         if file is not None:
@@ -259,7 +289,7 @@ class App:
             if method == "GET":
                 return serve_static(self.dist, file, req.environ)
             return text(405, "Method not allowed", {"Allow": "GET, HEAD"})
-        allowed = sorted({m for m, p in self.routes if p == req.path})
+        allowed = sorted(routes)
         if allowed:
             if "GET" in allowed and "HEAD" not in allowed:
                 allowed.append("HEAD")
@@ -296,4 +326,4 @@ def make_app(dist, instance_dir, origin, routes=None, clock=None):
 
 
 # Route modules register into ROUTES when imported.
-from . import auth, records  # noqa: E402,F401
+from . import auth, helpers, records  # noqa: E402,F401
