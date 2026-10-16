@@ -1259,7 +1259,7 @@
       "page": 35,
       "manual_quote": "YELLOW: General warning.",
       "manual_sample": false,
-      "color": "#f2c230"
+      "color": "#ffdc00"
     },
     {
       "id": "a-085",
@@ -6746,7 +6746,7 @@
       "page": 66,
       "manual_quote": "Stop only long enough to load or unload. Stay with your car.",
       "manual_sample": false,
-      "color": "#f2c230"
+      "color": "#ffdc00"
     },
     {
       "id": "b-265",
