@@ -14,8 +14,9 @@ import hashlib
 import hmac
 import secrets
 import sqlite3
+import threading
 
-from . import db
+from . import db, limits
 from .app import HTTPError, Response, json_response, route
 
 ROLES = ("helper", "learner")
@@ -30,6 +31,10 @@ SCRYPT_R = 8
 SCRYPT_P = 3
 SALT_BYTES = 16
 KEY_BYTES = 32
+# Each check takes about 0.16 s and 32 MB. Waitress runs 4 threads; at most 2 hash at once,
+# so a burst of sign-ins can't take every thread or more than 64 MB.
+SCRYPT_AT_ONCE = threading.BoundedSemaphore(2)
+THROWAWAY_SALT = bytes(SALT_BYTES)  # for the check an unknown name still runs
 
 COOKIE = "__Host-rrtn"
 DAY = 86400
@@ -69,8 +74,9 @@ def check_password(password):
 
 def _scrypt(password, salt, n, r, p):
     # OpenSSL's default memory cap (32 MB) is just under what N=2^15, r=8 needs.
-    return hashlib.scrypt(password.encode(), salt=salt, n=n, r=r, p=p,
-                          maxmem=2 * 128 * n * r, dklen=KEY_BYTES)
+    with SCRYPT_AT_ONCE:
+        return hashlib.scrypt(password.encode(), salt=salt, n=n, r=r, p=p,
+                              maxmem=2 * 128 * n * r, dklen=KEY_BYTES)
 
 
 def hash_password(password, n=SCRYPT_N, r=SCRYPT_R, p=SCRYPT_P):
@@ -132,11 +138,15 @@ def rename_account(conn, account_id, name):
 
 
 def set_password(conn, account_id, password):
-    """Give an account a new password and end all of its sessions."""
+    """Give an account a new password, end all of its sessions and clear its name's sign-in pause."""
     check_password(password)
+    password_hash = hash_password(password)
     with db.transaction(conn):
-        conn.execute("UPDATE accounts SET password_hash = ? WHERE id = ?", (hash_password(password), account_id))
+        conn.execute("UPDATE accounts SET password_hash = ? WHERE id = ?", (password_hash, account_id))
         end_all_sessions(conn, account_id)
+        account = get_account(conn, account_id)
+        if account is not None:
+            limits.clear_name(conn, account["name_key"])
 
 
 def delete_account(conn, account_id):
@@ -149,16 +159,25 @@ def helper_exists(conn):
 
 
 def authenticate(conn, name, password):
-    """The account if the name and password match, else None. Unknown name or wrong password look the same."""
-    if len(name.strip()) > NAME_MAX or len(password) > PASSWORD_MAX:
-        return None  # no account has a name or password this long, so there's nothing to hash
+    """(account, "signed-in") if the name and password match, else (None, "unknown-name" or "wrong-password").
+
+    An unknown name still runs one throwaway check, so the time taken doesn't say whether
+    the name exists. A name or password longer than any account's is refused unhashed.
+    """
+    if len(name.strip()) > NAME_MAX:
+        return None, "unknown-name"
     account = find_account(conn, name)
-    if account is None or not verify_password(password, account["password_hash"]):
-        return None
+    if len(password) > PASSWORD_MAX:
+        return None, "unknown-name" if account is None else "wrong-password"
+    if account is None:
+        _scrypt(password, THROWAWAY_SALT, SCRYPT_N, SCRYPT_R, SCRYPT_P)
+        return None, "unknown-name"
+    if not verify_password(password, account["password_hash"]):
+        return None, "wrong-password"
     if needs_rehash(account["password_hash"]):
         conn.execute("UPDATE accounts SET password_hash = ? WHERE id = ?",
                      (hash_password(password), account["id"]))
-    return account
+    return account, "signed-in"
 
 
 # Sessions
@@ -261,6 +280,12 @@ def require(*roles):
 
 # Routes
 
+def _log_sign_in(now, address, name, outcome):
+    """One line per sign-in: time, client IP, name and outcome. Never the password."""
+    limits.log.info("%s sign-in ip=%s name=%s outcome=%s", limits.iso(now), limits.log_text(address or "unknown"),
+                    limits.log_text(name, NAME_MAX), outcome)
+
+
 @route("POST", "/api/sign-in")
 def sign_in(req):
     body = req.json()
@@ -268,12 +293,20 @@ def sign_in(req):
     password = body.get("password") if isinstance(body, dict) else None
     if not isinstance(name, str) or not isinstance(password, str):
         raise HTTPError(400, "send a name and a password")
-    conn = req.db
-    account = authenticate(conn, name, password)
+    conn, now, address, key = req.db, req.now(), req.environ.get("REMOTE_ADDR"), name_key(name)
+    limits.prune(conn, now)
+    wait = limits.seconds_left(conn, (limits.name(key), limits.ip(address)), now)
+    if wait:
+        _log_sign_in(now, address, name, "paused")
+        return json_response({"error": "paused", "retry_after": wait}, 429)
+    account, outcome = authenticate(conn, name, password)
+    _log_sign_in(now, address, name, outcome)
     if account is None:
+        limits.failed(conn, key, address, now)
         raise HTTPError(401, "mismatch")
-    now = int(req.now())
+    now = int(now)
     with db.transaction(conn):
+        limits.clear_name(conn, key)
         conn.execute("DELETE FROM sessions WHERE expires_at <= ?", (now,))
         token = start_session(conn, account, now)
     req.set_cookie(cookie(token, LIFETIME[account["role"]]))

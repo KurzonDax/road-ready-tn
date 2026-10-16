@@ -55,6 +55,17 @@ STEPS = [
         saved_at   INTEGER NOT NULL
     ) STRICT;
     """,
+    # 4: sign-in limits, one row per name or client IP with failed sign-ins. See server/limits.py.
+    """
+    CREATE TABLE sign_in_limits (
+        key          TEXT PRIMARY KEY,   -- 'name:<name_key>' or 'ip:<client ip>'
+        failures     INTEGER NOT NULL,   -- failed tries counted since window_start
+        window_start INTEGER NOT NULL,
+        paused_until INTEGER,            -- NULL when not paused
+        level        INTEGER NOT NULL,   -- pauses so far with no successful sign-in between
+        updated_at   INTEGER NOT NULL    -- the last failed try
+    ) STRICT;
+    """,
 ]
 
 

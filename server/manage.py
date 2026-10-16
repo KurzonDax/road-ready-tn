@@ -1,4 +1,5 @@
-"""Manage Helper accounts: `python -m server.manage add|password|remove <name>`.
+"""Manage Helper accounts: `python -m server.manage add|password|remove <name>`, and
+end every sign-in pause: `python -m server.manage unlock`.
 
 Run it inside the container, where RRTN_DIR names the Instance folder (default
 /var/lib/rrtn). Passwords are typed at a prompt, twice, and never taken as an
@@ -15,7 +16,7 @@ import sqlite3
 import sys
 import time
 
-from . import auth, db
+from . import auth, db, limits
 
 PROG = "python -m server.manage"
 
@@ -69,7 +70,7 @@ def add(conn, name, new_password):
 
 def password(conn, name, new_password):
     account = find_helper(conn, name)
-    auth.set_password(conn, account["id"], new_password())
+    auth.set_password(conn, account["id"], new_password())  # also clears a sign-in pause on the name
     return f"Set a new password for {account['name']!r}. Their sign-ins have ended."
 
 
@@ -79,21 +80,30 @@ def remove(conn, name, new_password):
     return f"Removed the Helper {account['name']!r}."
 
 
+def unlock(conn, name, new_password):
+    cleared = limits.clear_all(conn)
+    what = "1 name or IP" if cleared == 1 else f"{cleared} names and IPs"
+    return f"Cleared the sign-in counts and pauses for {what}."
+
+
+# command: (function, help, takes a name)
 COMMANDS = {
-    "add": (add, "make a Helper"),
-    "password": (password, "set a new password for a Helper and end their sign-ins"),
-    "remove": (remove, "delete a Helper"),
+    "add": (add, "make a Helper", True),
+    "password": (password, "set a new password for a Helper and end their sign-ins", True),
+    "remove": (remove, "delete a Helper", True),
+    "unlock": (unlock, "end every sign-in pause, for names and IPs", False),
 }
 
 
 def main(argv=None, environ=None):
     """Run the command. Returns the exit status: 0 done, 1 refused, 2 the database can't be opened."""
     environ = os.environ if environ is None else environ
-    parser = argparse.ArgumentParser(prog=PROG, description="Manage Helper accounts.")
+    parser = argparse.ArgumentParser(prog=PROG, description="Manage Helper accounts and sign-in pauses.")
     sub = parser.add_subparsers(dest="command", required=True)
-    for command, (_, help_text) in COMMANDS.items():
+    for command, (_, help_text, takes_name) in COMMANDS.items():
         command_parser = sub.add_parser(command, help=help_text)
-        command_parser.add_argument("name")
+        if takes_name:
+            command_parser.add_argument("name")
         command_parser.add_argument("--password-stdin", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
 
@@ -106,7 +116,7 @@ def main(argv=None, environ=None):
         return 2
     try:
         new_password = read_password if args.password_stdin else ask_password
-        print(COMMANDS[args.command][0](conn, args.name, new_password))
+        print(COMMANDS[args.command][0](conn, getattr(args, "name", None), new_password))
         return 0
     except Refused as e:
         print(f"{PROG}: {e}", file=sys.stderr)
