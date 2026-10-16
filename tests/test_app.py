@@ -425,7 +425,11 @@ def check_offline(browser):
         ctx.set_offline(False)
         reload(pg)
         pg.evaluate("fetch('/api/me').then(r => r.status)")
+        pg.evaluate("fetch('/fonts/overpass/OFL.txt').then(r => r.status)")  # in fonts/, but not a file sw.js lists
         kept = cached(pg)
+        static = sorted(k[1].lstrip("/") for k in kept if k[0] == f"rrtn-static-{v1}")
+        listed = sorted(json.loads(re.search(r"const STATIC_FILES = (\[.*?\]);", (inst.root / "dist" / "sw.js").read_text()).group(1)))
+        check(static == listed, "the static cache holds exactly the files build.py lists in sw.js", static)
         api = [k for k in kept if k[1].startswith("/api/")]
         check(kept and not api, f"no /api/ answer is in any cache (got {api})")
         pages = sorted(k[1] for k in kept if k[0] == "rrtn-pages")

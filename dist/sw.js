@@ -3,7 +3,8 @@
 //
 // - The page (/ and /index.html) and questions.json: network first. Wait up to 3 seconds;
 //   use the network's answer and keep a copy in rrtn-pages, else use the kept copy.
-// - Fonts, icons and the manifest: cache first, in rrtn-static-<version>.
+// - Fonts, icons and the manifest (STATIC_FILES, as build.py lists them): cache first, in
+//   rrtn-static-<version>.
 // - Everything else, every /api/ request among it, goes to the network and is never kept.
 const VERSION = '5716ed9ba22b';
 const STATIC_FILES = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2", "fonts/overpass/overpass-variable.woff2", "icon-192.png", "icon-512.png", "manifest.webmanifest"];
@@ -11,8 +12,7 @@ const PAGES = 'rrtn-pages';
 const STATIC = 'rrtn-static-' + VERSION;
 const WAIT_MS = 3000;
 
-const isStatic = path => path.startsWith('/fonts/') || /^\/icon-[^/]+\.png$/.test(path)
-  || path === '/apple-touch-icon.png' || path === '/manifest.webmanifest';
+const STATIC_PATHS = new Set(STATIC_FILES.map(name => '/' + name));
 
 // The copy is kept under one name for each: the page as /, whichever URL opened it.
 function pageKey(request) {
@@ -81,5 +81,5 @@ self.addEventListener('fetch', event => {
   if (url.origin !== self.location.origin || request.method !== 'GET' || url.pathname.startsWith('/api/')) return;
   const key = pageKey(request);
   if (key) return event.respondWith(networkFirst(event, key));
-  if (isStatic(url.pathname)) return event.respondWith(cacheFirst(request));
+  if (STATIC_PATHS.has(url.pathname)) return event.respondWith(cacheFirst(request));
 });
