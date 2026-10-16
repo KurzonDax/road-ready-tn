@@ -37,7 +37,7 @@ A calm, guided path rather than a question bank. There's no menu, no topic list,
 - **Scoring:** a finished section is colored by its latest score: green for 10 of 10, yellow for 7 to 9, red for under 7. Tapping a finished section redoes it in a new order. Getting a missed question right on a redo removes it from review.
 - **Order:** redos and review shuffle the questions. Answer choices are shuffled every time.
 - **Content:** 120 app questions chosen from a bank of 803 (`data/questions.json`, `data/sections.json`), including all 29 of the manual's sample questions. Each has exactly one right answer and three wrong ones, an explanation, a page, and a quote under 25 words. Sign or color pictures appear only when they don't give the answer away.
-- **Stack:** a single HTML page (`src/app.html`) with inline styles and script. `build.py` validates the data and inlines it into `dist/index.html`. Tests are in Python (`tests/`), and the browser test uses Playwright.
+- **Stack:** a single HTML page (`src/app.html`) with inline styles and script. `build.py` validates the data and writes the page (`dist/index.html`), its questions (`dist/questions.json`, fetched when the page starts) and the inline script's CSP hash (`dist/csp.json`). Tests are in Python (`tests/`), and the browser test uses Playwright.
 - **Fixed:** question ids and the saved progress key never change, because progress is keyed by them.
 - **Terminology:** "Section", "Review", "Practice test", "Ready for the test".
 
