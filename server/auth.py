@@ -121,6 +121,16 @@ def get_account(conn, account_id):
     return conn.execute("SELECT * FROM accounts WHERE id = ?", (account_id,)).fetchone()
 
 
+def rename_account(conn, account_id, name):
+    """Give an account a new name and return it as stored. AccountError if it breaks the rules."""
+    name = check_name(name)
+    try:
+        conn.execute("UPDATE accounts SET name = ?, name_key = ? WHERE id = ?", (name, name_key(name), account_id))
+    except sqlite3.IntegrityError:
+        raise AccountError("name-taken", "That name is already taken.") from None
+    return name
+
+
 def set_password(conn, account_id, password):
     """Give an account a new password and end all of its sessions."""
     check_password(password)

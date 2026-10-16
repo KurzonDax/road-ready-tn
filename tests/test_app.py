@@ -12,9 +12,13 @@ database, and signs in through the page like a person would.
 Covers the sign-in screen (its wording, the mismatch and pause messages, each role
 landing on its own screen, sign-out, and a sign-in that has ended) and the whole
 path the Learner takes: all 12 sections, redoing a section, section scores,
-review of missed questions, practice tests, the "ready" screen, the hidden
-#restart / #sectionN links, saving progress across a reload, picking up a
-half-finished section, and the phone layout. Also the Home Screen pieces: the
+review of missed questions, practice tests, the "ready" screen, saving progress
+across a reload, picking up a half-finished section, and the phone layout. Progress
+is worked out from the Learner's records on the server: progressFrom() on fixtures,
+finished Sets stored as records and shown again in a fresh browser, a Reset and a
+Move put straight into the database, a record that waits when the server can't be
+reached, the old tn-permit-daily-v1 state left alone, and #restart / #sectionN
+doing nothing. Also the Home Screen pieces: the
 manifest, the icon sizes, the page head, the safe-area padding, and that the page
 loads its fonts and everything else from its own origin. The service worker, on an
 Instance run from a copy of the project so its dist/ can be rebuilt: opening the
@@ -43,7 +47,7 @@ from playwright.sync_api import TimeoutError as PlaywrightTimeout, sync_playwrig
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from server import auth, db  # noqa: E402
+from server import auth, db, records as records_api  # noqa: E402
 
 failures = []
 
@@ -51,7 +55,10 @@ HELPER = ("Randy", "helper password")
 LEARNER = ("Sam", "learner password")
 
 
-def check(cond, msg):
+def check(cond, msg, got=None):
+    """Print and count one check. `got`, when given, is shown only if the check fails."""
+    if not cond and got is not None:
+        msg += f" (got {got})"
     print(("  ok    " if cond else "  FAIL  ") + msg)
     if not cond:
         failures.append(msg)
@@ -439,6 +446,252 @@ def check_offline(browser):
         ctx.close()
 
 
+def at(minute):
+    """A record time, `minute` minutes after a fixed start, in the page's toISOString() form."""
+    return f"2026-10-01T{12 + minute // 60:02d}:{minute % 60:02d}:00.000Z"
+
+
+def record(n, kind, minute, data, reset=None, seq=None):
+    """A record as the server hands it back (with seq), or as it waits on the device (seq None)."""
+    r = {"id": f"record-{n:012d}", "kind": kind, "reset": reset, "at": at(minute), "data": data}
+    if seq is not None:
+        r["seq"] = seq
+    return r
+
+
+def set_record(n, kind, section, minute, answers, reset=None, seq=None):
+    """A finished Set. `answers` is a list of (question id, right)."""
+    return record(n, "set", minute, {
+        "set_id": f"set-{n}", "type": kind, "section": section, "started_at": at(minute - 1),
+        "answers": [{"q": q, "chosen": "an answer", "right": right, "at": at(minute)} for q, right in answers]},
+        reset, seq)
+
+
+def check_progress_from(browser, inst):
+    """progressFrom(records) on fixtures, run in the page itself."""
+    inst.add_learner("Fixtures", "fixtures password")
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Fixtures", "fixtures password")
+    ids = pg.evaluate("Object.fromEntries(DAYS.map(d => [d.day, QS.filter(q => q.day === d.day).map(q => q.id)]))")
+    s1, s2, s3, s4 = ids["1"], ids["2"], ids["3"], ids["4"]
+
+    def section(n, kind, number, minute, wrong=0, **kw):
+        qs = ids[str(number)]
+        return set_record(n, kind, number, minute, [(q, i >= wrong) for i, q in enumerate(qs)], **kw)
+
+    def progress(records):
+        return pg.evaluate("records => progressFrom(records)", records)
+
+    def marks(qs, wrong=0):
+        return {q: i >= wrong for i, q in enumerate(qs)}
+
+    print("\n[progressFrom]")
+    got = progress([section(1, "day", 1, 10, wrong=3, seq=1)])
+    check(got == {"day": 2, "last": marks(s1, 3), "scores": {"1": 7}, "tests": []},
+          "one Section Set moves the Learner on to Section 2 and keeps its score and answers", got)
+
+    got = progress([])
+    check(got == {"day": 1, "last": {}, "scores": {}, "tests": []}, "no records is the start of Section 1", got)
+
+    # Two devices both finish Section 3. Device B's arrives first but finished later; and a
+    # record still waiting on a device (no seq) sorts after a sent one with the same time.
+    both = [section(1, "day", 1, 10, seq=1), section(2, "day", 2, 20, seq=2),
+            section(4, "day", 3, 31, wrong=4, seq=3), section(3, "day", 3, 30, wrong=1, seq=4)]
+    got = progress(both)
+    check(got["day"] == 4 and got["scores"] == {"1": 10, "2": 10, "3": 6},
+          "two devices finishing Section 3 move the Learner on once; the later one counts as a redo", got)
+    got = progress(both + [section(5, "day", 3, 31, wrong=2)])
+    check(got["day"] == 4 and got["scores"]["3"] == 8,
+          "a record not yet sent sorts after a sent one with the same time", got)
+    got = progress([section(1, "day", 1, 10, seq=1), section(2, "day", 3, 20, seq=2)])
+    check(got["day"] == 2 and got["scores"] == {"1": 10, "3": 10},
+          "a Section Set that isn't the next Section counts as a redo of it", got)
+
+    # A Reset: only records after it that name it count. One still naming the older Reset, and
+    # one naming none, stay in the History but don't count.
+    old, new = "record-000000000003", "record-000000000005"
+    got = progress([section(1, "day", 1, 10, seq=1), section(2, "day", 2, 20, seq=2),
+                    record(3, "reset", 30, {}, seq=3), section(4, "day", 1, 40, wrong=5, reset=old, seq=4),
+                    record(5, "reset", 50, {}, reset=old, seq=5), section(6, "day", 1, 60, wrong=2, reset=new, seq=6),
+                    section(7, "day", 2, 70, reset=old, seq=7), set_record(8, "test", None, 80, [(s3[0], False)], seq=8)])
+    check(got == {"day": 2, "last": marks(s1, 2), "scores": {"1": 8}, "tests": []},
+          "after a Reset only records naming it count", got)
+
+    # A Move to Section 4 keeps the scores, answers and Practice tests.
+    got = progress([section(1, "day", 1, 10, wrong=1, seq=1), section(2, "day", 2, 20, seq=2),
+                    record(3, "move", 30, {"to": 4}, seq=3)])
+    check(got == {"day": 4, "last": {**marks(s1, 1), **marks(s2)}, "scores": {"1": 9, "2": 10}, "tests": []},
+          "a Move to Section 4 makes Section 4 next and keeps the rest", got)
+    got = progress([record(1, "move", 10, {"to": 4}, seq=1), section(2, "day", 4, 20, seq=2)])
+    check(got["day"] == 5, "after a Move to Section 4, finishing Section 4 moves on to Section 5", got)
+
+    # An Imported start: its state's fields are checked and anything else is dropped.
+    state = {"day": 5, "last": {s1[0]: True, s1[1]: False, s1[2]: "yes"}, "scores": {"1": 10, "2": "8", "3": 7},
+             "tests": [28, "29", 25], "run": {"kind": "day"}, "extra": 1}
+    got = progress([record(1, "imported", 10, {"state": state}, seq=1), section(2, "day", 5, 20, wrong=1, seq=2)])
+    check(got == {"day": 6, "last": {s1[0]: True, s1[1]: False, **marks(ids["5"], 1)},
+                  "scores": {"1": 10, "3": 7, "5": 9}, "tests": [28, 25]},
+          "an Imported record is the starting point, with its fields checked", got)
+    got = progress([record(1, "imported", 10, {"state": {"day": "7", "last": [], "scores": None}}, seq=1)])
+    check(got == {"day": 1, "last": {}, "scores": {}, "tests": []},
+          "an Imported state with fields of the wrong type starts from Section 1", got)
+
+    # Practice tests count in finish order, and the in-a-row count comes from them.
+    def test_set(n, minute, right, seq):
+        qs = s1 + s2 + s3
+        return set_record(n, "test", None, minute, [(q, i < right) for i, q in enumerate(qs)], seq=seq)
+
+    tests = [record(1, "move", 10, {"to": 13}, seq=1), test_set(2, 20, 28, 2), test_set(3, 30, 20, 3),
+             test_set(5, 50, 29, 4), test_set(4, 40, 27, 5)]
+    got = progress(tests)
+    check(got["day"] == 13 and got["tests"] == [28, 20, 27, 29],
+          "Practice tests count in finish order", got)
+    check(pg.evaluate("records => streak(progressFrom(records))", tests) == 2,
+          "the in-a-row count is 2 after 28, 20, 27, 29")
+    check(pg.evaluate("records => streak(progressFrom(records))", tests + [test_set(6, 60, 30, 6)]) == 3,
+          "a third test at 27 or more in a row reaches Ready for the test")
+    got = progress([set_record(1, "review", None, 10, [(s4[0], True), (s4[1], False)], seq=1)])
+    check(got == {"day": 1, "last": {s4[0]: True, s4[1]: False}, "scores": {}, "tests": []},
+          "a Review Set changes only which questions are right or wrong", got)
+    ctx.close()
+
+
+OLD_KEY = "tn-permit-daily-v1"  # the saved state from before accounts; this page must leave it alone
+# Logs every localStorage call that names the old key, from before the page's own script runs.
+WATCH_OLD_KEY = """(() => { window.oldKeyCalls = [];
+    for (const name of ['getItem', 'setItem', 'removeItem']) {
+        const real = Storage.prototype[name];
+        Storage.prototype[name] = function (key, ...rest) {
+            if (key === '%s') window.oldKeyCalls.push(name);
+            return real.call(this, key, ...rest);
+        };
+    } })()""" % OLD_KEY
+
+
+def server_records(pg):
+    """The signed-in Learner's records, as GET /api/records hands them back."""
+    return pg.evaluate("fetch('/api/records').then(r => r.json()).then(b => b.records)")
+
+
+def wait_for_records(pg, n):
+    """Wait until the server holds `n` records for the signed-in Learner, and return them."""
+    deadline = time.monotonic() + 10
+    while True:
+        records = server_records(pg)
+        if len(records) >= n or time.monotonic() > deadline:
+            return records
+        time.sleep(0.1)
+
+
+def wait_for_h1(pg, text):
+    """Wait (up to 5 seconds) for the home screen's heading to read `text`; return what it reads."""
+    try:
+        pg.wait_for_function("t => document.querySelector('.home h1')?.textContent === t", arg=text, timeout=5000)
+    except Exception:
+        pass
+    return h1(pg)
+
+
+def store_for(inst, learner_id, kind, data):
+    """Put a reset or move record straight into the database, as the Helper API does. Returns its id."""
+    conn = db.connect(inst.dir)
+    try:
+        return records_api.helper_record(conn, learner_id, kind, data, time.time())["id"]
+    finally:
+        conn.close()
+
+
+def check_records_on_server(browser, inst):
+    """Finished Sets become records on the server, and Progress comes back from them anywhere."""
+    name, password = "Robin", "records password"
+    learner = inst.add_learner(name, password)
+    print("\n[Progress from the server's records]")
+    ctx = browser.new_context()
+    ctx.add_init_script(WATCH_OLD_KEY)
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    old = json.dumps({"day": 7, "last": {}, "tests": [], "scores": {}})
+    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [OLD_KEY, old])
+    sign_in(pg, name, password)
+    check(h1(pg) == "Section 1 of 12", "a new Learner starts at Section 1, whatever the old saved state says")
+
+    pg.click("#startBtn")
+    answer_set(pg, miss=2)
+    check(pg.inner_text(".score") == "8 of 10" and pg.inner_text(".home h2") == "Section 1 done.",
+          "the results screen is the same as before")
+    got = wait_for_records(pg, 1)
+    rec = got[0] if len(got) == 1 else {}
+    data = rec.get("data", {})
+    check(len(got) == 1 and rec["kind"] == "set" and rec["reset"] is None
+          and (data["type"], data["section"]) == ("day", 1),
+          "finishing Section 1 stores one Section Set record on the server", got)
+    answers = data.get("answers", [])
+    check(len(answers) == 10 and sum(a["right"] for a in answers) == 8
+          and all(a["at"] >= data["started_at"] and a["at"] <= rec["at"] for a in answers),
+          "the record holds every answer, which were right, and when each was chosen", data)
+    pg.click("#homeBtn")
+    check(h1(pg) == "Section 2 of 12", "home then shows Section 2")
+    calls = pg.evaluate("window.oldKeyCalls")
+    check(calls == ["setItem"], f"signing in and finishing a Set don't touch tn-permit-daily-v1 (calls: {calls})")
+    reload(pg)
+    check(h1(pg) == "Section 2 of 12", "reloading keeps Progress")
+
+    other = browser.new_context()
+    pg2 = other.new_page()
+    open_page(pg2, inst.url)
+    sign_in(pg2, name, password)
+    check(h1(pg2) == "Section 2 of 12", "signing in on a fresh browser shows the same Section")
+    other.close()
+
+    reset = store_for(inst, learner, "reset", {})
+    reload(pg)
+    check(wait_for_h1(pg, "Section 1 of 12") == "Section 1 of 12",
+          "a Reset put into the database shows on the Learner's next app open")
+    check(not pg.query_selector(".scores"), "after the Reset no Section scores are left")
+    store_for(inst, learner, "move", {"to": 4})
+    reload(pg)
+    check(wait_for_h1(pg, "Section 4 of 12") == "Section 4 of 12",
+          "a Move to Section 4 put into the database shows on the Learner's next app open")
+    pg.click("#startBtn")
+    answer_set(pg)
+    got = wait_for_records(pg, 4)
+    check(len(got) == 4 and got[-1]["reset"] == reset and got[-1]["data"]["section"] == 4,
+          "a Set finished after the Reset names that Reset", got[-1:])
+    pg.click("#homeBtn")
+    check(h1(pg) == "Section 5 of 12", "finishing Section 4 after the Move moves on to Section 5")
+
+    # The server can't be reached when a Set finishes: the record waits and is sent next time.
+    ctx.route("**/api/records", lambda route: route.abort() if route.request.method == "POST" else route.continue_())
+    pg.click("#startBtn")
+    answer_set(pg)
+    check(pg.inner_text(".home h2") == "Section 5 done.", "with the server out of reach, the Set still finishes")
+    pg.click("#homeBtn")
+    check(h1(pg) == "Section 6 of 12", "and the home screen shows Section 6")
+    check(len(server_records(pg)) == 4, "the record hasn't reached the server yet")
+    reload(pg)
+    check(h1(pg) == "Section 6 of 12", "the waiting record still counts after a reload")
+    ctx.unroute("**/api/records")
+    reload(pg)
+    got = wait_for_records(pg, 5)
+    check(len(got) == 5 and got[-1]["data"]["section"] == 5, "the waiting record is sent on the next app open", got)
+    reload(pg)
+    check(len(server_records(pg)) == 5, "and it is stored only once")
+
+    calls = pg.evaluate("window.oldKeyCalls")
+    check(calls == [], f"opening the app doesn't touch tn-permit-daily-v1 (calls: {calls})")
+    check(pg.evaluate("([k]) => localStorage.getItem(k)", [OLD_KEY]) == old,
+          "the old saved state under tn-permit-daily-v1 is untouched")
+    pg.goto(inst.url + "#section9")
+    pg.wait_for_selector("#stage section")
+    check(h1(pg) == "Section 6 of 12", "#section9 does nothing")
+    pg.goto(inst.url + "?r=1#restart")
+    pg.wait_for_selector("#stage section")
+    check(h1(pg) == "Section 6 of 12" and not pg.query_selector("#yes"), "#restart does nothing")
+    ctx.close()
+
+
 def main():
     errors = []
     with Instance() as inst, sync_playwright() as p:
@@ -451,6 +704,8 @@ def main():
         browser = p.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
         check_sign_in(browser, inst)
         check_offline(browser)
+        check_progress_from(browser, inst)
+        check_records_on_server(browser, inst)
 
         print("\n[page head, fonts, own origin]")
         ctx = browser.new_context()
@@ -532,8 +787,11 @@ def main():
             pg = ctx.new_page()
             pg.on("pageerror", lambda e: errors.append(str(e)))
             pg.on("console", lambda m: errors.append(m.text) if "Content Security Policy" in m.text else None)
+            # Progress lives on the server now, so each run of the whole path needs its own Learner.
+            learner = (f"{scheme.title()} Learner", "path password")
+            inst.add_learner(*learner)
             open_page(pg, url)
-            sign_in(pg, *LEARNER)
+            sign_in(pg, *learner)
 
             check(h1(pg) == "Section 1 of 12", "starts at Section 1 of 12")
             check(not pg.query_selector("details") and "parent" not in pg.inner_text("body").lower(),
@@ -608,14 +866,8 @@ def main():
                 if h1(pg) == "Review":
                     pg.click("#startBtn"); answer_set(pg); pg.click("#homeBtn")
             check(h1(pg) == "Ready for the test", "three tests in a row at 27+ shows the ready screen")
-
-            # Hidden links.
-            pg.goto(url + "#section5")
-            check(h1(pg) == "Section 5 of 12", "#section5 jumps to Section 5")
-            open_page(pg, url + "?r=1#restart")
-            check("Start over" in pg.inner_text("h2"), "#restart asks before erasing")
-            pg.click("#yes")
-            check(h1(pg) == "Section 1 of 12", "restart goes back to Section 1")
+            reload(pg)
+            check(h1(pg) == "Ready for the test", "Ready for the test is still shown after a reload")
             ctx.close()
         browser.close()
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
