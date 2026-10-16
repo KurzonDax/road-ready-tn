@@ -93,6 +93,17 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .btn.slim { width: auto; font-size: 16px; padding: 10px 14px; min-height: 44px; border-radius: 10px; }
 .link { font: inherit; font-size: 16px; background: none; border: 0; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 10px 8px; min-height: 44px; align-self: center; }
 .fine { font-size: 15px; color: var(--muted); margin: 18px 0 0; border-top: 1.5px solid var(--line); padding-top: 14px; }
+.fine p { margin: 0; }
+.fine .link { font-size: 15px; padding: 10px 0; margin-top: 4px; }
+
+/* Sign-in: one short form, labels above their fields. */
+.signin { display: flex; flex-direction: column; gap: 14px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field > label { font-weight: 700; }
+.field input { font: inherit; font-size: 19px; padding: 12px 14px; min-height: 52px; border-radius: 12px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); width: 100%; }
+.check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 17px; cursor: pointer; align-self: flex-start; }
+.check input { width: 22px; height: 22px; margin: 0; accent-color: var(--guide); }
+#signInMsg:empty { display: none; }
 .warn { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--bad-soft); color: var(--ink); font-size: 16px; }
 
 .progress { display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 16px; }
@@ -240,7 +251,8 @@ function scoresPanel() {
   return `<details class="scores"><summary>See your section scores</summary><ul>${rows}</ul></details>`;
 }
 
-const disclaimer = `<p class="fine">This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p>`;
+// The fine print at the bottom of the Learner's home screen, with a quiet Sign out beside it.
+const disclaimer = `<footer class="fine"><p>This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p><button class="link" type="button" id="signOutBtn">Sign out</button></footer>`;
 
 function renderHome() {
   run = null;
@@ -284,6 +296,7 @@ function renderHome() {
     </section>`, 'h1');
   $('startBtn').onclick = () => start();
   document.querySelectorAll('.redo').forEach(b => b.onclick = () => start(Number(b.dataset.day)));
+  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
 }
 
 function renderResume(saved) {
@@ -297,7 +310,9 @@ function renderResume(saved) {
       <p class="sub">You answered ${done} of ${n} questions. Your answers are saved.</p>
       <button class="btn primary" type="button" id="resumeBtn">Continue where I stopped</button>
       <button class="link" type="button" id="overBtn">Start over from question 1 (this clears these answers)</button>
+      ${disclaimer}
     </section>`, 'h1');
+  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
   $('resumeBtn').onclick = () => { run = saved; renderQuestion(); };
   $('overBtn').onclick = () => { S.run = null; save(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
 }
@@ -457,19 +472,136 @@ function applyHash() {
   renderHome();
 }
 
+window.addEventListener('hashchange', () => { if (me && me.role === 'learner' && QS.length) applyHash(); });
+
+// Accounts. `me` is the signed-in account ({id, role, name}) or null. Every call to the
+// server goes through api(): a 401 while signed in means the sign-in has ended, and the
+// page goes back to the sign-in screen without saying why.
+let me = null;
+class SignedOut extends Error {}
+async function api(path, opts) {
+  const r = await fetch(path, Object.assign({ cache: 'no-store' }, opts));
+  if (r.status === 401 && me) { signedOut(); throw new SignedOut(); }
+  return r;
+}
+const postJSON = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
+// Start-up, and again after each sign-in: who is signed in, then their questions, then their screen.
+async function startUp() {
+  try {
+    const r = await fetch('/api/me', { cache: 'no-store' });
+    if (r.status === 401) { me = null; return renderSignIn(); }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    me = await r.json();
+  } catch (e) { return couldNotLoad(); }
+  let data;
+  try {
+    const q = await api('questions.json', { cache: 'no-cache' });
+    if (!q.ok) throw new Error('HTTP ' + q.status);
+    data = await q.json();
+  } catch (e) { return e instanceof SignedOut ? undefined : couldNotLoad(); }
+  begin(data);
+}
+
 // The questions live in questions.json next to the page, not in the page itself.
 function begin(data) {
   DAYS = data.days; QS = data.qs; TOTAL_DAYS = DAYS.length;
   BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
-  window.addEventListener('hashchange', applyHash);
-  applyHash();
+  if (me.role === 'helper') renderHelper();
+  else applyHash();
 }
 function couldNotLoad() {
   paint(`<section class="home"><p class="sub">The questions could not be loaded. Check your connection and open the app again.</p></section>`);
 }
-fetch('questions.json', { cache: 'no-cache' })
-  .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-  .then(begin, couldNotLoad);
+
+function signedOut() {
+  me = null; run = null;
+  renderSignIn();
+}
+
+function renderSignIn() {
+  paint(`
+    <section class="signin">
+      <h1 tabindex="-1">Sign in</h1>
+      <p class="sub">Type the name and password you were given.</p>
+      <form id="signInForm" method="post" class="signin">
+        <div class="field"><label for="name">Name</label><input id="name" name="name" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" required></div>
+        <div class="field"><label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" required></div>
+        <label class="check"><input type="checkbox" id="showPw">Show password</label>
+        <div id="signInMsg" aria-live="polite"></div>
+        <button class="btn primary" type="submit" id="signInBtn">Sign in</button>
+      </form>
+    </section>`, 'h1');
+  $('showPw').onchange = () => { $('password').type = $('showPw').checked ? 'text' : 'password'; };
+  $('signInForm').onsubmit = e => { e.preventDefault(); signIn(); };
+}
+
+function signInMessage(text) {
+  $('signInMsg').innerHTML = `<p class="warn" tabindex="-1">${esc(text)}</p>`;
+  $('signInMsg').firstChild.focus();
+}
+
+async function signIn() {
+  const btn = $('signInBtn');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  $('signInMsg').textContent = '';
+  let ok = false;
+  try {
+    const r = await postJSON('/api/sign-in', { name: $('name').value, password: $('password').value });
+    ok = r.ok;
+    if (ok) return;
+    if (r.status === 429) {
+      const body = await r.json().catch(() => ({}));
+      const seconds = Math.max(0, Number(body.retry_after) || 0);
+      // Rounded up to the minute, so the time shown is never before the pause ends.
+      const at = new Date(Math.ceil((Date.now() + seconds * 1000) / 60000) * 60000);
+      signInMessage(`Sign-in is paused because of too many tries. You can try again at ${at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`);
+    } else if (r.status === 401) {
+      signInMessage('That name and password do not match. Check them and try again.');
+    } else {
+      signInMessage('Sign-in did not work. Try again later.');
+    }
+  } catch (e) {
+    signInMessage('The app could not be reached. Check your connection and try again.');
+  } finally {
+    if (ok) startUp(); else btn.disabled = false;
+  }
+}
+
+// Sign out, for the Learner (from the home screen's fine print) and the Helper. `back` repaints where they came from.
+function confirmSignOut(back) {
+  paint(`
+    <section class="home">
+      <h2 tabindex="-1">Sign out?</h2>
+      <p class="sub">You will need your name and password to sign in again.</p>
+      <button class="btn primary" type="button" id="signOutYes">Yes, sign out</button>
+      <button class="btn" type="button" id="signOutNo">No, stay signed in</button>
+    </section>`, 'h2');
+  $('signOutNo').onclick = () => { back(); window.scrollTo(0, 0); };
+  $('signOutYes').onclick = signOut;
+}
+async function signOut() {
+  try { await api('/api/sign-out', { method: 'POST' }); } catch (e) {
+    if (e instanceof SignedOut) return;
+    if ($('signOutMsg')) $('signOutMsg').remove();
+    $('signOutYes').insertAdjacentHTML('beforebegin', '<p class="warn" tabindex="-1" id="signOutMsg">The app could not be reached. Check your connection and try again.</p>');
+    return $('signOutMsg').focus();
+  }
+  signedOut();
+}
+
+// The Helper's screen. The Helper's view fills this in.
+function renderHelper() {
+  paint(`
+    <section class="home">
+      <h1 tabindex="-1">Learners</h1>
+      <button class="btn" type="button" id="signOutBtn">Sign out</button>
+    </section>`, 'h1');
+  $('signOutBtn').onclick = () => confirmSignOut(renderHelper);
+}
+
+startUp();
 </script>
 </body>
 </html>
