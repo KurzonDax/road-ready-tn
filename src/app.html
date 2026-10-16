@@ -417,12 +417,8 @@ window.addEventListener('online', () => {
   if (unfinishedUnsent) sendUnfinished();
 });
 
-function runName(r) {
-  if (r.kind === 'day') return `Section ${r.dayNum}`;
-  if (r.kind === 'redo') return `Section ${r.dayNum}`;
-  if (r.kind === 'review') return 'Review';
-  return 'Practice test';
-}
+// A Set's name from its type ('day', 'redo', 'review' or 'test') and Section number.
+const setName = (type, section) => type === 'review' ? 'Review' : type === 'test' ? 'Practice test' : `Section ${section}`;
 
 let painted = false, onHome = false; // onHome: the Learner's home screen (or its "You stopped partway" form) is showing
 function paint(html, focus) {
@@ -504,7 +500,7 @@ function renderHome() {
 
 function renderResume(saved) {
   const n = saved.items.length, done = saved.i + (saved.answered ? 1 : 0);
-  const name = runName(saved);
+  const name = setName(saved.kind, saved.dayNum);
   const head = saved.kind === 'day' ? `Section ${saved.dayNum} of ${TOTAL_DAYS}` : saved.kind === 'redo' ? `Section ${saved.dayNum} again` : name;
   paint(`
     <section class="home">
@@ -556,7 +552,7 @@ function renderQuestion(revealFeedback) {
   const done = run.i + (run.answered ? 1 : 0);
   paint(`
     <div class="home">
-      <div class="progress"><span>${runName(run)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${done / n * 100}%"></span></div></div>
+      <div class="progress"><span>${setName(run.kind, run.dayNum)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${done / n * 100}%"></span></div></div>
       <div class="card">
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <h1 class="q" id="qText" tabindex="-1">${esc(q.q)}</h1>
@@ -903,7 +899,7 @@ function whereNow(p) {
 // The unfinished Set (as the page saves it, see packRun), or null when it can't be read.
 function unfinishedLine(u) {
   if (!u || typeof u !== 'object' || !Array.isArray(u.items) || !u.items.length) return null;
-  const where = u.kind === 'review' ? 'Review' : u.kind === 'test' ? 'Practice test' : `Section ${u.dayNum}`;
+  const where = setName(u.kind, u.dayNum);
   const done = Math.min(u.items.length, (Number(u.i) || 0) + (u.answered ? 1 : 0));
   return `Unfinished: ${where}, ${done} of ${u.items.length} answered`;
 }
@@ -982,8 +978,6 @@ function lengthText(ms) {
   if (m < 1) return 'Less than 1 minute';
   return [h ? plural(h, 'hour', 'hours') : '', m % 60 ? plural(m % 60, 'minute', 'minutes') : ''].filter(Boolean).join(' ');
 }
-const setName = s => s.type === 'review' ? 'Review' : s.type === 'test' ? 'Practice test' : `Section ${s.section}`;
-
 // A GET for the Helper's view. A failed answer throws an Error with its `status`.
 async function getJSON(path) {
   const r = await api(path);
@@ -1112,7 +1106,7 @@ function learnerPage({ records, unfinished }, learner) {
   const lines = studySessions(records);
   const history = lines.length ? `<ul class="sessions">${lines.map(e => e.kind === 'session'
     ? `<li><p class="when">${whenText(e.start)}</p><p>${lengthText(Date.parse(e.end) - Date.parse(e.start))}</p>` +
-      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>No Sets finished.</p>') + '</li>'
+      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s.type, s.section)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>No Sets finished.</p>') + '</li>'
     : `<li><p class="when">${whenText(e.at)}</p><p>${historyLine(e)}</p></li>`).join('')}</ul>`
     : '<p>No Study sessions yet.</p>';
 
