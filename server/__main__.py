@@ -66,6 +66,17 @@ def fail(message):
     sys.exit(2)
 
 
+def warn_if_no_helper(folder):
+    """Helpers are made only with server.manage, so until one exists the log says how."""
+    from . import auth, db
+    conn = db.connect(folder)
+    try:
+        if not auth.helper_exists(conn):
+            logging.getLogger("rrtn").warning("No Helper account exists. Run: python -m server.manage add <name>")
+    finally:
+        conn.close()
+
+
 def main():
     try:
         config = load_config(os.environ)
@@ -84,6 +95,7 @@ def main():
     import waitress
 
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
+    warn_if_no_helper(config.dir)
     waitress.serve(
         app.make_app(dist=DIST, instance_dir=config.dir, origin=config.origin),
         host="0.0.0.0",

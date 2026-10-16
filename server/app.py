@@ -7,6 +7,7 @@ import pathlib
 import re
 import sqlite3
 import sys
+import time
 import traceback
 
 from . import db
@@ -27,6 +28,9 @@ CONTENT_TYPES = {
 MAX_BODY = 64 * 1024  # bytes; a bigger request body gets 413
 # Files whose Cache-Control differs from the static default of "no-cache".
 CACHE_CONTROL = {"questions.json": "private, no-cache"}
+# Files in dist/ served only to someone signed in. Everything else there is open,
+# because the sign-in page needs it.
+SIGNED_IN_FILES = {"questions.json"}
 
 
 class Response:
@@ -146,6 +150,15 @@ class Request:
         self.path = (environ.get("PATH_INFO") or "/").encode("latin-1").decode("utf-8", "replace")
         self._db = None
         self._body = None
+        self.cookie = None  # a Set-Cookie value to send with the response
+
+    def now(self):
+        """The time now, in seconds since 1970, from the app's clock."""
+        return self.app.clock()
+
+    def set_cookie(self, value):
+        """Send this Set-Cookie value with the response (the app has one cookie, so the last one wins)."""
+        self.cookie = value
 
     def header(self, name, default=None):
         """A request header by its HTTP name, e.g. req.header("If-None-Match")."""
@@ -220,11 +233,12 @@ def healthz(req):
 class App:
     """The WSGI app. `routes` defaults to ROUTES; tests may pass their own table."""
 
-    def __init__(self, dist, instance_dir, origin, routes=None):
+    def __init__(self, dist, instance_dir, origin, routes=None, clock=None):
         self.dist = pathlib.Path(dist)
         self.instance_dir = pathlib.Path(instance_dir)
         self.origin = origin
         self.routes = ROUTES if routes is None else routes
+        self.clock = clock or time.time
 
     def handle(self, req):
         # Forgery protection: everything that changes something is a POST, and a POST
@@ -239,6 +253,9 @@ class App:
             return handler(req)
         file = find_static(self.dist, req.path)
         if file is not None:
+            if file.name in SIGNED_IN_FILES and file.parent == self.dist.resolve() \
+                    and auth.current_account(req) is None:
+                return json_error(401, "signed-out")
             if method == "GET":
                 return serve_static(self.dist, file, req.environ)
             return text(405, "Method not allowed", {"Allow": "GET, HEAD"})
@@ -262,6 +279,8 @@ class App:
             req.close()
         headers = {"Cache-Control": "no-store", **resp.headers, **security_headers(self.dist)}
         headers = list(headers.items())
+        if req.cookie is not None:
+            headers.append(("Set-Cookie", req.cookie))
         if resp.status != 304:
             headers.append(("Content-Length", str(len(resp.body))))
         status = http.HTTPStatus(resp.status)
@@ -271,5 +290,10 @@ class App:
         return [resp.body]
 
 
-def make_app(dist, instance_dir, origin, routes=None):
-    return App(dist, instance_dir, origin, routes)
+def make_app(dist, instance_dir, origin, routes=None, clock=None):
+    """The WSGI app. `clock` returns the time in seconds (default time.time); tests pass a fake one."""
+    return App(dist, instance_dir, origin, routes, clock)
+
+
+# Route modules register into ROUTES when imported.
+from . import auth  # noqa: E402
