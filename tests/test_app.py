@@ -498,13 +498,10 @@ def check_records_on_server(browser, inst):
     learner = inst.add_learner(name, password)
     print("\n[Progress from the server's records]")
     ctx = browser.new_context()
-    ctx.add_init_script(WATCH_OLD_KEY)
     pg = ctx.new_page()
     open_page(pg, inst.url)
-    old = json.dumps({"day": 7, "last": {}, "tests": [], "scores": {}})
-    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [OLD_KEY, old])
     sign_in(pg, name, password)
-    check(h1(pg) == "Section 1 of 12", "a new Learner starts at Section 1, whatever the old saved state says")
+    check(h1(pg) == "Section 1 of 12", "a new Learner starts at Section 1")
 
     pg.click("#startBtn")
     answer_set(pg, miss=2)
@@ -522,8 +519,6 @@ def check_records_on_server(browser, inst):
           "the record holds every answer, which were right, and when each was chosen", data)
     pg.click("#homeBtn")
     check(h1(pg) == "Section 2 of 12", "home then shows Section 2")
-    calls = pg.evaluate("window.oldKeyCalls")
-    check(calls == ["setItem"], f"signing in and finishing a Set don't touch tn-permit-daily-v1 (calls: {calls})")
     reload(pg)
     check(h1(pg) == "Section 2 of 12", "reloading keeps Progress")
 
@@ -567,17 +562,207 @@ def check_records_on_server(browser, inst):
     check(len(got) == 5 and got[-1]["data"]["section"] == 5, "the waiting record is sent on the next app open", got)
     reload(pg)
     check(len(server_records(pg)) == 5, "and it is stored only once")
-
-    calls = pg.evaluate("window.oldKeyCalls")
-    check(calls == [], f"opening the app doesn't touch tn-permit-daily-v1 (calls: {calls})")
-    check(pg.evaluate("([k]) => localStorage.getItem(k)", [OLD_KEY]) == old,
-          "the old saved state under tn-permit-daily-v1 is untouched")
     pg.goto(inst.url + "#section9")
     pg.wait_for_selector("#stage section")
     check(h1(pg) == "Section 6 of 12", "#section9 does nothing")
     pg.goto(inst.url + "?r=1#restart")
     pg.wait_for_selector("#stage section")
     check(h1(pg) == "Section 6 of 12" and not pg.query_selector("#yes"), "#restart does nothing")
+    ctx.close()
+
+
+def db_state(inst, learner_id):
+    """What the server holds for a Learner, read straight from the database: (records, unfinished Set)."""
+    conn = db.connect(inst.dir)
+    try:
+        return records_api.learner_records(conn, learner_id), records_api.unfinished_set(conn, learner_id)
+    finally:
+        conn.close()
+
+
+def wait_until(test, timeout=10):
+    """Call `test` until it returns something true (or the time runs out); return its last answer."""
+    deadline = time.monotonic() + timeout
+    while True:
+        got = test()
+        if got or time.monotonic() > deadline:
+            return got
+        time.sleep(0.1)
+
+
+def record_posts(pg):
+    """A list that fills with the body of each POST /api/records the page sends."""
+    posts = []
+    pg.on("request", lambda r: posts.append(json.loads(r.post_data))
+          if r.method == "POST" and r.url.endswith("/api/records") else None)
+    return posts
+
+
+def copy_key(learner_id):
+    return f"rrtn-learner-{learner_id}"
+
+
+def local_item(pg, key):
+    return pg.evaluate("k => localStorage.getItem(k)", key)
+
+
+def block_record_posts(ctx):
+    """Make POST /api/records fail as if the server can't be reached (GETs still work)."""
+    ctx.route("**/api/records", lambda route: route.abort() if route.request.method == "POST" else route.continue_())
+
+
+OFFLINE_SIGN_OUT = "You are offline. Sign out needs a connection, so that your answers are saved first."
+
+
+def check_offline_and_sync(browser, inst):
+    """Waiting records are sent later, the unfinished Set follows the Learner, and old progress comes in once."""
+    print("\n[a Set finished offline]")
+    name, password = "Kit", "offline password"
+    kit = inst.add_learner(name, password)
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, name, password)
+    ctx.set_offline(True)
+    pg.click("#startBtn")
+    answer_set(pg, miss=1)
+    check(pg.inner_text(".home h2") == "Section 1 done.", "with no connection the Learner keeps answering to the end of a Set")
+    pg.click("#homeBtn")
+    check(h1(pg) == "Section 2 of 12", "and the home screen moves on to Section 2")
+    shown = stage_text(pg).lower()
+    check("offline" not in shown and "connection" not in shown, "nothing on the page says the device is offline", shown)
+    check(db_state(inst, kit)[0] == [], "the server doesn't have the Set yet")
+    ctx.set_offline(False)
+    got = wait_until(lambda: db_state(inst, kit)[0])
+    check(len(got) == 1 and got[0]["data"]["section"] == 1,
+          "going back online sends the waiting Set without reopening the app", got)
+    reload(pg)
+    check(len(server_records(pg)) == 1 and h1(pg) == "Section 2 of 12", "and the server holds it exactly once")
+    check(json.loads(local_item(pg, copy_key(kit)))["pending"] == [], "the device copy has nothing left waiting")
+    ctx.close()
+
+    print("\n[an unfinished Set on two devices]")
+    name, password = "Lee", "two devices password"
+    lee = inst.add_learner(name, password)
+    phone, laptop = browser.new_context(), browser.new_context()
+    pg, pg2 = phone.new_page(), laptop.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, name, password)
+    pg.click("#startBtn")
+    for _ in range(3):
+        answer_one(pg)
+        pg.click("#nextBtn")
+    unfinished = wait_until(lambda: (db_state(inst, lee)[1] or {}).get("i") == 3 and db_state(inst, lee)[1])
+    check(bool(unfinished) and isinstance(unfinished.get("saved_at"), str),
+          "after each answer the unfinished Set is on the server, with saved_at", unfinished)
+    open_page(pg2, inst.url)
+    sign_in(pg2, name, password)
+    check(pg2.query_selector("#resumeBtn") is not None and "You answered 3 of 10 questions" in stage_text(pg2),
+          "the second device offers the Set the first one stopped partway through", stage_text(pg2))
+    pg2.click("#resumeBtn")
+    check(pg2.evaluate("run.i") == 3 and pg2.evaluate("run.set_id") == pg.evaluate("run.set_id"),
+          "and continues it at the next question")
+    answer_one(pg2)
+    pg2.click("#nextBtn")
+    wait_until(lambda: (db_state(inst, lee)[1] or {}).get("i") == 4)
+    reload(pg)
+    check("You answered 4 of 10 questions" in stage_text(pg),
+          "the first device, opened again, takes the newer unfinished Set from the server", stage_text(pg))
+    answer_set(pg2)
+    pg2.click("#homeBtn")
+    got = wait_until(lambda: db_state(inst, lee)[0])
+    check(len(got) == 1 and wait_until(lambda: db_state(inst, lee)[1] is None, 5),
+          "finishing it stores the Set and the server drops the unfinished one", db_state(inst, lee))
+    reload(pg)
+    check(h1(pg) == "Section 2 of 12" and not pg.query_selector("#resumeBtn"),
+          "the first device then shows Section 2 and nothing to continue")
+    phone.close()
+    laptop.close()
+
+    print("\n[old progress from before accounts]")
+    name, password = "Ash", "import password"
+    ash = inst.add_learner(name, password)
+    ctx = browser.new_context()
+    ctx.add_init_script(WATCH_OLD_KEY)
+    pg = ctx.new_page()
+    posts = record_posts(pg)
+    open_page(pg, inst.url)
+    old_state = {"day": 5, "last": {}, "tests": [], "scores": {"1": 9, "2": 7, "3": 10, "4": 8}}
+    old = json.dumps(old_state)
+    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [OLD_KEY, old])
+    pg.evaluate("localStorage.setItem('rrtn-learner-someone-else', '{}')")
+
+    sign_in(pg, *HELPER)
+    check(pg.inner_text("#stage h1") == "Learners" and posts == [], "a Helper signing in on that device imports nothing")
+    pg.get_by_role("button", name="Sign out").click()
+    pg.get_by_role("button", name="Yes, sign out").click()
+    pg.wait_for_selector("#signInForm")
+
+    sign_in(pg, name, password)
+    check(wait_for_h1(pg, "Section 5 of 12") == "Section 5 of 12",
+          "the Learner's first sign-in picks up the old progress at Section 5")
+    got = wait_until(lambda: db_state(inst, ash)[0])
+    check(len(got) == 1 and got[0]["kind"] == "imported" and got[0]["data"] == {"state": old_state},
+          "the old progress becomes one imported record holding the old saved state", got)
+    check(json.loads(local_item(pg, copy_key(ash))).get("imported_done") is True,
+          "the device copy remembers that the import is done")
+    reload(pg)
+    check(h1(pg) == "Section 5 of 12", "the imported progress stays after a reload")
+
+    # Sign-out sends what is waiting first. The record can't be sent when the Set finishes...
+    block_record_posts(ctx)
+    pg.click("#startBtn")
+    answer_set(pg)
+    pg.click("#homeBtn")
+    ctx.unroute("**/api/records")
+    check(len(db_state(inst, ash)[0]) == 1, "a Set waits on the device when the server can't take it")
+    # ...and offline, sign-out refuses and stays signed in.
+    ctx.set_offline(True)
+    pg.get_by_role("button", name="Sign out").click()
+    pg.get_by_role("button", name="Yes, sign out").click()
+    msg = pg.wait_for_selector("#signOutMsg")
+    check(msg.inner_text() == OFFLINE_SIGN_OUT, "signing out offline says it needs a connection", msg.inner_text())
+    check(pg.evaluate("document.activeElement?.id") == "signOutMsg", "focus moves to that sentence")
+    # Back online, with the online event held back, so only sign-out can send the waiting Set.
+    pg.evaluate("window.addEventListener('online', e => e.stopImmediatePropagation(), true)")
+    ctx.set_offline(False)
+    check(me_status(pg) == 200 and local_item(pg, copy_key(ash)) is not None,
+          "the Learner is still signed in and the device copy is kept")
+    check(len(db_state(inst, ash)[0]) == 1, "the Set is still waiting")
+    pg.get_by_role("button", name="Yes, sign out").click()
+    pg.wait_for_selector("#signInForm")
+    got = db_state(inst, ash)[0]
+    check(len(got) == 2 and got[1]["data"]["section"] == 5, "signing out online sends the waiting Set first", got)
+    check(local_item(pg, copy_key(ash)) is None, "and then deletes that Learner's device copy")
+    check(local_item(pg, "rrtn-learner-someone-else") == "{}", "but leaves other copies alone")
+
+    sign_in(pg, name, password)
+    check(wait_for_h1(pg, "Section 6 of 12") == "Section 6 of 12", "signing in again shows Section 6")
+    imports = [r for body in posts for r in body["records"] if r["kind"] == "imported"]
+    check(len(imports) == 1 and len(db_state(inst, ash)[0]) == 2, "and doesn't import the old progress again", imports)
+    calls = [c for c in pg.evaluate("window.oldKeyCalls") if c != "getItem"]
+    check(calls == [], f"the page never writes or deletes tn-permit-daily-v1 (calls: {calls})")
+    check(local_item(pg, OLD_KEY) == old, "the old saved state under tn-permit-daily-v1 is unchanged")
+    ctx.close()
+
+    print("\n[an import that has to wait]")
+    name, password = "Bo", "waiting import password"
+    bo = inst.add_learner(name, password)
+    ctx = browser.new_context()
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [OLD_KEY, json.dumps({"day": 3, "last": {}, "tests": [], "scores": {}})])
+    block_record_posts(ctx)
+    sign_in(pg, name, password)
+    check(wait_for_h1(pg, "Section 3 of 12") == "Section 3 of 12", "the import counts at once, before the server has it")
+    reload(pg)
+    pending = json.loads(local_item(pg, copy_key(bo)))["pending"]
+    check([r["kind"] for r in pending] == ["imported"], "opening the app again doesn't make a second imported record", pending)
+    ctx.unroute("**/api/records")
+    reload(pg)
+    got = wait_until(lambda: db_state(inst, bo)[0])
+    check(len(got) == 1 and got[0]["kind"] == "imported" and h1(pg) == "Section 3 of 12",
+          "it is sent on the next app open", got)
     ctx.close()
 
 
@@ -594,6 +779,7 @@ def main():
         check_sign_in(browser, inst)
         check_progress_from(browser, inst)
         check_records_on_server(browser, inst)
+        check_offline_and_sync(browser, inst)
 
         print("\n[page head, fonts, own origin]")
         ctx = browser.new_context()
