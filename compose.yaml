@@ -1,0 +1,26 @@
+# One Instance of Road Ready TN. See docs/self-hosting.md.
+#
+# The repo is mounted read-only, so `git pull` then `docker compose restart` is the
+# whole update. Settings come from .env (copy .env.example). HTTPS must terminate in
+# a reverse proxy in front of this container.
+services:
+  app:
+    image: python:3.14-slim
+    working_dir: /app
+    command: python -m server
+    user: "${RRTN_UID:-1000}:${RRTN_GID:-1000}"
+    volumes:
+      - .:/app:ro
+      - ${RRTN_HOST_DIR:-./instance}:/var/lib/rrtn
+    env_file: .env
+    # Published on loopback only, for a reverse proxy on the same machine.
+    # If the proxy runs in Docker, remove `ports:` and join the proxy's Docker network instead.
+    ports:
+      - "127.0.0.1:${RRTN_PORT:-8080}:${RRTN_PORT:-8080}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:${RRTN_PORT:-8080}/healthz', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped

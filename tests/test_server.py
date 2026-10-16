@@ -1126,6 +1126,90 @@ class HelperCommand(AccountsTestCase):
                 self.assertIn("no Helper", out)
 
 
+class BackupCommand(AccountsTestCase):
+    def tables(self, path):
+        import sqlite3
+        conn = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
+        try:
+            return sorted(r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type = 'table'"))
+        finally:
+            conn.close()
+
+    def test_backup_writes_a_dated_copy_in_backups_and_prints_its_path(self):
+        import re
+        self.add_helper("Randy", "correct horse")
+        code, out, prompts = run_manage(self.instance, "backup")
+        self.assertEqual((code, prompts), (0, 0), out)
+        written = pathlib.Path(out.strip())
+        self.assertEqual(written.parent, self.instance / "backups")
+        self.assertRegex(written.name, r"^\d{4}-\d{2}-\d{2}-\d{6}\.db$")
+        self.assertTrue(written.is_file())
+        self.assertEqual(self.tables(written), self.tables(self.instance / "rrtn.db"))
+
+    def test_the_copy_holds_the_accounts_and_records(self):
+        import sqlite3
+        self.add_helper("Randy", "correct horse")
+        learner = self.add_learner("Sam", "learner pass")
+        from server import db, records
+        conn = db.connect(self.instance)
+        try:
+            records.helper_record(conn, learner, "move", {"to": 4}, now=self.now)
+        finally:
+            conn.close()
+        written = run_manage(self.instance, "backup")[1].strip()
+        copy = sqlite3.connect(f"file:{written}?mode=ro", uri=True)
+        try:
+            self.assertEqual(sorted(r[0] for r in copy.execute("SELECT name FROM accounts")), ["Randy", "Sam"])
+            self.assertEqual(copy.execute("SELECT count(*) FROM records").fetchone()[0], 1)
+            self.assertEqual(copy.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+        finally:
+            copy.close()
+
+    def test_backup_takes_no_name(self):
+        import contextlib
+        import io
+        from server import manage
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            manage.main(["backup", "Randy"], {"RRTN_DIR": str(self.instance)})
+
+    def test_two_backups_in_the_same_second_both_keep_their_copy(self):
+        from unittest import mock
+        self.add_helper("Randy", "correct horse")
+        with mock.patch("time.time", return_value=T0):
+            first = run_manage(self.instance, "backup")[1].strip()
+            second = run_manage(self.instance, "backup")[1].strip()
+        self.assertNotEqual(first, second)
+        self.assertTrue(pathlib.Path(first).is_file())
+        self.assertTrue(pathlib.Path(second).is_file())
+
+    def test_backup_runs_while_the_server_is_running_and_the_copy_has_new_sign_ins(self):
+        import json
+        import sqlite3
+        import urllib.request
+        with tempfile.TemporaryDirectory() as tmp:
+            run_manage(tmp, "add", "Randy", passwords=["correct horse"] * 2)
+            with RunningServer(tmp) as srv:
+                req = urllib.request.Request(srv.url + "/api/sign-in", method="POST",
+                                             data=json.dumps({"name": "Randy", "password": "correct horse"}).encode(),
+                                             headers={**JSON, "Origin": ORIGIN})
+                urllib.request.urlopen(req).close()
+                env = {k: v for k, v in os.environ.items() if not k.startswith("RRTN_")}
+                env["RRTN_DIR"] = tmp
+                done = subprocess.run([sys.executable, "-m", "server.manage", "backup"], cwd=ROOT, env=env,
+                                      capture_output=True, text=True, timeout=30)
+                self.assertEqual(done.returncode, 0, done.stderr)
+                written = done.stdout.strip()
+                with urllib.request.urlopen(srv.url + "/healthz") as r:
+                    self.assertEqual(r.status, 200)
+            copy = sqlite3.connect(f"file:{written}?mode=ro", uri=True)
+            try:
+                # the session lives in the WAL until a checkpoint; the copy must still have it
+                self.assertEqual(copy.execute("SELECT count(*) FROM sessions").fetchone()[0], 1)
+                self.assertEqual(copy.execute("PRAGMA integrity_check").fetchone()[0], "ok")
+            finally:
+                copy.close()
+
+
 def a_set(id="set-record-000001", set_id="set-000001", type="day", section=1, answers=None, **extra):
     """A finished-Set record that passes every shape rule. Tests change one field to break one rule."""
     record = {
