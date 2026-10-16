@@ -27,3 +27,7 @@ __pycache__/
 **/.impeccable/live/*.png
 # impeccable-ignore-end
 
+
+# A running Instance: its folder (database, backups) and its local settings.
+instance/
+.env

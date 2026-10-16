@@ -1,5 +1,6 @@
-"""Manage Helper accounts: `python -m server.manage add|password|remove <name>`, and
-end every sign-in pause: `python -m server.manage unlock`.
+"""Manage Helper accounts: `python -m server.manage add|password|remove <name>`,
+end every sign-in pause: `python -m server.manage unlock`, and copy the database:
+`python -m server.manage backup`.
 
 Run it inside the container, where RRTN_DIR names the Instance folder (default
 /var/lib/rrtn). Passwords are typed at a prompt, twice, and never taken as an
@@ -86,19 +87,45 @@ def unlock(conn, name, new_password):
     return f"Cleared the sign-in counts and pauses for {what}."
 
 
+def backup(conn, name, new_password):
+    """Copy the database to <Instance folder>/backups/<YYYY-MM-DD-HHMMSS>.db and return its path.
+
+    sqlite3's backup() takes a consistent copy while the server keeps running. The copy is
+    written under a temporary name first, so a half-written file is never left with a real name.
+    """
+    folder = pathlib.Path(conn.execute("PRAGMA database_list").fetchone()["file"]).parent
+    backups = folder / "backups"
+    backups.mkdir(exist_ok=True)
+    stamp = time.strftime("%Y-%m-%d-%H%M%S", time.gmtime(time.time()))
+    target, n = backups / f"{stamp}.db", 1
+    while target.exists():
+        n += 1
+        target = backups / f"{stamp}-{n}.db"
+    partial = target.with_name(target.name + ".part")
+    copy = sqlite3.connect(partial)
+    try:
+        conn.backup(copy)
+        copy.execute("PRAGMA journal_mode = DELETE")  # one self-contained file, no -wal beside it
+    finally:
+        copy.close()
+    os.replace(partial, target)
+    return str(target)
+
+
 # command: (function, help, takes a name)
 COMMANDS = {
     "add": (add, "make a Helper", True),
     "password": (password, "set a new password for a Helper and end their sign-ins", True),
     "remove": (remove, "delete a Helper", True),
     "unlock": (unlock, "end every sign-in pause, for names and IPs", False),
+    "backup": (backup, "copy the database to backups/ in the Instance folder", False),
 }
 
 
 def main(argv=None, environ=None):
     """Run the command. Returns the exit status: 0 done, 1 refused, 2 the database can't be opened."""
     environ = os.environ if environ is None else environ
-    parser = argparse.ArgumentParser(prog=PROG, description="Manage Helper accounts and sign-in pauses.")
+    parser = argparse.ArgumentParser(prog=PROG, description="Manage Helper accounts and sign-in pauses, and back up the database.")
     sub = parser.add_subparsers(dest="command", required=True)
     for command, (_, help_text, takes_name) in COMMANDS.items():
         command_parser = sub.add_parser(command, help=help_text)
