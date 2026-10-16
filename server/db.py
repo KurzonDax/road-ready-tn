@@ -37,6 +37,24 @@ STEPS = [
     ) STRICT;
     CREATE INDEX sessions_by_account ON sessions (account_id);
     """,
+    # 3: each Learner's records (a list that only grows) and their one unfinished Set.
+    # The record is kept as the JSON the device sent; see server/records.py for its shape.
+    """
+    CREATE TABLE records (
+        id          TEXT PRIMARY KEY,         -- made on the device, so a record sent twice is stored once
+        account_id  INTEGER NOT NULL REFERENCES accounts (id) ON DELETE CASCADE,
+        kind        TEXT NOT NULL CHECK (kind IN ('set', 'reset', 'move', 'imported')),
+        record      TEXT NOT NULL,            -- the record as JSON: id, kind, reset, at, data
+        seq         INTEGER NOT NULL UNIQUE,  -- arrival number, increasing across the Instance
+        received_at INTEGER NOT NULL
+    ) STRICT;
+    CREATE INDEX records_by_account ON records (account_id, seq);
+    CREATE TABLE unfinished_sets (
+        account_id INTEGER PRIMARY KEY REFERENCES accounts (id) ON DELETE CASCADE,
+        set_json   TEXT NOT NULL,
+        saved_at   INTEGER NOT NULL
+    ) STRICT;
+    """,
 ]
 
 
