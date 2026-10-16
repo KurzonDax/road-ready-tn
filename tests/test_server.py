@@ -630,7 +630,7 @@ class AccountsTestCase(AppTestCase):
         self.app = app.make_app(dist=self.dist, instance_dir=self.instance, origin=ORIGIN,
                                 clock=lambda: self.now)
 
-    def add_helper(self, name="Randy", password="correct horse"):
+    def add_helper(self, name="Avery", password="correct horse"):
         code, out, _ = run_manage(self.instance, "add", name, passwords=[password, password])
         self.assertEqual(code, 0, out)
 
@@ -655,14 +655,14 @@ class AccountsTestCase(AppTestCase):
 class SigningIn(AccountsTestCase):
     def test_a_helper_made_with_manage_add_can_sign_in_and_is_a_helper(self):
         import json
-        self.add_helper("Randy", "correct horse")
-        r = self.sign_in("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
+        r = self.sign_in("Avery", "correct horse")
         self.assertEqual(r.status, 200)
-        self.assertEqual(json.loads(r.body), {"role": "helper", "name": "Randy"})
+        self.assertEqual(json.loads(r.body), {"role": "helper", "name": "Avery"})
         me = self.get("/api/me", cookie_from(r))
         self.assertEqual(me.status, 200)
         body = json.loads(me.body)
-        self.assertEqual((body["role"], body["name"]), ("helper", "Randy"))
+        self.assertEqual((body["role"], body["name"]), ("helper", "Avery"))
         self.assertIsInstance(body["id"], int)
 
     def test_a_learner_can_sign_in_and_is_a_learner(self):
@@ -673,9 +673,9 @@ class SigningIn(AccountsTestCase):
         self.assertEqual(json.loads(self.get("/api/me", cookie_from(r)).body)["role"], "learner")
 
     def test_an_unknown_name_and_a_wrong_password_get_the_same_401(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         unknown = self.sign_in("Nobody", "correct horse")
-        wrong = self.sign_in("Randy", "wrong horse!")
+        wrong = self.sign_in("Avery", "wrong horse!")
         for r in (unknown, wrong):
             self.assertEqual(r.status, 401)
             self.assertEqual(r.body, b'{"error": "mismatch"}')
@@ -683,49 +683,49 @@ class SigningIn(AccountsTestCase):
             self.assertIsNone(cookie_from(r))
 
     def test_names_match_ignoring_capitals_and_outer_spaces(self):
-        self.add_helper("Randy Willis", "correct horse")
-        for typed in ("randy willis", "  RANDY WILLIS ", "Randy Willis\t"):
+        self.add_helper("Avery Fowler", "correct horse")
+        for typed in ("avery fowler", "  AVERY FOWLER ", "Avery Fowler\t"):
             with self.subTest(typed=typed):
                 self.assertEqual(self.sign_in(typed, "correct horse").status, 200)
-        self.assertEqual(self.sign_in("Randy  Willis", "correct horse").status, 401)
+        self.assertEqual(self.sign_in("Avery  Fowler", "correct horse").status, 401)
 
     def test_passwords_match_exactly(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         for typed in ("Correct horse", "correct horse ", " correct horse", "correct hors"):
             with self.subTest(typed=typed):
-                self.assertEqual(self.sign_in("Randy", typed).status, 401)
+                self.assertEqual(self.sign_in("Avery", typed).status, 401)
 
     def test_a_name_over_64_or_a_password_over_128_is_a_mismatch(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.assertEqual(self.sign_in("R" * 65, "correct horse").body, b'{"error": "mismatch"}')
-        self.assertEqual(self.sign_in("Randy", "x" * 129).body, b'{"error": "mismatch"}')
+        self.assertEqual(self.sign_in("Avery", "x" * 129).body, b'{"error": "mismatch"}')
 
     def test_a_sign_in_without_a_name_or_password_is_400(self):
         import json
-        for body in ({}, {"name": "Randy"}, {"name": "Randy", "password": 12345678}, ["Randy", "pw"]):
+        for body in ({}, {"name": "Avery"}, {"name": "Avery", "password": 12345678}, ["Avery", "pw"]):
             with self.subTest(body=body):
                 r = call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": ORIGIN}, json.dumps(body).encode())
                 self.assertEqual(r.status, 400)
 
     def test_sign_in_needs_the_instance_origin(self):
-        self.add_helper("Randy", "correct horse")
-        body = b'{"name": "Randy", "password": "correct horse"}'
+        self.add_helper("Avery", "correct horse")
+        body = b'{"name": "Avery", "password": "correct horse"}'
         r = call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": "https://evil.example.com"}, body)
         self.assertEqual(r.status, 403)
         self.assertIsNone(cookie_from(r))
 
     def test_account_answers_are_never_cached(self):
-        self.add_helper("Randy", "correct horse")
-        token = cookie_from(self.sign_in("Randy", "correct horse"))
-        for r in (self.sign_in("Randy", "correct horse"), self.sign_in("Randy", "nope nope"),
+        self.add_helper("Avery", "correct horse")
+        token = cookie_from(self.sign_in("Avery", "correct horse"))
+        for r in (self.sign_in("Avery", "correct horse"), self.sign_in("Avery", "nope nope"),
                   self.get("/api/me", token), self.get("/api/me")):
             self.assertEqual(r.headers["cache-control"], "no-store")
 
 
 class SessionCookie(AccountsTestCase):
     def test_the_cookie_is_host_prefixed_http_only_secure_and_lax(self):
-        self.add_helper("Randy", "correct horse")
-        r = self.sign_in("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
+        r = self.sign_in("Avery", "correct horse")
         self.assertTrue(r.headers["set-cookie"].startswith("__Host-rrtn="))
         attrs = cookie_attributes(r)
         self.assertIs(attrs["httponly"], True)
@@ -735,15 +735,15 @@ class SessionCookie(AccountsTestCase):
         self.assertNotIn("domain", attrs)
 
     def test_max_age_is_400_days_for_a_learner_and_30_days_for_a_helper(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.add_learner("Sam", "learner pass")
         self.assertEqual(cookie_attributes(self.sign_in("Sam", "learner pass"))["max-age"], "34560000")
-        self.assertEqual(cookie_attributes(self.sign_in("Randy", "correct horse"))["max-age"], "2592000")
+        self.assertEqual(cookie_attributes(self.sign_in("Avery", "correct horse"))["max-age"], "2592000")
 
     def test_each_sign_in_gets_a_new_long_token(self):
-        self.add_helper("Randy", "correct horse")
-        a = cookie_from(self.sign_in("Randy", "correct horse"))
-        b = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.add_helper("Avery", "correct horse")
+        a = cookie_from(self.sign_in("Avery", "correct horse"))
+        b = cookie_from(self.sign_in("Avery", "correct horse"))
         self.assertNotEqual(a, b)
         self.assertGreaterEqual(len(a), 43)  # 32 random bytes in base64url
 
@@ -751,7 +751,7 @@ class SessionCookie(AccountsTestCase):
 class SessionLifetime(AccountsTestCase):
     def setUp(self):
         super().setUp()
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.add_learner("Sam", "learner pass")
 
     def session_count(self):
@@ -769,7 +769,7 @@ class SessionLifetime(AccountsTestCase):
                 self.assertEqual((r.status, r.body), (401, b'{"error": "signed-out"}'))
 
     def test_a_helper_session_ends_after_30_days_and_is_deleted(self):
-        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        token = cookie_from(self.sign_in("Avery", "correct horse"))
         self.now = T0 + 29 * DAY
         self.assertEqual(self.get("/api/me", token).status, 200)  # moves the expiry to now + 30 days
         self.now += 30 * DAY - 1
@@ -781,7 +781,7 @@ class SessionLifetime(AccountsTestCase):
         self.assertEqual(self.session_count(), 0)
 
     def test_a_session_not_used_for_its_whole_lifetime_ends(self):
-        helper = cookie_from(self.sign_in("Randy", "correct horse"))
+        helper = cookie_from(self.sign_in("Avery", "correct horse"))
         learner = cookie_from(self.sign_in("Sam", "learner pass"))
         unused_learner = cookie_from(self.sign_in("Sam", "learner pass"))
         self.now = T0 + 30 * DAY
@@ -805,7 +805,7 @@ class SessionLifetime(AccountsTestCase):
         self.assertEqual(self.get("/api/me", token).status, 200)
 
     def test_a_session_used_only_within_a_day_keeps_its_first_expiry(self):
-        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        token = cookie_from(self.sign_in("Avery", "correct horse"))
         for hours in (1, 5, 23):
             self.now = T0 + hours * 3600
             self.assertEqual(self.get("/api/me", token).status, 200)
@@ -835,7 +835,7 @@ class SessionLifetime(AccountsTestCase):
     def test_deleting_an_account_deletes_its_sessions(self):
         from server import auth, db
         token = cookie_from(self.sign_in("Sam", "learner pass"))
-        self.sign_in("Randy", "correct horse")
+        self.sign_in("Avery", "correct horse")
         conn = db.connect(self.instance)
         try:
             auth.delete_account(conn, auth.find_account(conn, "Sam")["id"])
@@ -847,21 +847,21 @@ class SessionLifetime(AccountsTestCase):
 
 class QuestionsNeedSignIn(AccountsTestCase):
     def test_questions_are_401_signed_out_and_200_for_either_role(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.add_learner("Sam", "learner pass")
         for method in ("GET", "HEAD"):
             with self.subTest(method=method):
                 r = call(self.app, method, "/questions.json")
                 self.assertEqual(r.status, 401)
         self.assertEqual(call(self.app, "GET", "/questions.json").body, b'{"error": "signed-out"}')
-        for name, password in (("Randy", "correct horse"), ("Sam", "learner pass")):
+        for name, password in (("Avery", "correct horse"), ("Sam", "learner pass")):
             with self.subTest(name=name):
                 r = self.get("/questions.json", cookie_from(self.sign_in(name, password)))
                 self.assertEqual((r.status, r.body), (200, QUESTIONS))
 
     def test_an_ended_session_cannot_fetch_questions(self):
-        self.add_helper("Randy", "correct horse")
-        token = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.add_helper("Avery", "correct horse")
+        token = cookie_from(self.sign_in("Avery", "correct horse"))
         self.now = T0 + 30 * DAY
         self.assertEqual(self.get("/questions.json", token).status, 401)
 
@@ -885,12 +885,12 @@ class WhatTheDatabaseHolds(AccountsTestCase):
             conn.close()
 
     def test_no_raw_token_and_no_raw_password_is_stored(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.add_learner("Sam", "learner pass")
-        tokens = [cookie_from(self.sign_in("Randy", "correct horse")),
+        tokens = [cookie_from(self.sign_in("Avery", "correct horse")),
                   cookie_from(self.sign_in("Sam", "learner pass"))]
         dump = self.all_values()
-        self.assertIn("Randy", dump)
+        self.assertIn("Avery", dump)
         for secret in ["correct horse", "learner pass", *tokens]:
             self.assertNotIn(secret, dump)
         for f in self.instance.iterdir():
@@ -898,7 +898,7 @@ class WhatTheDatabaseHolds(AccountsTestCase):
                 self.assertNotIn(secret, f.read_bytes(), f.name)
 
     def test_each_hash_carries_its_scrypt_settings(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         dump = self.all_values()
         self.assertIn("scrypt$32768$8$3$", dump)
 
@@ -985,12 +985,12 @@ class Roles(AccountsTestCase):
 
         self.app = app.make_app(dist=self.dist, instance_dir=self.instance, origin=ORIGIN, routes=routes,
                                 clock=lambda: self.now)
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.add_learner("Sam", "learner pass")
 
     def test_the_role_gets_in_the_other_role_gets_403_and_signed_out_gets_401(self):
-        helper = self.get("/helpers-only", cookie_from(self.sign_in("Randy", "correct horse")))
-        self.assertEqual((helper.status, helper.body), (200, b'{"hello": "Randy"}'))
+        helper = self.get("/helpers-only", cookie_from(self.sign_in("Avery", "correct horse")))
+        self.assertEqual((helper.status, helper.body), (200, b'{"hello": "Avery"}'))
         learner = self.get("/helpers-only", cookie_from(self.sign_in("Sam", "learner pass")))
         self.assertEqual((learner.status, learner.body), (403, b'{"error": "wrong-role"}'))
         self.assertEqual(self.get("/helpers-only").status, 401)
@@ -1001,31 +1001,31 @@ class HelperCommand(AccountsTestCase):
         return run_manage(self.instance, *args, passwords=passwords)
 
     def test_add_asks_for_the_password_twice_and_makes_a_helper(self):
-        code, out, prompts = self.manage("add", "Randy", passwords=["correct horse", "correct horse"])
+        code, out, prompts = self.manage("add", "Avery", passwords=["correct horse", "correct horse"])
         self.assertEqual((code, prompts), (0, 2))
-        self.assertIn("Randy", out)
-        self.assertEqual(self.sign_in("randy", "correct horse").status, 200)
+        self.assertIn("Avery", out)
+        self.assertEqual(self.sign_in("avery", "correct horse").status, 200)
 
     def test_add_works_on_an_instance_folder_that_has_no_database_yet(self):
         fresh = pathlib.Path(self.tmp.name) / "fresh"
         fresh.mkdir()
-        code, _, _ = run_manage(fresh, "add", "Randy", passwords=["correct horse"] * 2)
+        code, _, _ = run_manage(fresh, "add", "Avery", passwords=["correct horse"] * 2)
         self.assertEqual(code, 0)
         self.assertTrue((fresh / "rrtn.db").is_file())
 
     def test_add_refuses_two_different_passwords(self):
-        code, out, _ = self.manage("add", "Randy", passwords=["correct horse", "correct house"])
+        code, out, _ = self.manage("add", "Avery", passwords=["correct horse", "correct house"])
         self.assertNotEqual(code, 0)
         self.assertIn("not the same", out)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 401)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 401)
 
     def test_add_refuses_a_password_of_7_or_129_characters(self):
         for bad in ("x" * 7, "x" * 129):
             with self.subTest(length=len(bad)):
-                code, out, _ = self.manage("add", "Randy", passwords=[bad, bad])
+                code, out, _ = self.manage("add", "Avery", passwords=[bad, bad])
                 self.assertNotEqual(code, 0)
                 self.assertIn("8 to 128", out)
-        self.assertEqual(self.sign_in("Randy", "x" * 7).status, 401)
+        self.assertEqual(self.sign_in("Avery", "x" * 7).status, 401)
 
     def test_add_refuses_a_65_character_name_or_a_name_taken_ignoring_capitals(self):
         code, out, prompts = self.manage("add", "R" * 65, passwords=["correct horse"] * 2)
@@ -1041,7 +1041,7 @@ class HelperCommand(AccountsTestCase):
         import contextlib
         import io
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
-            self.manage("add", "Randy", "correct horse")
+            self.manage("add", "Avery", "correct horse")
         self.assertNotEqual(e.exception.code, 0)
 
     def test_password_stdin_reads_one_line_for_tests_and_asks_nothing(self):
@@ -1052,9 +1052,9 @@ class HelperCommand(AccountsTestCase):
         with mock.patch("sys.stdin", io.StringIO("correct horse\n")), \
                 mock.patch("getpass.getpass", side_effect=AssertionError("prompted")), \
                 contextlib.redirect_stdout(io.StringIO()):
-            code = manage.main(["add", "Randy", "--password-stdin"], {"RRTN_DIR": str(self.instance)})
+            code = manage.main(["add", "Avery", "--password-stdin"], {"RRTN_DIR": str(self.instance)})
         self.assertEqual(code, 0)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 200)
 
     def test_password_stdin_still_checks_the_length(self):
         import contextlib
@@ -1064,7 +1064,7 @@ class HelperCommand(AccountsTestCase):
         err = io.StringIO()
         with mock.patch("sys.stdin", io.StringIO("short\n")), \
                 contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(err):
-            code = manage.main(["add", "Randy", "--password-stdin"], {"RRTN_DIR": str(self.instance)})
+            code = manage.main(["add", "Avery", "--password-stdin"], {"RRTN_DIR": str(self.instance)})
         self.assertNotEqual(code, 0)
         self.assertIn("8 to 128", err.getvalue())
 
@@ -1072,39 +1072,39 @@ class HelperCommand(AccountsTestCase):
         # A fresh interpreter imports server.auth before server.app, unlike the tests above.
         env = {k: v for k, v in os.environ.items() if not k.startswith("RRTN_")}
         env["RRTN_DIR"] = str(self.instance)
-        done = subprocess.run([sys.executable, "-m", "server.manage", "add", "Randy", "--password-stdin"],
+        done = subprocess.run([sys.executable, "-m", "server.manage", "add", "Avery", "--password-stdin"],
                               cwd=ROOT, env=env, input="correct horse\n", capture_output=True, text=True)
         self.assertEqual(done.returncode, 0, done.stderr)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 200)
 
     def test_password_sets_a_new_one_and_ends_that_helpers_sessions(self):
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         self.add_helper("Alex", "another helper")
-        randy = [cookie_from(self.sign_in("Randy", "correct horse")) for _ in range(2)]
+        avery = [cookie_from(self.sign_in("Avery", "correct horse")) for _ in range(2)]
         alex = cookie_from(self.sign_in("Alex", "another helper"))
-        code, out, prompts = self.manage("password", "randy", passwords=["battery staple", "battery staple"])
+        code, out, prompts = self.manage("password", "avery", passwords=["battery staple", "battery staple"])
         self.assertEqual((code, prompts), (0, 2))
-        for token in randy:
+        for token in avery:
             self.assertEqual(self.get("/api/me", token).status, 401)
         self.assertEqual(self.get("/api/me", alex).status, 200)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 401)
-        self.assertEqual(self.sign_in("Randy", "battery staple").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 401)
+        self.assertEqual(self.sign_in("Avery", "battery staple").status, 200)
 
     def test_password_refuses_a_bad_new_password_and_keeps_the_old_one(self):
-        self.add_helper("Randy", "correct horse")
-        token = cookie_from(self.sign_in("Randy", "correct horse"))
-        code, _, _ = self.manage("password", "Randy", passwords=["short", "short"])
+        self.add_helper("Avery", "correct horse")
+        token = cookie_from(self.sign_in("Avery", "correct horse"))
+        code, _, _ = self.manage("password", "Avery", passwords=["short", "short"])
         self.assertNotEqual(code, 0)
         self.assertEqual(self.get("/api/me", token).status, 200)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 200)
 
     def test_remove_deletes_the_helper_and_their_sessions(self):
-        self.add_helper("Randy", "correct horse")
-        token = cookie_from(self.sign_in("Randy", "correct horse"))
-        code, out, prompts = self.manage("remove", "Randy")
+        self.add_helper("Avery", "correct horse")
+        token = cookie_from(self.sign_in("Avery", "correct horse"))
+        code, out, prompts = self.manage("remove", "Avery")
         self.assertEqual((code, prompts), (0, 0))
         self.assertEqual(self.get("/api/me", token).status, 401)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 401)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 401)
 
     def test_the_command_never_touches_a_learner(self):
         self.add_learner("Sam", "learner pass")
@@ -1137,7 +1137,7 @@ class BackupCommand(AccountsTestCase):
 
     def test_backup_writes_a_dated_copy_in_backups_and_prints_its_path(self):
         import re
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         code, out, prompts = run_manage(self.instance, "backup")
         self.assertEqual((code, prompts), (0, 0), out)
         written = pathlib.Path(out.strip())
@@ -1148,7 +1148,7 @@ class BackupCommand(AccountsTestCase):
 
     def test_the_copy_holds_the_accounts_and_records(self):
         import sqlite3
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         learner = self.add_learner("Sam", "learner pass")
         from server import db, records
         conn = db.connect(self.instance)
@@ -1159,7 +1159,7 @@ class BackupCommand(AccountsTestCase):
         written = run_manage(self.instance, "backup")[1].strip()
         copy = sqlite3.connect(f"file:{written}?mode=ro", uri=True)
         try:
-            self.assertEqual(sorted(r[0] for r in copy.execute("SELECT name FROM accounts")), ["Randy", "Sam"])
+            self.assertEqual(sorted(r[0] for r in copy.execute("SELECT name FROM accounts")), ["Avery", "Sam"])
             self.assertEqual(copy.execute("SELECT count(*) FROM records").fetchone()[0], 1)
             self.assertEqual(copy.execute("PRAGMA integrity_check").fetchone()[0], "ok")
         finally:
@@ -1170,11 +1170,11 @@ class BackupCommand(AccountsTestCase):
         import io
         from server import manage
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
-            manage.main(["backup", "Randy"], {"RRTN_DIR": str(self.instance)})
+            manage.main(["backup", "Avery"], {"RRTN_DIR": str(self.instance)})
 
     def test_two_backups_in_the_same_second_both_keep_their_copy(self):
         from unittest import mock
-        self.add_helper("Randy", "correct horse")
+        self.add_helper("Avery", "correct horse")
         with mock.patch("time.time", return_value=T0):
             first = run_manage(self.instance, "backup")[1].strip()
             second = run_manage(self.instance, "backup")[1].strip()
@@ -1187,10 +1187,10 @@ class BackupCommand(AccountsTestCase):
         import sqlite3
         import urllib.request
         with tempfile.TemporaryDirectory() as tmp:
-            run_manage(tmp, "add", "Randy", passwords=["correct horse"] * 2)
+            run_manage(tmp, "add", "Avery", passwords=["correct horse"] * 2)
             with RunningServer(tmp) as srv:
                 req = urllib.request.Request(srv.url + "/api/sign-in", method="POST",
-                                             data=json.dumps({"name": "Randy", "password": "correct horse"}).encode(),
+                                             data=json.dumps({"name": "Avery", "password": "correct horse"}).encode(),
                                              headers={**JSON, "Origin": ORIGIN})
                 urllib.request.urlopen(req).close()
                 env = {k: v for k, v in os.environ.items() if not k.startswith("RRTN_")}
@@ -1274,8 +1274,8 @@ class RecordRoutesAreForLearners(RecordsTestCase):
 
     def test_a_helper_gets_403_and_signed_out_gets_401_on_every_route(self):
         import json
-        self.add_helper("Randy", "correct horse")
-        helper = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.add_helper("Avery", "correct horse")
+        helper = cookie_from(self.sign_in("Avery", "correct horse"))
         for token, status, error in ((helper, 403, "wrong-role"), ("not-a-session", 401, "signed-out")):
             answers = [self.get("/api/records", token), self.send(a_set(), token=token),
                        self.save_unfinished({"set_id": "x"}, token=token)]
@@ -1634,12 +1634,12 @@ class RecordsAreKeptApartPerLearner(RecordsTestCase):
 
 
 class HelperTestCase(RecordsTestCase):
-    """The Helper's routes, called by a signed-in Helper (Randy) about a Learner (Sam)."""
+    """The Helper's routes, called by a signed-in Helper (Avery) about a Learner (Sam)."""
 
     def setUp(self):
         super().setUp()
-        self.add_helper("Randy", "correct horse")
-        self.helper = cookie_from(self.sign_in("Randy", "correct horse"))
+        self.add_helper("Avery", "correct horse")
+        self.helper = cookie_from(self.sign_in("Avery", "correct horse"))
         self.sam_id = self.account_id("Sam")
 
     def account_id(self, name):
@@ -1727,7 +1727,7 @@ class HelperRoutesAreForHelpers(HelperTestCase):
             conn.close()
         self.assertEqual(len(stored), 2)
         for text in stored:
-            self.assertNotIn("Randy", text)
+            self.assertNotIn("Avery", text)
             self.assertEqual(set(json.loads(text)), {"id", "kind", "reset", "at", "data"})
 
 
@@ -1752,7 +1752,7 @@ class AddingALearner(HelperTestCase):
         self.assertEqual(r.body, b'{"role": "learner", "name": "Alex"}')
 
     def test_a_name_in_use_by_a_learner_or_a_helper_ignoring_capitals_is_409(self):
-        for name in ("sam", "RANDY"):
+        for name in ("sam", "AVERY"):
             with self.subTest(name=name):
                 self.assertEqual(self.as_helper("POST", "/api/learners", {"name": name, "password": "a good password"}),
                                  (409, {"error": "name-taken"}))
@@ -1783,7 +1783,7 @@ class ALearnersRecords(HelperTestCase):
 
     def test_an_unknown_id_a_helpers_id_or_a_word_is_404(self):
         arabic_one = "١".encode().decode("latin-1")  # as WSGI hands a UTF-8 path over
-        for learner in (self.sam_id + 100, self.account_id("Randy"), "sam", "0", "-1", "1.0", arabic_one):
+        for learner in (self.sam_id + 100, self.account_id("Avery"), "sam", "0", "-1", "1.0", arabic_one):
             with self.subTest(learner=learner):
                 self.assertEqual(self.as_helper("GET", f"/api/learners/{learner}/records")[0], 404)
 
@@ -1808,7 +1808,7 @@ class RenamingALearner(HelperTestCase):
     def test_the_same_name_rules_apply(self):
         self.add_learner("Alex", "learner pass")
         self.assertEqual(self.rename("alex"), (409, {"error": "name-taken"}))
-        self.assertEqual(self.rename("randy"), (409, {"error": "name-taken"}))
+        self.assertEqual(self.rename("avery"), (409, {"error": "name-taken"}))
         for name in ("  ", "x" * 65, None):
             with self.subTest(name=name):
                 self.assertEqual(self.rename(name), (400, {"error": "bad-name"}))
@@ -2066,7 +2066,7 @@ class PausingAName(SignInLimitsTestCase):
 
     def test_one_paused_name_leaves_other_names_alone(self):
         self.fail_sign_in("Sam", 10)
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 200)
 
 
 class PausingAnUnknownName(SignInLimitsTestCase):
@@ -2108,7 +2108,7 @@ class PausingAnIP(SignInLimitsTestCase):
         self.assert_paused(self.sign_in("Sam", "learner pass"), HOUR)
         self.assertEqual(self.sign_in("Sam", "learner pass", ip="198.51.100.7").status, 200)
         self.now += HOUR
-        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse").status, 200)
 
     def test_failures_more_than_an_hour_apart_do_not_add_up(self):
         self.fail_across_names(49)
@@ -2120,7 +2120,7 @@ class PausingAnIP(SignInLimitsTestCase):
         self.fail_across_names(49)
         self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
         self.fail_sign_in("Someone", 1)
-        self.assert_paused(self.sign_in("Randy", "correct horse"), HOUR)
+        self.assert_paused(self.sign_in("Avery", "correct horse"), HOUR)
 
     def test_tries_during_an_ip_pause_are_not_counted_and_hash_nothing(self):
         self.fail_across_names(50)
@@ -2163,26 +2163,26 @@ class ClearingPauses(SignInLimitsTestCase):
 
     def test_manage_password_clears_that_helpers_pause_and_pause_level(self):
         self.add_helper("Pat", "pats password")
-        self.pause_twice("Randy", "correct horse")
+        self.pause_twice("Avery", "correct horse")
         self.pause_twice("Pat", "pats password")
-        code, out, _ = run_manage(self.instance, "password", "randy", passwords=["new horse!"] * 2)
+        code, out, _ = run_manage(self.instance, "password", "avery", passwords=["new horse!"] * 2)
         self.assertEqual(code, 0, out)
         self.assertEqual(self.sign_in("Pat", "pats password").status, 429)
-        self.assertEqual(self.sign_in("Randy", "new horse!").status, 200)
-        self.fail_sign_in("Randy", 10)
-        self.assert_paused(self.sign_in("Randy", "new horse!"), 15 * MINUTE)
+        self.assertEqual(self.sign_in("Avery", "new horse!").status, 200)
+        self.fail_sign_in("Avery", 10)
+        self.assert_paused(self.sign_in("Avery", "new horse!"), 15 * MINUTE)
 
     def test_manage_unlock_clears_every_pause_for_names_and_ips_and_says_how_many(self):
         self.pause_twice("Sam", "learner pass")
         self.pause_twice("Nobody", "anything at all")
         for i in range(50):
             self.fail_sign_in(f"Name {i}", 1, ip="198.51.100.7")
-        self.assertEqual(self.sign_in("Randy", "correct horse", ip="198.51.100.7").status, 429)
+        self.assertEqual(self.sign_in("Avery", "correct horse", ip="198.51.100.7").status, 429)
         code, out, prompts = run_manage(self.instance, "unlock")
         self.assertEqual((code, prompts), (0, 0), out)
         # Sam, Nobody, Name 0 to Name 49, and three IPs
         self.assertEqual(out, "Cleared the sign-in counts and pauses for 55 names and IPs.\n")
-        self.assertEqual(self.sign_in("Randy", "correct horse", ip="198.51.100.7").status, 200)
+        self.assertEqual(self.sign_in("Avery", "correct horse", ip="198.51.100.7").status, 200)
         self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
         self.fail_sign_in("Nobody", 10)
         self.assert_paused(self.sign_in("Nobody", "anything at all"), 15 * MINUTE)
@@ -2194,7 +2194,7 @@ class ClearingPauses(SignInLimitsTestCase):
         import io
         from server import manage
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
-            manage.main(["unlock", "Randy"], {"RRTN_DIR": str(self.instance)})
+            manage.main(["unlock", "Avery"], {"RRTN_DIR": str(self.instance)})
         self.assertEqual(e.exception.code, 2)
 
 
@@ -2235,8 +2235,8 @@ class SignInLoad(SignInLimitsTestCase):
 
         self.scrypt.side_effect = slow_scrypt
         statuses = []
-        tries = [("Sam", "learner pass"), ("Randy", "correct horse"), ("Nobody", "some password"),
-                 ("Sam", "wrong password"), ("Randy", "wrong password"), ("Nobody 2", "some password")]
+        tries = [("Sam", "learner pass"), ("Avery", "correct horse"), ("Nobody", "some password"),
+                 ("Sam", "wrong password"), ("Avery", "wrong password"), ("Nobody 2", "some password")]
         threads = [threading.Thread(target=lambda t=t: statuses.append(self.sign_in(*t).status)) for t in tries]
         for thread in threads:
             thread.start()
@@ -2260,11 +2260,11 @@ class PruningOldRows(SignInLimitsTestCase):
         self.assertEqual(self.sign_in("Sam", "learner pass").status, 429)
 
     def test_pruning_runs_at_most_once_an_hour(self):
-        self.sign_in("Randy", "correct horse")  # prunes at T0
+        self.sign_in("Avery", "correct horse")  # prunes at T0
         self.now += 30 * MINUTE
         self.fail_sign_in("Sam", 9)
         self.now += 24 * HOUR - 10 * MINUTE  # Sam idle 23 h 50 min: kept
-        self.sign_in("Randy", "correct horse")  # prunes
+        self.sign_in("Avery", "correct horse")  # prunes
         self.now += 20 * MINUTE  # Sam idle 24 h 10 min, but the last prune was 20 minutes ago
         self.fail_sign_in("Sam", 1)
         self.assertEqual(self.sign_in("Sam", "learner pass").status, 429)
@@ -2335,18 +2335,18 @@ class SignInLogOnTheRunningServer(unittest.TestCase):
         import urllib.error
         import urllib.request
         with tempfile.TemporaryDirectory() as tmp:
-            run_manage(tmp, "add", "Randy", passwords=["correct horse"] * 2)
+            run_manage(tmp, "add", "Avery", passwords=["correct horse"] * 2)
             with RunningServer(tmp, stderr_apart=True) as srv:
                 for password in ("correct horse", "my wrong password"):
                     req = urllib.request.Request(srv.url + "/api/sign-in", method="POST",
-                                                 data=json.dumps({"name": "Randy", "password": password}).encode(),
+                                                 data=json.dumps({"name": "Avery", "password": password}).encode(),
                                                  headers={**JSON, "Origin": ORIGIN})
                     try:
                         urllib.request.urlopen(req).close()
                     except urllib.error.HTTPError as e:
                         self.assertEqual(e.code, 401)
-        self.assertIn('name="Randy" outcome=signed-in', srv.output)
-        self.assertIn('name="Randy" outcome=wrong-password', srv.output)
+        self.assertIn('name="Avery" outcome=signed-in', srv.output)
+        self.assertIn('name="Avery" outcome=wrong-password', srv.output)
         self.assertIn('ip="127.0.0.1"', srv.output)
         self.assertNotIn("correct horse", srv.output)
         self.assertNotIn("my wrong password", srv.output)
@@ -2362,7 +2362,7 @@ class NoHelperYet(unittest.TestCase):
             with RunningServer(tmp) as srv:
                 pass
             self.assertEqual(srv.output.count(NO_HELPER_LINE), 1, srv.output)
-            run_manage(tmp, "add", "Randy", passwords=["correct horse"] * 2)
+            run_manage(tmp, "add", "Avery", passwords=["correct horse"] * 2)
             with RunningServer(tmp) as srv:
                 pass
             self.assertNotIn("No Helper", srv.output)

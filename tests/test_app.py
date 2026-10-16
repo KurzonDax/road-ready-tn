@@ -64,7 +64,7 @@ from server import auth, db, records as records_api  # noqa: E402
 
 failures = []
 
-HELPER = ("Randy", "helper password")
+HELPER = ("Avery", "helper password")
 LEARNER = ("Sam", "learner password")
 
 
@@ -81,7 +81,7 @@ class Instance:
     """`python -m server` on a free port, with its own temporary Instance folder.
 
         with Instance() as inst:
-            inst.add_helper("Randy", "helper password")
+            inst.add_helper("Avery", "helper password")
             page.goto(inst.url)
     """
 
@@ -933,7 +933,7 @@ def check_manage_learner(browser):
                 ("Jordan", "short", "The password must be 8 to 128 characters."),
                 ("Jordan", "p" * 129, "The password must be 8 to 128 characters."),
                 (" casey ", "new password", "Another account already uses that name. Choose a different name."),
-                ("randy", "new password", "Another account already uses that name. Choose a different name.")]:
+                ("avery", "new password", "Another account already uses that name. Choose a different name.")]:
             pg.get_by_label("Name", exact=True).fill(name)
             pw.fill(password)
             submit_form(pg, "Add this Learner")
