@@ -1,13 +1,17 @@
 """The Instance database: SQLite at <Instance folder>/rrtn.db.
 
+Times are kept as whole seconds since 1970 (UTC); `iso_time` writes one out for answers and logs.
+
 Schema changes are numbered steps in STEPS. `PRAGMA user_version` records how many
 have run, and `migrate()` runs the rest at start. To change the schema, append a
 step; never edit or reorder one that has shipped.
 """
+import datetime
 import pathlib
 import sqlite3
 
 FILENAME = "rrtn.db"
+DEFAULT_DIR = "/var/lib/rrtn"  # the Instance folder when RRTN_DIR is not set
 BUSY_TIMEOUT_MS = 5000
 
 # Each step is a script run in one transaction. Step n is STEPS[n - 1].
@@ -69,8 +73,18 @@ STEPS = [
 ]
 
 
+def instance_dir(environ):
+    """The Instance folder named by RRTN_DIR in `environ`, or DEFAULT_DIR."""
+    return pathlib.Path(environ.get("RRTN_DIR", "").strip() or DEFAULT_DIR)
+
+
 def path(instance_dir):
     return pathlib.Path(instance_dir) / FILENAME
+
+
+def iso_time(seconds):
+    """A time the database keeps (whole seconds) as ISO 8601 UTC."""
+    return datetime.datetime.fromtimestamp(int(seconds), datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _open(instance_dir, mode):

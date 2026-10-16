@@ -15,7 +15,6 @@ Counted in the sign_in_limits table, one row per key (`name:<name_key>` or `ip:<
 
 Times are whole seconds since 1970 (UTC). Every function takes `now`, so tests use a fake clock.
 """
-import datetime
 import logging
 
 from . import db
@@ -36,17 +35,14 @@ NAME_KEY_CHARS = 65
 log = logging.getLogger("rrtn.sign-in")
 
 
-def name(name_key):
-    """The key for a name, given its name_key (see auth.name_key)."""
+def key_for_name(name_key):
+    """The row key for a name, given its name_key (see auth.name_key)."""
     return "name:" + name_key[:NAME_KEY_CHARS]
 
 
-def ip(address):
+def key_for_ip(address):
+    """The row key for a client IP."""
     return "ip:" + (address or "unknown")
-
-
-def iso(seconds):
-    return datetime.datetime.fromtimestamp(int(seconds), datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def log_text(value, limit=None):
@@ -78,16 +74,11 @@ def seconds_left(conn, keys, now):
     return max(left, 0)
 
 
-def _name_pause(level):
-    return min(NAME_PAUSE * 2 ** min(level, 16), NAME_PAUSE_MAX)
+def _count(conn, key, now, limit, first_pause, max_pause, window=None):
+    """Count one failure for a key. Returns the length of the pause it started, or None.
 
-
-def _ip_pause(level):
-    return IP_PAUSE
-
-
-def _count(conn, key, now, limit, pause_for, window=None):
-    """Count one failure for a key. Returns the length of the pause it started, or None."""
+    The first pause is `first_pause` long; each further one doubles, up to `max_pause`.
+    """
     row = conn.execute("SELECT failures, window_start, paused_until, level FROM sign_in_limits WHERE key = ?",
                        (key,)).fetchone()
     failures, start, paused_until, level = (0, now, None, 0) if row is None else tuple(row)
@@ -96,7 +87,7 @@ def _count(conn, key, now, limit, pause_for, window=None):
     failures += 1
     pause = None
     if failures >= limit:
-        pause = pause_for(level)
+        pause = min(first_pause * 2 ** min(level, 16), max_pause)
         failures, start, paused_until, level = 0, now, now + pause, level + 1
     conn.execute(
         "INSERT INTO sign_in_limits (key, failures, window_start, paused_until, level, updated_at) "
@@ -105,7 +96,7 @@ def _count(conn, key, now, limit, pause_for, window=None):
         "level = excluded.level, updated_at = excluded.updated_at",
         (key, failures, start, paused_until, level, now))
     if pause is not None:
-        log.info("%s pause key=%s seconds=%d until=%s", iso(now), log_text(key), pause, iso(now + pause))
+        log.info("%s pause key=%s seconds=%d until=%s", db.iso_time(now), log_text(key), pause, db.iso_time(now + pause))
     return pause
 
 
@@ -113,13 +104,13 @@ def failed(conn, name_key, address, now):
     """Count a failed sign-in for a name and a client IP, pausing either that reaches its limit."""
     now = int(now)
     with db.transaction(conn):
-        _count(conn, name(name_key), now, NAME_FAILURES, _name_pause)
-        _count(conn, ip(address), now, IP_FAILURES, _ip_pause, window=IP_WINDOW)
+        _count(conn, key_for_name(name_key), now, NAME_FAILURES, NAME_PAUSE, NAME_PAUSE_MAX)
+        _count(conn, key_for_ip(address), now, IP_FAILURES, IP_PAUSE, IP_PAUSE, window=IP_WINDOW)
 
 
 def clear_name(conn, name_key):
     """Forget a name's failures, pause and pause level (a successful sign-in, Reset sign-in, a new password)."""
-    conn.execute("DELETE FROM sign_in_limits WHERE key = ?", (name(name_key),))
+    conn.execute("DELETE FROM sign_in_limits WHERE key = ?", (key_for_name(name_key),))
 
 
 def clear_all(conn):

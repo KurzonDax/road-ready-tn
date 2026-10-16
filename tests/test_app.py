@@ -64,7 +64,7 @@ from server import auth, db, records as records_api  # noqa: E402
 
 failures = []
 
-HELPER = ("Randy", "helper password")
+HELPER = ("Avery", "helper password")
 LEARNER = ("Sam", "learner password")
 
 
@@ -81,7 +81,7 @@ class Instance:
     """`python -m server` on a free port, with its own temporary Instance folder.
 
         with Instance() as inst:
-            inst.add_helper("Randy", "helper password")
+            inst.add_helper("Avery", "helper password")
             page.goto(inst.url)
     """
 
@@ -258,11 +258,14 @@ def check_sign_in(browser, inst):
     ctx = browser.new_context()
     pg = ctx.new_page()
     requested = []
-    pg.on("request", lambda r: requested.append(r.url))
+    ctx.on("request", lambda r: requested.append(r.url))  # the context also sees the service worker's requests
     open_page(pg, url)
     check(stage_text(pg) == "Sign in Type the name and password you were given. Name Password Show password Sign in",
           f"signed out, the page shows only the sign-in screen, worded as decided (got {stage_text(pg)!r})")
-    check(not any(u.endswith("questions.json") for u in requested), "signed out, the page never asks for questions.json")
+    pg.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=10000)
+    time.sleep(1)  # time for the service worker to fetch anything it would after taking control
+    check(any(u.endswith("/sw.js") for u in requested) and not any(u.endswith("questions.json") for u in requested),
+          "signed out, neither the page nor its service worker asks for questions.json", requested)
     form = pg.evaluate("""() => { const f = document.querySelector('#stage form');
         return f && { method: f.getAttribute('method'),
                       fields: [...f.querySelectorAll('input:not([type=checkbox])')].map(i => [i.type, i.autocomplete]) }; }""")
@@ -422,7 +425,11 @@ def check_offline(browser):
         ctx.set_offline(False)
         reload(pg)
         pg.evaluate("fetch('/api/me').then(r => r.status)")
+        pg.evaluate("fetch('/fonts/overpass/OFL.txt').then(r => r.status)")  # in fonts/, but not a file sw.js lists
         kept = cached(pg)
+        static = sorted(k[1].lstrip("/") for k in kept if k[0] == f"rrtn-static-{v1}")
+        listed = sorted(json.loads(re.search(r"const STATIC_FILES = (\[.*?\]);", (inst.root / "dist" / "sw.js").read_text()).group(1)))
+        check(static == listed, "the static cache holds exactly the files build.py lists in sw.js", static)
         api = [k for k in kept if k[1].startswith("/api/")]
         check(kept and not api, f"no /api/ answer is in any cache (got {api})")
         pages = sorted(k[1] for k in kept if k[0] == "rrtn-pages")
@@ -430,6 +437,26 @@ def check_offline(browser):
         names = sorted({k[0] for k in kept})
         check(names == ["rrtn-pages", f"rrtn-static-{v1}"],
               f"the fonts, icons and manifest are kept under this build's version (got {names})")
+
+        print("\n[signed in before the service worker takes control]")
+        ctx2 = browser.new_context()
+        held = []
+        ctx2.route("**/sw.js", lambda route: held.append(route))  # the worker script waits until the Learner has signed in
+        pg2 = ctx2.new_page()
+        asked = []
+        ctx2.on("request", lambda r: asked.append(r.url) if r.url.endswith("questions.json") else None)
+        open_page(pg2, inst.url)
+        sign_in(pg2, *LEARNER)
+        check(held and len(asked) == 1 and not pg2.evaluate("!!navigator.serviceWorker.controller"),
+              "the page got its questions before any service worker controlled it", asked)
+        held[0].continue_()
+        pg2.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=10000)
+        wait_until(lambda: ["rrtn-pages", "/questions.json"] in cached(pg2), 5)
+        ctx2.set_offline(True)
+        reload(pg2)
+        check(stage_text(pg2).startswith("Section 2 of 12"), "with no connection, the next open still shows the study path",
+              stage_text(pg2))
+        ctx2.close()
 
         print("\n[a new build]")
         v2 = rebuild(inst.root, lambda page: page.replace("This is a practice app.", "This is a practice app, new build."))
@@ -855,6 +882,29 @@ def open_learner(pg, name):
     pg.wait_for_selector("#stage .manage")
 
 
+def stop_partway(pg, inst, learner_id, stop=True):
+    """The Learner answers 2 questions of the next Set (and stops); wait until the server has that unfinished Set."""
+    pg.click("#startBtn")
+    answer_one(pg)
+    pg.click("#nextBtn")
+    answer_one(pg)
+    if stop:
+        pg.click("#quitBtn")
+        pg.wait_for_selector("#resumeBtn")
+    wait_until(lambda: (db_state(inst, learner_id)[1] or {}).get("i") == 1)
+
+
+def check_set_dropped(pg, inst, learner_id, what):
+    """After a Reset or Move, the Set the Learner's device stopped partway through is gone, there and on the server."""
+    check(pg.query_selector("#resumeBtn") is None and "stopped partway" not in stage_text(pg),
+          f"after {what}, the Learner's device no longer offers the Set it stopped partway through", stage_text(pg))
+    time.sleep(0.5)
+    reload(pg)
+    check(pg.query_selector("#resumeBtn") is None, "not after another app open either")
+    check(db_state(inst, learner_id)[1] is None, "and the server doesn't keep that Set",
+          db_state(inst, learner_id)[1])
+
+
 def check_manage_learner(browser):
     """The Helper adds a Learner and manages one: each action asks first, in literal words."""
     print("\n[Manage Learners]")
@@ -887,7 +937,7 @@ def check_manage_learner(browser):
                 ("Jordan", "short", "The password must be 8 to 128 characters."),
                 ("Jordan", "p" * 129, "The password must be 8 to 128 characters."),
                 (" casey ", "new password", "Another account already uses that name. Choose a different name."),
-                ("randy", "new password", "Another account already uses that name. Choose a different name.")]:
+                ("avery", "new password", "Another account already uses that name. Choose a different name.")]:
             pg.get_by_label("Name", exact=True).fill(name)
             pw.fill(password)
             submit_form(pg, "Add this Learner")
@@ -1025,6 +1075,7 @@ def check_manage_learner(browser):
         open_page(cpg, inst.url)
         sign_in(cpg, "Casey Lee", "casey password")
         check(h1(cpg) == "Section 3 of 12", "Casey Lee's study path is at Section 3", h1(cpg))
+        stop_partway(cpg, inst, casey)
         pg.get_by_role("button", name="Back to Learners").first.click()
         open_learner(pg, "Casey Lee")
         pg.get_by_role("button", name="Reset progress").click()
@@ -1033,7 +1084,8 @@ def check_manage_learner(browser):
         check(stage_text(pg).startswith(want), "Reset progress asks first, in the decided words", stage_text(pg))
         pg.click("#confirmNo")
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["Section 3 of 12"], "saying no to Reset progress changes nothing", texts(pg, ".now p"))
+        check(texts(pg, ".now p") == ["Section 3 of 12", "Unfinished: Section 3, 2 of 10 answered"],
+              "saying no to Reset progress changes nothing", texts(pg, ".now p"))
         pg.get_by_role("button", name="Reset progress").click()
         pg.click("#confirmYes")
         pg.wait_for_selector("#stage .manage")
@@ -1046,6 +1098,9 @@ def check_manage_learner(browser):
         reload(cpg)
         check(wait_for_h1(cpg, "Section 1 of 12") == "Section 1 of 12",
               "the Learner's next app open shows Section 1", h1(cpg))
+        check_set_dropped(cpg, inst, casey, "Reset progress")
+        # This time the Set is still on the Learner's screen when the Helper moves them.
+        stop_partway(cpg, inst, casey, stop=False)
 
         # Move: Section 1 to 12, or Review and Practice tests.
         pg.get_by_role("button", name="Move", exact=True).click()
@@ -1061,7 +1116,8 @@ def check_manage_learner(browser):
         pg.click("#confirmNo")
         pg.get_by_role("button", name="Cancel").click()
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["Section 1 of 12"], "saying no to Move changes nothing", texts(pg, ".now p"))
+        check(texts(pg, ".now p") == ["Section 1 of 12", "Unfinished: Section 1, 2 of 10 answered"],
+              "saying no to Move changes nothing", texts(pg, ".now p"))
         pg.get_by_role("button", name="Move", exact=True).click()
         pg.get_by_label("Move Casey Lee to").select_option(label="Section 4")
         submit_form(pg, "Move")
@@ -1070,8 +1126,13 @@ def check_manage_learner(browser):
         check(texts(pg, ".now p") == ["Section 4 of 12"], "after Move, the Learner's page says Section 4", texts(pg, ".now p"))
         check(texts(pg, ".sessions > li")[0].endswith("Moved to Section 4"), "Study sessions has a Moved to Section 4 line",
               texts(pg, ".sessions > li"))
+        cpg.click("#nextBtn")
+        answer_one(cpg)
+        check(wait_until(lambda: (db_state(inst, casey)[1] or {}).get("i") == 2),
+              "an answer given after the Move sends that Set to the server again")
         reload(cpg)
         check(wait_for_h1(cpg, "Section 4 of 12") == "Section 4 of 12", "the Learner's next app open shows Section 4", h1(cpg))
+        check_set_dropped(cpg, inst, casey, "Move")
         cctx.close()
 
         # Delete: the Helper types the Learner's name to turn on the button.
@@ -1317,7 +1378,12 @@ def check_offline_and_sync(browser, inst):
     check(got and [r["id"] for r in got[1:]] == [t["id"] for t in tests],
           "a long wait is sent in several requests, all stored once and in order", len(got or []))
     left = wait_until(lambda: json.loads(local_item(pg, copy_key(kit)))["pending"] == [], 5)
-    check(left, "a record the server refuses is dropped, so it doesn't hold back the others")
+    check(left, "a record the server refuses no longer waits, so it doesn't hold back the others")
+    kept = json.loads(local_item(pg, copy_key(kit))).get("rejected")
+    check(kept == [bad], "but it is kept aside in the device copy, not deleted", kept)
+    reload(pg)
+    kept = json.loads(local_item(pg, copy_key(kit))).get("rejected")
+    check(kept == [bad] and h1(pg) == "Section 2 of 12", "and stays kept aside when the app opens again", kept)
     ctx.close()
 
     print("\n[an unfinished Set on two devices]")
@@ -1384,8 +1450,6 @@ def check_offline_and_sync(browser, inst):
     got = wait_until(lambda: db_state(inst, ash)[0])
     check(len(got) == 1 and got[0]["kind"] == "imported" and got[0]["data"] == {"state": old_state},
           "the old progress becomes one imported record holding the old saved state", got)
-    check(json.loads(local_item(pg, copy_key(ash))).get("imported_done") is True,
-          "the device copy remembers that the import is done")
     reload(pg)
     check(h1(pg) == "Section 5 of 12", "the imported progress stays after a reload")
 
@@ -1425,6 +1489,17 @@ def check_offline_and_sync(browser, inst):
     calls = [c for c in pg.evaluate("window.oldKeyCalls") if c != "getItem"]
     check(calls == [], f"the page never writes or deletes tn-permit-daily-v1 (calls: {calls})")
     check(local_item(pg, OLD_KEY) == old, "the old saved state under tn-permit-daily-v1 is unchanged")
+
+    # The device remembers the import is done, so a second Learner with no records gets none.
+    pg.get_by_role("button", name="Sign out").click()
+    pg.get_by_role("button", name="Yes, sign out").click()
+    pg.wait_for_selector("#signInForm")
+    cy = inst.add_learner("Cy", "second import password")
+    sign_in(pg, "Cy", "second import password")
+    check(h1(pg) == "Section 1 of 12", "a second Learner signing in on that device starts at Section 1", h1(pg))
+    time.sleep(0.5)
+    imports = [r for body in posts for r in body["records"] if r["kind"] == "imported"]
+    check(len(imports) == 1 and db_state(inst, cy)[0] == [], "and the old progress is not imported for them", imports)
     ctx.close()
 
     print("\n[an import that has to wait]")

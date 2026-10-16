@@ -17,6 +17,8 @@ import tempfile
 import urllib.parse
 from dataclasses import dataclass
 
+from . import db
+
 
 class ConfigError(Exception):
     """A setting is missing or wrong. The message is one line naming the problem."""
@@ -45,7 +47,7 @@ def load_config(environ):
     if not raw_port.isdigit() or not 0 < int(raw_port) < 65536:
         raise ConfigError(f"RRTN_PORT must be a port number (got {raw_port!r})")
 
-    folder = pathlib.Path(environ.get("RRTN_DIR", "").strip() or "/var/lib/rrtn")
+    folder = db.instance_dir(environ)
     try:
         with tempfile.TemporaryFile(dir=folder):
             pass

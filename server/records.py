@@ -123,11 +123,6 @@ def check_record(record, kinds=KINDS):
     CHECK_DATA[record["kind"]](record["data"])
 
 
-def iso_time(seconds):
-    """A time the server keeps (whole seconds) as ISO 8601 UTC."""
-    return datetime.datetime.fromtimestamp(int(seconds), datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
 def store_records(conn, account_id, records, now, kinds=LEARNER_KINDS):
     """Store new records for a Learner, all or none. Returns (stored, skipped).
 
@@ -178,7 +173,7 @@ def helper_record(conn, account_id, kind, data, now):
         check_record(record, HELPER_KINDS)
         seq = _insert(conn, account_id, record, now)
         save_unfinished(conn, account_id, None, now)
-    return {**record, "seq": seq, "received_at": iso_time(now)}
+    return {**record, "seq": seq, "received_at": db.iso_time(now)}
 
 
 def page_time(seconds):
@@ -235,7 +230,7 @@ def learner_records(conn, account_id):
     """Every record a Learner has, in arrival (seq) order, each with seq and received_at added."""
     rows = conn.execute("SELECT record, seq, received_at FROM records WHERE account_id = ? ORDER BY seq",
                         (account_id,)).fetchall()
-    return [{**json.loads(row["record"]), "seq": row["seq"], "received_at": iso_time(row["received_at"])}
+    return [{**json.loads(row["record"]), "seq": row["seq"], "received_at": db.iso_time(row["received_at"])}
             for row in rows]
 
 

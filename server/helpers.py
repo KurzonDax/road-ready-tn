@@ -6,9 +6,8 @@ nothing about which Helper did what.
 """
 import re
 
-from . import auth, limits, records
+from . import auth, db, limits, records
 from .app import HTTPError, Response, json_response, route
-from .records import iso_time
 
 LEARNER_ID = re.compile(r"[1-9][0-9]{0,17}")  # an account id in a path: plain ASCII digits
 # What an AccountError's code becomes in an answer: (status, error).
@@ -55,11 +54,11 @@ def list_learners(req):
     paused = limits.paused_names(req.db, req.now())
 
     def paused_until(row):
-        until = paused.get(limits.name(row["name_key"]))
-        return None if until is None else iso_time(until)
+        until = paused.get(limits.key_for_name(row["name_key"]))
+        return None if until is None else db.iso_time(until)
 
     return json_response({"learners": [{"id": row["id"], "name": row["name"],
-                                        "created_at": iso_time(row["created_at"]),
+                                        "created_at": db.iso_time(row["created_at"]),
                                         "paused_until": paused_until(row)} for row in rows]})
 
 
@@ -70,11 +69,10 @@ def add_learner(req):
     name = _string(body, "name", "bad-name")
     password = _string(body, "password", "bad-password")
     try:
-        name = auth.check_name(name)
         account_id = auth.create_account(req.db, "learner", name, password, req.now())
     except auth.AccountError as e:
         raise _account_error(e) from None
-    return json_response({"id": account_id, "name": name}, 201)
+    return json_response({"id": account_id, "name": auth.get_account(req.db, account_id)["name"]}, 201)
 
 
 @route("GET", "/api/learners/<id>/records")
