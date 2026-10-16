@@ -16,6 +16,13 @@ and copies the Home Screen files from src/ as they are:
   icon-512.png                         tools/make_icons.py
 - fonts/                               from src/fonts/, without its README
 
+and last writes sw.js, the service worker (src/sw.js), with two things filled in:
+the build version, the first 12 hex characters of a SHA-256 over every other
+file in the output folder (each one's path and contents), and the list of fonts,
+icons and the manifest it keeps on install. Any change to any other file gives
+the service worker a new version, which is how a new build replaces the old one's
+kept files.
+
 The page needs a web server: opened as a file it can't fetch questions.json
 and shows "The questions could not be loaded." There is no guest mode.
 
@@ -110,6 +117,34 @@ def script_hash(page):
     return "sha256-" + base64.b64encode(digest).decode("ascii")
 
 
+def build_version(out):
+    """The first 12 hex characters of a SHA-256 over every file in out/ but sw.js, path and contents."""
+    digest = hashlib.sha256()
+    for file in sorted(p for p in out.rglob("*") if p.is_file() and p.relative_to(out).as_posix() != "sw.js"):
+        name = file.relative_to(out).as_posix().encode("utf-8")
+        digest.update(len(name).to_bytes(4, "big") + name)
+        digest.update(hashlib.sha256(file.read_bytes()).digest())
+    return digest.hexdigest()[:12]
+
+
+def static_files(out):
+    """The files sw.js keeps on install: the fonts, the icons and the manifest."""
+    names = [p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file()]
+    return sorted(n for n in names if (n.startswith("fonts/") and n.endswith(".woff2"))
+                  or re.fullmatch(r"icon-[^/]+\.png|apple-touch-icon\.png|manifest\.webmanifest", n))
+
+
+def write_service_worker(out):
+    sw = (SRC / "sw.js").read_text(encoding="utf-8")
+    for placeholder in ("'__VERSION__'", "__STATIC_FILES__"):
+        if sw.count(placeholder) != 1:
+            sys.exit(f"src/sw.js must have {placeholder} exactly once.")
+    version = build_version(out)
+    sw = sw.replace("'__VERSION__'", f"'{version}'").replace("__STATIC_FILES__", json.dumps(static_files(out)))
+    (out / "sw.js").write_text(sw, encoding="utf-8")
+    return version
+
+
 def main():
     args = argparse.ArgumentParser(description="Build the study app into dist/.")
     args.add_argument("--src", type=pathlib.Path, default=ROOT / "src" / "app.html", help="page source")
@@ -134,8 +169,9 @@ def main():
         shutil.copyfile(icon, out / icon.name)
     shutil.rmtree(out / "fonts", ignore_errors=True)
     shutil.copytree(SRC / "fonts", out / "fonts", ignore=shutil.ignore_patterns("README.md"))
+    version = write_service_worker(out)
     print(f"Wrote {out}: index.html, csp.json, questions.json ({len(data['qs'])} questions in {len(data['days'])} sections),"
-          " manifest.webmanifest, icons, fonts/")
+          f" manifest.webmanifest, icons, fonts/, sw.js (version {version})")
 
 
 if __name__ == "__main__":

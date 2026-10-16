@@ -1,5 +1,5 @@
 """Tests for the server: startup checks, the WSGI app, static files and headers,
-accounts, sign-in sessions, the Helper command, Learner records, and the
+accounts, sign-in sessions, sign-in limits, the Helper command, Learner records, and the
 Helper's routes for managing Learners.
 
 Most tests call the WSGI app directly, with no network. The startup tests run
@@ -42,8 +42,11 @@ class RunningServer:
     """
 
     output = None
+    errors = None  # what it wrote to stderr, when `stderr_apart` keeps that out of `output`
 
-    def __init__(self, instance_dir, origin="https://permit.example.org", trusted_proxy="127.0.0.1"):
+    def __init__(self, instance_dir, origin="https://permit.example.org", trusted_proxy="127.0.0.1",
+                 stderr_apart=False):
+        self.stderr_apart = stderr_apart
         self.port = free_port()
         self.url = f"http://127.0.0.1:{self.port}"
         self.env = {k: v for k, v in os.environ.items() if not k.startswith("RRTN_")}
@@ -54,7 +57,8 @@ class RunningServer:
         import time
         import urllib.request
         self.proc = subprocess.Popen([sys.executable, "-m", "server"], cwd=ROOT, env=self.env,
-                                     stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                                     stdout=subprocess.PIPE, text=True,
+                                     stderr=subprocess.PIPE if self.stderr_apart else subprocess.STDOUT)
         deadline = time.monotonic() + 15
         while time.monotonic() < deadline:
             if self.proc.poll() is not None:
@@ -68,13 +72,13 @@ class RunningServer:
         raise RuntimeError("server did not answer /healthz in time")
 
     def __exit__(self, *exc):
-        """Stop the server. What it wrote to stdout and stderr is then in `self.output`."""
+        """Stop the server. What it wrote to stdout and stderr is then in `self.output` (and `self.errors`)."""
         self.proc.terminate()
         try:
-            self.output = self.proc.communicate(timeout=5)[0]
+            self.output, self.errors = self.proc.communicate(timeout=5)
         except subprocess.TimeoutExpired:
             self.proc.kill()
-            self.output = self.proc.communicate()[0]
+            self.output, self.errors = self.proc.communicate()
 
 
 class RunningTheServer(unittest.TestCase):
@@ -164,13 +168,17 @@ class Response:
         self.body = body
 
 
-def call(app, method="GET", path="/", headers=None, body=b""):
+CLIENT_IP = "192.0.2.10"  # the client address waitress reports, unless a test passes another
+
+
+def call(app, method="GET", path="/", headers=None, body=b"", ip=CLIENT_IP):
     """Call a WSGI app the way waitress would, and collect what it answers."""
     import io
     environ = {
         "REQUEST_METHOD": method, "PATH_INFO": path, "QUERY_STRING": "", "SERVER_NAME": "localhost",
         "SERVER_PORT": "8080", "SERVER_PROTOCOL": "HTTP/1.1", "wsgi.url_scheme": "https",
         "wsgi.input": io.BytesIO(body), "wsgi.errors": io.StringIO(), "CONTENT_LENGTH": str(len(body)),
+        "REMOTE_ADDR": ip,
     }
     for k, v in (headers or {}).items():
         key = k.upper().replace("-", "_")
@@ -634,10 +642,10 @@ class AccountsTestCase(AppTestCase):
         finally:
             conn.close()
 
-    def sign_in(self, name, password):
+    def sign_in(self, name, password, ip=CLIENT_IP):
         import json
         body = json.dumps({"name": name, "password": password}).encode()
-        return call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": ORIGIN}, body)
+        return call(self.app, "POST", "/api/sign-in", {**JSON, "Origin": ORIGIN}, body, ip=ip)
 
     def get(self, path, token=None):
         headers = {"Cookie": f"__Host-rrtn={token}"} if token else {}
@@ -1591,7 +1599,8 @@ class HelperRoutesAreForHelpers(HelperTestCase):
 
     def assert_nothing_changed(self):
         self.assertEqual(self.as_helper("GET", "/api/learners")[1]["learners"],
-                         [{"id": self.sam_id, "name": "Sam", "created_at": "2027-01-15T08:00:00Z"}])
+                         [{"id": self.sam_id, "name": "Sam", "created_at": "2027-01-15T08:00:00Z",
+                          "paused_until": None}])
         self.assertEqual(self.as_helper("GET", f"/api/learners/{self.sam_id}/records")[1],
                          {"records": [], "unfinished": {"set_id": "set-000002"}})
         self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
@@ -1646,7 +1655,7 @@ class LearnerList(HelperTestCase):
         self.assertEqual(status, 200)
         self.assertEqual([l["name"] for l in body["learners"]], ["alex", "Sam", "Zoe"])
         self.assertEqual(body["learners"][1], {"id": self.sam_id, "name": "Sam",
-                                               "created_at": "2027-01-15T08:00:00Z"})
+                                               "created_at": "2027-01-15T08:00:00Z", "paused_until": None})
 
 
 class AddingALearner(HelperTestCase):
@@ -1866,6 +1875,398 @@ class DeletingALearner(HelperTestCase):
 
     def test_an_unknown_learner_is_404(self):
         self.assertEqual(self.delete({"name": "Sam"}, self.sam_id + 100)[0], 404)
+
+
+def fast_scrypt(password, *, salt, n, r, p, maxmem=0, dklen=64):
+    """A quick stand-in for hashlib.scrypt, so tests that sign in many times don't take minutes."""
+    import hashlib
+    return hashlib.sha256(b"%d$%d$%d$" % (n, r, p) + salt + password).digest()[:dklen]
+
+
+MINUTE = 60
+HOUR = 3600
+
+
+class SignInLimitsTestCase(HelperTestCase):
+    """Sign-in limits with a fake clock and a fast scrypt that counts its calls (`self.scrypt`)."""
+
+    def setUp(self):
+        from unittest import mock
+        patcher = mock.patch("hashlib.scrypt", side_effect=fast_scrypt)
+        self.scrypt = patcher.start()
+        self.addCleanup(patcher.stop)
+        super().setUp()
+
+    def fail_sign_in(self, name, times, ip=CLIENT_IP, password="wrong password"):
+        """Sign in `times` times with a wrong password; each must be refused as a mismatch."""
+        for _ in range(times):
+            r = self.sign_in(name, password, ip=ip)
+            self.assertEqual((r.status, r.body), (401, b'{"error": "mismatch"}'))
+
+    def assert_paused(self, r, seconds):
+        import json
+        self.assertEqual(r.status, 429, r.body)
+        self.assertEqual(json.loads(r.body), {"error": "paused", "retry_after": seconds})
+        self.assertIsNone(cookie_from(r))
+
+
+class PausingAName(SignInLimitsTestCase):
+    def test_10_failures_pause_the_name_and_an_11th_try_with_the_right_password_gets_429(self):
+        self.fail_sign_in("Sam", 10)
+        self.assert_paused(self.sign_in("Sam", "learner pass"), 15 * MINUTE)
+
+    def test_9_failures_do_not_pause(self):
+        self.fail_sign_in("Sam", 9)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_the_name_is_matched_like_sign_in_ignoring_capitals_and_outer_spaces(self):
+        for typed in ("sam", " SAM ", "Sam\t", "sAm", "Sam"):
+            self.fail_sign_in(typed, 2)
+        self.assert_paused(self.sign_in("Sam", "learner pass"), 15 * MINUTE)
+
+    def test_a_pause_ends_by_itself(self):
+        self.fail_sign_in("Sam", 10)
+        self.now += 15 * MINUTE
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_retry_after_counts_down_in_whole_seconds_and_never_exceeds_the_pause_left(self):
+        self.fail_sign_in("Sam", 10)
+        for passed, left in ((0, 900), (0.25, 899), (1, 899), (600.5, 299), (899, 1)):
+            with self.subTest(passed=passed):
+                self.now = T0 + passed
+                self.assert_paused(self.sign_in("Sam", "learner pass"), left)
+        self.now = T0 + 899.5  # under a second to go: the pause has ended
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_each_further_pause_doubles_up_to_24_hours(self):
+        import json
+        pauses = []
+        for _ in range(9):
+            self.fail_sign_in("Sam", 10)
+            r = self.sign_in("Sam", "learner pass")
+            self.assertEqual(r.status, 429)
+            pauses.append(json.loads(r.body)["retry_after"])
+            self.now += pauses[-1]
+        self.assertEqual(pauses, [m * MINUTE for m in (15, 30, 60, 120, 240, 480, 960, 1440, 1440)])
+
+    def test_tries_during_a_pause_are_not_counted_and_do_not_lengthen_it(self):
+        self.fail_sign_in("Sam", 10)
+        for _ in range(30):
+            self.assertEqual(self.sign_in("Sam", "wrong password").status, 429)
+        self.now += 15 * MINUTE
+        self.fail_sign_in("Sam", 9)  # the count starts again from nothing
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_during_a_pause_the_password_is_not_checked_so_nothing_is_hashed(self):
+        self.fail_sign_in("Sam", 10)
+        self.scrypt.reset_mock()
+        right, wrong = self.sign_in("Sam", "learner pass"), self.sign_in("Sam", "wrong password")
+        self.assertEqual(self.scrypt.call_count, 0)
+        self.assertEqual((right.status, right.body), (wrong.status, wrong.body))
+
+    def test_a_successful_sign_in_clears_the_count_and_the_pause_level(self):
+        self.fail_sign_in("Sam", 10)
+        self.now += 15 * MINUTE
+        self.fail_sign_in("Sam", 9)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+        self.fail_sign_in("Sam", 9)  # the count was cleared: 9 more do not pause
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+        self.fail_sign_in("Sam", 10)  # and the level: the next pause is the first again
+        self.assert_paused(self.sign_in("Sam", "learner pass"), 15 * MINUTE)
+
+    def test_a_signed_in_session_keeps_working_while_its_name_is_paused(self):
+        self.fail_sign_in("Sam", 10)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 429)
+        self.assertEqual(self.get("/api/me", self.sam).status, 200)
+        self.assertEqual(self.fetch(), {"records": [], "unfinished": None})
+
+    def test_one_paused_name_leaves_other_names_alone(self):
+        self.fail_sign_in("Sam", 10)
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+
+
+class PausingAnUnknownName(SignInLimitsTestCase):
+    def test_an_unknown_name_is_counted_and_paused_the_same_way(self):
+        self.fail_sign_in("Nobody", 10)
+        self.assert_paused(self.sign_in("Nobody", "anything at all"), 15 * MINUTE)
+        self.now += 15 * MINUTE
+        self.fail_sign_in("nobody", 10)
+        self.assert_paused(self.sign_in("Nobody", "anything at all"), 30 * MINUTE)
+
+    def test_an_unknown_name_runs_one_throwaway_check_like_a_known_one(self):
+        self.scrypt.reset_mock()
+        self.sign_in("Nobody", "wrong password")
+        unknown = self.scrypt.call_count
+        self.scrypt.reset_mock()
+        self.sign_in("Sam", "wrong password")
+        self.assertEqual((unknown, self.scrypt.call_count), (1, 1))
+
+    def test_a_name_over_64_or_a_password_over_128_is_a_failed_try_with_no_hashing(self):
+        self.scrypt.reset_mock()
+        self.fail_sign_in("Sam", 5, password="x" * 129)
+        self.fail_sign_in("Sam", 5)
+        self.assert_paused(self.sign_in("Sam", "learner pass"), 15 * MINUTE)
+        self.fail_sign_in("S" * 65, 10, password="learner pass")
+        self.assert_paused(self.sign_in("S" * 65, "learner pass"), 15 * MINUTE)
+        self.assertEqual(self.scrypt.call_count, 5)  # only the five ordinary wrong passwords
+        self.assertEqual(self.sign_in("S" * 64, "learner pass").status, 401)  # not paused
+
+
+class PausingAnIP(SignInLimitsTestCase):
+    def fail_across_names(self, times, ip=CLIENT_IP):
+        for i in range(times):
+            self.fail_sign_in(f"Name {i}", 1, ip=ip)  # never 10 on one name
+
+    def test_50_failures_across_names_within_an_hour_pause_the_ip_for_an_hour(self):
+        self.fail_across_names(49)
+        self.now += 59 * MINUTE
+        self.fail_across_names(1)
+        self.assert_paused(self.sign_in("Sam", "learner pass"), HOUR)
+        self.assertEqual(self.sign_in("Sam", "learner pass", ip="198.51.100.7").status, 200)
+        self.now += HOUR
+        self.assertEqual(self.sign_in("Randy", "correct horse").status, 200)
+
+    def test_failures_more_than_an_hour_apart_do_not_add_up(self):
+        self.fail_across_names(49)
+        self.now += HOUR
+        self.fail_across_names(49)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_a_success_does_not_clear_the_ips_count(self):
+        self.fail_across_names(49)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+        self.fail_sign_in("Someone", 1)
+        self.assert_paused(self.sign_in("Randy", "correct horse"), HOUR)
+
+    def test_tries_during_an_ip_pause_are_not_counted_and_hash_nothing(self):
+        self.fail_across_names(50)
+        self.scrypt.reset_mock()
+        for _ in range(20):
+            self.assertEqual(self.sign_in("Sam", "wrong password").status, 429)
+        self.assertEqual(self.scrypt.call_count, 0)
+        self.now += HOUR
+        self.fail_sign_in("Sam", 9)  # Sam's count did not grow during the pause
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_when_the_name_and_the_ip_are_both_paused_retry_after_is_the_longer_wait(self):
+        self.fail_across_names(40)
+        self.now += 30 * MINUTE
+        self.fail_sign_in("Sam", 10)  # Sam: 15 minutes; the IP reaches 50 and is paused for an hour
+        self.assert_paused(self.sign_in("Sam", "learner pass"), HOUR)
+
+
+class ClearingPauses(SignInLimitsTestCase):
+    def pause_twice(self, name, password):
+        """Pause a name twice, so its next pause would be 1 hour, and leave it paused for 30 minutes.
+
+        Each name's tries come from an IP of its own, so no IP is paused.
+        """
+        ip = f"203.0.113.{len(name)}{ord(name[0])}"
+        self.fail_sign_in(name, 10, ip=ip)
+        self.now += 15 * MINUTE
+        self.fail_sign_in(name, 10, ip=ip)
+        self.assertEqual(self.sign_in(name, password).status, 429)
+
+    def test_reset_sign_in_clears_that_learners_pause_and_pause_level(self):
+        self.add_learner("Alex", "learner pass")
+        self.pause_twice("Sam", "learner pass")
+        self.pause_twice("Alex", "learner pass")
+        status, _ = self.as_helper("POST", f"/api/learners/{self.sam_id}/reset-sign-in", {"password": "a new password"})
+        self.assertEqual(status, 200)
+        self.assertEqual(self.sign_in("Alex", "learner pass").status, 429)  # only Sam's is cleared
+        self.fail_sign_in("Sam", 10)
+        self.assert_paused(self.sign_in("Sam", "a new password"), 15 * MINUTE)  # back to the first pause
+
+    def test_manage_password_clears_that_helpers_pause_and_pause_level(self):
+        self.add_helper("Pat", "pats password")
+        self.pause_twice("Randy", "correct horse")
+        self.pause_twice("Pat", "pats password")
+        code, out, _ = run_manage(self.instance, "password", "randy", passwords=["new horse!"] * 2)
+        self.assertEqual(code, 0, out)
+        self.assertEqual(self.sign_in("Pat", "pats password").status, 429)
+        self.assertEqual(self.sign_in("Randy", "new horse!").status, 200)
+        self.fail_sign_in("Randy", 10)
+        self.assert_paused(self.sign_in("Randy", "new horse!"), 15 * MINUTE)
+
+    def test_manage_unlock_clears_every_pause_for_names_and_ips_and_says_how_many(self):
+        self.pause_twice("Sam", "learner pass")
+        self.pause_twice("Nobody", "anything at all")
+        for i in range(50):
+            self.fail_sign_in(f"Name {i}", 1, ip="198.51.100.7")
+        self.assertEqual(self.sign_in("Randy", "correct horse", ip="198.51.100.7").status, 429)
+        code, out, prompts = run_manage(self.instance, "unlock")
+        self.assertEqual((code, prompts), (0, 0), out)
+        # Sam, Nobody, Name 0 to Name 49, and three IPs
+        self.assertEqual(out, "Cleared the sign-in counts and pauses for 55 names and IPs.\n")
+        self.assertEqual(self.sign_in("Randy", "correct horse", ip="198.51.100.7").status, 200)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+        self.fail_sign_in("Nobody", 10)
+        self.assert_paused(self.sign_in("Nobody", "anything at all"), 15 * MINUTE)
+        self.assertEqual(run_manage(self.instance, "unlock")[1],
+                         "Cleared the sign-in counts and pauses for 2 names and IPs.\n")  # Nobody and the IP
+
+    def test_unlock_takes_no_name(self):
+        import contextlib
+        import io
+        from server import manage
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as e:
+            manage.main(["unlock", "Randy"], {"RRTN_DIR": str(self.instance)})
+        self.assertEqual(e.exception.code, 2)
+
+
+class PausedLearnersInTheHelpersList(SignInLimitsTestCase):
+    def paused_until(self):
+        return {l["name"]: l["paused_until"] for l in self.as_helper("GET", "/api/learners")[1]["learners"]}
+
+    def test_each_learner_shows_when_their_pause_ends_or_null(self):
+        self.add_learner("Alex", "learner pass")
+        self.now = T0 + 0.5
+        self.fail_sign_in("Sam", 10)
+        self.assertEqual(self.paused_until(), {"Alex": None, "Sam": "2027-01-15T08:15:00Z"})
+
+    def test_a_pause_that_has_ended_or_an_ip_pause_shows_null(self):
+        self.fail_sign_in("Sam", 10)
+        self.now += 15 * MINUTE
+        for i in range(50):
+            self.fail_sign_in(f"Name {i}", 1, ip="198.51.100.7")
+        self.assertEqual(self.sign_in("Sam", "learner pass", ip="198.51.100.7").status, 429)
+        self.assertEqual(self.paused_until(), {"Sam": None})
+
+
+class SignInLoad(SignInLimitsTestCase):
+    def test_at_most_2_password_checks_run_at_once(self):
+        import threading
+        import time
+        running, most, lock = 0, 0, threading.Lock()
+
+        def slow_scrypt(*args, **kwargs):
+            nonlocal running, most
+            with lock:
+                running += 1
+                most = max(most, running)
+            time.sleep(0.05)
+            with lock:
+                running -= 1
+            return fast_scrypt(*args, **kwargs)
+
+        self.scrypt.side_effect = slow_scrypt
+        statuses = []
+        tries = [("Sam", "learner pass"), ("Randy", "correct horse"), ("Nobody", "some password"),
+                 ("Sam", "wrong password"), ("Randy", "wrong password"), ("Nobody 2", "some password")]
+        threads = [threading.Thread(target=lambda t=t: statuses.append(self.sign_in(*t).status)) for t in tries]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(sorted(statuses), [200, 200, 401, 401, 401, 401])
+        self.assertEqual(most, 2)
+
+
+class PruningOldRows(SignInLimitsTestCase):
+    def test_a_name_with_no_failures_for_24_hours_starts_again_from_nothing(self):
+        self.fail_sign_in("Sam", 9)
+        self.now += 24 * HOUR
+        self.fail_sign_in("Sam", 9)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 200)
+
+    def test_without_24_idle_hours_the_count_is_kept(self):
+        self.fail_sign_in("Sam", 9)
+        self.now += 24 * HOUR - 1
+        self.fail_sign_in("Sam", 1)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 429)
+
+    def test_pruning_runs_at_most_once_an_hour(self):
+        self.sign_in("Randy", "correct horse")  # prunes at T0
+        self.now += 30 * MINUTE
+        self.fail_sign_in("Sam", 9)
+        self.now += 24 * HOUR - 10 * MINUTE  # Sam idle 23 h 50 min: kept
+        self.sign_in("Randy", "correct horse")  # prunes
+        self.now += 20 * MINUTE  # Sam idle 24 h 10 min, but the last prune was 20 minutes ago
+        self.fail_sign_in("Sam", 1)
+        self.assertEqual(self.sign_in("Sam", "learner pass").status, 429)
+
+    def test_a_long_pause_and_its_level_outlast_24_idle_hours_until_the_pause_ends(self):
+        for minutes in (15, 30, 60, 120, 240, 480, 960):
+            self.fail_sign_in("Sam", 10)
+            self.now += minutes * MINUTE
+        self.fail_sign_in("Sam", 10)  # a 24 hour pause
+        self.now += 24 * HOUR - 1
+        self.assert_paused(self.sign_in("Sam", "learner pass"), 1)
+        self.now += 1
+        self.fail_sign_in("Sam", 10)  # the level was kept: another 24 hours
+        self.assert_paused(self.sign_in("Sam", "learner pass"), 24 * HOUR)
+
+
+class SignInLog(SignInLimitsTestCase):
+    def logged(self, *tries):
+        """The log lines written while making these (name, password[, ip]) sign-ins."""
+        with self.assertLogs("rrtn", "INFO") as logs:
+            for t in tries:
+                self.sign_in(*t)
+        return logs.output
+
+    def test_each_sign_in_logs_its_time_ip_name_and_outcome(self):
+        self.now = T0 + 5
+        lines = self.logged(("Sam", "learner pass"), ("Sam", "wrong password", "198.51.100.7"),
+                            ("Nobody", "a password"))
+        self.assertEqual(lines, [
+            'INFO:rrtn.sign-in:2027-01-15T08:00:05Z sign-in ip="192.0.2.10" name="Sam" outcome=signed-in',
+            'INFO:rrtn.sign-in:2027-01-15T08:00:05Z sign-in ip="198.51.100.7" name="Sam" outcome=wrong-password',
+            'INFO:rrtn.sign-in:2027-01-15T08:00:05Z sign-in ip="192.0.2.10" name="Nobody" outcome=unknown-name',
+        ])
+
+    def test_a_pause_logs_when_it_starts_and_each_paused_try_logs_paused(self):
+        self.fail_sign_in("Sam", 9)
+        lines = self.logged(("Sam", "wrong password"), ("Sam", "learner pass"))
+        self.assertEqual(lines[1:], [
+            'INFO:rrtn.sign-in:2027-01-15T08:00:00Z pause key="name:sam" seconds=900 until=2027-01-15T08:15:00Z',
+            'INFO:rrtn.sign-in:2027-01-15T08:00:00Z sign-in ip="192.0.2.10" name="Sam" outcome=paused',
+        ])
+        for i in range(39):  # with Sam's 10, the IP's 49th failure
+            self.fail_sign_in(f"Name {i}", 1)
+        self.assertIn('INFO:rrtn.sign-in:2027-01-15T08:00:00Z pause key="ip:192.0.2.10" seconds=3600 '
+                      'until=2027-01-15T09:00:00Z', self.logged(("Pat", "wrong password")))
+
+    def test_the_name_is_cut_to_64_characters_with_control_characters_escaped(self):
+        name = 'Sam\n"x"\\\x1b[31m ' + "y" * 100
+        [line] = self.logged((name, "wrong password"))
+        logged_name = line.split(" name=")[1].split(" outcome=")[0]
+        self.assertEqual(logged_name, '"Sam\\x0a\\"x\\"\\\\\\x1b[31m\\u2028' + "y" * 50 + '"')
+        self.assertNotIn("\n", line)
+
+    def test_no_password_is_ever_logged(self):
+        passwords = ["learner pass", "wrong password", "Sam's secret 1", "x" * 129] + ["p" * 20] * 7
+        lines = self.logged(*[("Sam", pw) for pw in passwords + ["while paused"]])
+        for outcome in ("signed-in", "wrong-password", "paused"):
+            self.assertTrue(any(f"outcome={outcome}" in line for line in lines), outcome)
+        for line in lines:
+            for pw in passwords + ["while paused", "pppppppp", "xxxxxxxx"]:
+                self.assertNotIn(pw, line)
+
+
+
+class SignInLogOnTheRunningServer(unittest.TestCase):
+    def test_the_running_server_logs_sign_ins_to_standard_output_without_passwords(self):
+        import json
+        import urllib.error
+        import urllib.request
+        with tempfile.TemporaryDirectory() as tmp:
+            run_manage(tmp, "add", "Randy", passwords=["correct horse"] * 2)
+            with RunningServer(tmp, stderr_apart=True) as srv:
+                for password in ("correct horse", "my wrong password"):
+                    req = urllib.request.Request(srv.url + "/api/sign-in", method="POST",
+                                                 data=json.dumps({"name": "Randy", "password": password}).encode(),
+                                                 headers={**JSON, "Origin": ORIGIN})
+                    try:
+                        urllib.request.urlopen(req).close()
+                    except urllib.error.HTTPError as e:
+                        self.assertEqual(e.code, 401)
+        self.assertIn('name="Randy" outcome=signed-in', srv.output)
+        self.assertIn('name="Randy" outcome=wrong-password', srv.output)
+        self.assertIn('ip="127.0.0.1"', srv.output)
+        self.assertNotIn("correct horse", srv.output)
+        self.assertNotIn("my wrong password", srv.output)
+        self.assertNotIn("sign-in", srv.errors)
 
 
 NO_HELPER_LINE = "No Helper account exists. Run: python -m server.manage add <name>"

@@ -565,13 +565,21 @@ async function api(path, opts) {
 const postJSON = (path, body) => api(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
 
 // Start-up, and again after each sign-in: who is signed in, then their questions, then their screen.
+// With no connection, the account last signed in on this device is used, and the
+// service worker answers with the questions it kept.
 async function startUp() {
+  const last = rememberedMe();
   try {
-    const r = await fetch('/api/me', { cache: 'no-store' });
-    if (r.status === 401) { me = null; return renderSignIn(); }
+    // On a weak signal, wait at most 3 seconds when there is an account to fall back on.
+    const r = await fetch('/api/me', { cache: 'no-store', signal: last && AbortSignal.timeout ? AbortSignal.timeout(3000) : undefined });
+    if (r.status === 401) { forgetDevice(); me = null; return renderSignIn(); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     me = await r.json();
-  } catch (e) { return couldNotLoad(); }
+    rememberMe(me);
+  } catch (e) {
+    if (!last) return couldNotLoad();
+    me = last;
+  }
   let data;
   try {
     const q = await api('questions.json', { cache: 'no-cache' });
@@ -626,7 +634,23 @@ function couldNotLoad() {
 
 function signedOut() {
   me = null; run = null; S = null; copy = null; copyFor = null;
+  forgetDevice();
   renderSignIn();
+}
+
+// The account last seen signed in, so the app can open with no connection. Only {id, role, name}.
+const ME_KEY = 'rrtn-me';
+function rememberMe(m) { try { localStorage.setItem(ME_KEY, JSON.stringify({ id: m.id, role: m.role, name: m.name })); } catch (e) {} }
+function rememberedMe() {
+  try {
+    const m = JSON.parse(localStorage.getItem(ME_KEY));
+    return m && (m.role === 'learner' || m.role === 'helper') ? m : null;
+  } catch (e) { return null; }
+}
+// Signed out, the device keeps neither the account nor the questions.
+function forgetDevice() {
+  try { localStorage.removeItem(ME_KEY); } catch (e) {}
+  if (window.caches) caches.open('rrtn-pages').then(c => c.delete('/questions.json')).catch(() => {});
 }
 
 function renderSignIn() {
@@ -675,7 +699,11 @@ async function signIn() {
   } catch (e) {
     signInMessage('The app could not be reached. Check your connection and try again.');
   } finally {
-    if (ok) startUp(); else btn.disabled = false;
+    if (ok) {
+      // Ask the browser to keep this device's saved progress even when space runs low.
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      startUp();
+    } else btn.disabled = false;
   }
 }
 
@@ -712,6 +740,10 @@ function renderHelper() {
 }
 
 startUp();
+// The service worker (sw.js) keeps the page, the questions, the fonts and the icons, so the app opens with no connection.
+window.addEventListener('load', () => {
+  if (navigator.serviceWorker) navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+});
 </script>
 </body>
 </html>
