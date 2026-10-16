@@ -17,8 +17,12 @@ across a reload, picking up a half-finished section, and the phone layout. Progr
 is worked out from the Learner's records on the server: progressFrom() on fixtures,
 finished Sets stored as records and shown again in a fresh browser, a Reset and a
 Move put straight into the database, a record that waits when the server can't be
-reached, the old tn-permit-daily-v1 state left alone, and #restart / #sectionN
-doing nothing. Also the Home Screen pieces: the
+reached, and #restart / #sectionN doing nothing. Offline (context.set_offline): a
+Set finished offline sent once on reconnecting, a long wait sent in parts, an
+unfinished Set continued on a second device (the newest wins), the one-time import
+of the old tn-permit-daily-v1 state (once, never for a Helper, the old key left
+alone), and sign-out refusing offline, sending waiting records first and deleting
+that Learner's device copy. Also the Home Screen pieces: the
 manifest, the icon sizes, the page head, the safe-area padding, and that the page
 loads its fonts and everything else from its own origin. The service worker, on an
 Instance run from a copy of the project so its dist/ can be rebuilt: opening the
@@ -709,6 +713,14 @@ def record_posts(pg):
     return posts
 
 
+def wait_for_stage_text(pg, text):
+    """Wait (up to 5 seconds) for #stage to show `text` somewhere."""
+    try:
+        pg.wait_for_function("t => document.querySelector('#stage').textContent.includes(t)", arg=text, timeout=5000)
+    except Exception:
+        pass
+
+
 def copy_key(learner_id):
     return f"rrtn-learner-{learner_id}"
 
@@ -750,6 +762,26 @@ def check_offline_and_sync(browser, inst):
     reload(pg)
     check(len(server_records(pg)) == 1 and h1(pg) == "Section 2 of 12", "and the server holds it exactly once")
     check(json.loads(local_item(pg, copy_key(kit)))["pending"] == [], "the device copy has nothing left waiting")
+
+    # A long wait: 40 Practice tests (well over the server's 64 KB body limit in all), with one
+    # record among them the server will never take.
+    qs = pg.evaluate("QS.map(q => q.id)")[:30]
+    tests = [set_record(100 + n, "test", None, 100 + n, [(q, True) for q in qs]) for n in range(40)]
+    for t in tests:
+        t["id"] = f"long-wait-{t['id']}"
+        for a in t["data"]["answers"]:
+            a["chosen"] = "an answer chosen from four, about as long as the real ones are"
+    bad = dict(tests[5], id="long-wait-bad-record-0", kind="move", data={"to": 99})
+    saved = json.loads(local_item(pg, copy_key(kit)))
+    saved["pending"] = tests[:5] + [bad] + tests[5:]
+    check(len(json.dumps(saved["pending"])) > 64 * 1024, "the waiting records are over 64 KB together")
+    pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [copy_key(kit), json.dumps(saved)])
+    reload(pg)
+    got = wait_until(lambda: len(db_state(inst, kit)[0]) == 41 and db_state(inst, kit)[0])
+    check(got and [r["id"] for r in got[1:]] == [t["id"] for t in tests],
+          "a long wait is sent in several requests, all stored once and in order", len(got or []))
+    left = wait_until(lambda: json.loads(local_item(pg, copy_key(kit)))["pending"] == [], 5)
+    check(left, "a record the server refuses is dropped, so it doesn't hold back the others")
     ctx.close()
 
     print("\n[an unfinished Set on two devices]")
@@ -777,6 +809,7 @@ def check_offline_and_sync(browser, inst):
     pg2.click("#nextBtn")
     wait_until(lambda: (db_state(inst, lee)[1] or {}).get("i") == 4)
     reload(pg)
+    wait_for_stage_text(pg, "You answered 4 of 10 questions")
     check("You answered 4 of 10 questions" in stage_text(pg),
           "the first device, opened again, takes the newer unfinished Set from the server", stage_text(pg))
     answer_set(pg2)
@@ -785,7 +818,7 @@ def check_offline_and_sync(browser, inst):
     check(len(got) == 1 and wait_until(lambda: db_state(inst, lee)[1] is None, 5),
           "finishing it stores the Set and the server drops the unfinished one", db_state(inst, lee))
     reload(pg)
-    check(h1(pg) == "Section 2 of 12" and not pg.query_selector("#resumeBtn"),
+    check(wait_for_h1(pg, "Section 2 of 12") == "Section 2 of 12" and not pg.query_selector("#resumeBtn"),
           "the first device then shows Section 2 and nothing to continue")
     phone.close()
     laptop.close()
@@ -834,12 +867,14 @@ def check_offline_and_sync(browser, inst):
     msg = pg.wait_for_selector("#signOutMsg")
     check(msg.inner_text() == OFFLINE_SIGN_OUT, "signing out offline says it needs a connection", msg.inner_text())
     check(pg.evaluate("document.activeElement?.id") == "signOutMsg", "focus moves to that sentence")
-    # Back online, with the online event held back, so only sign-out can send the waiting Set.
-    pg.evaluate("window.addEventListener('online', e => e.stopImmediatePropagation(), true)")
+    # Back online, with the server still not taking records, so only sign-out can send the waiting Set.
+    block_record_posts(ctx)
     ctx.set_offline(False)
     check(me_status(pg) == 200 and local_item(pg, copy_key(ash)) is not None,
           "the Learner is still signed in and the device copy is kept")
+    time.sleep(0.5)  # let the send the online event starts fail
     check(len(db_state(inst, ash)[0]) == 1, "the Set is still waiting")
+    ctx.unroute("**/api/records")
     pg.get_by_role("button", name="Yes, sign out").click()
     pg.wait_for_selector("#signInForm")
     got = db_state(inst, ash)[0]
