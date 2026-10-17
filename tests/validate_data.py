@@ -2,7 +2,8 @@
 """Check the question bank and study plan for mistakes.
 
 Run on its own (python3 tests/validate_data.py) or automatically from build.py.
-Every rule here exists because the mistake it catches actually happened.
+Every rule here exists because the mistake it catches actually happened, except the
+fact rules, which guard the grouping of wordings done by hand (see check_facts).
 """
 import json
 import pathlib
@@ -65,6 +66,52 @@ def validate():
     missing = samples - set(used)
     if missing:
         errors.append(f"the manual's own sample questions are missing from the sections: {sorted(missing)}")
+    errors += check_facts(qs, set(used))
+    return errors
+
+
+NUMBER_WORDS = {w: str(n) for n, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve".split())}
+
+
+def numbers(text):
+    """The numbers in an answer, whether written as digits or words: "No closer than two seconds" -> {"2"}."""
+    digits = {n.replace(",", "") for n in re.findall(r"\d[\d,]*(?:\.\d+)?|\.\d+", text)}
+    return digits | {NUMBER_WORDS[w] for w in re.findall(r"[a-z]+", text.lower()) if w in NUMBER_WORDS}
+
+
+def plain(text):
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
+def check_facts(qs, used):
+    """Each of the app's questions is its own fact. Other wordings of a fact must have the same right answer.
+
+    Whether two questions test the same rule is a person's judgment, recorded in `fact`. What can be
+    checked here: no wording's right answer is a wrong choice in another wording of the same fact, and
+    every wording's right answer has the same numbers ("15 and 50 feet", never "15 and 30 feet").
+    """
+    errors = []
+    by_id = {q["id"]: q for q in qs}
+    wordings = {}
+    for q in qs:
+        f = q.get("fact")
+        if q["id"] in used and f != q["id"]:
+            errors.append(f"{q['id']}: is in the sections, so its fact must be its own id, not {f!r}")
+        elif f is not None and f not in used:
+            errors.append(f"{q['id']}: fact {f!r} is not a question in the sections")
+        elif f is not None:
+            wordings.setdefault(f, []).append(q)
+    for f, group in wordings.items():
+        want = numbers(by_id[f]["answer"])
+        for q in group:
+            if numbers(q["answer"]) != want:
+                errors.append(f"{q['id']}: its answer {q['answer']!r} has different numbers from fact {f}'s"
+                              f" answer {by_id[f]['answer']!r}")
+            for other in group:
+                if plain(q["answer"]) in {plain(w) for w in other["wrong"]}:
+                    errors.append(f"{q['id']}: its right answer is a wrong choice in {other['id']}, another"
+                                  f" wording of fact {f}")
     return errors
 
 

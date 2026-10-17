@@ -18,6 +18,16 @@ _Avoid_: Parent, guardian, admin, device manager
 One hosted copy of the app, run by a Helper and used only by the people that Helper gives access to. The repo itself is public so anyone can run their own Instance.
 _Avoid_: Deployment, site, server
 
+## Questions
+
+**Fact**:
+One rule from the manual that the app teaches, such as "stop between 15 and 50 feet from the tracks". Each of the app's 120 questions tests a different Fact, and a Fact is named by that question's id.
+_Avoid_: Item, concept, skill
+
+**Wording**:
+One question that tests a Fact. Every Fact has the app's own question as one Wording, and some have other Wordings from the question bank. All Wordings of a Fact have the same right answer.
+_Avoid_: Variant, version, paraphrase
+
 ## Study path
 
 **Section**:
