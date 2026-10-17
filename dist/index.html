@@ -847,7 +847,7 @@ function renderQuestion(revealFeedback) {
       ${manual(q)}
       ${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}
     </div>` : '';
-  const above = s.kind === 'first_look' ? '<p class="sub">This is a new rule. Pick the answer you think is right. This answer does not count.</p>'
+  const above = s.kind === 'first_look' ? '<p class="sub">You have not had this question before. Pick the answer you think is right. This answer does not count.</p>'
     : s.kind === 'reask' ? '<p class="sub">One more time.</p>' : '';
   paint(`
     <div class="home">
