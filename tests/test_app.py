@@ -2225,7 +2225,7 @@ def check_lessons(browser, inst):
     pg.click(".k-target[data-t='you']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith("Lesson for Section 3: step 1 of 12 Not your car.") and "The car on the main road goes first." in shown
+    check(shown.startswith("Lesson for Section 3: 1 of 12 Not your car.") and "The car on the main road goes first." in shown
           and "Driver manual" not in shown and "Tap the car" not in shown and pg.query_selector(".k-no") is not None
           and steps[0]["fact"] == "b-110", "a wrong tap leads with Not your car, then the one reason, with the wrong pick crossed on the drawing and nothing else", shown[:120])
     check(pg.evaluate("document.activeElement.id") == "stepHead", "after acting, focus moves to the result")
@@ -2275,7 +2275,7 @@ def check_lessons(browser, inst):
     check("You finished this lesson." in pg.inner_text("details.lessons"), "Lessons on the home screen lists the finished lesson")
     pg.click(".lesson-open")
     pg.wait_for_selector(".k-target")
-    check(pg.evaluate("lesson.i") == 0 and "step 1 of" in pg.inner_text(".progress"), "a lesson can be opened again from the start")
+    check(pg.evaluate("lesson.i") == 0 and ": 1 of 12" in pg.inner_text(".progress"), "a lesson can be opened again from the start")
     ctx.close()
 
 
