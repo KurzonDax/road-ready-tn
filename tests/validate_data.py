@@ -237,6 +237,7 @@ BANNED = [
     (re.compile(r"\b(both|these|those|the above|the earlier|previous|the last) (cases?|ones?|screens?|examples?|questions?)\b", re.I),
      "points at earlier screens without naming them; say which situations"),
     (re.compile(r"\bcases?\b", re.I), "says case; say situation, and name it"),
+    (re.compile(r"\bscreens?\b", re.I), "says screen; to the Learner these are questions"),
     (re.compile(r"[;!]"), "has a semicolon or an exclamation mark"),
     (re.compile(r"\b(wrong|incorrect|oops|nice|great|good job|well done)\b", re.I), "has a verdict or praise word"),
 ]

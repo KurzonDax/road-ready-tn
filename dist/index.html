@@ -773,7 +773,7 @@ function renderHome() {
   // A Section's lesson comes before the Set that would first ask about its facts, as the main button.
   const lessonDay = saved ? null : lessonNext(plan), teach = lessonDay && LESSONS[lessonDay];
   const lessonBlock = teach ? `<section class="home"><h1 tabindex="-1">Section ${lessonDay}: ${esc(teach.title)}</h1>
-      <p class="sub">This lesson has ${teach.steps.length} screens. On each one you do something first. Then you see what happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
+      <p class="sub">This lesson has ${teach.steps.length} questions. On each one you do something first. Then you see what happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
       <button class="btn primary" type="button" id="lessonBtn">Start the lesson</button></section>` : '';
   const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst || teach ? 'h2' : 'h1';
   const set = saved && saved.kind === 'daily'
@@ -1221,7 +1221,7 @@ function lessonNext(plan, p = S) {
 function lessonsPanel() {
   const list = Object.values(LESSONS);
   if (!list.length) return '';
-  const rows = list.map(l => `<li><div><span class="sname">Section ${l.section}: ${esc(l.title)}</span><span class="sscore">${S.lessons[l.section] !== undefined ? 'You finished this lesson.' : 'You have not done this lesson yet.'} It has ${l.steps.length} screens.</span></div>` +
+  const rows = list.map(l => `<li><div><span class="sname">Section ${l.section}: ${esc(l.title)}</span><span class="sscore">${S.lessons[l.section] !== undefined ? 'You finished this lesson.' : 'You have not done this lesson yet.'} It has ${l.steps.length} questions.</span></div>` +
     `<button type="button" class="btn slim lesson-open" data-section="${l.section}">Open the lesson</button></li>`).join('');
   return `<details class="scores lessons"><summary>Lessons</summary><ul>${rows}</ul></details>`;
 }

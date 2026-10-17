@@ -786,7 +786,7 @@
     {
       "id": "s3-12",
       "kind": "principle",
-      "prompt": "Every screen in this lesson asked you to decide the same thing. Which question did you answer every time?",
+      "prompt": "Every question in this lesson came down to one thing. What was it?",
       "options": [
         "Who must wait?",
         "Who is driving the faster car?",
