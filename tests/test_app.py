@@ -1696,6 +1696,17 @@ def main():
             pg.click("#quitBtn")
             check(pg.query_selector("#resumeBtn") is not None and "answered 2 of 10" in pg.inner_text(".home"),
                   "stopping partway shows how far you got")
+            check(h1(pg) == "Section 4 of 12" and pg.query_selector(".road") and pg.query_selector(".scores")
+                  and not pg.query_selector("#startBtn"),
+                  "stopping partway goes back to the home screen, where Continue takes the place of Start", stage_text(pg))
+            # Starting a different Set asks first, and No leaves the saved answers alone.
+            pg.click(".scores summary")
+            pg.click('.redo[data-day="1"]')
+            check(pg.inner_text(".home h2") == "Start Section 1 again?"
+                  and "the 2 answers you gave there will be cleared" in stage_text(pg),
+                  "starting a different Set asks first and says the saved answers will be cleared", stage_text(pg))
+            pg.click("#newSetNo")
+            check(pg.query_selector("#resumeBtn") is not None, "No goes back to the home screen with the Set still saved")
             reload(pg)
             check(pg.query_selector("#resumeBtn") is not None, "a half-finished section survives a reload")
             pg.click("#resumeBtn")
@@ -1710,6 +1721,14 @@ def main():
             # Progress survives a reload.
             reload(pg)
             check(h1(pg) == "Section 5 of 12", "progress is saved across a reload")
+
+            # Yes clears the saved answers and starts the other Set.
+            pg.click("#startBtn"); answer_one(pg); pg.click("#quitBtn")
+            pg.click(".scores summary"); pg.click('.redo[data-day="2"]'); pg.click("#newSetYes")
+            check(pg.evaluate("[run.kind, run.dayNum, run.i]") == ["redo", 2, 0], "Yes starts the other Set from its first question")
+            answer_set(pg); pg.click("#homeBtn")
+            check(h1(pg) == "Section 5 of 12" and not pg.query_selector(".stopped"),
+                  "and the Set stopped partway through is gone", stage_text(pg))
 
             # Finish the rest, missing 2 in each.
             for _ in range(5, 13):
