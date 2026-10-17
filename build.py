@@ -46,8 +46,9 @@ sys.path.insert(0, str(ROOT / "tests"))
 from validate_data import plain, validate  # noqa: E402
 
 
-def compact(q, section, group=None):
-    """Convert a bank question to the short field names the page uses. `group` is the id of the
+def compact(q, section=None, group=None):
+    """Convert a bank question to the short field names the page uses. `section` is the Section of one
+    of the app's 120 questions (None for another wording of a fact); `group` is the id of the
     data/groups.json group its fact is in, if any."""
     item = {
         "id": q["id"],
@@ -66,7 +67,9 @@ def compact(q, section, group=None):
         item["swatch"] = q["color"]
     if group:
         item["group"] = group
-    item["day"] = section  # the page calls sections "days" internally
+    item["fact"] = q.get("fact") or q["id"]
+    if section is not None:
+        item["day"] = section  # the page calls sections "days" internally
     return item
 
 
@@ -80,16 +83,20 @@ def build_data():
     for sec in plan["sections"]:
         days.append({"day": sec["section"], "title": sec["title"]})
         qs.extend(compact(by_id[i], sec["section"], group_of.get(i)) for i in sec["questions"])
-    add_also(qs)
-    return {"days": days, "qs": qs, "groups": groups}
+    app = {q["id"] for q in qs}
+    # Other wordings of the app's facts (docs/QUESTIONS.md, `fact`): the page asks a fact in each of them in turn.
+    wordings = [compact(q) for q in bank["questions"] if q.get("fact") in app and q["id"] not in app]
+    add_also(qs, qs + wordings)
+    return {"days": days, "qs": qs, "groups": groups, "wordings": wordings}
 
 
-def add_also(qs):
-    """Give a question `also` when a wrong choice is the right answer to another question: {wrong text: that
-    question's id}. The page says so after that choice ("30 feet answers a different question: ...")."""
-    answers = {plain(q["a"]): q["id"] for q in qs}
+def add_also(facts, qs):
+    """Give a question `also` when a wrong choice is the right answer to another fact: {wrong text: that
+    fact's question id}. The page says so after that choice ("30 feet answers a different question: ...").
+    `facts` are the app's 120 questions; `qs` every question shipped, wordings included."""
+    answers = {plain(q["a"]): q["id"] for q in facts}
     for q in qs:
-        also = {w: answers[plain(w)] for w in q["o"] if answers.get(plain(w), q["id"]) != q["id"]}
+        also = {w: answers[plain(w)] for w in q["o"] if answers.get(plain(w), q["fact"]) != q["fact"]}
         if also:
             q["also"] = also
 

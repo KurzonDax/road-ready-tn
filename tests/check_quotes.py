@@ -12,7 +12,8 @@ import re
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-KNOWN_TABLE_QUOTES = {"a-022", "a-050", "a-084", "a-156", "a-157"}
+KNOWN_TABLE_QUOTES = {"a-022", "a-050", "a-084", "a-156", "a-157",
+                      "a-197"}  # another wording of a-157, with its quote
 
 
 def norm(s):
