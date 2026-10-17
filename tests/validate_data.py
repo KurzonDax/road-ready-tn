@@ -144,7 +144,7 @@ def check_groups(groups, used):
             seen[f["id"]] = gid
         stem = g.get("reverse")
         if stem is not None:
-            if stem.count("{answer}") != 1:
+            if not isinstance(stem, str) or stem.count("{answer}") != 1:
                 errors.append(f"group {gid}: its reverse stem needs {{answer}} exactly once")
             if len(facts) < 4:
                 errors.append(f"group {gid}: a reverse stem needs a group of 4 or more facts")

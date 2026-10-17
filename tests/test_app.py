@@ -158,11 +158,16 @@ def screen_kind(pg):
     return pg.evaluate("run ? run.screens[run.i].kind : null")
 
 
+def choice_texts(pg):
+    """The answer choices on screen, without their A to D keys."""
+    return [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")]
+
+
 def click_choice(pg, right=True):
     """Click the right answer to the question on screen, or the one after it in the list."""
     opts = pg.query_selector_all("button.opt")
     want = pg.evaluate("answerOf(run.screens[run.i])")
-    k = [o.inner_text().split("\n", 1)[-1].strip() for o in opts].index(want)
+    k = choice_texts(pg).index(want)
     opts[k if right else (k + 1) % len(opts)].click()
 
 
@@ -742,6 +747,11 @@ def check_engine(browser, inst):
                       [daily(35, [(q, True, 1) for q in ("a-152", "a-153", "a-155", "a-154")])])
     check(all(len(x) == 1 and x[0] != "a-154" for x in got),
           "in a group of 4 with one fact marked reverse: false, one question is reverse, and never that fact", got[:3])
+    got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-01T14:00:00Z');
+        return [...Array(20)].map(() => buildSet(p, now).filter(s => s.format === 'reverse').map(s => s.id)); }""",
+                      [daily(36, [(q, True, 1) for q in ("a-168", "a-175", "a-176", "a-170", "a-172", "a-166")])])
+    check(all(len(x) == 1 and x[0] in ("a-170", "a-166") for x in got),
+          "line colors: a-172 and a-176 are never reversed, since each one's answer is true of the other's label", got[:3])
     got = pg.evaluate("""r => { const run = { kind: 'daily', set_id: 's', number: 2, i: 0, answered: false, reasks: 0, group: 'parking-distances',
         screens: buildSet(progressFrom(r), Date.parse('2026-10-01T14:00:00Z')) };
         const ok = !!unpackRun(packRun(run)), rev = run.screens.find(s => s.format === 'reverse');
@@ -1940,7 +1950,7 @@ def check_known_facts(browser, inst):
             click_choice(pg2)
             if pg2.query_selector("#nextBtn"):
                 pg2.click("#nextBtn")
-    k = [o.inner_text().split("\n", 1)[-1].strip() for o in pg2.query_selector_all("button.opt")].index("30 feet")
+    k = choice_texts(pg2).index("30 feet")
     pg2.query_selector_all("button.opt")[k].click()
     other = pg2.evaluate("BY_ID['b-253'].q")
     check(pg2.inner_text(".also") == f"30 feet answers a different question: {other}",
@@ -2055,7 +2065,7 @@ def check_compare(browser, inst):
         fact, fmt = pg.evaluate("[run.screens[run.i].id, run.screens[run.i].format]")
         if fmt == "reverse":
             answer = pg.evaluate("BY_ID[run.screens[run.i].id].a")
-            opts = [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")]
+            opts = choice_texts(pg)
             check(pg.inner_text("#qText") == f"You may NOT park within {answer} of which of these?" and sorted(opts) == sorted(labels)
                   and not pg.query_selector(".visual"),
                   "a reverse question gives the answer in the stem and the group's labels as the choices", [pg.inner_text("#qText"), opts])
@@ -2070,7 +2080,7 @@ def check_compare(browser, inst):
                 click_choice(pg)
                 check(pg.inner_text("#feedback .verdict") == "Correct.", "a right reverse answer says Correct.")
         elif fact == "b-250":
-            k = [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")].index("30 feet")
+            k = choice_texts(pg).index("30 feet")
             pg.query_selector_all("button.opt")[k].click()
             check(pg.inner_text(".also") == "30 feet answers a different question: It is illegal to park within how many feet "
                                             "of a traffic signal or stop sign?",

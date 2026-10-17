@@ -20,9 +20,9 @@
      "facts": [
        {"id": "a-168", "label": "Lines that separate traffic going in opposite directions", "reverse": false},
        {"id": "a-175", "label": "Lines that separate lanes going the same direction", "reverse": false},
-       {"id": "a-176", "label": "Broken white lines between lanes"},
+       {"id": "a-176", "label": "Broken white lines between lanes", "reverse": false},
        {"id": "a-170", "label": "Two solid yellow lines between lanes"},
-       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side"},
+       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side", "reverse": false},
        {"id": "a-166", "label": "A yellow line on your right and a white line on your left"}
      ]},
     {"id": "lights", "title": "Red and yellow lights", "reverse": null,
@@ -36,7 +36,7 @@
        {"id": "a-152", "label": "A green arrow"},
        {"id": "a-153", "label": "A yellow arrow"},
        {"id": "a-155", "label": "A flashing yellow arrow"},
-       {"id": "a-154", "label": "A red arrow", "reverse": false}
+       {"id": "a-154", "label": "A red arrow", "means": "All turns are prohibited", "reverse": false}
      ]},
     {"id": "parking-distances", "title": "How close you may park", "reverse": "You may NOT park within {answer} of which of these?",
      "facts": [

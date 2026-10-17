@@ -198,7 +198,8 @@ def test_group_rules_catch_each_mistake():
             ([group(facts=four, reverse="Which one?")], "{answer}", "a stem with no {answer}"),
             ([group(facts=("q-1", "q-2", "q-3"), reverse="Which one: {answer}?")], "4 or more",
              "a reverse stem on a group of 3"),
-            ([group(), group()], "id", "two groups with one id")):
+            ([group(), group()], "id", "two groups with one id"),
+            ([group(facts=four, reverse=7)], "{answer}", "a stem that is not text")):
         errors = check_groups(groups, used)
         check(any(want in e for e in errors), f"check_groups catches {what} (got {errors})")
     check(check_groups([group(facts=four, reverse="Which one: {answer}?")], used) == [],

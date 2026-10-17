@@ -112,9 +112,9 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
      "facts": [
        {"id": "a-168", "label": "Lines that separate traffic going in opposite directions", "reverse": false},
        {"id": "a-175", "label": "Lines that separate lanes going the same direction", "reverse": false},
-       {"id": "a-176", "label": "Broken white lines between lanes"},
+       {"id": "a-176", "label": "Broken white lines between lanes", "reverse": false},
        {"id": "a-170", "label": "Two solid yellow lines between lanes"},
-       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side"},
+       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side", "reverse": false},
        {"id": "a-166", "label": "A yellow line on your right and a white line on your left"}]},
     {"id": "lights", "title": "Red and yellow lights",
      "reverse": null,
@@ -128,7 +128,7 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
        {"id": "a-152", "label": "A green arrow"},
        {"id": "a-153", "label": "A yellow arrow"},
        {"id": "a-155", "label": "A flashing yellow arrow"},
-       {"id": "a-154", "label": "A red arrow", "reverse": false}]},
+       {"id": "a-154", "label": "A red arrow", "means": "All turns are prohibited", "reverse": false}]},
     {"id": "parking-distances", "title": "How close you may park",
      "reverse": "You may NOT park within {answer} of which of these?",
      "facts": [
@@ -195,6 +195,8 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
   ]
 }
 ```
+
+a-172 and a-176 are never reversed because each one's answer is also true of the other's label ("You may pass when it is safe", "You may change lanes or pass if it is safe"), and a-154's `means` replaces an answer that only reads as a reply to its own yes-or-no question (both changed 2026-10-17 in review of Phase 2).
 
 `tests/validate_data.py` checks: every fact id is in `data/sections.json`; no fact is in two groups; every group has 2 or more facts; every `label` is non-empty; a `reverse` stem contains `{answer}` exactly once; a group with a `reverse` stem has at least 4 facts.
 
@@ -272,7 +274,7 @@ Screen kinds: `contrast` (a group's Compare screen), `first_look`, `rule`, `coun
 
 **Re-asks** are inserted while the Set runs. A wrong re-ask never inserts another. After a wrong counted answer at screen index `p`, if fewer than `RE_ASK_CAP` re-asks have been inserted in this Set, insert a `reask` for that fact right after the `RE_ASK_GAP`th question screen for another fact that follows `p`; if fewer remain, append it at the end. A re-ask uses the same format and, for `choice`, a fresh shuffle of the same options.
 
-**There is always a Set.** `buildSet(now)` never yields fewer than `min(MIN_SET, 120)` counted questions: new facts are always taken when they exist, and a fact that is not new is either due or a fill fact. When nothing is due and nothing is new, the Set is made of fill facts only; the home screen and the Set done screen say so (see those screens) and do not push it.
+**There is always a Set.** `buildSet(now)` never yields fewer than `min(MIN_SET, 120)` counted questions, except a Set with a group block when too few other facts are learned to fill it (four parking facts learned and nothing else gives four questions): without a block, new facts are always taken when they exist, and a fact that is not new is either due or a fill fact. When nothing is due and nothing is new, the Set is made of fill facts only; the home screen and the Set done screen say so (see those screens) and do not push it.
 
 ## Formats
 
