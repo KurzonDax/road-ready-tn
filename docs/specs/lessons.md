@@ -55,7 +55,7 @@ The scene is an SVG with `viewBox="0 0 320 320"`, top-down, north up. Roads are 
 | `circle-road` | `cx, cy, r, w` | a roundabout: a ring road of width `w`. |
 | `car` | `id, x, y, heading` (`n`, `e`, `s`, `w`), `you` (bool), `tone` (`a` or `b`, default `a`) | a car centered at x,y with a windshield wedge toward its heading. `you: true` draws it in the accent outline with a "You" label. `id` makes it a tap target or a highlight. |
 | `sign` | `kind` (`stop`, `yield`, `allway`), `x, y` | the sign as the manual draws it, small, at a corner. `allway` is a stop sign with an ALL WAY plate. |
-| `light` | `x, y, state` (`red`, `yellow`, `green`, `off`, `green-left`, `flashing-red`, `flashing-yellow`), `span` (default 64) | a traffic signal as the driver meets it: a horizontal head on a span across the road, over the far side of the intersection. For a car heading north on the standard intersection, `x` 160, `y` 121. |
+| `light` | `x, y, state` (`red`, `yellow`, `green`, `off`, `green-left`, `flashing-red`, `flashing-yellow`), `span` (default 64) | a traffic signal as the driver meets it: a vertical head, red on top, on a span across the road, over the far side of the intersection. For a car heading north on the standard intersection, `x` 160, `y` 121. |
 | `crosswalk` | `x, y, w, h` | white stripes across the road. |
 | `ped` | `id, x, y`, `cane` (bool) | a pedestrian as a dot with shoulders; `cane: true` adds a white cane with a red tip. |
 | `path` | `from: [x, y]`, `to: [x, y]`, `via: [x, y]` (optional) | a dashed arrow for where a vehicle intends to go. |
