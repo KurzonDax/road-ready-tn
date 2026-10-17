@@ -14,7 +14,7 @@ From `PRODUCT.md`, unchanged:
 - Question ids never change.
 - One thing on screen. Plain, literal, complete wording. "You", active voice. NOT in capitals. No idioms, no gesture words, no timers, no streaks, no verdicts. Counts are information.
 - Every word on the Learner's pages is addressed to the Learner. Nothing on them mentions the Helper or tracking.
-- The manual is the authority. Every fact shows the manual's sentence and page.
+- The manual is the authority. Every question is checked against the manual's own sentence, which stays in the data; the Learner's screens do not quote the manual (changed 2026-10-17).
 - Do not assume or document where an Instance is hosted.
 
 ## Vocabulary
@@ -25,7 +25,7 @@ Add to `GLOSSARY.md` in Phase 1 (full wording in "Docs to update"):
 - **Due**: a fact whose standing says it should be asked again now.
 - **Counted question**: a question whose answer changes a fact's standing.
 - **First look**: an unscored question shown before a fact's rule, the first time the Learner meets it.
-- **Rule screen**: the screen with a fact's rule, the manual's sentence and the page. Replaces "Rule card".
+- **Rule screen**: the screen with a fact's answer and its explanation. Replaces "Rule card".
 - **Set**: one run of screens from "Start the set" to "Set done". The page builds it from due facts and new facts.
 - **Compare**: one screen that shows a group of easily mixed-up facts side by side, followed by questions on just that group.
 
@@ -260,11 +260,11 @@ Wording is exact. Everything else (type, spacing, the pinned button, the A to D 
 
 **First look** (`FIRST_LOOK` true). Above the question, one line in the muted style: "You have not had this question before. Pick the answer you think is right. This answer does not count." Then the question and four choices. Choosing one goes straight to the rule screen; no coloring, no "Correct", no "right answer" on this screen.
 
-**Rule screen.** After a first look, the result is the heading, at the top in the question's size: "You picked the right answer: {answer}." (in green) after a right pick; "The answer is: {answer}." followed by the line "You picked: {chosen}." after a wrong one. Without a first look the heading is "Read this first." Then the sign or color picture if the fact has one, the rule (`why`), and the manual's sentence with "Driver manual, page N" as today. Then: "This question comes back later in this set." Button: "Go on".
+**Rule screen.** After a first look, the result is the heading, at the top in the question's size: "You picked the right answer: {answer}." (in green) after a right pick; "The answer is: {answer}." followed by the line "You picked: {chosen}." after a wrong one. Without a first look the heading is "Read this first." Then the sign or color picture if the fact has one, and the explanation (`why`). No manual quote. Then: "This question comes back later in this set." Button: "Go on".
 
-**Counted question, `choice`.** As today before answering. After a right answer: "Correct." then `why`, then the manual's sentence and page. After a wrong answer: "The right answer is: {answer}." then, when `also[chosen]` exists, one line: "{chosen} answers a different question: {that question's text}" (this line appears wherever `choice` feedback is shown, Practice tests included). Then `why` and the manual's sentence. Then one line: "This question comes back later in this set, and in your next set." when a re-ask was inserted, otherwise "This question comes back in your next set." Button: "Next question", or "See how it went" on the last screen.
+**Counted question, `choice`.** As today before answering. After a right answer: "Correct." then `why`. After a wrong answer: "The right answer is: {answer}." then, when `also[chosen]` exists, one line: "{chosen} answers a different question: {that question's text}" (this line appears wherever `choice` feedback is shown, Practice tests included). Then `why`. Then one line: "This question comes back later in this set, and in your next set." when a re-ask was inserted, otherwise "This question comes back in your next set." Button: "Next question", or "See how it went" on the last screen.
 
-**Counted question, `reverse`.** The stem, four label choices. Feedback as for `choice`, with "The right answer is: {label}." after a wrong answer, and `why` and the manual's sentence of the fact.
+**Counted question, `reverse`.** The stem, four label choices. Feedback as for `choice`, with "The right answer is: {label}." after a wrong answer, and `why`.
 
 **Re-ask.** Above the question: "One more time." Otherwise as the counted question of the same format, except the comes-back line after a wrong answer is always "This question comes back in your next set."
 

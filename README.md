@@ -6,7 +6,7 @@ I am developing this specifically for my son who is on the autism spectrum and s
 
 I am not an educator by trade or training.  In fact, I'm pretty terrible at trying to teach anything, so I'm trying to build a tool that will help my son learn what he needs to pass the test.
 
-This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees one short Set at a time: the facts due again and a few new ones, each new fact's rule before its question, an explanation after each answer with the manual's own words and page number, and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
+This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees one short Set at a time: the facts due again and a few new ones, each new fact's rule before its question, a plain explanation after each answer, and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
 
 Since this app is in active development, the content of this README may not always be up to date.  
 

@@ -186,8 +186,8 @@ def answer_set(pg, miss=0, stop=None):
         click_choice(pg, right=not wrong)
         if kind == "first_look":
             continue
-        if not pg.query_selector(".src"):
-            failures.append(f"no manual quote shown after answering {pg.evaluate('run.screens[run.i].id')}")
+        if pg.query_selector(".src, blockquote") or "Driver manual" in pg.inner_text("#stage"):
+            failures.append(f"a manual quote shown after answering {pg.evaluate('run.screens[run.i].id')}")
         n += 1
         if n == stop:
             break
@@ -1852,9 +1852,9 @@ def check_study_path(browser, inst, scheme="light"):
     q = pg.evaluate("BY_ID[run.screens[1].id]")
     check(pg.inner_text("#ruleHead") == f"The answer is: {q['a']}." and texts(pg, ".picked") == [f"You picked: {picked}."]
           and stage_text(pg).startswith(f"Set 1 The answer is: {q['a']}. You picked: {picked}.") and pg.inner_text(".rule") == q["why"]
-          and pg.text_content(".src figcaption") == f"Driver manual, page {q['p']}"
+          and not pg.query_selector("blockquote") and "Driver manual" not in stage_text(pg)
           and "This question comes back later in this set." in stage_text(pg),
-          "choosing goes straight to the rule screen: the rule, the manual's words, what was picked and the answer",
+          "choosing goes straight to the next screen: what was picked, the answer and its explanation, and no manual quote",
           stage_text(pg))
     check(not pg.query_selector(".opt.right, .opt.wrong, .verdict") and "Correct" not in stage_text(pg),
           "a first look is not scored: no colors and no Correct")
@@ -1892,7 +1892,7 @@ def check_study_path(browser, inst, scheme="light"):
           "after a wrong answer, the screen gives the right answer and says the question comes back, with no verdict", feedback)
     shown = pg.evaluate("BY_ID[run.screens[run.i].id]")
     said = pg.text_content("#announce")
-    check(said.startswith(f"The right answer is: {right}. {shown['why']} Driver manual, page {shown['p']}: “{shown['src']}”")
+    check(said.startswith(f"The right answer is: {right}. {shown['why']} This question")
           and said.endswith("This question comes back later in this set, and in your next set."),
           "and the screen reader hears the same sentences, in the same order", said)
     now = screens(pg)

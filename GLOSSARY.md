@@ -55,7 +55,7 @@ An unscored question shown before a Fact's Rule screen, the first time the Learn
 _Avoid_: Pre-test, guess
 
 **Rule screen**:
-The screen with a Fact's rule in plain words, the manual's own words, and the page. It comes once, when the Learner first meets the Fact.
+The screen with a Fact's answer and its explanation in plain words. It comes once, when the Learner first meets the Fact.
 _Avoid_: Rule card, flashcard, hint
 
 **Compare**:

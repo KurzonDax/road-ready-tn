@@ -18,7 +18,7 @@ The app is written for learners who read literally, do best with explicit rules,
 **Source**
 - Answerable from a statement in the manual. No outside knowledge. If the manual is ambiguous or contradicts itself, leave the fact out (see [DECISIONS.md](DECISIONS.md)).
 - `page` is the printed manual page of the supporting statement.
-- `manual_quote` is a short verbatim quote (under 25 words) that supports the answer. The app shows it after each answer, and `tests/check_quotes.py` checks it.
+- `manual_quote` is a short verbatim quote (under 25 words) that supports the answer. It is how each question is checked against the manual (`tests/check_quotes.py` checks it); the app does not show it.
 - Skip statistics, licensing paperwork, and fees.
 
 **Wording**

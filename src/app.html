@@ -142,9 +142,6 @@ button.opt { cursor: pointer; }
 .rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
 .rule { font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
 .back { margin: 0; color: var(--muted); }
-.src { margin: 0; display: flex; flex-direction: column; gap: 2px; }
-.src figcaption { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
-.src blockquote { margin: 0; font-size: 16px; color: var(--muted); }
 #nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(12 20 16 / .45); }
 
 .score { font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1; margin: 0; font-variant-numeric: tabular-nums; }
@@ -155,7 +152,7 @@ button.opt { cursor: pointer; }
 .missed li { border-top: 1.5px solid var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 4px; }
 .missed p { margin: 0; }
 .missed .mq { font-weight: 700; }
-.missed .mwhy, .missed .mpage { color: var(--muted); font-size: 16px; }
+.missed .mwhy { color: var(--muted); font-size: 16px; }
 
 /* The one moment that breaks the template: a full guide sign, white border inset like the real thing. */
 .sign { background: var(--guide); color: var(--guide-ink); border-radius: 16px; padding: 28px 26px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 0 6px var(--guide), inset 0 0 0 9px var(--guide-ink); }
@@ -754,7 +751,6 @@ function start(kind) {
 }
 
 function visual(q) { return q.sign ? SIGNS[q.sign] || '' : q.swatch ? SIGNS.swatch(q.swatch) : ''; }
-const manual = q => q.src ? `<figure class="src"><figcaption>Driver manual, page ${q.p}</figcaption><blockquote>“${esc(q.src)}”</blockquote></figure>` : '';
 const quitLink = '<button class="link" type="button" id="quitBtn">Stop for now and save my place</button>';
 function wireQuit() { $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); }; }
 
@@ -811,7 +807,6 @@ function renderRule() {
           : `<h1 class="outcome" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}.</p>`}
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
-        ${manual(q)}
         <p class="back">This question comes back later in this set.</p>
       </div>
       <button class="btn primary" type="button" id="ruleGoBtn">Go on</button>
@@ -848,7 +843,6 @@ function renderQuestion(revealFeedback) {
       <p class="verdict${isRight(s) ? ' good' : ''}">${esc(lines.verdict)}</p>
       ${lines.also ? `<p class="also">${esc(lines.also)}</p>` : ''}
       <p class="why">${esc(q.why)}</p>
-      ${manual(q)}
       ${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}
     </div>` : '';
   const above = s.kind === 'first_look' ? '<p class="sub">You have not had this question before. Pick the answer you think is right. This answer does not count.</p>'
@@ -913,7 +907,7 @@ function choose(k) {
   renderQuestion(true);
   const lines = feedbackLines(s);
   const q = asked(s);
-  $('announce').textContent = [lines.verdict, lines.also, q.why, q.src ? `Driver manual, page ${q.p}: “${q.src}”` : '', lines.back]
+  $('announce').textContent = [lines.verdict, lines.also, q.why, lines.back]
     .filter(Boolean).join(' ');
 }
 
@@ -938,7 +932,7 @@ function finish() {
   // Each fact with a wrong counted answer or re-ask, once, in the wording it was asked.
   const wrong = r.screens.filter(s => (s.kind === 'counted' || s.kind === 'reask') && !isRight(s));
   const missed = [...new Set(wrong.map(s => s.id))];
-  const list = missed.map(id => { const q = asked(wrong.find(s => s.id === id)); return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p><p class="mwhy">${esc(q.why)}</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('');
+  const list = missed.map(id => { const q = asked(wrong.find(s => s.id === id)); return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p><p class="mwhy">${esc(q.why)}</p></li>`; }).join('');
   const missedList = missed.length ? `<details class="missed"><summary>See the ${plural(missed.length, 'question', 'questions')} you missed</summary><ul>${list}</ul></details>` : '';
   if (r.kind === 'test') testDone(r, missed, missedList); else setDone(r, before, missedList);
   toTop();
