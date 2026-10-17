@@ -2832,6 +2832,310 @@
       "manual_sample": false
     },
     {
+      "id": "a-185",
+      "fact": "a-084",
+      "topic": "signs",
+      "question": "You see a sign with a yellow background. What kind of sign is it?",
+      "answer": "A general warning sign",
+      "wrong": [
+        "A construction and maintenance sign",
+        "A guide sign that gives directions",
+        "A motorist services sign"
+      ],
+      "explanation": "Yellow is the background color for warning signs, except construction and maintenance signs, which are orange. It is also used for school signs.",
+      "page": 35,
+      "manual_quote": "YELLOW is used as a background color for warning signs, except where orange is specified, and for school signs.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-186",
+      "fact": "a-085",
+      "topic": "signs",
+      "question": "You see an orange sign ahead. What does the orange color tell you?",
+      "answer": "Construction and maintenance warning",
+      "wrong": [
+        "A school zone with children crossing is ahead",
+        "Motorist services are nearby",
+        "A recreation area is nearby"
+      ],
+      "explanation": "Orange is used only for construction and maintenance signs.",
+      "page": 35,
+      "manual_quote": "ORANGE is used as a background color for construction and maintenance signs and shall not be used for any other purpose.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-187",
+      "fact": "a-086",
+      "topic": "signs",
+      "question": "Signs with a green background give you what kind of information?",
+      "answer": "Guidance (directions)",
+      "wrong": [
+        "Construction and maintenance warnings",
+        "Motorist services and information",
+        "School zone warnings"
+      ],
+      "explanation": "Green is the background color for guide signs, which give directions, and for mileposts.",
+      "page": 35,
+      "manual_quote": "GREEN is used as a background color for guide signs (other than those using brown or white), mileposts",
+      "manual_sample": false
+    },
+    {
+      "id": "a-188",
+      "fact": "a-089",
+      "topic": "signs",
+      "question": "You see a fluorescent yellow-green sign. Where are you most likely to be?",
+      "answer": "In a school zone or pedestrian area",
+      "wrong": [
+        "In a construction or maintenance work zone",
+        "Near a rest area",
+        "Near a hospital"
+      ],
+      "explanation": "Fluorescent yellow-green signs mark school zones and pedestrian areas, such as crosswalks. Watch for children, people on foot, and bicyclists.",
+      "page": 36,
+      "manual_quote": "FLUORESCENT YELLOW-GREEN is now in use for signage in school zones and other pedestrian traffic areas such as crosswalks.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-189",
+      "fact": "a-095",
+      "topic": "signs",
+      "question": "A red, eight-sided sign is partly covered by snow, so you cannot read it. What must you do?",
+      "answer": "Come to a complete stop",
+      "wrong": [
+        "Slow down and yield",
+        "Slow down for a railroad crossing",
+        "Keep going if no one is coming"
+      ],
+      "explanation": "Even when a stop sign is damaged or covered, its eight-sided shape and red color tell you to stop.",
+      "page": 35,
+      "manual_quote": "you should know by the octagonal shape and red color that you must stop",
+      "manual_sample": false
+    },
+    {
+      "id": "a-190",
+      "fact": "a-099",
+      "topic": "signs",
+      "question": "You come to an intersection with a sign shaped like a triangle pointing down. What does the sign tell you to do?",
+      "answer": "Slow down and yield to traffic",
+      "wrong": [
+        "Always come to a complete stop",
+        "Speed up to get ahead of traffic",
+        "Stop only if a train is coming"
+      ],
+      "explanation": "A triangle pointing down is a yield sign. Slow down and yield. If no cars are coming, you do not have to stop completely. If traffic is heavy, always stop.",
+      "page": 36,
+      "manual_quote": "you need not come to a complete stop but you must slow down and enter the intersection with caution.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-191",
+      "fact": "a-101",
+      "topic": "signs",
+      "question": "A round sign is posted beside the road. What does it warn you about?",
+      "answer": "A railroad crossing is ahead",
+      "wrong": [
+        "A school crossing is ahead",
+        "A sharp curve in the road is ahead",
+        "A stop sign is ahead"
+      ],
+      "explanation": "A round sign always means you are coming to a railroad crossing. Slow down and be ready to stop.",
+      "page": 36,
+      "manual_quote": "This circular sign always means that you are approaching a railroad grade crossing.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-192",
+      "fact": "a-108",
+      "topic": "signs",
+      "question": "Signs shaped like a diamond warn you about what?",
+      "answer": "A hazardous or unexpected condition ahead",
+      "wrong": [
+        "A law you must obey, like a speed limit",
+        "Gas, food, and other services nearby",
+        "A place where you must stop"
+      ],
+      "explanation": "Diamond-shaped signs warn you about a hazard or something unexpected ahead. Be careful and usually slow down.",
+      "page": 36,
+      "manual_quote": "Diamond Shape — Hazardous Or Unexpected Condition Ahead",
+      "manual_sample": false
+    },
+    {
+      "id": "a-193",
+      "fact": "a-109",
+      "topic": "signs",
+      "question": "A speed limit sign is a regulatory sign. What shape is it?",
+      "answer": "Rectangle",
+      "wrong": [
+        "Diamond",
+        "Circle",
+        "Octagon"
+      ],
+      "explanation": "Regulatory signs, which tell you about laws, speed limits, and lane use, are always rectangles.",
+      "page": 35,
+      "manual_quote": "a regulatory sign is always a rectangle, telling you about laws and regulations",
+      "manual_sample": false
+    },
+    {
+      "id": "a-194",
+      "fact": "a-176",
+      "topic": "signals",
+      "question": "Two lanes going your way are divided by a broken white line. May you move into the other lane?",
+      "answer": "Yes, you may cross it to change lanes or pass if it is safe",
+      "wrong": [
+        "No, you may never cross a broken white line",
+        "Only to make a left turn",
+        "Only when a police officer waves you over"
+      ],
+      "explanation": "Broken white lines between lanes mean you may cross them to change lanes or pass, when it is safe.",
+      "page": 43,
+      "manual_quote": "Broken white lines between lanes of traffic mean you may cross the lines to pass or change lanes",
+      "manual_sample": false
+    },
+    {
+      "id": "a-195",
+      "fact": "a-170",
+      "topic": "signals",
+      "question": "The center of the road has two solid yellow lines. A slow truck is ahead, and no cars are coming the other way. May you pass it?",
+      "answer": "No, you may not cross the lines from either direction",
+      "wrong": [
+        "Yes, because you can see that no cars are coming the other way",
+        "Yes, if you honk first",
+        "Yes, if the truck driver waves you on"
+      ],
+      "explanation": "Two solid yellow lines mean no passing from either direction, even when no oncoming traffic is in sight.",
+      "page": 42,
+      "manual_quote": "Two solid yellow lines between lanes of traffic mean you MAY NOT cross the lines from either direction",
+      "manual_sample": false
+    },
+    {
+      "id": "a-196",
+      "fact": "a-172",
+      "topic": "signals",
+      "question": "You want to pass a slow car. In the center of the road, the broken yellow line is on your side and the solid yellow line is on the other side. What does this mean?",
+      "answer": "You may pass when it is safe",
+      "wrong": [
+        "You may never pass on a road with yellow lines",
+        "You may pass only on the right shoulder",
+        "You must wait for a broken white line"
+      ],
+      "explanation": "When the broken yellow line is on your side, you are in a passing zone and may pass when it is safe. When the solid line is on your side, you may not pass.",
+      "page": 43,
+      "manual_quote": "If the broken yellow line is on your side, you are in the \"passing zone\" and may pass",
+      "manual_sample": false
+    },
+    {
+      "id": "a-197",
+      "fact": "a-157",
+      "topic": "signals",
+      "question": "A traffic light is blinking yellow. What should you do?",
+      "answer": "Slow down and go through with caution",
+      "wrong": [
+        "Come to a complete stop, then go when it is clear",
+        "Speed up before it turns red",
+        "Stop and wait until it turns green"
+      ],
+      "explanation": "A flashing yellow light means slow down and go ahead with caution.",
+      "page": 41,
+      "manual_quote": "FLASHING YELLOW Slow down and proceed with caution",
+      "manual_sample": false
+    },
+    {
+      "id": "a-198",
+      "fact": "a-147",
+      "topic": "signals",
+      "question": "The traffic light ahead of you changes from green to yellow. What should you do?",
+      "answer": "Slow down and stop, unless you are too close to stop safely",
+      "wrong": [
+        "Speed up to beat the red light",
+        "Keep going at the same speed",
+        "Stop right away, even if you are already in the middle of the intersection"
+      ],
+      "explanation": "Yellow means the light is about to turn red. Stop if you can do so safely. Do not speed up to beat the light.",
+      "page": 41,
+      "manual_quote": "You must stop if it is safe to do so. Do not speed up to beat the light.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-199",
+      "fact": "a-152",
+      "topic": "signals",
+      "question": "You are in a left-turn lane, and the signal shows a green arrow pointing left. What does the arrow mean?",
+      "answer": "You may turn that way, and you have the right-of-way",
+      "wrong": [
+        "You must yield to all oncoming traffic, then turn",
+        "You may go straight or turn",
+        "You must stop first, then turn"
+      ],
+      "explanation": "A green arrow gives you the right-of-way to go in the direction of the arrow. Still yield to cars and people already in the intersection.",
+      "page": 41,
+      "manual_quote": "When the arrow is green, you have the right-of-way and may drive the vehicle only in the direction of the arrow",
+      "manual_sample": false
+    },
+    {
+      "id": "a-200",
+      "fact": "a-153",
+      "topic": "signals",
+      "question": "You are waiting to turn left on a green arrow. It changes to a steady yellow arrow. What does that mean?",
+      "answer": "Your protected turn is ending, so get ready to yield",
+      "wrong": [
+        "You still have the right-of-way, so turn quickly",
+        "Oncoming cars must now stop for you",
+        "You may turn left only after a full stop"
+      ],
+      "explanation": "When the arrow turns yellow, your protected turn is ending. Get ready to yield to oncoming traffic.",
+      "page": 41,
+      "manual_quote": "When the arrow changes to yellow, prepare to yield to oncoming traffic.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-201",
+      "fact": "a-155",
+      "topic": "signals",
+      "question": "The left-turn signal shows a flashing yellow arrow. What may you do?",
+      "answer": "Turn left after yielding to oncoming cars and pedestrians",
+      "wrong": [
+        "Turn left right away, because oncoming cars must stop",
+        "Nothing, because left turns are not allowed",
+        "Turn left only after the arrow turns red"
+      ],
+      "explanation": "A flashing yellow arrow lets you turn left after you yield to all oncoming traffic, bicyclists, and pedestrians in the crosswalk. Wait for a safe gap.",
+      "page": 41,
+      "manual_quote": "If you see a flashing yellow arrow, you are allowed to turn left after yielding to all oncoming traffic",
+      "manual_sample": false
+    },
+    {
+      "id": "a-202",
+      "fact": "a-154",
+      "topic": "signals",
+      "question": "Your lane has a red turn arrow. The cars in the lane next to you have a green light. May you make your turn?",
+      "answer": "No, all turns are prohibited",
+      "wrong": [
+        "Yes, if no cars are coming",
+        "Yes, if you signal first",
+        "Yes, if the car behind you honks"
+      ],
+      "explanation": "When the arrow for your lane is red, all turns are prohibited, even if other lanes have green.",
+      "page": 41,
+      "manual_quote": "When the arrow is red or your lane has the red light, all turns are prohibited.",
+      "manual_sample": false
+    },
+    {
+      "id": "a-203",
+      "fact": "a-159",
+      "topic": "signals",
+      "question": "The traffic lights at an intersection are completely dark because the power is out. What should you do?",
+      "answer": "Treat it as an all-way stop",
+      "wrong": [
+        "Treat it as a yield sign",
+        "Go through if you are on the bigger road",
+        "Treat it like a flashing yellow light"
+      ],
+      "explanation": "Tennessee law says a traffic signal that is not working is treated as an all-way stop. Stop as you would at stop signs.",
+      "page": 41,
+      "manual_quote": "if a signal is not working, the intersection is to be treated as if it were a ll-way stop intersection.",
+      "manual_sample": false
+    },
+    {
       "id": "b-001",
       "fact": "b-001",
       "topic": "road",
@@ -7032,6 +7336,342 @@
       "manual_sample": false
     },
     {
+      "id": "b-277",
+      "fact": "b-250",
+      "topic": "turns",
+      "question": "What is the closest you may park to a fire hydrant?",
+      "answer": "15 feet away",
+      "wrong": [
+        "5 feet away",
+        "10 feet away",
+        "30 feet away"
+      ],
+      "explanation": "You may not park within 15 feet of a fire hydrant.",
+      "page": 65,
+      "manual_quote": "Within 15 feet of a fire hydrant",
+      "manual_sample": false
+    },
+    {
+      "id": "b-278",
+      "fact": "b-252",
+      "topic": "turns",
+      "question": "What is the closest you may park to a crosswalk?",
+      "answer": "20 feet away",
+      "wrong": [
+        "5 feet away",
+        "10 feet away",
+        "50 feet away"
+      ],
+      "explanation": "You may not park in a crosswalk or within 20 feet of one.",
+      "page": 65,
+      "manual_quote": "Within 20 feet of a crosswalk or in the crosswalk marked area",
+      "manual_sample": false
+    },
+    {
+      "id": "b-279",
+      "fact": "b-253",
+      "topic": "turns",
+      "question": "What is the closest you may park to a stop sign?",
+      "answer": "30 feet away",
+      "wrong": [
+        "10 feet away",
+        "15 feet away",
+        "50 feet away"
+      ],
+      "explanation": "You may not park within 30 feet of a traffic signal, a stop sign, or any other traffic control device.",
+      "page": 65,
+      "manual_quote": "Within 30 feet of a traffic signal, stop sign or any other traffic control device",
+      "manual_sample": false
+    },
+    {
+      "id": "b-280",
+      "fact": "b-251",
+      "topic": "turns",
+      "question": "What is the closest you may park to a railroad crossing?",
+      "answer": "50 feet away",
+      "wrong": [
+        "15 feet away",
+        "20 feet away",
+        "100 feet away"
+      ],
+      "explanation": "You may not park within 50 feet of a railroad crossing.",
+      "page": 65,
+      "manual_quote": "Within 50 feet of a railroad crossing",
+      "manual_sample": false
+    },
+    {
+      "id": "b-281",
+      "fact": "b-260",
+      "topic": "turns",
+      "question": "You park facing downhill next to a curb. How should you set your front wheels?",
+      "answer": "Toward the curb",
+      "wrong": [
+        "Away from the curb",
+        "Straight, lined up with the car",
+        "Toward the middle of the street"
+      ],
+      "explanation": "Facing downhill next to a curb, turn the front wheels toward the curb and set the parking brake. If the car rolls, the curb stops it.",
+      "page": 65,
+      "manual_quote": "On a downhill with a curb: Turn the front wheels toward the curb (right) and set the parking brake.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-282",
+      "fact": "b-261",
+      "topic": "turns",
+      "question": "You park facing uphill next to a curb. How should you set your front wheels?",
+      "answer": "Away from the curb",
+      "wrong": [
+        "Toward the curb",
+        "Straight, lined up with the car",
+        "Toward the edge of the road"
+      ],
+      "explanation": "Facing uphill next to a curb, turn the front wheels away from the curb. If the car rolls back, the back of the front wheel stops against the curb.",
+      "page": 65,
+      "manual_quote": "On an uphill with a curb: Turn the front wheels away",
+      "manual_sample": false
+    },
+    {
+      "id": "b-283",
+      "fact": "b-262",
+      "topic": "turns",
+      "question": "You park on a hill beside a road that has no curb. Which way should you point your front wheels?",
+      "answer": "Toward the edge of the road",
+      "wrong": [
+        "Toward the middle of the road",
+        "Straight, lined up with the car",
+        "Away from the edge of the road"
+      ],
+      "explanation": "With no curb, uphill or downhill, turn the front wheels toward the edge of the road, so the car rolls away from traffic if it moves.",
+      "page": 65,
+      "manual_quote": "On a downhill without a curb: Turn the front wheels toward the edge of the roadway (right).",
+      "manual_sample": false
+    },
+    {
+      "id": "b-284",
+      "fact": "b-147",
+      "topic": "turns",
+      "question": "You plan to turn right at the next corner. When should your turn signal be on?",
+      "answer": "At least 50 feet before the turn",
+      "wrong": [
+        "Only once you start to turn",
+        "Only after you stop at the corner",
+        "Never, because right turns need no signal"
+      ],
+      "explanation": "Turn on your turn signal at least 50 feet before you turn.",
+      "page": 56,
+      "manual_quote": "At least 50 feet before the turn, you must turn on your turn signal lights.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-285",
+      "fact": "b-031",
+      "topic": "road",
+      "question": "What is the highest speed Tennessee law allows on an interstate highway?",
+      "answer": "70 mph",
+      "wrong": [
+        "60 mph",
+        "65 mph",
+        "75 mph"
+      ],
+      "explanation": "The highest speed Tennessee law allows on interstate highways is 70 mph. Some stretches have a lower posted limit, and you should go that fast only in good conditions.",
+      "page": 47,
+      "manual_quote": "The maximum speed set by Tennessee law for interstate highways is 70 m.p.h.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-286",
+      "fact": "b-030",
+      "topic": "road",
+      "question": "You are on a primary state highway, and no speed limit is posted. What is the speed limit?",
+      "answer": "55 mph",
+      "wrong": [
+        "45 mph",
+        "65 mph",
+        "70 mph"
+      ],
+      "explanation": "Unless another speed is posted, the speed limit on primary and secondary state and federal highways is 55 mph.",
+      "page": 47,
+      "manual_quote": "Unless otherwise posted, the speed limit on primary and secondary state and federal highways is 55 m.p.h.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-287",
+      "fact": "b-055",
+      "topic": "road",
+      "question": "On a state highway with a moderate speed limit, at what speeds does the two-second following rule work?",
+      "answer": "At any speed",
+      "wrong": [
+        "Only below 30 mph",
+        "Only below 45 mph",
+        "Only above 55 mph"
+      ],
+      "explanation": "The two-second rule holds at any speed on state and U.S. highways with moderate speed limits. In bad weather, at night, and at higher interstate speeds, leave at least four seconds.",
+      "page": 49,
+      "manual_quote": "This principle will hold true at any speed on state and U.S. highways with moderate speed limits.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-288",
+      "fact": "b-084",
+      "topic": "road",
+      "question": "What do flashing yellow lights on the front and back of a school bus tell you?",
+      "answer": "The bus is about to stop, so slow down and get ready to stop",
+      "wrong": [
+        "The bus is moving, so it is safe to pass it",
+        "Children are crossing the road right now",
+        "The bus is about to turn left"
+      ],
+      "explanation": "Flashing yellow lights mean the bus is getting ready to stop to load or unload children. Slow down and be ready to stop.",
+      "page": 51,
+      "manual_quote": "When the yellow lights on the front and back of the bus are flashing the bus is preparing to stop to load or unload",
+      "manual_sample": false
+    },
+    {
+      "id": "b-289",
+      "fact": "b-085",
+      "topic": "road",
+      "question": "You have stopped for a school bus that has red flashing lights and its stop arm out. When may you drive on?",
+      "answer": "When the red lights stop, the stop arm goes in, and the bus starts moving",
+      "wrong": [
+        "As soon as the last child reaches the sidewalk",
+        "When the bus driver honks the horn twice",
+        "After you count to 30 and see no children"
+      ],
+      "explanation": "Wait until the red lights turn off, the stop arm goes back in, and the bus starts moving.",
+      "page": 51,
+      "manual_quote": "Motorists must stop their cars and wait until the red flashing lights are turned off, the stop arm is withdrawn, and the bus begins",
+      "manual_sample": false
+    },
+    {
+      "id": "b-290",
+      "fact": "b-086",
+      "topic": "road",
+      "question": "You are at an intersection where a school bus has stopped to let children off. Which drivers must stop?",
+      "answer": "Drivers from all directions",
+      "wrong": [
+        "Only drivers behind the bus",
+        "Only drivers coming toward the bus",
+        "Only drivers who are about to turn"
+      ],
+      "explanation": "When a school bus stops at an intersection to load or unload children, drivers from all directions must stop until the bus moves again.",
+      "page": 51,
+      "manual_quote": "drivers from ALL directions are required to stop until the bus resumes motion",
+      "manual_sample": false
+    },
+    {
+      "id": "b-291",
+      "fact": "b-089",
+      "topic": "road",
+      "question": "A school bus with red lights flashing is stopped on the other side of a divided highway. A median that cars cannot drive on is between you and the bus. What must you do?",
+      "answer": "You don't have to stop, but drive carefully",
+      "wrong": [
+        "Stop until the bus starts moving again",
+        "Stop, then pass slowly once the stop arm goes in",
+        "Honk your horn and keep going at the same speed"
+      ],
+      "explanation": "On a highway divided by a median or barrier that cars cannot drive on, drivers on the other side do not have to stop, but they should drive with caution.",
+      "page": 51,
+      "manual_quote": "divided by median space or a barrier not suitable for vehicular traffic, the driver need not stop, but should proceed with caution.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-292",
+      "fact": "b-169",
+      "topic": "turns",
+      "question": "You turn right onto a street that has two lanes going your way. Which lane should you turn into?",
+      "answer": "The lane closest to the right curb",
+      "wrong": [
+        "The lane closest to the center line",
+        "Whichever lane has less traffic",
+        "The lane farthest to the left"
+      ],
+      "explanation": "Make a right turn into the travel lane closest to the right curb.",
+      "page": 58,
+      "manual_quote": "Move your vehicle around the corner and into the travel lane closest to the right curb.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-293",
+      "fact": "b-163",
+      "topic": "turns",
+      "question": "You are on a one-way street and want to turn left. Which lane should you be in before you turn?",
+      "answer": "The lane nearest the left curb",
+      "wrong": [
+        "The lane nearest the right curb",
+        "The middle lane",
+        "Any lane, as long as you signal"
+      ],
+      "explanation": "To turn left from a one-way street, make your approach in the lane nearest the left curb.",
+      "page": 57,
+      "manual_quote": "Make your approach in the traffic lane furthermost to the left curb of the street.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-294",
+      "fact": "b-118",
+      "topic": "road",
+      "question": "You and two other cars stop at an all-way stop at different times. Which car goes first?",
+      "answer": "The vehicle that got there first",
+      "wrong": [
+        "The largest vehicle",
+        "The vehicle going straight through the intersection",
+        "The vehicle on the left"
+      ],
+      "explanation": "At an all-way stop, every vehicle stops, and the vehicle that reaches the intersection first goes first.",
+      "page": 54,
+      "manual_quote": "the vehicle reaching the intersection first gets to go first (of course, ALL vehicles must stop).",
+      "manual_sample": false
+    },
+    {
+      "id": "b-295",
+      "fact": "b-124",
+      "topic": "road",
+      "question": "You hear a siren, and an ambulance is coming up behind you. What must you do?",
+      "answer": "Pull to the right edge and stop",
+      "wrong": [
+        "Speed up to stay ahead of it",
+        "Stop where you are in your lane",
+        "Pull to the left edge and keep driving"
+      ],
+      "explanation": "Yield to the ambulance: pull as close as you can to the right edge or curb and stop until it has passed.",
+      "page": 54,
+      "manual_quote": "immediately drive to a position parallel to, and as close as possible to the right hand edge or curb of the roadway stop.",
+      "manual_sample": false
+    },
+    {
+      "id": "b-296",
+      "fact": "b-126",
+      "topic": "road",
+      "question": "You are halfway through an intersection when a fire truck with its siren on comes toward it. What should you do?",
+      "answer": "Drive on through, then pull over",
+      "wrong": [
+        "Stop right where you are",
+        "Back up out of the intersection",
+        "Turn right at once, even if you were going straight"
+      ],
+      "explanation": "If you are in an intersection, drive on through it before you pull over, so you do not block the emergency vehicle.",
+      "page": 54,
+      "manual_quote": "If you are in an intersection, drive on through the intersection before pulling over",
+      "manual_sample": false
+    },
+    {
+      "id": "b-297",
+      "fact": "b-136",
+      "topic": "road",
+      "question": "You are on a highway with two lanes going your way. A police car is stopped on the right shoulder of your side, with its lights flashing. What must you do?",
+      "answer": "Move over a lane away from it, or slow down if you can't",
+      "wrong": [
+        "Stop behind it and wait until it drives away from the shoulder",
+        "Keep going at the same speed",
+        "Flash your high beams and pass quickly"
+      ],
+      "explanation": "Move into a lane that is not next to the stopped emergency vehicle, or slow down and drive with caution.",
+      "page": 55,
+      "manual_quote": "you must make a lane change into a lane not adjacent to that of the vehicle, or proceed with caution by reducing the speed",
+      "manual_sample": false
+    },
+    {
       "id": "c-001",
       "fact": "c-001",
       "topic": "interstate",
@@ -9492,6 +10132,38 @@
       "manual_sample": false
     },
     {
+      "id": "c-163",
+      "fact": "c-097",
+      "topic": "alcohol",
+      "question": "For a driver 21 or older, what is the lowest blood alcohol concentration (BAC) at which driving is always illegal in Tennessee?",
+      "answer": "0.08 percent",
+      "wrong": [
+        "0.02 percent",
+        "0.10 percent",
+        "0.15 percent"
+      ],
+      "explanation": "For drivers 21 and older, a BAC of 0.08 percent is always illegal. You can still be charged with DUI below 0.08 if you are impaired.",
+      "page": 79,
+      "manual_quote": "In most states, including Tennessee, .08 is the level of intoxication which is always illegal.",
+      "manual_sample": false
+    },
+    {
+      "id": "c-164",
+      "fact": "c-121",
+      "topic": "alcohol",
+      "question": "What is the lowest blood alcohol concentration (BAC) at which an 18-year-old driver can be convicted of underage driving while impaired?",
+      "answer": "0.02 percent",
+      "wrong": [
+        "0.05 percent",
+        "0.08 percent",
+        "0.10 percent"
+      ],
+      "explanation": "A driver who is at least 16 but not yet 21 can be convicted of underage driving while impaired with a BAC of 0.02 percent or more.",
+      "page": 83,
+      "manual_quote": "at least 16, but is not yet 21 years old, and who is found: (1) driving with a BAC of .02 percent",
+      "manual_sample": false
+    },
+    {
       "id": "d-001",
       "topic": "defensive",
       "question": "What does \"defensive driving\" mean?",
@@ -11566,7 +12238,7 @@
       "wrong": [
         "Two feet",
         "Five feet",
-        "Fifty feet"
+        "Three feet"
       ],
       "explanation": "The Danger Zone is on all sides of the bus. Children should stay ten feet away and NEVER go behind the bus.",
       "page": 111,
@@ -12236,6 +12908,38 @@
       "explanation": "Pedestrians may NOT cross on a red or yellow light unless facing a WALK signal.",
       "page": 104,
       "manual_quote": "Pedestrians may NOT cross on a red or yellow traffic light, or on a red-green combines light unless facing a WALK signal.",
+      "manual_sample": false
+    },
+    {
+      "id": "d-183",
+      "fact": "d-116",
+      "topic": "sharing",
+      "question": "You are driving near a large truck. Where are its blind spots, where the driver cannot see you?",
+      "answer": "Right in front, on both sides, and up to 200 feet behind",
+      "wrong": [
+        "Only directly behind the truck, up to 10 feet",
+        "Only next to the driver's door",
+        "Only far ahead of the truck, more than 500 feet in front of it"
+      ],
+      "explanation": "A truck's blind spots, or No-Zones, are right in front of it, on both sides, and up to 200 feet behind it.",
+      "page": 109,
+      "manual_quote": "A truck’s blind spots are immediate in front, on either side of the car and up to 200 feet in the rear.",
+      "manual_sample": false
+    },
+    {
+      "id": "d-184",
+      "fact": "d-138",
+      "topic": "sharing",
+      "question": "Children getting off a school bus should stay how far away from the bus?",
+      "answer": "Ten feet",
+      "wrong": [
+        "Two feet",
+        "Five feet",
+        "Three feet"
+      ],
+      "explanation": "The area all around a school bus is the Danger Zone. Children should stay ten feet away and never go behind the bus.",
+      "page": 111,
+      "manual_quote": "Children should stay ten feet away from the school bus and NEVER go behind the bus.",
       "manual_sample": false
     }
   ]

@@ -22,7 +22,7 @@ Since this app is in active development, the content of this README may not alwa
 - The real test is 30 questions and needs 24 right (80%). "Ready" asks for 27 (90%) to leave room for nerves.
 - Progress is stored on the Instance, so it follows the learner from one device to another. With no connection the app still works, and finished sets wait on the device until it is back online.
 
-The 120 questions cover the rules the test asks about, including all 29 of the manual's own end-of-chapter sample questions. They come from a bank of 803 questions written from and checked against the manual. See [docs/QUESTIONS.md](docs/QUESTIONS.md).
+The 120 questions cover the rules the test asks about, including all 29 of the manual's own end-of-chapter sample questions. They come from a bank of 847 questions written from and checked against the manual, and the app asks many of them in more than one wording. See [docs/QUESTIONS.md](docs/QUESTIONS.md).
 
 ## Run your own Instance
 
@@ -32,7 +32,7 @@ An Instance is one hosted copy of Road Ready TN. A Helper runs it, and only the 
 
 ```
 data/
-  questions.json         803 questions: answer, wrong answers, explanation, manual page and quote
+  questions.json         847 questions: answer, wrong answers, explanation, manual page and quote
   sections.json          the 12 study sections (10 question ids each)
   manual/sections-b-c.txt  text of manual Sections B and C, marked by printed page
 src/

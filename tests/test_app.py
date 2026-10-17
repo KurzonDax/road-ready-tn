@@ -763,6 +763,37 @@ def check_engine(browser, inst):
         return [ok, unpackRun(packRun(run))]; }""", learned)
     check(got == [True, None], "a saved Set whose reverse question's choices are not labels of its group is dropped", got)
 
+    print("\n[other wordings]")
+    got = fact([daily(80, [("d-165", True, 0)])], "b-077", 1)
+    check(got == {"standing": "learned", "spaced": 1, "due": False}, "a right answer to another wording counts toward its fact", got)
+
+    def wording(records):
+        return pg.evaluate("r => wordingFor(progressFrom(r), 'b-077')", records)
+
+    check(pg.evaluate("WORDINGS['b-077']") == ["b-077", "d-165"], "a fact's wordings are its own question, then the others in id order")
+    check(wording([]) == "b-077", "with no answers, a fact is asked in its own wording")
+    check(wording([daily(81, [("b-077", True, 0)])]) == "d-165", "then in the wording with the fewest counted answers")
+    check(wording([daily(82, [("b-077", True, 0), ("d-165", False, 13)])]) == "b-077", "on a tie, its own wording comes first")
+    check(wording([daily(83, [("b-077", True, 0), ("d-165", False, 13, "first_look"), ("d-165", False, 13, "reask")])]) == "d-165",
+          "only counted answers count toward a wording")
+    got = pg.evaluate("""r => buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z'))
+        .filter(s => s.id === 'b-077').map(s => [s.kind, s.q, sameOptions(s.options, BY_ID[s.q])])""", [daily(84, [("b-077", True, 1)])])
+    check(got == [["counted", "d-165", True]], "a due fact's counted question is asked in that wording, with its own choices", got)
+    got = pg.evaluate("""() => buildSet(progressFrom([]), Date.now()).filter(s => s.kind === 'first_look' || s.kind === 'counted')
+        .every(s => s.q === s.id)""")
+    check(got, "first looks, and a new fact's first counted question, use the fact's own question")
+    got = pg.evaluate("""r => { const run = { kind: 'daily', set_id: 'set-wording', started_at: '2026-10-02T02:00:00.000Z', number: 2, group: null,
+          i: 0, answered: false, reasks: 0, screens: buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z')) };
+        const s = run.screens.find(s => s.id === 'b-077'), ok = !!unpackRun(packRun(run));
+        s.chosen = BY_ID['d-165'].a; s.at = '2026-10-02T02:01:00.000Z';
+        copy = { records: [], pending: [] };  // setRecord names the latest Reset in the device copy; a Helper's page has none
+        const rec = setRecord(run).data.answers.find(a => a.q === 'd-165');
+        copy = null;
+        s.q = 'd-138';
+        return [ok, rec && [rec.right, rec.role], unpackRun(packRun(run))]; }""", [daily(85, [("b-077", True, 1)])])
+    check(got == [True, [True, "counted"], None],
+          "a record names the wording asked, and a saved Set whose question is not a wording of its fact is dropped", got)
+
     print("\n[retention]")
     for answers, want, what in (
             ([(a, True, 0), (a, False, 13)], {"right": 0, "of": 1}, "a right answer followed by a wrong 13 hours later is 0 of 1"),
@@ -1938,7 +1969,8 @@ def check_known_facts(browser, inst):
 
     print("\n[a wrong choice that answers a different question]")
     b = inst.add_learner("Eli", "also password")
-    store_history(inst, b, [daily_at(11, [("b-250", False, 2)])])
+    # b-250 and its other wording each missed once, so the next counted question uses b-250's own wording (a tie).
+    store_history(inst, b, [daily_at(11, [("b-250", False, 2), ("b-277", False, 2)])])
     ctx = browser.new_context(viewport={"width": 400, "height": 900})
     pg2 = ctx.new_page()
     pg2.on("pageerror", lambda e: errors.append(str(e)))
@@ -2082,11 +2114,9 @@ def check_compare(browser, inst):
                 click_choice(pg)
                 check(pg.inner_text("#feedback .verdict") == "Correct.", "a right reverse answer says Correct.")
         elif fact == "b-250":
-            k = choice_texts(pg).index("30 feet")
-            pg.query_selector_all("button.opt")[k].click()
-            check(pg.inner_text(".also") == "30 feet answers a different question: It is illegal to park within how many feet "
-                                            "of a traffic signal or stop sign?",
-                  "choosing 30 feet for the hydrant names the question 30 feet answers", pg.inner_text(".also"))
+            check(pg.inner_text("#qText") == "What is the closest you may park to a fire hydrant?",
+                  "the hydrant, answered before in its own wording, is asked in its other wording", pg.inner_text("#qText"))
+            click_choice(pg)
         else:
             click_choice(pg)
         pg.click("#nextBtn")

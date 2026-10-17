@@ -219,6 +219,8 @@ const SIGNS = {
 };
 let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.json when the page starts
 let GROUPS = [], GROUP_BY_ID = {}; // the groups of easily mixed-up facts (data/groups.json), likewise
+// Each fact's wordings, from questions.json: its own question first, then the other wordings in id order.
+let WORDINGS = {};
 // The learning engine (docs/specs/learning-engine.md, docs/adr/0002-*). Every rule below reads these.
 const HOUR = 60 * 60 * 1000;
 const FIRST_LOOK = true;          // a new fact starts with an unscored question; false starts with its rule screen
@@ -346,8 +348,9 @@ function importedStart(state) {
 // A counted answer changes a fact's standing. First looks and re-asks are stored but never counted;
 // answers from before the learning engine have no role and all count.
 const isCounted = a => a.role === undefined || a.role === 'counted';
-// The fact an answer belongs to: the question itself, or null for a question no longer in the sections.
-const factOf = q => BY_ID[q] ? q : null;
+// The fact an answer belongs to: the fact its question is a wording of (the 120 questions are their own
+// facts), or null for a question no longer shipped.
+const factOf = q => BY_ID[q] ? BY_ID[q].fact || q : null;
 // One fact's numbers, from its counted answers in time order ({at, right}).
 function factFrom(answers) {
   const f = { asked: answers.length, right: 0, wrong: 0, spacedRights: 0, lastAt: null, lastRight: null };
@@ -365,11 +368,15 @@ function factFrom(answers) {
 // A Learner's Progress from their records (docs/adr/0001-*, 0002-*), counting only those after the
 // latest Reset: {facts: {id: factFrom()}, answers: {id: [{at, right}]}, tests: [right counts],
 // cursor: the Section new facts come from, unlockMove: the latest Move is to 13, sets: daily Sets so far,
-// groupAt: {group id: when the newest daily Set with that group block finished}}.
+// groupAt: {group id: when the newest daily Set with that group block finished}, byWording: {question id:
+// its counted answers}}.
 function progressFrom(records) {
   const answers = Object.fromEntries(QS.map(q => [q.id, []]));
-  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {} };
-  const add = (q, at, right) => { const f = factOf(q); if (f) answers[f].push({ at, right }); };
+  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {}, byWording: {} };
+  const add = (q, at, right) => {
+    const f = factOf(q);
+    if (f) { answers[f].push({ at, right }); p.byWording[q] = (p.byWording[q] || 0) + 1; }
+  };
   for (const r of countedRecords(records)) {
     if (r.kind === 'imported') {
       const old = importedStart(r.data.state);
@@ -427,24 +434,28 @@ function setPlan(p, now) {
 // A group block: the group's Compare screen, then one counted question per fact, shuffled. In a group
 // with a reverse stem and 4 or more facts, every second fact that may be reversed is asked the other
 // way round: the stem with the fact's answer, and the group's labels as the choices.
-function groupBlock(g) {
+function groupBlock(g, p) {
   const reversible = g.reverse !== null && g.facts.length >= 4;
   let n = 0;
   return [{ kind: 'contrast', id: null, group: g.id }, ...shuffle(g.facts).map(f => {
-    if (!(reversible && f.reverse !== false && n++ % 2 === 1)) return { kind: 'counted', id: f.id, group: g.id, ...choiceOf(f.id) };
+    if (!(reversible && f.reverse !== false && n++ % 2 === 1)) return { kind: 'counted', id: f.id, group: g.id, ...choiceOf(wordingFor(p, f.id)) };
     const others = shuffle(g.facts.filter(o => o !== f)).slice(0, 3).map(o => o.label);
-    return { kind: 'counted', id: f.id, group: g.id, format: 'reverse', options: shuffle([f.label, ...others]), chosen: null, at: null };
+    return { kind: 'counted', id: f.id, q: f.id, group: g.id, format: 'reverse', options: shuffle([f.label, ...others]), chosen: null, at: null };
   })];
 }
-const choiceOf = id => ({ format: 'choice', options: shuffle([BY_ID[id].a, ...BY_ID[id].o]), chosen: null, at: null });
+// A choice question in wording `q`: its own answer and wrong choices, shuffled.
+const choiceOf = q => ({ q, format: 'choice', options: shuffle([BY_ID[q].a, ...BY_ID[q].o]), chosen: null, at: null });
+// The wording a fact's next counted choice question uses: the one with the fewest counted answers,
+// the fact's own question first on a tie, then the others in id order (#36).
+const wordingFor = (p, id) => WORDINGS[id].reduce((best, q) => (p.byWording[q] || 0) < (p.byWording[best] || 0) ? q : best);
 // The next Set as a list of screens ({kind, id, format, options, chosen, at, group}), from setPlan
 // by the spec's step 5: the group block, if any, then each new fact's first look and rule screen,
 // with due and fill questions spread between them, and its counted question at least GAP screens
 // for other facts later.
 function buildSet(p, now, firstLook = FIRST_LOOK) {
   const plan = setPlan(p, now);
-  const counted = id => ({ kind: 'counted', id, ...choiceOf(id) });
-  const block = plan.group ? groupBlock(plan.group) : [];
+  const counted = id => ({ kind: 'counted', id, ...choiceOf(wordingFor(p, id)) });
+  const block = plan.group ? groupBlock(plan.group, p) : [];
   const W = plan.fresh, k = W.length;
   const D = shuffle([...plan.due, ...plan.fill].map(counted)), m = D.length;
   if (!k) return [...block, ...D];
@@ -482,7 +493,7 @@ const SCREEN_KINDS = ['contrast', 'first_look', 'rule', 'counted', 'reask'];
 function packRun(r) {
   return { kind: r.kind, set_id: r.set_id, started_at: r.started_at, after: r.after, number: r.number, group: r.group,
     i: r.i, answered: r.answered, reasks: r.reasks,
-    screens: r.screens.map(s => ({ kind: s.kind, id: s.id, format: s.format, options: s.options, chosen: s.chosen, at: s.at, group: s.group })) };
+    screens: r.screens.map(s => ({ kind: s.kind, id: s.id, q: s.q, format: s.format, options: s.options, chosen: s.chosen, at: s.at, group: s.group })) };
 }
 const sameOptions = (options, q) => Array.isArray(options) && options.slice().sort().join('\n') === [q.a, ...q.o].sort().join('\n');
 // A reverse question's choices are 4 different labels of its group, its own fact's among them.
@@ -495,10 +506,11 @@ function unpackRun(p) {
   try {
     if ((p.kind !== 'daily' && p.kind !== 'test') || !Array.isArray(p.screens) || !p.screens.length) return null;
     const screens = p.screens.map(x => {
-      const q = BY_ID[x.id], g = GROUP_BY_ID[x.group];
-      if (!SCREEN_KINDS.includes(x.kind) || (x.kind === 'contrast' ? !g : !q)) throw new Error('changed');
+      // A question screen's wording `q` must still be a wording of its fact (a Set saved before wordings has none).
+      const g = GROUP_BY_ID[x.group], wording = isQuestion(x) ? x.q ?? x.id : null, q = BY_ID[wording ?? x.id];
+      if (!SCREEN_KINDS.includes(x.kind) || (x.kind === 'contrast' ? !g : !q || (wording && factOf(wording) !== x.id))) throw new Error('changed');
       if (isQuestion(x) && !(x.format === 'choice' ? sameOptions(x.options, q) : x.format === 'reverse' && reverseOptions(x, g))) throw new Error('changed');
-      return { kind: x.kind, id: x.id, format: x.format, options: x.options, chosen: x.chosen ?? null, at: x.at || null, group: x.group ?? null };
+      return { kind: x.kind, id: x.id, q: wording ?? undefined, format: x.format, options: x.options, chosen: x.chosen ?? null, at: x.at || null, group: x.group ?? null };
     });
     if (!Number.isInteger(p.i) || p.i < 0 || p.i >= screens.length || typeof p.set_id !== 'string' || !p.set_id) return null;
     return { kind: p.kind, set_id: p.set_id, started_at: p.started_at || new Date().toISOString(), after: p.after,
@@ -513,17 +525,19 @@ function keepRun() {
   sendUnfinished();
 }
 
-// A reverse question's answer is its fact's label in the group; any other question's is the fact's answer.
+// The question a screen asks: its wording `q` (the fact's own question when it has none).
+const asked = s => BY_ID[s.q || s.id];
+// A reverse question's answer is its fact's label in the group; any other question's is its wording's answer.
 const labelOf = (group, id) => GROUP_BY_ID[group].facts.find(f => f.id === id).label;
-const answerOf = s => s.format === 'reverse' ? labelOf(s.group, s.id) : BY_ID[s.id].a;
-const questionText = s => s.format === 'reverse' ? GROUP_BY_ID[s.group].reverse.replace('{answer}', BY_ID[s.id].a) : BY_ID[s.id].q;
+const answerOf = s => s.format === 'reverse' ? labelOf(s.group, s.id) : asked(s).a;
+const questionText = s => s.format === 'reverse' ? GROUP_BY_ID[s.group].reverse.replace('{answer}', BY_ID[s.id].a) : asked(s).q;
 const isRight = s => s.chosen === answerOf(s);
 // A finished Set as a record. It names the latest Reset this device knows about. Every answered
 // question screen is an answer; its role says whether it counts toward the fact's standing.
 function setRecord(r) {
   const now = new Date().toISOString();
   const answers = r.screens.filter(s => isQuestion(s) && s.chosen !== null)
-    .map(s => ({ q: s.id, chosen: s.chosen, right: isRight(s), at: s.at || now, role: s.kind, format: s.format }));
+    .map(s => ({ q: s.q || s.id, chosen: s.chosen, right: isRight(s), at: s.at || now, role: s.kind, format: s.format }));
   const data = { set_id: r.set_id, type: r.kind, section: null, started_at: r.started_at, answers };
   if (r.kind === 'daily') data.group = r.group;
   return { id: crypto.randomUUID(), kind: 'set', reset: currentReset(copyRecords()), at: now, data };
@@ -807,7 +821,7 @@ function renderRule() {
 // the question a wrong choice answers, when it is another fact's answer; `back` says when the
 // question comes back, said plainly instead of a verdict.
 function feedbackLines(s) {
-  const q = BY_ID[s.id];
+  const q = asked(s);
   if (isRight(s)) return { verdict: 'Correct.', also: '', back: '' };
   const other = s.format === 'choice' && q.also && BY_ID[q.also[s.chosen]];
   const reasked = run.kind === 'daily' && s.kind === 'counted' && run.screens.some((x, j) => j > run.i && x.kind === 'reask' && x.id === s.id);
@@ -816,7 +830,7 @@ function feedbackLines(s) {
 }
 
 function renderQuestion(revealFeedback) {
-  const s = run.screens[run.i], q = BY_ID[s.id], last = run.i === run.screens.length - 1, right = answerOf(s);
+  const s = run.screens[run.i], q = asked(s), last = run.i === run.screens.length - 1, right = answerOf(s);
   const L = ['A', 'B', 'C', 'D'];
   const opts = s.options.map((o, k) => {
     if (!run.answered) return `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${L[k]}"><span class="key">${L[k]}</span><span class="otext">${esc(o)}</span></button></li>`;
@@ -877,7 +891,7 @@ function insertReask(r, p) {
     if (isQuestion(r.screens[j]) && r.screens[j].id !== s.id && ++seen === RE_ASK_GAP) { at = j + 1; break; }
   }
   if (at < r.screens.length && r.screens[at - 1].kind === 'first_look') at++;
-  r.screens.splice(at, 0, { kind: 'reask', id: s.id, group: s.group, format: s.format, options: shuffle(s.options), chosen: null, at: null });
+  r.screens.splice(at, 0, { kind: 'reask', id: s.id, q: s.q, group: s.group, format: s.format, options: shuffle(s.options), chosen: null, at: null });
   r.reasks++;
   return true;
 }
@@ -894,7 +908,7 @@ function choose(k) {
   keepRun();
   renderQuestion(true);
   const lines = feedbackLines(s);
-  const q = BY_ID[s.id];
+  const q = asked(s);
   $('announce').textContent = [lines.verdict, lines.also, q.why, q.src ? `Driver manual, page ${q.p}: “${q.src}”` : '', lines.back]
     .filter(Boolean).join(' ');
 }
@@ -917,9 +931,10 @@ function finish() {
   unfinishedUnsent = true;
   sendPending().then(() => { if (copy === mine && !mine.pending.includes(rec)) sendUnfinished(); });
   run = null;
-  // Each fact with a wrong counted answer or re-ask, once.
-  const missed = [...new Set(r.screens.filter(s => (s.kind === 'counted' || s.kind === 'reask') && !isRight(s)).map(s => s.id))];
-  const list = missed.map(id => { const q = BY_ID[id]; return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p><p class="mwhy">${esc(q.why)}</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('');
+  // Each fact with a wrong counted answer or re-ask, once, in the wording it was asked.
+  const wrong = r.screens.filter(s => (s.kind === 'counted' || s.kind === 'reask') && !isRight(s));
+  const missed = [...new Set(wrong.map(s => s.id))];
+  const list = missed.map(id => { const q = asked(wrong.find(s => s.id === id)); return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p><p class="mwhy">${esc(q.why)}</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('');
   const missedList = missed.length ? `<details class="missed"><summary>See the ${plural(missed.length, 'question', 'questions')} you missed</summary><ul>${list}</ul></details>` : '';
   if (r.kind === 'test') testDone(r, missed, missedList); else setDone(r, before, missedList);
   toTop();
@@ -1038,7 +1053,10 @@ function keepQuestions() {
 // The questions live in questions.json next to the page, not in the page itself.
 function begin(data) {
   DAYS = data.days; QS = data.qs; TOTAL_DAYS = DAYS.length;
-  BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
+  // BY_ID holds every question: the 120 facts' own and their other wordings (each names its `fact`).
+  BY_ID = Object.fromEntries([...QS, ...(data.wordings || [])].map(q => [q.id, q]));
+  WORDINGS = Object.fromEntries(QS.map(q => [q.id, [q.id]]));
+  for (const w of (data.wordings || []).slice().sort((a, b) => a.id < b.id ? -1 : 1)) if (WORDINGS[w.fact]) WORDINGS[w.fact].push(w.id);
   GROUPS = data.groups || [];
   GROUP_BY_ID = Object.fromEntries(GROUPS.map(g => [g.id, g]));
   if (me.role === 'helper') renderHelper();
@@ -1296,7 +1314,7 @@ function missedMost(records) {
     t.answered++;
     if (!a.right) { t.missed++; t.picks.set(a.chosen, (t.picks.get(a.chosen) || 0) + 1); }
   }
-  const place = Object.fromEntries(QS.map((q, i) => [q.id, i]));
+  const order = Object.fromEntries(QS.map((q, i) => [q.id, i])), place = Object.fromEntries(Object.keys(BY_ID).map(q => [q, order[factOf(q)]]));
   const most = picks => [...picks].reduce((best, x) => x[1] > best[1] ? x : best)[0];
   return [...tally.values()].filter(t => t.missed >= 2)
     .sort((a, b) => b.missed - a.missed || a.answered - b.answered || place[a.q] - place[b.q])
