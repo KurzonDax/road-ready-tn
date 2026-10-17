@@ -1850,7 +1850,7 @@ def check_study_path(browser, inst, scheme="light"):
     click_choice(pg, right=False)
     picked = pg.evaluate("run.screens[0].chosen")
     q = pg.evaluate("BY_ID[run.screens[1].id]")
-    check(pg.inner_text("#ruleHead") == "Here is the rule." and pg.inner_text(".rule") == q["why"]
+    check(pg.inner_text("#ruleHead") == "Here is the answer." and pg.inner_text(".rule") == q["why"]
           and texts(pg, ".picked") == [f"You picked: {picked}.", f"The answer is: {q['a']}."]
           and pg.text_content(".src figcaption") == f"Driver manual, page {q['p']}"
           and "This question comes back later in this set." in stage_text(pg),
@@ -1860,6 +1860,11 @@ def check_study_path(browser, inst, scheme="light"):
           "a first look is not scored: no colors and no Correct")
     check(pg.inner_text(".progress") == "Set 1" and pg.inner_text("#ruleGoBtn") == "Go on",
           "the rule screen's progress line is just the Set, and its button is Go on")
+    pg.click("#ruleGoBtn")
+    click_choice(pg)
+    q = pg.evaluate("BY_ID[run.screens[run.i].id]")
+    check(texts(pg, ".picked") == [f"You picked the right answer: {q['a']}."],
+          "after a right pick, the rule screen says so in one line", texts(pg, ".picked"))
     answer_set(pg)
     done = stage_text(pg)
     check(done.startswith("Set done. 5 new facts learned. 5 of 120 facts learned. 0 solid."),
