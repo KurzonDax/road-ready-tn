@@ -57,7 +57,6 @@ def compact(q, section=None, group=None):
         "o": q["wrong"],
         "why": q["explanation"],
         "p": q["page"],
-        "src": q["manual_quote"],
     }
     if q.get("manual_sample"):
         item["s"] = 1
