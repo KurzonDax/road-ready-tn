@@ -7,7 +7,7 @@ Every question comes from Sections B and C of the *Tennessee Comprehensive Drive
 3. **Verify.** A separate review, done without seeing how the questions were written, checked every question against the manual text: the answer is what the manual says, every wrong answer really is wrong, there is one clear best answer, and the page is right.
 4. **Reword.** Every question was brought up to the wording standard below.
 
-The 120 questions the app uses (`data/sections.json`) were then picked from the 803: all 29 manual sample questions, plus the clearest question for each core rule. No two of the 120 test the same fact.
+The 120 questions the app uses (`data/sections.json`) were then picked from the 803: all 29 manual sample questions, plus the clearest question for each core rule. No two of the 120 test the same fact, and some of the other 683 test a fact again in other words (see `fact` under Data format).
 
 ## Audience
 
@@ -44,6 +44,7 @@ The app is written for learners who read literally, do best with explicit rules,
 ```json
 {
   "id": "b-077",
+  "fact": "b-077",
   "topic": "road",
   "question": "A train is coming. How far from the railroad tracks must you stop?",
   "answer": "Between 15 and 50 feet",
@@ -56,5 +57,13 @@ The app is written for learners who read literally, do best with explicit rules,
 ```
 
 Ids are grouped by manual range: `a-` pages 25-44 (vehicle, seat belts, signs, signals), `b-` pages 45-67 (rules of the road), `c-` pages 68-90 (interstate, weather, alcohol, your record), `d-` pages 91-118 (defensive driving, sharing the road). Ids never change, because the app saves progress by id.
+
+`fact` says which of the app's questions this one tests the same fact as. Each of the 120 questions in `data/sections.json` is its own fact, so its `fact` is its own id. Another question in the bank gets that id as its `fact` when it is another wording of the same fact:
+
+- it rests on the same rule in the manual, and its right answer says what that rule says;
+- it tests the whole rule, not one part of it (b-045 "ease off the brake and steer in the direction of the skid" has no other wording, because c-067 asks only about the brake and c-068 only about steering);
+- a Learner who knows the app question's answer can pick its right answer without learning anything new (d-073, "on your half of the road", is not a wording of a-178, "in or about to enter the crosswalk").
+
+d-165 ("Within 50 feet but no closer than 15 feet from the nearest rail") is a wording of b-077. A question with no `fact` tests something the app does not use. A fact may have just one wording, the app's own question. `tests/validate_data.py` checks that every question in the sections is its own fact, that every `fact` names one of them, and that the wordings of a fact share one answer: none gives another's right answer as a wrong choice, and all of their right answers have the same numbers. The app does not use `fact` yet, and `build.py` leaves it out.
 
 `data/sections.json` lists the 12 study sections, 10 question ids each, in the order the app presents them the first time through (easiest first).

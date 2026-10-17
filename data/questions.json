@@ -16,6 +16,7 @@
   "questions": [
     {
       "id": "a-001",
+      "fact": "a-001",
       "topic": "vehicle",
       "question": "What are properly adjusted seat head restraints designed to do?",
       "answer": "Prevent whiplash if you are hit from behind",
@@ -31,6 +32,7 @@
     },
     {
       "id": "a-002",
+      "fact": "a-002",
       "topic": "vehicle",
       "question": "How high should you adjust the seat head restraint?",
       "answer": "Level with the back of your head",
@@ -46,6 +48,7 @@
     },
     {
       "id": "a-003",
+      "fact": "a-003",
       "topic": "vehicle",
       "question": "Where should you place your hands on the steering wheel?",
       "answer": "9 o'clock and 3 o'clock",
@@ -61,6 +64,7 @@
     },
     {
       "id": "a-004",
+      "fact": "a-004",
       "topic": "vehicle",
       "question": "About how far back from the steering wheel should your body be?",
       "answer": "10 to 12 inches",
@@ -166,6 +170,7 @@
     },
     {
       "id": "a-011",
+      "fact": "b-207",
       "topic": "vehicle",
       "question": "Your mirrors are adjusted correctly. What must you still do before you turn or change lanes?",
       "answer": "Turn your head and check your blind spots",
@@ -421,6 +426,7 @@
     },
     {
       "id": "a-028",
+      "fact": "b-268",
       "topic": "vehicle",
       "question": "When stopping at a curb to park, how close should you get?",
       "answer": "Within 18 inches of the curb",
@@ -481,6 +487,7 @@
     },
     {
       "id": "a-032",
+      "fact": "a-032",
       "topic": "vehicle",
       "question": "How can you tell if carbon monoxide is in your car?",
       "answer": "You can't tell, because it has no taste, smell, or color",
@@ -541,6 +548,7 @@
     },
     {
       "id": "a-036",
+      "fact": "a-036",
       "topic": "vehicle",
       "question": "Under Tennessee's Hands Free law, which is illegal for a driver?",
       "answer": "Holding a phone with any part of your body",
@@ -661,6 +669,7 @@
     },
     {
       "id": "a-044",
+      "fact": "a-044",
       "topic": "vehicle",
       "question": "Who must wear a safety belt any time the vehicle is moving?",
       "answer": "The driver and all front-seat passengers",
@@ -736,6 +745,7 @@
     },
     {
       "id": "a-050",
+      "fact": "a-050",
       "topic": "vehicle",
       "question": "Which statement about car seats is correct?",
       "answer": "Rear-facing if under 1 year old and under 20 pounds. Forward-facing if 1 through 3 years old and over 20 pounds",
@@ -871,6 +881,7 @@
     },
     {
       "id": "a-059",
+      "fact": "a-059",
       "topic": "vehicle",
       "question": "How should a pregnant woman wear her safety belt?",
       "answer": "Lap belt below the abdomen, shoulder belt above the belly",
@@ -1096,6 +1107,7 @@
     },
     {
       "id": "a-074",
+      "fact": "a-074",
       "topic": "vehicle",
       "question": "What is the safest place for children 12 and under to ride in a car with air bags?",
       "answer": "The back seat",
@@ -1141,6 +1153,7 @@
     },
     {
       "id": "a-077",
+      "fact": "a-004",
       "topic": "vehicle",
       "question": "How far should your chest be from the air bag module, according to NHTSA?",
       "answer": "10 to 12 inches",
@@ -1247,6 +1260,7 @@
     },
     {
       "id": "a-084",
+      "fact": "a-084",
       "topic": "signs",
       "question": "What does a yellow sign color mean?",
       "answer": "General warning",
@@ -1263,6 +1277,7 @@
     },
     {
       "id": "a-085",
+      "fact": "a-085",
       "topic": "signs",
       "question": "What does an orange sign color mean?",
       "answer": "Construction and maintenance warning",
@@ -1279,6 +1294,7 @@
     },
     {
       "id": "a-086",
+      "fact": "a-086",
       "topic": "signs",
       "question": "What does a green sign color mean?",
       "answer": "Guidance (directions)",
@@ -1295,6 +1311,7 @@
     },
     {
       "id": "a-087",
+      "fact": "a-087",
       "topic": "signs",
       "question": "What does a blue sign color mean?",
       "answer": "Motorist services and information",
@@ -1327,6 +1344,7 @@
     },
     {
       "id": "a-089",
+      "fact": "a-089",
       "topic": "signs",
       "question": "What does a fluorescent yellow-green sign color mean?",
       "answer": "School zones and pedestrian areas",
@@ -1374,6 +1392,7 @@
     },
     {
       "id": "a-092",
+      "fact": "a-087",
       "topic": "signs",
       "question": "A blue sign points to a rest area. What kind of sign is it?",
       "answer": "A motorist services sign",
@@ -1421,6 +1440,7 @@
     },
     {
       "id": "a-095",
+      "fact": "a-095",
       "topic": "signs",
       "question": "What does an eight-sided (octagon) sign mean?",
       "answer": "Stop",
@@ -1483,6 +1503,7 @@
     },
     {
       "id": "a-099",
+      "fact": "a-099",
       "topic": "signs",
       "question": "What does a triangular (three-sided) sign pointing down mean?",
       "answer": "Slow down and yield to traffic",
@@ -1515,6 +1536,7 @@
     },
     {
       "id": "a-101",
+      "fact": "a-101",
       "topic": "signs",
       "question": "What does a round (circular) sign mean?",
       "answer": "A railroad crossing is ahead",
@@ -1610,6 +1632,7 @@
     },
     {
       "id": "a-107",
+      "fact": "a-107",
       "topic": "signs",
       "question": "At a crossing with lights and a gate, when may you go after a train passes?",
       "answer": "When the gates are up and the lights stop flashing",
@@ -1625,6 +1648,7 @@
     },
     {
       "id": "a-108",
+      "fact": "a-108",
       "topic": "signs",
       "question": "What does a diamond-shaped sign mean?",
       "answer": "A hazardous or unexpected condition ahead",
@@ -1641,6 +1665,7 @@
     },
     {
       "id": "a-109",
+      "fact": "a-109",
       "topic": "signs",
       "question": "What shape are regulatory signs (like speed limits and lane use)?",
       "answer": "Rectangle",
@@ -2008,6 +2033,7 @@
     },
     {
       "id": "a-133",
+      "fact": "d-155",
       "topic": "signs",
       "question": "You see a flashing arrow panel showing a lane is closed. When should you merge?",
       "answer": "Well before you reach the sign",
@@ -2203,6 +2229,7 @@
     },
     {
       "id": "a-146",
+      "fact": "a-146",
       "topic": "signals",
       "question": "Unless a sign says otherwise, may you turn right on a red light?",
       "answer": "Yes, after a complete stop, if there are no pedestrians or cross traffic",
@@ -2218,6 +2245,7 @@
     },
     {
       "id": "a-147",
+      "fact": "a-147",
       "topic": "signals",
       "question": "What should you do when a steady yellow light appears?",
       "answer": "Slow down and stop, unless you are too close to stop safely",
@@ -2263,6 +2291,7 @@
     },
     {
       "id": "a-150",
+      "fact": "a-150",
       "topic": "signals",
       "question": "Your light turns green. What must you still do?",
       "answer": "Yield to pedestrians and vehicles still in the intersection",
@@ -2278,6 +2307,7 @@
     },
     {
       "id": "a-151",
+      "fact": "a-151",
       "topic": "signals",
       "question": "You have a green light (not an arrow) and want to turn left. Who must you yield to?",
       "answer": "Oncoming vehicles",
@@ -2293,6 +2323,7 @@
     },
     {
       "id": "a-152",
+      "fact": "a-152",
       "topic": "signals",
       "question": "What does a green turn arrow (protected turn) mean?",
       "answer": "You may turn that way, and you have the right-of-way",
@@ -2308,6 +2339,7 @@
     },
     {
       "id": "a-153",
+      "fact": "a-153",
       "topic": "signals",
       "question": "What does a yellow left arrow mean?",
       "answer": "Your protected turn is ending, so get ready to yield",
@@ -2323,6 +2355,7 @@
     },
     {
       "id": "a-154",
+      "fact": "a-154",
       "topic": "signals",
       "question": "Your lane has a red arrow, but other lanes have green and the path looks clear. May you turn?",
       "answer": "No, all turns are prohibited",
@@ -2338,6 +2371,7 @@
     },
     {
       "id": "a-155",
+      "fact": "a-155",
       "topic": "signals",
       "question": "What does a flashing yellow arrow mean?",
       "answer": "Turn left after yielding to oncoming cars and pedestrians",
@@ -2353,6 +2387,7 @@
     },
     {
       "id": "a-156",
+      "fact": "a-156",
       "topic": "signals",
       "question": "What should you do at a flashing red light?",
       "answer": "Come to a complete stop, like a stop sign",
@@ -2368,6 +2403,7 @@
     },
     {
       "id": "a-157",
+      "fact": "a-157",
       "topic": "signals",
       "question": "What should you do at a flashing yellow light?",
       "answer": "Slow down and go through with caution",
@@ -2398,6 +2434,7 @@
     },
     {
       "id": "a-159",
+      "fact": "a-159",
       "topic": "signals",
       "question": "A traffic signal is not working at all. What does Tennessee law require?",
       "answer": "Treat it as an all-way stop",
@@ -2413,6 +2450,7 @@
     },
     {
       "id": "a-160",
+      "fact": "b-119",
       "topic": "signals",
       "question": "Two vehicles stop at an all-way stop at the same time. Who goes first?",
       "answer": "The driver on the right",
@@ -2503,6 +2541,7 @@
     },
     {
       "id": "a-166",
+      "fact": "a-166",
       "topic": "signals",
       "question": "You have a yellow line on your right and a white line on your left. What does this mean?",
       "answer": "You are going the wrong way",
@@ -2533,6 +2572,7 @@
     },
     {
       "id": "a-168",
+      "fact": "a-168",
       "topic": "signals",
       "question": "What color lines separate traffic moving in opposite directions?",
       "answer": "Yellow",
@@ -2563,6 +2603,7 @@
     },
     {
       "id": "a-170",
+      "fact": "a-170",
       "topic": "signals",
       "question": "What do two solid yellow lines between lanes mean?",
       "answer": "No passing from either direction",
@@ -2593,6 +2634,7 @@
     },
     {
       "id": "a-172",
+      "fact": "a-172",
       "topic": "signals",
       "question": "The center has a solid yellow line and a broken yellow line. The broken line is on your side. What does this mean?",
       "answer": "You may pass when it is safe",
@@ -2638,6 +2680,7 @@
     },
     {
       "id": "a-175",
+      "fact": "a-175",
       "topic": "signals",
       "question": "What color lines separate lanes of traffic going the same direction?",
       "answer": "White",
@@ -2653,6 +2696,7 @@
     },
     {
       "id": "a-176",
+      "fact": "a-176",
       "topic": "signals",
       "question": "What do broken white lines between lanes mean?",
       "answer": "You may change lanes or pass if it is safe",
@@ -2683,6 +2727,7 @@
     },
     {
       "id": "a-178",
+      "fact": "a-178",
       "topic": "signals",
       "question": "When must you yield to pedestrians at a crosswalk?",
       "answer": "When they are in or about to enter the crosswalk",
@@ -2788,6 +2833,7 @@
     },
     {
       "id": "b-001",
+      "fact": "b-001",
       "topic": "road",
       "question": "At night, when must your headlights be on?",
       "answer": "From 30 minutes after sunset until 30 minutes before sunrise",
@@ -2833,6 +2879,7 @@
     },
     {
       "id": "b-004",
+      "fact": "c-050",
       "topic": "road",
       "question": "Your high beams are on. You must dim them when an oncoming vehicle is within how many feet?",
       "answer": "500 feet",
@@ -2848,6 +2895,7 @@
     },
     {
       "id": "b-005",
+      "fact": "c-050",
       "topic": "road",
       "question": "Your high beams are on and you are following another vehicle. You must dim them when you are within how many feet of it?",
       "answer": "500 feet",
@@ -3073,6 +3121,7 @@
     },
     {
       "id": "b-020",
+      "fact": "b-020",
       "topic": "road",
       "question": "What does the Basic Speed Rule teach?",
       "answer": "Drive at a speed that is safe for the conditions",
@@ -3223,6 +3272,7 @@
     },
     {
       "id": "b-030",
+      "fact": "b-030",
       "topic": "road",
       "question": "Unless another speed is posted, what is the speed limit on primary and secondary state and federal highways?",
       "answer": "55 mph",
@@ -3238,6 +3288,7 @@
     },
     {
       "id": "b-031",
+      "fact": "b-031",
       "topic": "road",
       "question": "What is the maximum speed set by Tennessee law for interstate highways?",
       "answer": "70 mph",
@@ -3358,6 +3409,7 @@
     },
     {
       "id": "b-039",
+      "fact": "b-039",
       "topic": "road",
       "question": "When are school zone speed limits in effect?",
       "answer": "When children are going to or from school, or at recess",
@@ -3448,6 +3500,7 @@
     },
     {
       "id": "b-045",
+      "fact": "b-045",
       "topic": "road",
       "question": "Your car does NOT have anti-lock brakes and starts to skid. What is the general rule?",
       "answer": "Ease off the brake and steer in the direction of the skid",
@@ -3463,6 +3516,7 @@
     },
     {
       "id": "b-046",
+      "fact": "b-046",
       "topic": "road",
       "question": "With anti-lock brakes (ABS), how should you press the brake pedal to stop?",
       "answer": "Press down firmly and hold it without pumping",
@@ -3553,6 +3607,7 @@
     },
     {
       "id": "b-052",
+      "fact": "b-052",
       "topic": "road",
       "question": "Most rear-end crashes are caused by drivers who are doing what?",
       "answer": "Tailgating (following too closely)",
@@ -3568,6 +3623,7 @@
     },
     {
       "id": "b-053",
+      "fact": "b-053",
       "topic": "road",
       "question": "To check your following distance, you watch the car ahead pass a fixed point, like a sign post. What do you do next?",
       "answer": "Count seconds until you reach that spot",
@@ -3583,6 +3639,7 @@
     },
     {
       "id": "b-054",
+      "fact": "b-054",
       "topic": "road",
       "question": "Under normal conditions, what is the closest you should follow another vehicle?",
       "answer": "No closer than two seconds",
@@ -3598,6 +3655,7 @@
     },
     {
       "id": "b-055",
+      "fact": "b-055",
       "topic": "road",
       "question": "At what speeds does the two-second rule for following at a safe distance hold true?",
       "answer": "At any speed",
@@ -3613,6 +3671,7 @@
     },
     {
       "id": "b-056",
+      "fact": "b-056",
       "topic": "road",
       "question": "In bad weather, at night, at higher interstate speeds, or when following a motorcycle, what following distance should you use?",
       "answer": "At least four seconds",
@@ -3733,6 +3792,7 @@
     },
     {
       "id": "b-064",
+      "fact": "b-064",
       "topic": "road",
       "question": "At a stop sign with a clearly marked stop line, where must you stop?",
       "answer": "Behind the stop line",
@@ -3838,6 +3898,7 @@
     },
     {
       "id": "b-071",
+      "fact": "a-156",
       "topic": "road",
       "question": "What must you do at a flashing red traffic light?",
       "answer": "Stop completely, as at a stop sign",
@@ -3928,6 +3989,7 @@
     },
     {
       "id": "b-077",
+      "fact": "b-077",
       "topic": "road",
       "question": "A train is coming. How far from the railroad tracks must you stop?",
       "answer": "Between 15 and 50 feet",
@@ -4033,6 +4095,7 @@
     },
     {
       "id": "b-084",
+      "fact": "b-084",
       "topic": "road",
       "question": "A school bus has yellow lights flashing. What does this mean?",
       "answer": "The bus is about to stop, so slow down and get ready to stop",
@@ -4048,6 +4111,7 @@
     },
     {
       "id": "b-085",
+      "fact": "b-085",
       "topic": "road",
       "question": "A school bus has red lights flashing and its stop arm out. When may you start driving again?",
       "answer": "When the red lights stop, the stop arm goes in, and the bus starts moving",
@@ -4063,6 +4127,7 @@
     },
     {
       "id": "b-086",
+      "fact": "b-086",
       "topic": "road",
       "question": "A school bus is stopped at an intersection loading children. Which drivers must stop?",
       "answer": "Drivers from all directions",
@@ -4108,6 +4173,7 @@
     },
     {
       "id": "b-089",
+      "fact": "b-089",
       "topic": "road",
       "question": "You are on a highway divided by a median that cars cannot drive on. A school bus is stopped on the other side with its red lights flashing. What should you do?",
       "answer": "You don't have to stop, but drive carefully",
@@ -4333,6 +4399,7 @@
     },
     {
       "id": "b-104",
+      "fact": "b-123",
       "topic": "road",
       "question": "Is it legal to drive into an intersection and block it after the light changes?",
       "answer": "No, it is always illegal, even if there is no sign",
@@ -4423,6 +4490,7 @@
     },
     {
       "id": "b-110",
+      "fact": "b-110",
       "topic": "road",
       "question": "You are entering a main road from a driveway or parking lot. Who must yield?",
       "answer": "You must yield to all vehicles on the main road",
@@ -4513,6 +4581,7 @@
     },
     {
       "id": "b-116",
+      "fact": "a-150",
       "topic": "road",
       "question": "Your light turns green, but a vehicle is still in the intersection. What should you do?",
       "answer": "Yield to the vehicle in the intersection",
@@ -4528,6 +4597,7 @@
     },
     {
       "id": "b-117",
+      "fact": "a-151",
       "topic": "road",
       "question": "You are turning left on a regular green light (not a green arrow). Who must you yield to?",
       "answer": "Oncoming cars going straight or turning right",
@@ -4543,6 +4613,7 @@
     },
     {
       "id": "b-118",
+      "fact": "b-118",
       "topic": "road",
       "question": "At an ALL-WAY stop, who goes first?",
       "answer": "The vehicle that got there first",
@@ -4558,6 +4629,7 @@
     },
     {
       "id": "b-119",
+      "fact": "b-119",
       "topic": "road",
       "question": "Two vehicles reach an all-way stop at the same time. Who goes first?",
       "answer": "The vehicle on the right",
@@ -4588,6 +4660,7 @@
     },
     {
       "id": "b-121",
+      "fact": "b-121",
       "topic": "road",
       "question": "At a “T” intersection, your road ends at a main road. Who must yield?",
       "answer": "You must yield to traffic from both directions",
@@ -4618,6 +4691,7 @@
     },
     {
       "id": "b-123",
+      "fact": "b-123",
       "topic": "road",
       "question": "May you enter an intersection if you cannot get all the way through it without stopping?",
       "answer": "No, wait until traffic ahead clears",
@@ -4633,6 +4707,7 @@
     },
     {
       "id": "b-124",
+      "fact": "b-124",
       "topic": "road",
       "question": "An emergency vehicle with a siren is approaching. What does Tennessee law require you to do?",
       "answer": "Pull to the right edge and stop",
@@ -4663,6 +4738,7 @@
     },
     {
       "id": "b-126",
+      "fact": "b-126",
       "topic": "road",
       "question": "You are in the middle of an intersection when an emergency vehicle approaches. What should you do?",
       "answer": "Drive on through, then pull over",
@@ -4813,6 +4889,7 @@
     },
     {
       "id": "b-136",
+      "fact": "b-136",
       "topic": "road",
       "question": "On a multi-lane road, you approach a stopped emergency vehicle with lights flashing on the roadside. What does the Move Over Law require?",
       "answer": "Move over a lane away from it, or slow down if you can't",
@@ -4858,6 +4935,7 @@
     },
     {
       "id": "b-139",
+      "fact": "b-139",
       "topic": "turns",
       "question": "Does using your turn signal give you the right-of-way?",
       "answer": "No, signaling does not give you the right-of-way",
@@ -4978,6 +5056,7 @@
     },
     {
       "id": "b-147",
+      "fact": "b-147",
       "topic": "turns",
       "question": "How far before a turn must you turn on your turn signal?",
       "answer": "At least 50 feet",
@@ -5158,6 +5237,7 @@
     },
     {
       "id": "b-159",
+      "fact": "b-159",
       "topic": "turns",
       "question": "Making a left turn from a two-way street onto a two-way street, which lane should you turn into?",
       "answer": "The lane just to the right of the center line",
@@ -5188,6 +5268,7 @@
     },
     {
       "id": "b-161",
+      "fact": "a-168",
       "topic": "turns",
       "question": "What color are center lines on two-way streets?",
       "answer": "Yellow",
@@ -5203,6 +5284,7 @@
     },
     {
       "id": "b-162",
+      "fact": "a-175",
       "topic": "turns",
       "question": "What color are center lines on one-way streets?",
       "answer": "White",
@@ -5218,6 +5300,7 @@
     },
     {
       "id": "b-163",
+      "fact": "b-163",
       "topic": "turns",
       "question": "Which lane must you be in before making a left turn from a one-way street?",
       "answer": "The lane nearest the left curb",
@@ -5278,6 +5361,7 @@
     },
     {
       "id": "b-167",
+      "fact": "b-159",
       "topic": "turns",
       "question": "Turning left from a one-way street onto a two-way street, which lane do you turn into?",
       "answer": "The first lane right of the yellow line",
@@ -5308,6 +5392,7 @@
     },
     {
       "id": "b-169",
+      "fact": "b-169",
       "topic": "turns",
       "question": "When making a right turn, which lane should you turn into?",
       "answer": "The lane closest to the right curb",
@@ -5383,6 +5468,7 @@
     },
     {
       "id": "b-174",
+      "fact": "b-174",
       "topic": "turns",
       "question": "Who has the right-of-way when you reach a roundabout?",
       "answer": "Vehicles already in the roundabout",
@@ -5548,6 +5634,7 @@
     },
     {
       "id": "b-185",
+      "fact": "a-166",
       "topic": "turns",
       "question": "You notice the yellow line is on your RIGHT side. What does this mean?",
       "answer": "You are on the wrong side, so pull over right away",
@@ -5878,6 +5965,7 @@
     },
     {
       "id": "b-207",
+      "fact": "b-207",
       "topic": "turns",
       "question": "Before changing lanes, how do you check your blind spot?",
       "answer": "Turn your head and look over your shoulder",
@@ -5998,6 +6086,7 @@
     },
     {
       "id": "b-215",
+      "fact": "b-215",
       "topic": "turns",
       "question": "On a two-lane road, when may you pass another vehicle on the right?",
       "answer": "When it is turning left, if it is safe",
@@ -6118,6 +6207,7 @@
     },
     {
       "id": "b-223",
+      "fact": "b-223",
       "topic": "turns",
       "question": "Should you pass when approaching a hill or curve?",
       "answer": "No, do not pass",
@@ -6193,6 +6283,7 @@
     },
     {
       "id": "b-228",
+      "fact": "b-228",
       "topic": "turns",
       "question": "When you pass a bicycle going the same direction as you, how much space does the law require?",
       "answer": "3 feet",
@@ -6403,6 +6494,7 @@
     },
     {
       "id": "b-242",
+      "fact": "c-024",
       "topic": "turns",
       "question": "You miss your exit on the interstate. What should you do?",
       "answer": "Go on to the next exit",
@@ -6508,6 +6600,7 @@
     },
     {
       "id": "b-249",
+      "fact": "b-249",
       "topic": "turns",
       "question": "When pulling out of any parking space, including a parallel space, what must you do?",
       "answer": "Look, signal, and yield",
@@ -6523,6 +6616,7 @@
     },
     {
       "id": "b-250",
+      "fact": "b-250",
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a fire hydrant?",
       "answer": "15 feet",
@@ -6538,6 +6632,7 @@
     },
     {
       "id": "b-251",
+      "fact": "b-251",
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a railroad crossing?",
       "answer": "50 feet",
@@ -6553,6 +6648,7 @@
     },
     {
       "id": "b-252",
+      "fact": "b-252",
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a crosswalk?",
       "answer": "20 feet",
@@ -6568,6 +6664,7 @@
     },
     {
       "id": "b-253",
+      "fact": "b-253",
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a traffic signal or stop sign?",
       "answer": "30 feet",
@@ -6613,6 +6710,7 @@
     },
     {
       "id": "b-256",
+      "fact": "b-256",
       "topic": "turns",
       "question": "Which of these is an illegal place to park?",
       "answer": "On a bridge or in a tunnel",
@@ -6673,6 +6771,7 @@
     },
     {
       "id": "b-260",
+      "fact": "b-260",
       "topic": "turns",
       "question": "You park facing DOWNHILL next to a curb. Which way should you turn your front wheels?",
       "answer": "Toward the curb",
@@ -6688,6 +6787,7 @@
     },
     {
       "id": "b-261",
+      "fact": "b-261",
       "topic": "turns",
       "question": "You park facing UPHILL next to a curb. Which way should you turn your front wheels?",
       "answer": "Away from the curb",
@@ -6703,6 +6803,7 @@
     },
     {
       "id": "b-262",
+      "fact": "b-262",
       "topic": "turns",
       "question": "You park on a hill with NO curb. Which way should you turn your front wheels?",
       "answer": "Toward the edge of the road",
@@ -6796,6 +6897,7 @@
     },
     {
       "id": "b-268",
+      "fact": "b-268",
       "topic": "turns",
       "question": "After parallel parking, your car should be no farther than how far from the curb?",
       "answer": "18 inches",
@@ -6931,6 +7033,7 @@
     },
     {
       "id": "c-001",
+      "fact": "c-001",
       "topic": "interstate",
       "question": "When you enter an interstate highway, what should you do?",
       "answer": "Check for cars, speed up to match traffic, and merge when clear",
@@ -6946,6 +7049,7 @@
     },
     {
       "id": "c-002",
+      "fact": "c-002",
       "topic": "interstate",
       "question": "Who is allowed to cross an interstate median (use an emergency crossover)?",
       "answer": "Only emergency vehicles and highway maintenance crews",
@@ -6961,6 +7065,7 @@
     },
     {
       "id": "c-003",
+      "fact": "c-003",
       "topic": "interstate",
       "question": "Safe interstate driving demands complete awareness of higher speed driving and what else?",
       "answer": "Constant alertness by the driver",
@@ -6976,6 +7081,7 @@
     },
     {
       "id": "c-004",
+      "fact": "c-004",
       "topic": "interstate",
       "question": "You are merging onto the interstate from a ramp. Who must yield the right-of-way?",
       "answer": "You, the driver entering from the ramp",
@@ -7066,6 +7172,7 @@
     },
     {
       "id": "c-010",
+      "fact": "c-010",
       "topic": "interstate",
       "question": "You are driving slower than the flow of traffic on the interstate. Which lane must you use?",
       "answer": "The right lane",
@@ -7096,6 +7203,7 @@
     },
     {
       "id": "c-012",
+      "fact": "b-054",
       "topic": "interstate",
       "question": "On the interstate in normal conditions, what is the least following distance you should keep behind the vehicle ahead?",
       "answer": "2 seconds",
@@ -7111,6 +7219,7 @@
     },
     {
       "id": "c-013",
+      "fact": "b-056",
       "topic": "interstate",
       "question": "In bad weather, at night, or on higher-speed rural sections of the interstate, what is the least following distance you should keep?",
       "answer": "4 seconds",
@@ -7231,6 +7340,7 @@
     },
     {
       "id": "c-021",
+      "fact": "c-021",
       "topic": "interstate",
       "question": "When you leave the interstate, when should you start to slow down?",
       "answer": "After you enter the deceleration lane",
@@ -7276,6 +7386,7 @@
     },
     {
       "id": "c-024",
+      "fact": "c-024",
       "topic": "interstate",
       "question": "You miss your exit on the interstate. What must you do?",
       "answer": "Go on to the next exit",
@@ -7441,6 +7552,7 @@
     },
     {
       "id": "c-035",
+      "fact": "c-035",
       "topic": "interstate",
       "question": "Your car has trouble on the interstate. What should you do first?",
       "answer": "Move to the right shoulder and turn on your emergency flashers",
@@ -7546,6 +7658,7 @@
     },
     {
       "id": "c-042",
+      "fact": "c-042",
       "topic": "weather",
       "question": "How does driving at night compare to driving in the daytime?",
       "answer": "More dangerous, because your headlights limit how far you can see",
@@ -7561,6 +7674,7 @@
     },
     {
       "id": "c-043",
+      "fact": "c-043",
       "topic": "weather",
       "question": "Why should you use low beams, not high beams, in fog?",
       "answer": "Low beams let you see better and help others see you",
@@ -7576,6 +7690,7 @@
     },
     {
       "id": "c-044",
+      "fact": "c-044",
       "topic": "weather",
       "question": "What does continuous hard braking on ice and snow often do?",
       "answer": "Locks the front wheels, so you lose steering control",
@@ -7666,6 +7781,7 @@
     },
     {
       "id": "c-050",
+      "fact": "c-050",
       "topic": "weather",
       "question": "At night, you must dim your high beams when meeting or overtaking a vehicle within how many feet?",
       "answer": "500 feet",
@@ -7861,6 +7977,7 @@
     },
     {
       "id": "c-063",
+      "fact": "c-063",
       "topic": "weather",
       "question": "Your car starts to hydroplane on a wet road. What should you do?",
       "answer": "Slow down gradually by letting up on the gas",
@@ -8041,6 +8158,7 @@
     },
     {
       "id": "c-075",
+      "fact": "c-075",
       "topic": "weather",
       "question": "You come to a road covered by flood water. What should you do?",
       "answer": "Turn around and find another way",
@@ -8206,6 +8324,7 @@
     },
     {
       "id": "c-086",
+      "fact": "b-046",
       "topic": "weather",
       "question": "How should you use antilock brakes (ABS) in an emergency stop?",
       "answer": "Apply constant, firm pressure to the pedal",
@@ -8251,6 +8370,7 @@
     },
     {
       "id": "c-089",
+      "fact": "c-089",
       "topic": "alcohol",
       "question": "What penalty does driving under the influence of drugs carry?",
       "answer": "The same penalty as for alcohol",
@@ -8266,6 +8386,7 @@
     },
     {
       "id": "c-090",
+      "fact": "c-090",
       "topic": "alcohol",
       "question": "You had three beers in the past hour. About how long will it take for the alcohol to leave your blood?",
       "answer": "About three hours",
@@ -8281,6 +8402,7 @@
     },
     {
       "id": "c-091",
+      "fact": "c-091",
       "topic": "alcohol",
       "question": "As the percentage of alcohol in your blood (BAC) goes up, what do you become?",
       "answer": "More intoxicated",
@@ -8296,6 +8418,7 @@
     },
     {
       "id": "c-092",
+      "fact": "c-092",
       "topic": "alcohol",
       "question": "What does Tennessee's Implied Consent law mean?",
       "answer": "By driving, you agree to be tested for alcohol or drugs if an officer asks",
@@ -8311,6 +8434,7 @@
     },
     {
       "id": "c-093",
+      "fact": "c-093",
       "topic": "alcohol",
       "question": "Which driving skills are affected by alcohol and drugs?",
       "answer": "Alertness, concentration, reaction time, and coordination",
@@ -8356,6 +8480,7 @@
     },
     {
       "id": "c-096",
+      "fact": "c-096",
       "topic": "alcohol",
       "question": "What is the only thing that can sober up a person who has been drinking?",
       "answer": "Time",
@@ -8371,6 +8496,7 @@
     },
     {
       "id": "c-097",
+      "fact": "c-097",
       "topic": "alcohol",
       "question": "What is the lowest BAC that is always illegal for drivers 21 and older in Tennessee?",
       "answer": "0.08 percent",
@@ -8731,6 +8857,7 @@
     },
     {
       "id": "c-121",
+      "fact": "c-121",
       "topic": "alcohol",
       "question": "What is the lowest BAC at which a driver age 16 to 20 can be convicted of underage driving while impaired?",
       "answer": "0.02 percent",
@@ -8806,6 +8933,7 @@
     },
     {
       "id": "c-126",
+      "fact": "c-126",
       "topic": "alcohol",
       "question": "How does the alcohol in a 12-ounce beer compare to a 1-ounce shot of whiskey?",
       "answer": "It is about the same",
@@ -8896,6 +9024,7 @@
     },
     {
       "id": "c-132",
+      "fact": "c-132",
       "topic": "record",
       "question": "After a reportable crash, how long does the driver have to file a crash report with the Department of Safety?",
       "answer": "20 days",
@@ -8911,6 +9040,7 @@
     },
     {
       "id": "c-133",
+      "fact": "c-133",
       "topic": "record",
       "question": "You are not the first at a crash scene and your help is not needed. What should you do?",
       "answer": "Slowly drive on and do not get in the way",
@@ -8926,6 +9056,7 @@
     },
     {
       "id": "c-134",
+      "fact": "c-134",
       "topic": "record",
       "question": "Which of these can get a driver license revoked or suspended?",
       "answer": "Fraudulently altering a driver license",
@@ -9241,6 +9372,7 @@
     },
     {
       "id": "c-155",
+      "fact": "c-155",
       "topic": "record",
       "question": "You are involved in a crash. What does the law require first?",
       "answer": "Stop right away at or near the scene, without blocking traffic",
@@ -9571,6 +9703,7 @@
     },
     {
       "id": "d-015",
+      "fact": "b-123",
       "topic": "defensive",
       "question": "When you cross or enter an intersection, what must you be sure of before you go?",
       "answer": "That you can get all the way across without blocking it",
@@ -9616,6 +9749,7 @@
     },
     {
       "id": "d-018",
+      "fact": "d-018",
       "topic": "defensive",
       "question": "After you pass a vehicle, when is it safest to return to the driving lane?",
       "answer": "When you see both of its headlights in your rearview mirror",
@@ -9751,6 +9885,7 @@
     },
     {
       "id": "d-027",
+      "fact": "b-046",
       "topic": "defensive",
       "question": "Your car has anti-lock brakes (ABS) and you need to stop quickly. What should you do?",
       "answer": "Press the brake as hard as you can and keep pressing",
@@ -9766,6 +9901,7 @@
     },
     {
       "id": "d-028",
+      "fact": "b-046",
       "topic": "defensive",
       "question": "You are braking hard in a car with ABS, and you feel the brake pedal pushing back. What should you do?",
       "answer": "Keep the brake pedal pushed down firmly",
@@ -9826,6 +9962,7 @@
     },
     {
       "id": "d-032",
+      "fact": "a-003",
       "topic": "defensive",
       "question": "Where is it best to place your hands on the steering wheel?",
       "answer": "At about the 9 o'clock and 3 o'clock positions",
@@ -10021,6 +10158,7 @@
     },
     {
       "id": "d-045",
+      "fact": "b-046",
       "topic": "defensive",
       "question": "In a car with ABS, should you pump the brakes in an emergency?",
       "answer": "No, never pump the brakes in a car with ABS",
@@ -10471,6 +10609,7 @@
     },
     {
       "id": "d-075",
+      "fact": "d-075",
       "topic": "sharing",
       "question": "A pedestrian is using a white cane with a red tip or a guide dog. What must you do?",
       "answer": "Always yield to the pedestrian",
@@ -10696,6 +10835,7 @@
     },
     {
       "id": "d-090",
+      "fact": "b-228",
       "topic": "sharing",
       "question": "When you pass a bicyclist going the same direction, how much space does Tennessee law require?",
       "answer": "At least 3 feet",
@@ -10801,6 +10941,7 @@
     },
     {
       "id": "d-097",
+      "fact": "d-097",
       "topic": "sharing",
       "question": "A bicyclist holds the left arm out, bent up at the elbow, hand pointing upward. What does this signal mean?",
       "answer": "Right turn",
@@ -10936,6 +11077,7 @@
     },
     {
       "id": "d-106",
+      "fact": "d-106",
       "topic": "sharing",
       "question": "May you share a lane with a motorcycle?",
       "answer": "No, a motorcycle has the right to the full lane",
@@ -11086,6 +11228,7 @@
     },
     {
       "id": "d-116",
+      "fact": "d-116",
       "topic": "sharing",
       "question": "Where are a truck's blind spots, or No-Zones?",
       "answer": "Right in front, on both sides, and up to 200 feet behind",
@@ -11416,6 +11559,7 @@
     },
     {
       "id": "d-138",
+      "fact": "d-138",
       "topic": "sharing",
       "question": "How far away from a school bus should children stay?",
       "answer": "Ten feet",
@@ -11566,6 +11710,7 @@
     },
     {
       "id": "d-148",
+      "fact": "c-010",
       "topic": "sharing",
       "question": "Which lane must slower traffic use?",
       "answer": "The right-hand lane",
@@ -11671,6 +11816,7 @@
     },
     {
       "id": "d-155",
+      "fact": "d-155",
       "topic": "sharing",
       "question": "When should you merge for a lane closure ahead in a work zone?",
       "answer": "As soon as possible, when you first see the work zone",
@@ -11806,6 +11952,7 @@
     },
     {
       "id": "d-164",
+      "fact": "a-107",
       "topic": "sharing",
       "question": "The crossing gates are down at a railroad crossing. When may you cross?",
       "answer": "Only after the gates are fully raised and the lights stop flashing",
@@ -11821,6 +11968,7 @@
     },
     {
       "id": "d-165",
+      "fact": "b-077",
       "topic": "sharing",
       "question": "At a railroad crossing with signal devices, where must you stop?",
       "answer": "Within 50 feet but no closer than 15 feet from the nearest rail",
@@ -11851,6 +11999,7 @@
     },
     {
       "id": "d-167",
+      "fact": "d-167",
       "topic": "sharing",
       "question": "Your vehicle stalls on the railroad tracks. What should you do first?",
       "answer": "Get everyone out right away and away from the tracks",
