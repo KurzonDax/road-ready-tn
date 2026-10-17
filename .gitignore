@@ -31,3 +31,7 @@ __pycache__/
 # A running Instance: its folder (database, backups) and its local settings.
 instance/
 .env
+
+# Private research for the Helper: kept on this machine, never pushed to the public repo.
+reports/
+research_notes/
