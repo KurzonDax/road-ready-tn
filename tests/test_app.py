@@ -1773,8 +1773,11 @@ def check_study_path(browser, inst, scheme="light"):
     check(feedback.startswith(f"The right answer is: {right}.") and "Not correct" not in feedback
           and feedback.endswith("This question comes back later in this set, and in your next set."),
           "after a wrong answer, the screen gives the right answer and says the question comes back, with no verdict", feedback)
-    check(pg.text_content("#announce").startswith(f"The right answer is: {right}."),
-          "and the screen reader hears the same sentences", pg.text_content("#announce"))
+    shown = pg.evaluate("BY_ID[run.screens[run.i].id]")
+    said = pg.text_content("#announce")
+    check(said.startswith(f"The right answer is: {right}. {shown['why']} Driver manual, page {shown['p']}: “{shown['src']}”")
+          and said.endswith("This question comes back later in this set, and in your next set."),
+          "and the screen reader hears the same sentences, in the same order", said)
     now = screens(pg)
     r = next(i for i, s in enumerate(now) if s[0] == "reask")
     between = [s for s in now[p + 1:r] if s[0] != "rule"]

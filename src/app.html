@@ -268,25 +268,26 @@ const ready = (p = S) => streak(p) >= READY_STREAK;
 // (one or two), solid (three or more). Standings only rise; a wrong answer makes the fact due instead.
 function standing(f) {
   if (!f.asked) return 'new';
-  return f.spacedRights === 0 ? 'seen' : f.spacedRights < 3 ? 'learned' : 'solid';
+  return f.spacedRights === 0 ? 'seen' : isSolid(f) ? 'solid' : 'learned';
 }
 const isLearned = f => f.spacedRights > 0; // learned or solid
+const isSolid = f => f.spacedRights >= 3;
 // When a fact that is not new is due again: at once after a wrong newest answer, else up the ladder.
 function dueAt(f) {
   if (!f.lastRight) return -Infinity;
-  return f.lastAt + (f.spacedRights >= 3 ? MAINTENANCE_MS : LADDER_MS[f.spacedRights - 1]);
+  return f.lastAt + (isSolid(f) ? MAINTENANCE_MS : LADDER_MS[f.spacedRights - 1]);
 }
 const isDue = (f, now) => f.asked > 0 && dueAt(f) <= now;
 // The ids of the facts due at `now`, in the order a Set takes them: wrong last (oldest first), then learned,
 // then solid (earliest due first); ties in the order of sections.json.
 function dueFacts(p, now) {
-  const rank = f => !f.lastRight ? 0 : f.spacedRights < 3 ? 1 : 2;
+  const rank = f => !f.lastRight ? 0 : isSolid(f) ? 2 : 1;
   const key = f => !f.lastRight ? f.lastAt : dueAt(f);
   return QS.map(q => q.id).filter(id => isDue(p.facts[id], now)) // sort is stable, so ties keep QS order
     .sort((a, b) => rank(p.facts[a]) - rank(p.facts[b]) || key(p.facts[a]) - key(p.facts[b]));
 }
 const learnedCount = (p = S) => QS.filter(q => isLearned(p.facts[q.id])).length;
-const solidCount = (p = S) => QS.filter(q => p.facts[q.id].spacedRights >= 3).length;
+const solidCount = (p = S) => QS.filter(q => isSolid(p.facts[q.id])).length;
 const sectionFacts = (p, day) => QS.filter(q => q.day === day).map(q => p.facts[q.id]);
 const sectionDone = (p, day) => sectionFacts(p, day).every(isLearned);
 const unlocked = (p = S) => p.unlockMove || QS.every(q => isLearned(p.facts[q.id]));
@@ -383,10 +384,11 @@ function progressFrom(records) {
   return p;
 }
 
-// The facts the next Set asks about, by the spec's steps 1 to 4: {block: the group block (Phase 2),
-// due, fresh: new facts, fill: not-yet-due facts added to reach MIN_SET}. Each is a list of fact ids.
+// The facts the next Set asks about, by the spec's steps 1 to 4: {group and block: the group block and
+// its group (Phase 2; none yet), due, fresh: new facts, fill: not-yet-due facts added to reach MIN_SET}.
+// Each but group is a list of fact ids.
 function setPlan(p, now) {
-  const block = [];
+  const group = null, block = [];
   const room = COUNTED_TARGET - block.length;
   const due = dueFacts(p, now).slice(0, room);
   let fresh = [];
@@ -401,18 +403,17 @@ function setPlan(p, now) {
     fill = QS.filter(q => p.facts[q.id].asked && !isDue(p.facts[q.id], now))
       .sort((a, b) => p.facts[a.id].lastAt - p.facts[b.id].lastAt).slice(0, short).map(q => q.id);
   }
-  return { block, due, fresh, fill };
+  return { group, block, due, fresh, fill };
 }
-// The next Set as a list of screens ({kind, id, format, options, chosen, at, from}), from setPlan
-// by the spec's step 5: each new fact's first look and rule screen, with due and fill questions
-// spread between them, and its counted question at least GAP screens for other facts later.
-// `from` says why a counted question is in the Set: due, fill, new or group.
+// The next Set as a list of screens ({kind, id, format, options, chosen, at}), from setPlan by the
+// spec's step 5: each new fact's first look and rule screen, with due and fill questions spread
+// between them, and its counted question at least GAP screens for other facts later.
 function buildSet(p, now, firstLook = FIRST_LOOK) {
   const plan = setPlan(p, now);
   const choice = id => ({ format: 'choice', options: shuffle([BY_ID[id].a, ...BY_ID[id].o]), chosen: null, at: null });
-  const counted = (id, from) => ({ kind: 'counted', id, from, ...choice(id) });
+  const counted = id => ({ kind: 'counted', id, ...choice(id) });
   const W = plan.fresh, k = W.length;
-  const D = shuffle([...plan.due.map(id => counted(id, 'due')), ...plan.fill.map(id => counted(id, 'fill'))]), m = D.length;
+  const D = shuffle([...plan.due, ...plan.fill].map(counted)), m = D.length;
   if (!k) return D;
   const h = Math.min(Math.max(0, GAP - (k - 1)), m), held = D.slice(0, h), rest = D.slice(h);
   const screens = [];
@@ -424,7 +425,7 @@ function buildSet(p, now, firstLook = FIRST_LOOK) {
     screens.push(...rest.slice(used, used + n));
     used += n;
   });
-  return [...screens, ...held, ...W.map(id => counted(id, 'new'))];
+  return [...screens, ...held, ...W.map(counted)];
 }
 const isQuestion = s => s.kind !== 'rule' && s.kind !== 'contrast';
 
@@ -578,20 +579,20 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
 // The progress track: a marker per Section, done when its 10 facts are learned, and Practice tests.
 function roadMarkers() {
-  const next = cursorOrder(S).find(day => sectionFacts(S, day).some(f => !f.asked)), r = ready(), u = unlocked();
+  const next = cursorOrder(S).find(day => sectionFacts(S, day).some(f => !f.asked)), isReady = ready(), open = unlocked();
   const item = (cls, label, sr) => `<li class="stop ${cls}"${cls.includes('now') ? ' aria-current="step"' : ''}><span aria-hidden="true">${label}</span><span class="vh">${sr}</span></li>`;
   let html = DAYS.map(d => sectionDone(S, d.day) ? item('done', d.day, `Section ${d.day}, finished`)
     : d.day === next ? item('now', d.day, `Section ${d.day}, next`)
     : item('', d.day, `Section ${d.day}, not finished`)).join('');
-  html += item(`wide ${r ? 'done' : u ? 'now' : ''}`, 'Practice tests', `Practice tests${r ? ', ready' : u ? ', next' : ''}`);
-  const anyDone = r || DAYS.some(d => sectionDone(S, d.day)), anyNext = !r && (next !== undefined || u);
+  html += item(`wide ${isReady ? 'done' : open ? 'now' : ''}`, 'Practice tests', `Practice tests${isReady ? ', ready' : open ? ', next' : ''}`);
+  const anyDone = isReady || DAYS.some(d => sectionDone(S, d.day)), anyNext = !isReady && (next !== undefined || open);
   const legend = anyDone ? `<p class="sub small">Green means finished.${anyNext ? ' The outlined one is next.' : ''}</p>` : '';
   return `<section class="track" aria-labelledby="trackLabel"><h2 class="label" id="trackLabel">Your progress</h2><ol class="road">${html}</ol>${legend}</section>`;
 }
 
 function sectionsPanel() {
   const rows = DAYS.map(d => {
-    const facts = sectionFacts(S, d.day), solid = facts.filter(f => f.spacedRights >= 3).length;
+    const facts = sectionFacts(S, d.day), solid = facts.filter(isSolid).length;
     return `<li><div><span class="sname">Section ${d.day}: ${esc(d.title)}</span><span class="sscore">${facts.filter(isLearned).length} of ${facts.length} learned, ${solid} solid</span></div></li>`;
   }).join('');
   return `<details class="scores"><summary>See each section</summary><ul>${rows}</ul></details>`;
@@ -615,9 +616,9 @@ function renderHome() {
   run = null;
   const saved = S.run && unpackRun(S.run);
   if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
-  const plan = setPlan(S, Date.now()), u = unlocked(), r = ready();
+  const plan = setPlan(S, Date.now()), open = unlocked(), isReady = ready();
   // "Start a practice test" is the main button only when the next Set would go over known facts alone.
-  const testFirst = !saved && u && fillOnly(plan);
+  const testFirst = !saved && open && fillOnly(plan);
   // A Set stopped partway through is one line on the home screen (#32). A daily Set's Continue takes
   // the place of Start the set; a Practice test's comes first, and the other buttons ask before
   // throwing its saved answers away.
@@ -626,11 +627,11 @@ function renderHome() {
     : `<h1 tabindex="-1">Set ${S.sets + 1}</h1>${saved ? stoppedLine(saved) : ''}<p class="sub">${esc(planLine(plan))}</p>
       <button class="btn${saved || testFirst ? '' : ' primary'}" type="button" id="startBtn">Start the set</button>`;
   const scores = S.tests.slice(-5);
-  const tests = !u ? '' : `<section class="home">
-      ${r ? `<div class="sign"><h2>Ready for the test</h2><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
+  const tests = !open ? '' : `<section class="home">
+      ${isReady ? `<div class="sign"><h2>Ready for the test</h2><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
         : `<h2>Practice tests</h2><p class="sub">The real test passes at ${PASS_SCORE} of ${TEST_LEN}. The app's goal is ${READY_SCORE} of ${TEST_LEN} on three practice tests in a row.</p>`}
       ${scores.length ? `<p class="sub">Your last practice tests: ${scores.join(', ')}</p>` : ''}
-      ${saved && saved.kind === 'test' ? '' : `<button class="btn${testFirst ? ' primary' : ''}" type="button" id="testBtn">${r ? 'Take another practice test' : 'Start a practice test'}</button>`}
+      ${saved && saved.kind === 'test' ? '' : `<button class="btn${testFirst ? ' primary' : ''}" type="button" id="testBtn">${isReady ? 'Take another practice test' : 'Start a practice test'}</button>`}
     </section>`;
   paint(`
     <section class="home">
@@ -827,7 +828,9 @@ function choose(k) {
   keepRun();
   renderQuestion(true);
   const lines = feedbackLines(s);
-  $('announce').textContent = [lines.verdict, lines.also, BY_ID[s.id].why, lines.back].filter(Boolean).join(' ');
+  const q = BY_ID[s.id];
+  $('announce').textContent = [lines.verdict, lines.also, q.why, q.src ? `Driver manual, page ${q.p}: “${q.src}”` : '', lines.back]
+    .filter(Boolean).join(' ');
 }
 
 function next() {
@@ -860,7 +863,7 @@ function finish() {
 function setDone(r, before, missedList) {
   const ids = [...new Set(r.screens.filter(isQuestion).map(s => s.id))];
   const learned = ids.filter(id => !isLearned(before.facts[id]) && isLearned(S.facts[id])).length;
-  const solid = ids.filter(id => before.facts[id].spacedRights < 3 && S.facts[id].spacedRights >= 3).length;
+  const solid = ids.filter(id => !isSolid(before.facts[id]) && isSolid(S.facts[id])).length;
   const back = ids.filter(id => S.facts[id].lastRight === false).length;
   const lines = [learned ? `${plural(learned, 'new fact', 'new facts')} learned.` : '', solid ? `${plural(solid, 'fact', 'facts')} now solid.` : '',
     back ? `${plural(back, 'fact comes', 'facts come')} back in your next set.` : ''].filter(Boolean);
@@ -1215,7 +1218,7 @@ function historyLine(e) {
 
 // Up to 10 questions missed two or more times since the latest Reset: the most misses first, then
 // the fewest answers, then the order of the study path. `wrong` is the wrong answer chosen most often.
-// A first look is a guess at a rule not yet seen, so it is left out; counted answers and re-asks count.
+// A first look is an unscored question on a rule not yet seen, so it is left out; counted answers and re-asks count.
 function missedMost(records) {
   const tally = new Map();
   for (const r of countedRecords(records)) if (r.kind === 'set') for (const a of r.data.answers) {
@@ -1358,7 +1361,7 @@ function learnerPage({ records, unfinished }, learner) {
         (f.wrong >= LEECH_WRONG ? '<p class="leech">Needs a different question</p>' : '') + '</li>';
     }).join('');
     return `<li><details><summary><span class="sname">Section ${d.day}: ${esc(d.title)}: ${fs.filter(isLearned).length} of ${fs.length} learned, ` +
-      `${fs.filter(f => f.spacedRights >= 3).length} solid</span></summary><ul class="sets facts">${rows}</ul></details></li>`;
+      `${fs.filter(isSolid).length} solid</span></summary><ul class="sets facts">${rows}</ul></details></li>`;
   }).join('');
 
   const tests = counted.filter(r => r.kind === 'set' && r.data.type === 'test').reverse(), st = streak(p);
