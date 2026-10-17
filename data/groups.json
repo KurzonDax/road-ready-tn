@@ -38,7 +38,7 @@
        {"id": "a-155", "label": "A flashing yellow arrow"},
        {"id": "a-154", "label": "A red arrow", "means": "All turns are prohibited", "reverse": false}
      ]},
-    {"id": "parking-distances", "title": "How close you may park", "reverse": "You may NOT park within {answer} of which of these?",
+    {"id": "parking-distances", "title": "No-parking distances", "reverse": "Which of these has a no-parking distance of {answer}?",
      "facts": [
        {"id": "b-250", "label": "A fire hydrant"},
        {"id": "b-252", "label": "A crosswalk"},
@@ -51,7 +51,7 @@
        {"id": "b-261", "label": "Facing uphill, next to a curb"},
        {"id": "b-262", "label": "On a hill with NO curb"}
      ]},
-    {"id": "feet-rules", "title": "Rules measured in feet", "reverse": "Which rule is: {answer}?",
+    {"id": "feet-rules", "title": "Distances measured in feet", "reverse": "Which of these distances is {answer}?",
      "facts": [
        {"id": "b-077", "label": "How far from the tracks you stop for a train"},
        {"id": "b-147", "label": "How far before a turn you turn on your signal"},

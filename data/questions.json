@@ -57,7 +57,7 @@
         "7 o'clock and 5 o'clock",
         "10 o'clock and 12 o'clock"
       ],
-      "explanation": "Left hand at 9 o'clock, right hand at 3 o'clock. This position helps avoid injury if the air bag opens.",
+      "explanation": "Put your left hand at 9 o'clock and your right hand at 3 o'clock. This position helps avoid injury if the air bag opens.",
       "page": 28,
       "manual_quote": "place the left hand at the 9 o'clock position and the right hand at 3 o'clock position",
       "manual_sample": true
@@ -6929,7 +6929,7 @@
         "10 feet",
         "30 feet"
       ],
-      "explanation": "No parking within 15 feet of a fire hydrant.",
+      "explanation": "You may NOT park within 15 feet of a fire hydrant.",
       "page": 65,
       "manual_quote": "Within 15 feet of a fire hydrant",
       "manual_sample": true
@@ -6945,7 +6945,7 @@
         "20 feet",
         "100 feet"
       ],
-      "explanation": "No parking within 50 feet of a railroad crossing.",
+      "explanation": "You may NOT park within 50 feet of a railroad crossing.",
       "page": 65,
       "manual_quote": "Within 50 feet of a railroad crossing",
       "manual_sample": true
@@ -6961,7 +6961,7 @@
         "10 feet",
         "50 feet"
       ],
-      "explanation": "No parking within 20 feet of a crosswalk or in the crosswalk area.",
+      "explanation": "You may NOT park in a crosswalk or within 20 feet of one.",
       "page": 65,
       "manual_quote": "Within 20 feet of a crosswalk or in the crosswalk marked area",
       "manual_sample": false

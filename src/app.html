@@ -65,7 +65,7 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .track { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
 .label { font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 0; }
 .road { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; list-style: none; margin: 0; padding: 0; }
-.stop { min-width: 30px; height: 30px; padding: 0 2px; border-radius: 6px; border: 1.5px solid var(--line); display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--muted); background: var(--surface); font-variant-numeric: tabular-nums; }
+.stop { min-width: 30px; height: 30px; padding: 0 2px; border-radius: 6px; border: 1.5px solid var(--control-line); line-height: 1; display: grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--muted); background: var(--surface); font-variant-numeric: tabular-nums; }
 .stop.wide { padding: 0 8px; }
 .stop.done { background: var(--guide); border-color: var(--guide); color: var(--guide-ink); }
 .stop.now { border: 2.5px solid var(--guide); color: var(--ink); background: var(--surface); }
@@ -97,11 +97,13 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .warn { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--bad-soft); color: var(--ink); font-size: 16px; }
 
 .progress { display: flex; align-items: center; gap: 12px; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 16px; }
-.bar { flex: 1; height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.bar { flex: 1; height: 8px; border-radius: 999px; background: var(--control-line); overflow: hidden; }
 .bar > span { display: block; height: 100%; background: var(--guide); width: 0; }
 
 .card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 16px; }
-.q { font-family: var(--font-body); font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
+.q { font-family: var(--font-body); font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; text-wrap: pretty; }
+/* Once answered, the question steps back under the result. */
+.q.asked { font-size: 19px; color: var(--muted); }
 .visual { display: flex; justify-content: center; }
 .visual svg { width: 110px; height: 110px; max-width: 100%; }
 .options { display: flex; flex-direction: column; gap: 10px; list-style: none; margin: 0; padding: 0; }
@@ -114,11 +116,12 @@ button.opt { cursor: pointer; }
 .opt.rest .key { border-color: var(--line); }
 .opt.right { border-color: var(--guide); background: var(--guide-soft); font-weight: 700; }
 .opt.right .key { background: var(--guide); border-color: var(--guide); color: var(--guide-ink); }
-.opt.wrong { border-color: var(--bad); background: var(--bad-soft); }
-.opt.wrong .key { border-color: var(--bad); }
+/* A wrong pick is marked by its tag and a dashed outline, not an alarm color: the answer is what stands out. */
+.opt.wrong { border-style: dashed; border-color: var(--ink); }
 .feedback { border-top: 2px dashed var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
-.verdict { font-weight: 700; margin: 0; }
-.verdict.good { color: var(--guide); }
+.result { display: flex; flex-direction: column; gap: 6px; }
+.later { display: flex; flex-direction: column; gap: 14px; border-top: 1.5px solid var(--line); padding-top: 20px; margin-top: 6px; }
+.facts { margin: 0; }
 .why, .also, .picked { margin: 0; }
 /* After a first look, what was picked leads the screen, as large as the question; green when it was right. */
 .outcome { font-family: var(--font-body); font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
@@ -130,12 +133,11 @@ button.opt { cursor: pointer; }
 .compare .cpic { display: block; line-height: 0; }
 .compare .cpic svg { width: 48px; height: 48px; }
 .rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
-.rule { font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
+.rule { font-size: 20px; line-height: 1.45; margin: 0; }
 .back { margin: 0; color: var(--muted); }
 #nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(12 20 16 / .45); }
 
-.score { font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1; margin: 0; font-variant-numeric: tabular-nums; }
-.score span { font-size: 28px; }
+.score { font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 6vw, 30px); line-height: 1.2; margin: 0; font-variant-numeric: tabular-nums; }
 .missed { border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); padding: 0 22px; }
 .missed > summary { font-weight: 700; cursor: pointer; padding: 14px 0; min-height: 44px; }
 .missed ul { list-style: none; margin: 0; padding: 0 0 18px; display: flex; flex-direction: column; gap: 14px; }
@@ -164,8 +166,8 @@ button.opt { cursor: pointer; }
 .lrow .lname { font-weight: 700; font-size: 20px; }
 .lrow .lwhen { color: var(--muted); font-size: 16px; }
 .link.top { align-self: flex-start; padding-left: 0; }
-.now { display: flex; flex-direction: column; gap: 4px; }
-.now p, .part p { margin: 0; }
+.helper .now { display: flex; flex-direction: column; gap: 4px; }
+.helper .now p, .part p { margin: 0; }
 .part { border-top: 1.5px solid var(--line); padding-top: 16px; display: flex; flex-direction: column; gap: 10px; }
 .part h2 { font-size: 22px; }
 .part ul { list-style: none; margin: 0; padding: 0; }
@@ -520,7 +522,9 @@ const asked = s => BY_ID[s.q || s.id];
 // A reverse question's answer is its fact's label in the group; any other question's is its wording's answer.
 const labelOf = (group, id) => GROUP_BY_ID[group].facts.find(f => f.id === id).label;
 const answerOf = s => s.format === 'reverse' ? labelOf(s.group, s.id) : asked(s).a;
-const questionText = s => s.format === 'reverse' ? GROUP_BY_ID[s.group].reverse.replace('{answer}', BY_ID[s.id].a) : asked(s).q;
+const questionText = s => s.format === 'reverse' ? reverseStem(GROUP_BY_ID[s.group].reverse, BY_ID[s.id].a) : asked(s).q;
+// A reverse stem with the fact's answer in it; mid-sentence, the answer starts with a small letter.
+const reverseStem = (stem, a) => stem.replace('{answer}', stem.includes(': {answer}') ? a : a[0].toLowerCase() + a.slice(1));
 const isRight = s => s.chosen === answerOf(s);
 // A finished Set as a record. It names the latest Reset this device knows about. Every answered
 // question screen is an answer; its role says whether it counts toward the fact's standing.
@@ -628,31 +632,39 @@ function roadMarkers() {
   const next = cursorOrder(S).find(day => sectionFacts(S, day).some(f => !f.asked)), isReady = ready(), open = unlocked();
   const item = (cls, label, sr) => `<li class="stop ${cls}"${cls.includes('now') ? ' aria-current="step"' : ''}><span aria-hidden="true">${label}</span><span class="vh">${sr}</span></li>`;
   let html = DAYS.map(d => sectionDone(S, d.day) ? item('done', d.day, `Section ${d.day}, finished`)
-    : d.day === next ? item('now', d.day, `Section ${d.day}, next`)
+    : d.day === next ? item('now', d.day, `Section ${d.day}, where your new facts come from`)
     : item('', d.day, `Section ${d.day}, not finished`)).join('');
-  html += item(`wide ${isReady ? 'done' : open ? 'now' : ''}`, 'Practice tests', `Practice tests${isReady ? ', ready' : open ? ', next' : ''}`);
-  const anyDone = isReady || DAYS.some(d => sectionDone(S, d.day)), anyNext = !isReady && (next !== undefined || open);
-  const legend = anyDone ? `<p class="sub small">Green means finished.${anyNext ? ' The outlined one is next.' : ''}</p>` : '';
+  html += item(`wide ${isReady ? 'done' : open ? 'now' : ''}`, 'Practice tests', `Practice tests${isReady ? ', ready' : open ? ', open to you' : ''}`);
+  const legend = `<p class="sub small">${next !== undefined ? 'The outlined section is where your new facts come from. ' : ''}A section turns green when you have learned all 10 of its facts.</p>`;
   return `<section class="track" aria-labelledby="trackLabel"><h2 class="label" id="trackLabel">Your progress</h2><ol class="road">${html}</ol>${legend}</section>`;
 }
 
 function sectionsPanel() {
   const rows = DAYS.map(d => {
     const facts = sectionFacts(S, d.day), solid = facts.filter(isSolid).length;
-    return `<li><div><span class="sname">Section ${d.day}: ${esc(d.title)}</span><span class="sscore">${facts.filter(isLearned).length} of ${facts.length} learned, ${solid} solid</span></div></li>`;
+    return `<li><div><span class="sname">Section ${d.day}: ${esc(d.title)}</span><span class="sscore">You have learned ${facts.filter(isLearned).length} of its ${facts.length} facts.${solid ? ` ${solid} of them ${solid === 1 ? 'is' : 'are'} solid.` : ''}</span></div></li>`;
   }).join('');
   return `<details class="scores"><summary>See each section</summary><ul>${rows}</ul></details>`;
 }
-const factsLine = (p = S) => `${learnedCount(p)} of ${QS.length} facts learned. ${solidCount(p)} solid.`;
+// How many facts are learned, and solid, said in full; "solid" is explained where it first appears.
+function factsLine(p = S) {
+  const l = learnedCount(p), s = solidCount(p);
+  return `You have learned ${l} of the ${QS.length} facts.` +
+    (s ? ` ${s === 1 ? '1 of them is' : `${s} of them are`} solid: you answered ${s === 1 ? 'it' : 'each one'} right 3 times, at least 12 hours apart.` : '');
+}
 // A Set made of fill facts only: nothing is due and nothing is new.
 const fillOnly = plan => !plan.block.length && !plan.due.length && !plan.fresh.length;
-// The line under "Set N" on the home screen: what the next Set holds.
+// Joins parts as a list a person would say: "a", "a and b", "a, b and c".
+const listOf = parts => parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
+// The line under "Set N" on the home screen: what the next Set holds, in full sentences.
 function planLine(plan) {
   const k = plan.fresh.length, f = plan.fill.length, d = plan.due.length;
-  if (!QS.some(q => S.facts[q.id].asked)) return `${k} new rules, one at a time. There is no time limit.`;
-  if (fillOnly(plan)) return `Nothing is due. This set goes over ${f} facts you already know.`;
-  return [plan.block.length ? `Compare: ${plan.group.title}.` : '', d ? `${plural(d, 'question comes', 'questions come')} back.` : '',
-    f ? `${f} to keep fresh.` : '', k ? `${k} new.` : ''].filter(Boolean).join(' ');
+  if (!QS.some(q => S.facts[q.id].asked)) return `This set has ${plural(k, 'new fact', 'new facts')}. You see them one at a time. There is no time limit.`;
+  if (fillOnly(plan)) return `Nothing is due. This set asks ${plural(f, 'question', 'questions')} you already know.`;
+  const has = listOf([d ? `${plural(d, 'question', 'questions')} to answer again` : '', f ? `${plural(f, 'question', 'questions')} you already know` : '',
+    k ? plural(k, 'new fact', 'new facts') : ''].filter(Boolean));
+  const block = plan.block.length ? `This set starts by showing ${plan.block.length} facts side by side: ${plan.group.title}.` : '';
+  return [block, has ? `${block ? 'Then it has' : 'This set has'} ${has}.` : ''].filter(Boolean).join(' ');
 }
 
 // The fine print at the bottom of the Learner's home screen, with a quiet Sign out beside it.
@@ -665,26 +677,30 @@ function renderHome() {
   const plan = setPlan(S, Date.now()), open = unlocked(), isReady = ready();
   // "Start a practice test" is the main button only when the next Set would go over known facts alone.
   const testFirst = !saved && open && fillOnly(plan);
-  // A Set stopped partway through is one line on the home screen (#32). A daily Set's Continue takes
+  // A Set stopped partway through is one block on the home screen (#32). A daily Set's Continue takes
   // the place of Start the set; a Practice test's comes first, and the other buttons ask before
   // throwing its saved answers away.
-  const top = saved && saved.kind === 'daily'
+  // Once Practice tests are where the Learner is (nothing new is left, or they are Ready), they come
+  // first and take the page heading; the next Set follows as a quieter block.
+  const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst ? 'h2' : 'h1';
+  const set = saved && saved.kind === 'daily'
     ? `<h1 tabindex="-1">Set ${saved.number}</h1>${stoppedLine(saved)}`
-    : `<h1 tabindex="-1">Set ${S.sets + 1}</h1>${saved ? stoppedLine(saved) : ''}<p class="sub">${esc(planLine(plan))}</p>
-      <button class="btn${saved || testFirst ? '' : ' primary'}" type="button" id="startBtn">Start the set</button>`;
+    : `<${setH} tabindex="-1">Set ${S.sets + 1}</${setH}>${saved ? stoppedLine(saved) : ''}<p class="sub">${esc(planLine(plan))}</p>
+      <button class="btn${saved || testFirst ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
   const scores = S.tests.slice(-5);
   const tests = !open ? '' : `<section class="home">
-      ${isReady ? `<div class="sign"><h2>Ready for the test</h2><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
-        : `<h2>Practice tests</h2><p class="sub">The real test passes at ${PASS_SCORE} of ${TEST_LEN}. The app's goal is ${READY_SCORE} of ${TEST_LEN} on three practice tests in a row.</p>`}
-      ${scores.length ? `<p class="sub">Your last practice tests: ${scores.join(', ')}</p>` : ''}
+      ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
+        : `<${testsH} tabindex="-1">Practice tests</${testsH}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more right out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p>`}
+      ${scores.length ? `<p class="sub">${scores.length === 1 ? 'Your last practice test' : `Your last ${scores.length} practice tests, oldest first`}: ${scores.join(', ')} right out of ${TEST_LEN}.</p>` : ''}
       ${saved && saved.kind === 'test' ? '' : `<button class="btn${testFirst ? ' primary' : ''}" type="button" id="testBtn">${isReady ? 'Take another practice test' : 'Start a practice test'}</button>`}
     </section>`;
   paint(`
     <section class="home">
-      ${top}
+      ${testsFirst ? tests : ''}
+      ${testsFirst ? `<div class="later">${set}</div>` : set}
       ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
-      <p class="theme">${factsLine()}</p>
-      ${tests}
+      <p class="facts">${factsLine()}</p>
+      ${testsFirst ? '' : tests}
       ${roadMarkers()}
       ${sectionsPanel()}
       ${disclaimer}
@@ -701,12 +717,17 @@ function renderHome() {
 
 // What the Learner was doing in a Set stopped partway through, for a sentence ("You stopped partway through …").
 const doing = saved => saved.kind === 'daily' ? `Set ${saved.number}` : 'a practice test';
+// Every answered question screen, first looks included: what starting over clears.
 const answeredSoFar = saved => saved.screens.filter(s => isQuestion(s) && s.chosen !== null).length;
+// The questions the Learner is counted on: counted questions and re-asks, not first looks.
+const scoredScreens = r => r.screens.filter(s => s.kind === 'counted' || s.kind === 'reask');
 function stoppedLine(saved) {
+  const scored = scoredScreens(saved), done = scored.filter(s => s.chosen !== null).length;
+  const again = saved.kind === 'daily' ? `Start Set ${saved.number} again from the beginning` : 'Start the practice test again from the beginning';
   return `<div class="stopped">
-      <p>You stopped partway through ${doing(saved)}. You answered ${answeredSoFar(saved)} of ${saved.screens.filter(isQuestion).length} questions. Your answers are saved.</p>
+      <p>You stopped partway through ${doing(saved)}. You answered ${done} of its ${scored.length} questions. Your answers are saved.</p>
       <button class="btn primary" type="button" id="resumeBtn">Continue where I stopped</button>
-      <button class="link" type="button" id="overBtn">Start over from question 1 (this clears these answers)</button>
+      <button class="link" type="button" id="overBtn">${again}. Your answers in it will be cleared.</button>
     </div>`;
 }
 function dropUnfinished() { copy.unfinished = S.run = null; saveCopy(); }
@@ -715,11 +736,11 @@ function dropUnfinished() { copy.unfinished = S.run = null; saveCopy(); }
 // through, it asks first and says that those answers will be cleared.
 function startOver(saved, kind) {
   if (!saved || !answeredSoFar(saved)) { if (saved) dropUnfinished(); return start(kind); }
-  const n = answeredSoFar(saved), what = kind === 'test' ? 'a practice test' : 'the set';
+  const what = kind === 'test' ? 'a practice test' : `Set ${S.sets + 1}`;
   paint(`
     <section class="home">
       <h2 tabindex="-1">Start ${what}?</h2>
-      <p class="sub">You stopped partway through ${doing(saved)}. If you start ${what} now, the ${plural(n, 'answer', 'answers')} you gave there will be cleared. They will not count.</p>
+      <p class="sub">You stopped partway through ${doing(saved)}. If you start ${what} now, the answers you gave there will be cleared. They will not count.</p>
       <button class="btn primary" type="button" id="newSetYes">Yes, start ${what}</button>
       <button class="btn" type="button" id="newSetNo">No, go back</button>
     </section>`, 'h2');
@@ -744,20 +765,20 @@ function visual(q) { return q.sign ? SIGNS[q.sign] || '' : q.swatch ? SIGNS.swat
 const quitLink = '<button class="link" type="button" id="quitBtn">Stop for now and save my place</button>';
 function wireQuit() { $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); }; }
 
-// The line above every screen of a Set. Its bar counts counted questions answered, so it does not
-// move on first looks, re-asks or rule screens.
+// The line above every screen of a Set: what kind of screen it is, and a bar of the counted
+// questions and re-asks answered so far, so it never looks full while questions are left.
 function progressLine() {
-  const s = run.screens[run.i], counted = run.screens.filter(x => x.kind === 'counted');
-  const done = counted.filter(x => x.chosen !== null).length, n = counted.indexOf(s) + 1;
+  const s = run.screens[run.i], counted = run.screens.filter(x => x.kind === 'counted'), scored = scoredScreens(run);
+  const done = scored.filter(x => x.chosen !== null).length, n = counted.indexOf(s) + 1;
   const where = run.kind === 'test' ? `Practice test: question ${n} of ${counted.length}`
-    : s.kind === 'counted' ? `Set ${run.number}: question ${n} of ${counted.length}`
-    : s.kind === 'first_look' ? `Set ${run.number}: first look` : s.kind === 'reask' ? `Set ${run.number}: one more time` : `Set ${run.number}`;
-  return `<div class="progress"><span>${where}</span><div class="bar" aria-hidden="true"><span style="width:${done / counted.length * 100}%"></span></div></div>`;
+    : `Set ${run.number}: ${s.kind === 'counted' ? `question ${n} of ${counted.length}` : s.kind === 'first_look' ? 'a new question'
+      : s.kind === 'reask' ? 'a question from earlier' : s.kind === 'contrast' ? 'facts side by side' : 'a new fact'}`;
+  return `<div class="progress"><span>${where}</span><div class="bar" aria-hidden="true"><span style="width:${done / scored.length * 100}%"></span></div></div>`;
 }
 
-function renderScreen(revealFeedback) {
+function renderScreen() {
   const kind = run.screens[run.i].kind;
-  return kind === 'rule' ? renderRule() : kind === 'contrast' ? renderCompare() : renderQuestion(revealFeedback);
+  return kind === 'rule' ? renderRule() : kind === 'contrast' ? renderCompare() : renderQuestion();
 }
 
 // A group's Compare screen: its easily mixed-up facts side by side, before the questions on them.
@@ -772,8 +793,8 @@ function renderCompare() {
     <div class="home">
       ${progressLine()}
       <div class="card">
-        <h1 class="q" id="compareHead" tabindex="-1">Compare: ${esc(g.title)}</h1>
-        <p class="sub">These ${g.facts.length} rules are easy to mix up. Here they are side by side.</p>
+        <h1 class="q" id="compareHead" tabindex="-1">${esc(g.title)}</h1>
+        <p class="sub">These ${g.facts.length} facts are easy to confuse with each other. Here they are side by side. The questions on them come next.</p>
         <ul class="compare">${rows}</ul>
       </div>
       <button class="btn primary" type="button" id="compareGoBtn">Go on to the questions</button>
@@ -783,8 +804,8 @@ function renderCompare() {
   wireQuit();
 }
 
-// A fact's rule: its explanation and the manual's own words. It comes once, when the Learner first
-// meets the fact, right after the first look; the fact's counted question comes later in the Set.
+// A new fact's answer and its explanation. It comes once, right after the fact's first look, and
+// leads with the result of that look; the fact's counted question comes later in the Set.
 function renderRule() {
   const s = run.screens[run.i], q = BY_ID[s.id], prev = run.screens[run.i - 1];
   const look = prev && prev.kind === 'first_look' && prev.id === s.id ? prev : null;
@@ -792,9 +813,9 @@ function renderRule() {
     <div class="home">
       ${progressLine()}
       <div class="card">
-        ${!look ? '<h1 class="rulehead" id="ruleHead" tabindex="-1">Read this first.</h1>'
+        ${!look ? '<h1 class="outcome" id="ruleHead" tabindex="-1">Read this first.</h1>'
           : look.chosen === q.a ? `<h1 class="outcome good" id="ruleHead" tabindex="-1">You picked the right answer: ${esc(q.a)}.</h1>`
-          : `<h1 class="outcome" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}.</p>`}
+          : `<h1 class="outcome" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
         <p class="back">This question comes back later in this set.</p>
@@ -806,66 +827,55 @@ function renderRule() {
   wireQuit();
 }
 
-// What a counted question or re-ask says after it is answered: {verdict, also, back}. `also` names
-// the question a wrong choice answers, when it is another fact's answer; `back` says when the
-// question comes back, said plainly instead of a verdict.
+// What an answered counted question or re-ask says, top of the card first: {lead, picked, other,
+// back}. `lead` is the result; `picked` says what was picked when it was wrong; `other` names the
+// question a wrong choice is the answer to; `back` says when the question comes back.
 function feedbackLines(s) {
   const q = asked(s);
-  if (isRight(s)) return { verdict: 'Correct.', also: '', back: '' };
+  if (isRight(s)) return { lead: `You picked the right answer: ${answerOf(s)}.`, picked: '', other: '', back: '' };
   const other = s.format === 'choice' && q.also && BY_ID[q.also[s.chosen]];
   const reasked = run.kind === 'daily' && s.kind === 'counted' && run.screens.some((x, j) => j > run.i && x.kind === 'reask' && x.id === s.id);
-  return { verdict: `The right answer is: ${answerOf(s)}.`, also: other ? `${s.chosen} answers a different question: ${other.q}` : '',
+  return { lead: `The answer is: ${answerOf(s)}.`, picked: `You picked: ${s.chosen}.`,
+    other: other ? `${s.chosen} is the answer to a different question: ${other.q}` : '',
     back: reasked ? 'This question comes back later in this set, and in your next set.' : 'This question comes back in your next set.' };
 }
 
-function renderQuestion(revealFeedback) {
+function renderQuestion() {
   const s = run.screens[run.i], q = asked(s), last = run.i === run.screens.length - 1, right = answerOf(s);
   const L = ['A', 'B', 'C', 'D'];
   const opts = s.options.map((o, k) => {
     if (!run.answered) return `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${L[k]}"><span class="key">${L[k]}</span><span class="otext">${esc(o)}</span></button></li>`;
-    let c = 'rest', tag = '';
-    if (o === right) { c = 'right'; tag = o === s.chosen ? 'Your answer. It is correct.' : 'Correct answer'; }
-    else if (o === s.chosen) { c = 'wrong'; tag = 'Your answer'; }
+    const c = o === right ? 'right' : o === s.chosen ? 'wrong' : 'rest';
+    const tag = o === s.chosen ? 'Your answer' : o === right ? 'The answer' : '';
     return `<li class="opt ${c}"><span class="key" aria-hidden="true">${L[k]}</span><span class="otext"><span>${esc(o)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</span></li>`;
   }).join('');
   const lines = run.answered ? feedbackLines(s) : null;
-  const fb = lines ? `<div class="feedback" id="feedback">
-      <p class="verdict${isRight(s) ? ' good' : ''}">${esc(lines.verdict)}</p>
-      ${lines.also ? `<p class="also">${esc(lines.also)}</p>` : ''}
-      <p class="why">${esc(q.why)}</p>
-      ${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}
+  // Answered, the result is the first thing on the card; the explanation follows the choices.
+  const result = lines ? `<div class="result" id="feedback">
+      <h2 class="outcome${isRight(s) ? ' good' : ''}" id="outcome" tabindex="-1">${esc(lines.lead)}</h2>
+      ${lines.picked ? `<p class="picked">${esc(lines.picked)}</p>` : ''}
+      ${lines.other ? `<p class="also">${esc(lines.other)}</p>` : ''}
     </div>` : '';
-  const above = s.kind === 'first_look' ? '<p class="sub">You have not had this question before. Pick the answer you think is right. This answer does not count.</p>'
-    : s.kind === 'reask' ? '<p class="sub">One more time.</p>' : '';
+  const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}</div>` : '';
+  const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is right. This answer does not count.</p>'
+    : s.kind === 'reask' ? '<p class="sub">You saw this question earlier in this set. Here it is again.</p>' : '';
   paint(`
     <div class="home">
       ${progressLine()}
       <div class="card">
+        ${result}
         ${above}
         ${visual(q) && s.format !== 'reverse' ? `<div class="visual">${visual(q)}</div>` : ''}
-        <h1 class="q" id="qText" tabindex="-1">${esc(questionText(s))}</h1>
+        ${run.answered ? `<p class="q asked" id="qText">${esc(questionText(s))}</p>` : `<h1 class="q" id="qText" tabindex="-1">${esc(questionText(s))}</h1>`}
         <ul class="options" aria-labelledby="qText">${opts}</ul>
-        ${fb}
+        ${explain}
       </div>
       ${run.answered ? `<button class="btn primary" type="button" id="nextBtn">${!last ? 'Next question' : run.kind === 'test' ? 'See my score' : 'See how it went'}</button>` : ''}
       ${quitLink}
-    </div>`, run.answered ? null : '#qText');
-  if (run.answered) {
-    $('nextBtn').onclick = next;
-    $('nextBtn').focus({ preventScroll: true });
-    if (revealFeedback) reveal();
-  } else document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
+    </div>`, run.answered ? '#outcome' : '#qText');
+  if (run.answered) $('nextBtn').onclick = next;
+  else document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
   wireQuit();
-}
-
-// After answering, bring the explanation into view above the pinned Next button without pushing the verdict off the top.
-function reveal() {
-  const fb = $('feedback'), nb = $('nextBtn');
-  if (!fb || !nb) return;
-  const r = fb.getBoundingClientRect();
-  const limit = window.innerHeight - nb.offsetHeight - 32;
-  const dy = Math.min(r.bottom - limit, r.top - 16);
-  if (dy > 0) window.scrollBy({ top: dy });
 }
 
 // After a wrong counted answer at screen `p`, the same fact is asked once more right after the
@@ -889,16 +899,15 @@ function choose(k) {
   if (run.answered || !isQuestion(s)) return;
   s.chosen = s.options[k];
   s.at = new Date().toISOString();
-  // A first look is not scored: choosing goes straight on to the fact's rule screen.
+  // A first look is not scored: choosing goes straight on to the fact's answer and explanation.
   if (s.kind === 'first_look') { run.i++; keepRun(); toTop(); return renderScreen(); }
   run.answered = true;
   if (run.kind === 'daily' && s.kind === 'counted' && !isRight(s)) insertReask(run, run.i);
   keepRun();
-  renderQuestion(true);
+  toTop();
+  renderQuestion();
   const lines = feedbackLines(s);
-  const q = asked(s);
-  $('announce').textContent = [lines.verdict, lines.also, q.why, lines.back]
-    .filter(Boolean).join(' ');
+  $('announce').textContent = [lines.lead, lines.picked, lines.other, asked(s).why, lines.back].filter(Boolean).join(' ');
 }
 
 function next() {
@@ -922,32 +931,33 @@ function finish() {
   // Each fact with a wrong counted answer or re-ask, once, in the wording it was asked.
   const wrong = r.screens.filter(s => (s.kind === 'counted' || s.kind === 'reask') && !isRight(s));
   const missed = [...new Set(wrong.map(s => s.id))];
-  const list = missed.map(id => { const q = asked(wrong.find(s => s.id === id)); return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p><p class="mwhy">${esc(q.why)}</p></li>`; }).join('');
+  const list = missed.map(id => { const s = wrong.find(x => x.id === id), q = asked(s); return `<li><p class="mq">${esc(questionText(s))}</p><p>The answer is: ${esc(answerOf(s))}.</p><p class="mwhy">${esc(q.why)}</p></li>`; }).join('');
   const missedList = missed.length ? `<details class="missed"><summary>See the ${plural(missed.length, 'question', 'questions')} you missed</summary><ul>${list}</ul></details>` : '';
-  if (r.kind === 'test') testDone(r, missed, missedList); else setDone(r, before, missedList);
+  if (r.kind === 'test') testDone(r, missed, missedList); else setDone(r, before, missed, missedList);
   toTop();
 }
 
-// The end of a daily Set: what changed, in counts, and what comes next. No score.
-function setDone(r, before, missedList) {
+// The end of a daily Set: what changed, in full sentences, and what comes next. No score.
+function setDone(r, before, missed, missedList) {
   const ids = [...new Set(r.screens.filter(isQuestion).map(s => s.id))];
   const learned = ids.filter(id => !isLearned(before.facts[id]) && isLearned(S.facts[id])).length;
   const solid = ids.filter(id => !isSolid(before.facts[id]) && isSolid(S.facts[id])).length;
   const back = ids.filter(id => S.facts[id].lastRight === false).length;
-  const lines = [learned ? `${plural(learned, 'new fact', 'new facts')} learned.` : '', solid ? `${plural(solid, 'fact', 'facts')} now solid.` : '',
-    back ? `${plural(back, 'fact comes', 'facts come')} back in your next set.` : ''].filter(Boolean);
-  const plan = setPlan(S, Date.now()), more = !fillOnly(plan);
+  const lines = [learned ? `You learned ${plural(learned, 'new fact', 'new facts')}.` : '',
+    solid ? `${plural(solid, 'fact is', 'facts are')} now solid.` : '',
+    back ? `${plural(back, 'question you missed comes', 'questions you missed come')} back in your next set. Missing a question is part of learning it.` : ''].filter(Boolean);
+  const plan = setPlan(S, Date.now()), more = !fillOnly(plan), nextSet = `Start Set ${S.sets + 1}`;
   const buttons = more
-    ? '<button class="btn primary" type="button" id="moreBtn">Another set</button><button class="btn" type="button" id="homeBtn">I\'m done for now</button>'
+    ? `<button class="btn primary" type="button" id="moreBtn">${nextSet}</button><button class="btn" type="button" id="homeBtn">I'm done for now</button>`
     : `<button class="btn primary" type="button" id="homeBtn">I'm done for now</button>${unlocked() ? '<button class="btn" type="button" id="testBtn">Start a practice test</button>' : ''}
-      <p class="sub">Nothing is due. The next set goes over ${plan.fill.length} facts you already know.</p><button class="link" type="button" id="moreBtn">Another set</button>`;
+      <p class="sub">Nothing is due. The next set asks ${plural(plan.fill.length, 'question', 'questions')} you already know.</p><button class="link" type="button" id="moreBtn">${nextSet}</button>`;
   paint(`
     <section class="home">
-      <h2 tabindex="-1">Set done.</h2>
+      <h2 tabindex="-1">You finished Set ${r.number}.</h2>
       ${lines.map(l => `<p class="theme">${l}</p>`).join('')}
       <p class="sub">${factsLine()}</p>
-      ${missedList}
       ${buttons}
+      ${missedList}
     </section>`, 'h2');
   wireDone();
 }
@@ -962,19 +972,20 @@ function testDone(r, missed, missedList) {
     title = 'You are ready for the real test.';
     note = `You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.`;
   } else if (right >= READY_SCORE) {
-    title = 'That counts toward ready.';
-    note = `In a row so far: ${st} of ${READY_STREAK}. Get ${READY_SCORE} or more right on ${plural(READY_STREAK - st, 'more test', 'more tests')} to be ready.` + back;
+    title = 'This practice test counts toward Ready for the test.';
+    note = `You have ${st} of ${READY_STREAK} in a row. Get ${READY_SCORE} or more right on ${plural(READY_STREAK - st, 'more practice test', 'more practice tests')} to be ready.` + back;
   } else {
-    title = 'This practice test is done.';
-    note = `To count toward ready, you need ${READY_SCORE} or more right.` + back;
+    title = 'You finished this practice test.';
+    note = `A practice test counts toward Ready for the test when you get ${READY_SCORE} or more right.` + back;
   }
   paint(`
     <section class="home">
-      <p class="score">${right} of ${counted.length}<span> right</span></p>
-      ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2><p class="sub">${esc(note)}</p>`}
-      ${sign && missed.length ? `<p class="sub">${back.trim()}</p>` : ''}
-      ${missedList}
+      ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2>`}
+      <p class="score">You got ${right} right out of ${counted.length}.</p>
+      ${sign ? (missed.length ? `<p class="sub">${back.trim()}</p>` : '') : `<p class="sub">${esc(note)}</p>`}
       <button class="btn primary" type="button" id="homeBtn">I'm done for now</button>
+      <button class="btn" type="button" id="testBtn">Take another practice test</button>
+      ${missedList}
     </section>`, 'h2');
   wireDone();
 }
