@@ -6,7 +6,7 @@ I am developing this specifically for my son who is on the autism spectrum and s
 
 I am not an educator by trade or training.  In fact, I'm pretty terrible at trying to teach anything, so I'm trying to build a tool that will help my son learn what he needs to pass the test.
 
-This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees only the section they're on: 10 questions, the rule before each question they have never answered, an explanation after each answer with the manual's own words and page number, and a short score at the end. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
+This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees one short Set at a time: the facts due again and a few new ones, each new fact's rule before its question, an explanation after each answer with the manual's own words and page number, and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
 
 Since this app is in active development, the content of this README may not always be up to date.  
 
@@ -14,11 +14,10 @@ Since this app is in active development, the content of this README may not alwa
 
 | Step | What the learner does | Done when |
 | --- | --- | --- |
-| Sections 1 to 12 | 10 questions on one topic per Study session, easiest first | All 12 sections finished |
-| Review | Only the questions they missed, 10 at a time | Nothing left to review |
+| Sets | Up to 10 counted questions: facts due again, then up to 5 new facts in Section order. Each new fact gets a first look, its rule, and its question a few screens later | Every fact is learned |
 | Practice tests | 30 questions drawn from all 120, like the real test | 27 or more right, three times in a row |
 
-- Finished sections show as finished, whatever the score. "See your section scores" on the home screen lists each section's latest score and lets the learner do it again in a new order.
+- A fact answered right comes back after 12 hours, then 48 hours, then every 7 days. A fact answered wrong comes back once more in the same Set and again in the next one. The home screen shows how many of the 120 facts are learned, never a score, and a Section shows as finished once its 10 facts are learned. The full design is in [docs/specs/learning-engine.md](docs/specs/learning-engine.md).
 - Stopping partway, or closing the page, keeps the answers so far. The home screen offers to continue where the learner stopped.
 - The real test is 30 questions and needs 24 right (80%). "Ready" asks for 27 (90%) to leave room for nerves.
 - Progress is stored on the Instance, so it follows the learner from one device to another. With no connection the app still works, and finished sets wait on the device until it is back online.

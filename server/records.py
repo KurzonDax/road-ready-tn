@@ -37,11 +37,18 @@ class RecordError(ValueError):
 ID = re.compile(r"[A-Za-z0-9_-]{16,64}")
 # ISO 8601 in UTC, as the page's Date.toISOString() writes it (the fraction and +00:00 are allowed too).
 UTC_TIME = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{1,6})?(Z|\+00:00)")
-SET_TYPES = ("day", "redo", "review", "test")  # the page's own names for a Section, a redo, Review, a Practice test
+# The page's own names for a Set from Start the set to Set done, and a Practice test. The page made
+# "day" (a Section), "redo" and "review" Sets before the learning engine; they are still accepted
+# so stored History keeps its shape, but the page never makes them again.
+SET_TYPES = ("daily", "test", "day", "redo", "review")
 SECTION_TYPES = ("day", "redo")                # the types that name a Section
 SECTIONS = 12
-MOVE_TO = SECTIONS + 1                         # a Move "to 13" sends the Learner on to Review and Practice tests
+MOVE_TO = SECTIONS + 1                         # a Move "to 13" unlocks Practice tests; 1 to 12 sets where new facts come from
 MAX_ANSWERS = 50
+MAX_GROUP = 64                                 # characters in a daily Set's group id
+ANSWER_FIELDS = ("q", "chosen", "right", "at")
+ROLES = ("counted", "first_look", "reask")     # only a counted answer changes a fact's standing
+FORMATS = ("choice", "typed", "reverse")
 
 
 def _fields(value, what, names):
@@ -67,7 +74,8 @@ def _check_time(value, what):
 
 
 def _check_set(data):
-    _fields(data, "a set's data", ("set_id", "type", "section", "started_at", "answers"))
+    names = ("set_id", "type", "section", "started_at", "answers")
+    _fields(data, "a set's data", names + ("group",) if isinstance(data, dict) and data.get("type") == "daily" else names)
     if not isinstance(data["set_id"], str) or not data["set_id"]:
         raise ValueError("set_id must be a string")
     if data["type"] not in SET_TYPES:
@@ -77,12 +85,20 @@ def _check_set(data):
             raise ValueError(f"section must be 1 to {SECTIONS} for {data['type']}")
     elif data["section"] is not None:
         raise ValueError(f"section must be null for {data['type']}")
+    if data["type"] == "daily" and data["group"] is not None and not (
+            isinstance(data["group"], str) and 1 <= len(data["group"]) <= MAX_GROUP):
+        raise ValueError(f"group must be null or a string of 1 to {MAX_GROUP} characters")
     _check_time(data["started_at"], "started_at")
     answers = data["answers"]
     if not isinstance(answers, list) or not 1 <= len(answers) <= MAX_ANSWERS:
         raise ValueError(f"answers must be a list of 1 to {MAX_ANSWERS}")
     for answer in answers:
-        _fields(answer, "an answer", ("q", "chosen", "right", "at"))
+        # Four fields, as the page wrote them before the learning engine, or six.
+        six = isinstance(answer, dict) and len(answer) == 6
+        _fields(answer, "an answer", ANSWER_FIELDS + ("role", "format") if six else ANSWER_FIELDS)
+        if six and (answer["role"] not in ROLES or answer["format"] not in FORMATS):
+            raise ValueError(f"an answer's role must be one of {', '.join(ROLES)}"
+                             f" and its format one of {', '.join(FORMATS)}")
         if not isinstance(answer["q"], str) or not isinstance(answer["chosen"], str):
             raise ValueError("an answer's q and chosen must be strings")
         if not isinstance(answer["right"], bool):

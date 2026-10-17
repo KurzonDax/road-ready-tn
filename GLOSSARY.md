@@ -31,31 +31,54 @@ _Avoid_: Variant, version, paraphrase
 ## Study path
 
 **Section**:
-One of the 12 topic sets of 10 questions, done in order.
+One of the 12 topic groups of 10 Facts, in the order new Facts arrive. Done when all 10 are learned.
 _Avoid_: Day, lesson, chapter
 
-**Review**:
-The step after Section 12 that repeats only the questions the Learner missed, 10 at a time.
-
-**Practice test**:
-30 questions drawn from all 120, like the real test.
-_Avoid_: Mock exam, quiz
-
 **Set**:
-One run of questions from the first to the last: a Section (first time or redone), 10 Review questions, or a Practice test.
+One run of screens from Start the set to Set done, built from due Facts and new Facts, or a Practice test.
 _Avoid_: Run, round, attempt
 
+**Standing**:
+How well a Fact is known, worked out from its counted questions: new, seen, learned or solid. A Standing only rises.
+_Avoid_: Level, score, mastery
+
+**Due**:
+A Fact whose Standing says it should be asked again now: after a wrong answer at once, else after a wait that grows with each spaced success.
+_Avoid_: Overdue, scheduled
+
+**Counted question**:
+A question whose answer changes a Fact's Standing. A First look and a re-ask are not counted.
+_Avoid_: Scored question
+
+**First look**:
+An unscored question shown before a Fact's Rule screen, the first time the Learner meets the Fact.
+_Avoid_: Pre-test, guess
+
+**Rule screen**:
+The screen with a Fact's rule in plain words, the manual's own words, and the page. It comes once, when the Learner first meets the Fact.
+_Avoid_: Rule card, flashcard, hint
+
+**Compare**:
+One screen that shows a group of easily mixed-up Facts side by side, followed by questions on just that group.
+_Avoid_: Contrast, review
+
+**Review**:
+No longer a stage. A Fact answered wrong comes back in the next Set instead.
+
+**Redo**:
+No longer a stage. A Section is not done again; its Facts come back when they are due.
+
+**Practice test**:
+30 questions drawn from all 120, like the real test. Unlocked once every Fact is learned.
+_Avoid_: Mock exam, quiz
+
 **Progress**:
-Where a Learner is on the study path now: the next Section, Section scores, what is left to Review, and the Practice test streak.
+Each Fact's Standing, the Section new Facts come from, and the Practice test scores.
 _Avoid_: State, save
 
 **History**:
 Every Set a Learner has finished, with each answer and when it was given. Resetting Progress keeps the History.
 _Avoid_: Log, activity
-
-**Rule card**:
-The screen before a question the Learner has never answered: the rule in plain words, the manual's own words, and the page. During a Section it can be opened again before answering.
-_Avoid_: Flashcard, hint
 
 **Study session**:
 A stretch of study with no break longer than 30 minutes between answers.
@@ -71,9 +94,9 @@ The screens a Helper sees after signing in: every Learner, and each Learner's Pr
 _Avoid_: Dashboard, admin panel, parent view
 
 **Reset**:
-A Helper putting a Learner's Progress back to the start of Section 1. The History is kept.
+A Helper putting a Learner's Progress back to the start: every Fact new again, new Facts from Section 1. The History is kept.
 _Avoid_: Restart, wipe
 
 **Move**:
-A Helper setting which Section a Learner does next, or sending them on to Review and Practice tests.
+A Helper setting which Section new Facts come from next, or unlocking Practice tests before every Fact is learned.
 _Avoid_: Jump, skip

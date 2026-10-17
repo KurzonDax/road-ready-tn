@@ -111,7 +111,7 @@ def reset_sign_in(req):
 @route("POST", "/api/learners/<id>/reset-progress")
 @auth.require("helper")
 def reset_progress(req):
-    """A Reset record: the Learner starts again at Section 1. Earlier records stay as History."""
+    """A Reset record: every fact is new again and new facts start at Section 1. Earlier records stay as History."""
     learner_id = _learner(req)["id"]
     _body(req)
     return json_response({"record": records.helper_record(req.db, learner_id, "reset", {}, req.now())})
@@ -120,7 +120,7 @@ def reset_progress(req):
 @route("POST", "/api/learners/<id>/move")
 @auth.require("helper")
 def move(req):
-    """A Move record: the Learner's next Section becomes `to` (13 is Review and Practice tests)."""
+    """A Move record: new facts come from Section `to` on (13 unlocks Practice tests)."""
     learner_id = _learner(req)["id"]
     body = _body(req)
     try:

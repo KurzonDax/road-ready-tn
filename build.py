@@ -42,7 +42,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent
 SRC = ROOT / "src"
 sys.path.insert(0, str(ROOT / "tests"))
-from validate_data import validate  # noqa: E402
+from validate_data import plain, validate  # noqa: E402
 
 
 def compact(q, section):
@@ -74,7 +74,18 @@ def build_data():
     for sec in plan["sections"]:
         days.append({"day": sec["section"], "title": sec["title"]})
         qs.extend(compact(by_id[i], sec["section"]) for i in sec["questions"])
+    add_also(qs)
     return {"days": days, "qs": qs}
+
+
+def add_also(qs):
+    """Give a question `also` when a wrong choice is the right answer to another question: {wrong text: that
+    question's id}. The page says so after that choice ("30 feet answers a different question: ...")."""
+    answers = {plain(q["a"]): q["id"] for q in qs}
+    for q in qs:
+        also = {w: answers[plain(w)] for w in q["o"] if answers.get(plain(w), q["id"]) != q["id"]}
+        if also:
+            q["also"] = also
 
 
 # An on...= attribute inside a tag the script writes as a string, such as `<button onclick="...">`.
