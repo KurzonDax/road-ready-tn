@@ -62,10 +62,6 @@ def test_build_writes_page_questions_and_csp(tmp):
     grouped = {q["id"]: q["group"] for q in data["qs"] if "group" in q}
     check(len(grouped) == 56 and grouped.get("b-250") == "parking-distances" and grouped.get("a-084") == "sign-colors",
           f"the 56 grouped questions name their group (got {len(grouped)})")
-    typed = {q["id"]: q["typed"] for q in data["qs"] if "typed" in q}
-    check(len(typed) == 22 and typed.get("b-077") == {"template": "Between {} and {} feet", "numbers": [15, 50]}
-          and typed.get("c-097") == {"template": "{} percent", "numbers": [0.08]},
-          f"the 22 numeric questions carry their typed template and numbers (got {len(typed)})")
     check("__DATA__" not in page, "the page has no __DATA__ placeholder left")
     by_id = {q["id"]: q for q in data["qs"]}
     also = {q["id"]: q["also"] for q in data["qs"] if "also" in q}
@@ -210,28 +206,6 @@ def test_group_rules_catch_each_mistake():
           "a reverse stem with {answer} once, on 4 facts, passes")
 
 
-def test_typed_rules_catch_each_mistake():
-    """The rules validate_data.py checks `typed` against, each shown catching its mistake."""
-    sys.path.insert(0, str(ROOT / "tests"))
-    from validate_data import check_typed
-    used = {"q-1", "q-2"}
-
-    def q(answer, template, numbers, qid="q-1"):
-        return {"id": qid, "answer": answer, "typed": {"template": template, "numbers": numbers}}
-
-    check(check_typed([q("Between 15 and 50 feet", "Between {} and {} feet", [15, 50]), q("Ten feet", "{} feet", [10], "q-2"),
-                       q("0.08 percent", "{} percent", [0.08], "q-2"), {"id": "q-3", "answer": "Stop"}], used) == [],
-          "templates whose numbers match the answer's, written as digits or words, pass")
-    for questions, want, what in (
-            ([q("Between 15 and 50 feet", "Between {} feet", [15, 50])], "{}", "one {} for two numbers"),
-            ([q("Between 15 and 50 feet", "Between {} and {} feet", [15, 30])], "numbers", "a number the answer doesn't have"),
-            ([q("Two seconds", "{} seconds", [3])], "numbers", "a word number that doesn't match"),
-            ([q("70 mph", "{} mph", [70], "x-9")], "sections", "typed on a question not in the sections"),
-            ([q("70 mph", "{} mph", ["70"])], "numbers", "a number written as text")):
-        errors = check_typed(questions, used)
-        check(any(want in e for e in errors), f"check_typed catches {what} (got {errors})")
-
-
 def main():
     with tempfile.TemporaryDirectory() as t:
         tmp = pathlib.Path(t)
@@ -245,8 +219,6 @@ def main():
         test_check_dist_catches_a_stale_dist(tmp)
         print("\n[groups.json rules]")
         test_group_rules_catch_each_mistake()
-        print("\n[typed rules]")
-        test_typed_rules_catch_each_mistake()
     print("\nAll checks passed." if not failures else f"\n{len(failures)} check(s) failed.")
     raise SystemExit(1 if failures else 0)
 

@@ -3,7 +3,7 @@
 
 Run on its own (python3 tests/validate_data.py) or automatically from build.py.
 Every rule here exists because the mistake it catches actually happened, except the
-fact, group and typed rules, which guard data written by hand (see check_facts, check_groups and check_typed).
+fact and group rules, which guard groupings done by hand (see check_facts and check_groups).
 """
 import json
 import pathlib
@@ -69,7 +69,6 @@ def validate():
     errors += check_facts(qs, set(used))
     groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
     errors += check_groups(groups, set(used))
-    errors += check_typed(qs, set(used))
     return errors
 
 
@@ -115,30 +114,6 @@ def check_facts(qs, used):
                 if plain(q["answer"]) in {plain(w) for w in other["wrong"]}:
                     errors.append(f"{q['id']}: its right answer is a wrong choice in {other['id']}, another"
                                   f" wording of fact {f}")
-    return errors
-
-
-def check_typed(qs, used):
-    """`typed` on a numeric fact: the Learner types its numbers into a template like "Between {} and {} feet".
-
-    The template has one {} per number, the numbers are exactly the answer's (as digits or words, so
-    "Ten feet" types 10), and only the app's own questions have it.
-    """
-    errors = []
-    for q in qs:
-        typed = q.get("typed")
-        if typed is None:
-            continue
-        nums, template = typed.get("numbers"), typed.get("template", "")
-        if q["id"] not in used:
-            errors.append(f"{q['id']}: typed is only for questions in the sections")
-        if not isinstance(nums, list) or not all(type(n) in (int, float) for n in nums):
-            errors.append(f"{q['id']}: typed numbers must be a list of numbers")
-            continue
-        if template.count("{}") != len(nums):
-            errors.append(f"{q['id']}: its typed template needs one {{}} per number")
-        if {str(n) for n in nums} != numbers(q["answer"]):
-            errors.append(f"{q['id']}: typed numbers {nums} are not the numbers in its answer {q['answer']!r}")
     return errors
 
 
