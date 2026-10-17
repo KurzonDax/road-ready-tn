@@ -257,7 +257,7 @@ def fetch(base, path):
 def check_manifest(base):
     m = json.loads(fetch(base, "manifest.webmanifest"))
     want = {"name": "Road Ready TN", "short_name": "Road Ready", "id": "/", "start_url": "/", "scope": "/",
-            "display": "standalone", "background_color": "#f3f5f2", "theme_color": "#f3f5f2", "lang": "en"}
+            "display": "standalone", "background_color": "#111814", "theme_color": "#111814", "lang": "en"}
     check({k: m.get(k) for k in want} == want, "the manifest names the app and opens it standalone at /")
     check("orientation" not in m, "the manifest doesn't lock the orientation")
     icons = sorted((i.get("src"), i.get("sizes"), i.get("purpose", "any")) for i in m.get("icons", []))
@@ -1819,7 +1819,7 @@ def daily_at(n, answers, group=None):
 def check_study_path(browser, inst, scheme="light"):
     """A new Learner's first Sets, in light or dark mode: first looks, rule screens, the gap, re-asks,
     Set done, the next Set, and a Set stopped partway through."""
-    print(f"\n[{scheme} mode: the study path]")
+    print(f"\n[the study path, device set to {scheme}]")
     errors = []
     ctx = browser.new_context(viewport={"width": 400, "height": 900}, color_scheme=scheme)
     pg = ctx.new_page()
@@ -1830,6 +1830,8 @@ def check_study_path(browser, inst, scheme="light"):
     open_page(pg, inst.url)
     sign_in(pg, *learner)
 
+    check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(17, 24, 20)",
+          f"the page is dark even when the device is set to {scheme}")
     check(h1(pg) == "Set 1" and "5 new rules, one at a time. There is no time limit." in stage_text(pg)
           and "0 of 120 facts learned. 0 solid." in stage_text(pg),
           "a new Learner's home screen: Set 1, 5 new rules, 0 of 120 facts learned", stage_text(pg))
@@ -2233,9 +2235,7 @@ def main():
         })""")
         check(head["viewport"] == "width=device-width, initial-scale=1, viewport-fit=cover",
               "the viewport covers the whole screen, with zoom left on")
-        check(sorted(head["themes"]) == [["(prefers-color-scheme: dark)", "#111814"],
-                                         ["(prefers-color-scheme: light)", "#f3f5f2"]],
-              f"theme-color is set for light and dark (got {head['themes']})")
+        check(head["themes"] == [["", "#111814"]], f"theme-color is the dark background (got {head['themes']})")
         check(head["title"] == "Road Ready", "the Home Screen label is Road Ready")
         check(sorted(head["links"]) == [["apple-touch-icon", "apple-touch-icon.png"], ["icon", "icon-192.png"],
                                         ["manifest", "manifest.webmanifest"]],

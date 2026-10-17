@@ -71,4 +71,4 @@ The needs every change must protect:
 - **Test anxiety:** no time pressure, gentle feedback, and a clear sense of how far along the learner is.
 - **Attention and focus:** one task on screen, no distractions, and a predictable flow.
 
-Baseline: readable, legible type at phone size; keyboard and screen reader support (the stage is an `aria-live` region); and both light and dark color schemes.
+Baseline: readable, legible type at phone size; keyboard and screen reader support (the stage is an `aria-live` region); and one dark color scheme on every device, whatever its own setting.
