@@ -64,8 +64,6 @@ def compact(q, section, group=None):
         item["sign"] = q["sign"]
     if q.get("color"):
         item["swatch"] = q["color"]
-    if q.get("typed"):
-        item["typed"] = q["typed"]
     if group:
         item["group"] = group
     item["day"] = section  # the page calls sections "days" internally

@@ -52,13 +52,6 @@
       "topic": "vehicle",
       "question": "Where should you place your hands on the steering wheel?",
       "answer": "9 o'clock and 3 o'clock",
-      "typed": {
-        "template": "Left hand at {} o'clock, right hand at {} o'clock",
-        "numbers": [
-          9,
-          3
-        ]
-      },
       "wrong": [
         "11 o'clock and 6 o'clock",
         "7 o'clock and 5 o'clock",
@@ -75,13 +68,6 @@
       "topic": "vehicle",
       "question": "About how far back from the steering wheel should your body be?",
       "answer": "10 to 12 inches",
-      "typed": {
-        "template": "{} to {} inches",
-        "numbers": [
-          10,
-          12
-        ]
-      },
       "wrong": [
         "6 to 8 inches",
         "18 to 24 inches",
@@ -2851,13 +2837,6 @@
       "topic": "road",
       "question": "At night, when must your headlights be on?",
       "answer": "From 30 minutes after sunset until 30 minutes before sunrise",
-      "typed": {
-        "template": "From {} minutes after sunset until {} minutes before sunrise",
-        "numbers": [
-          30,
-          30
-        ]
-      },
       "wrong": [
         "From sunset until sunrise",
         "From 1 hour after sunset until 1 hour before sunrise",
@@ -3297,12 +3276,6 @@
       "topic": "road",
       "question": "Unless another speed is posted, what is the speed limit on primary and secondary state and federal highways?",
       "answer": "55 mph",
-      "typed": {
-        "template": "{} mph",
-        "numbers": [
-          55
-        ]
-      },
       "wrong": [
         "45 mph",
         "60 mph",
@@ -3319,12 +3292,6 @@
       "topic": "road",
       "question": "What is the maximum speed set by Tennessee law for interstate highways?",
       "answer": "70 mph",
-      "typed": {
-        "template": "{} mph",
-        "numbers": [
-          70
-        ]
-      },
       "wrong": [
         "65 mph",
         "75 mph",
@@ -3676,12 +3643,6 @@
       "topic": "road",
       "question": "Under normal conditions, what is the closest you should follow another vehicle?",
       "answer": "No closer than two seconds",
-      "typed": {
-        "template": "No closer than {} seconds",
-        "numbers": [
-          2
-        ]
-      },
       "wrong": [
         "No closer than one second",
         "No closer than one car length",
@@ -3714,12 +3675,6 @@
       "topic": "road",
       "question": "In bad weather, at night, at higher interstate speeds, or when following a motorcycle, what following distance should you use?",
       "answer": "At least four seconds",
-      "typed": {
-        "template": "At least {} seconds",
-        "numbers": [
-          4
-        ]
-      },
       "wrong": [
         "At least one second",
         "At least two seconds",
@@ -4038,13 +3993,6 @@
       "topic": "road",
       "question": "A train is coming. How far from the railroad tracks must you stop?",
       "answer": "Between 15 and 50 feet",
-      "typed": {
-        "template": "Between {} and {} feet",
-        "numbers": [
-          15,
-          50
-        ]
-      },
       "wrong": [
         "Between 5 and 10 feet",
         "Between 50 and 100 feet",
@@ -5112,12 +5060,6 @@
       "topic": "turns",
       "question": "How far before a turn must you turn on your turn signal?",
       "answer": "At least 50 feet",
-      "typed": {
-        "template": "At least {} feet",
-        "numbers": [
-          50
-        ]
-      },
       "wrong": [
         "At least 10 feet",
         "At least 25 feet",
@@ -6345,12 +6287,6 @@
       "topic": "turns",
       "question": "When you pass a bicycle going the same direction as you, how much space does the law require?",
       "answer": "3 feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          3
-        ]
-      },
       "wrong": [
         "1 foot",
         "2 feet",
@@ -6684,12 +6620,6 @@
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a fire hydrant?",
       "answer": "15 feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          15
-        ]
-      },
       "wrong": [
         "5 feet",
         "10 feet",
@@ -6706,12 +6636,6 @@
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a railroad crossing?",
       "answer": "50 feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          50
-        ]
-      },
       "wrong": [
         "15 feet",
         "20 feet",
@@ -6728,12 +6652,6 @@
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a crosswalk?",
       "answer": "20 feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          20
-        ]
-      },
       "wrong": [
         "5 feet",
         "10 feet",
@@ -6750,12 +6668,6 @@
       "topic": "turns",
       "question": "It is illegal to park within how many feet of a traffic signal or stop sign?",
       "answer": "30 feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          30
-        ]
-      },
       "wrong": [
         "10 feet",
         "15 feet",
@@ -6989,12 +6901,6 @@
       "topic": "turns",
       "question": "After parallel parking, your car should be no farther than how far from the curb?",
       "answer": "18 inches",
-      "typed": {
-        "template": "{} inches",
-        "numbers": [
-          18
-        ]
-      },
       "wrong": [
         "6 inches",
         "12 inches",
@@ -7879,12 +7785,6 @@
       "topic": "weather",
       "question": "At night, you must dim your high beams when meeting or overtaking a vehicle within how many feet?",
       "answer": "500 feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          500
-        ]
-      },
       "wrong": [
         "200 feet",
         "300 feet",
@@ -8490,12 +8390,6 @@
       "topic": "alcohol",
       "question": "You had three beers in the past hour. About how long will it take for the alcohol to leave your blood?",
       "answer": "About three hours",
-      "typed": {
-        "template": "About {} hours",
-        "numbers": [
-          3
-        ]
-      },
       "wrong": [
         "About one hour",
         "About two hours",
@@ -8606,12 +8500,6 @@
       "topic": "alcohol",
       "question": "What is the lowest BAC that is always illegal for drivers 21 and older in Tennessee?",
       "answer": "0.08 percent",
-      "typed": {
-        "template": "{} percent",
-        "numbers": [
-          0.08
-        ]
-      },
       "wrong": [
         "0.10 percent",
         "0.15 percent",
@@ -8973,12 +8861,6 @@
       "topic": "alcohol",
       "question": "What is the lowest BAC at which a driver age 16 to 20 can be convicted of underage driving while impaired?",
       "answer": "0.02 percent",
-      "typed": {
-        "template": "{} percent",
-        "numbers": [
-          0.02
-        ]
-      },
       "wrong": [
         "0.05 percent",
         "0.08 percent",
@@ -9146,12 +9028,6 @@
       "topic": "record",
       "question": "After a reportable crash, how long does the driver have to file a crash report with the Department of Safety?",
       "answer": "20 days",
-      "typed": {
-        "template": "{} days",
-        "numbers": [
-          20
-        ]
-      },
       "wrong": [
         "10 days",
         "48 hours",
@@ -11356,12 +11232,6 @@
       "topic": "sharing",
       "question": "Where are a truck's blind spots, or No-Zones?",
       "answer": "Right in front, on both sides, and up to 200 feet behind",
-      "typed": {
-        "template": "Right in front, on both sides, and up to {} feet behind",
-        "numbers": [
-          200
-        ]
-      },
       "wrong": [
         "Only directly behind the truck, up to 20 feet",
         "Only on the left side of the cab, near the driver's door",
@@ -11693,12 +11563,6 @@
       "topic": "sharing",
       "question": "How far away from a school bus should children stay?",
       "answer": "Ten feet",
-      "typed": {
-        "template": "{} feet",
-        "numbers": [
-          10
-        ]
-      },
       "wrong": [
         "Two feet",
         "Five feet",
