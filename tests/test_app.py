@@ -1850,8 +1850,8 @@ def check_study_path(browser, inst, scheme="light"):
     click_choice(pg, right=False)
     picked = pg.evaluate("run.screens[0].chosen")
     q = pg.evaluate("BY_ID[run.screens[1].id]")
-    check(pg.inner_text("#ruleHead") == "Here is the answer." and pg.inner_text(".rule") == q["why"]
-          and texts(pg, ".picked") == [f"You picked: {picked}.", f"The answer is: {q['a']}."]
+    check(pg.inner_text("#ruleHead") == f"The answer is: {q['a']}." and texts(pg, ".picked") == [f"You picked: {picked}."]
+          and stage_text(pg).startswith(f"Set 1 The answer is: {q['a']}. You picked: {picked}.") and pg.inner_text(".rule") == q["why"]
           and pg.text_content(".src figcaption") == f"Driver manual, page {q['p']}"
           and "This question comes back later in this set." in stage_text(pg),
           "choosing goes straight to the rule screen: the rule, the manual's words, what was picked and the answer",
@@ -1863,8 +1863,9 @@ def check_study_path(browser, inst, scheme="light"):
     pg.click("#ruleGoBtn")
     click_choice(pg)
     q = pg.evaluate("BY_ID[run.screens[run.i].id]")
-    check(texts(pg, ".picked") == [f"You picked the right answer: {q['a']}."],
-          "after a right pick, the rule screen says so in one line", texts(pg, ".picked"))
+    check(pg.inner_text("#ruleHead") == f"You picked the right answer: {q['a']}." and "good" in pg.get_attribute("#ruleHead", "class")
+          and stage_text(pg).startswith(f"Set 1 You picked the right answer: {q['a']}.") and not pg.query_selector(".picked"),
+          "after a right pick, the screen says so first, as its heading", stage_text(pg)[:120])
     answer_set(pg)
     done = stage_text(pg)
     check(done.startswith("Set done. 5 new facts learned. 5 of 120 facts learned. 0 solid."),
