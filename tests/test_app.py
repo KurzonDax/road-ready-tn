@@ -250,6 +250,10 @@ def h1(pg):
     return pg.inner_text(".home h1")
 
 
+def h2(pg):
+    return pg.inner_text(".home h2")
+
+
 def fetch(base, path):
     with urllib.request.urlopen(base + path) as r:
         return r.read()
@@ -258,7 +262,7 @@ def fetch(base, path):
 def check_manifest(base):
     m = json.loads(fetch(base, "manifest.webmanifest"))
     want = {"name": "Road Ready TN", "short_name": "Road Ready", "id": "/", "start_url": "/", "scope": "/",
-            "display": "standalone", "background_color": "#111814", "theme_color": "#111814", "lang": "en"}
+            "display": "standalone", "background_color": "#181715", "theme_color": "#181715", "lang": "en"}
     check({k: m.get(k) for k in want} == want, "the manifest names the app and opens it standalone at /")
     check("orientation" not in m, "the manifest doesn't lock the orientation")
     icons = sorted((i.get("src"), i.get("sizes"), i.get("purpose", "any")) for i in m.get("icons", []))
@@ -1830,7 +1834,7 @@ def check_study_path(browser, inst, scheme="light"):
     open_page(pg, inst.url)
     sign_in(pg, *learner)
 
-    check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(17, 24, 20)",
+    check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(24, 23, 21)",
           f"the page is dark even when the device is set to {scheme}")
     check(h1(pg) == "Set 1" and "This set has 5 new questions. You see them one at a time. There is no time limit." in stage_text(pg)
           and "Questions learned 0 of 120" in stage_text(pg),
@@ -2195,6 +2199,85 @@ def run_only(names):
     raise SystemExit(1 if failures else 0)
 
 
+def check_lessons(browser, inst):
+    """A Section's lesson comes before the Set that would first ask about its facts; every step is acted on
+    before its rule shows; the finished lesson is a record of type lesson; the next Set asks the taught facts
+    with no first look; a wrong answer offers the lesson step; the lesson stays open under Lessons."""
+    print("\n[lessons]")
+    lid = inst.add_learner("Morgan", "lesson password")
+    store_for(inst, lid, "move", {"to": 3})  # new facts come from Section 3, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Morgan", "lesson password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 3:") and "primary" in pg.get_attribute("#lessonBtn", "class")
+          and "primary" not in pg.get_attribute("#startBtn", "class"), "the lesson is the main button before Set 1")
+    pg.click("#lessonBtn")
+    pg.wait_for_selector(".k-target")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer}))")
+    check(len(steps) >= 12 and {s["fact"] for s in steps} >= set(pg.evaluate("QS.filter(q => q.day === 3).map(q => q.id)")),
+          "the lesson has 12 or more steps and teaches every Section 3 fact", len(steps))
+    check("Driver manual" not in pg.inner_text("#stage") and pg.query_selector("#stepNextBtn") is None,
+          "before acting, no rule, no manual sentence and no Next button are on the screen")
+    text_before = pg.inner_text("#stage")
+    # Step 1: tap the wrong car, and the screen says so and still shows the rule.
+    pg.click(".k-target[data-t='you']")
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check("You picked: your car." in shown and "The right one is the car on the main road." in shown
+          and "Driver manual, page 53" in shown and steps[0]["fact"] == "b-110", "a wrong tap says what was picked, the right one, and the rule with its page")
+    check(pg.evaluate("document.activeElement.id") == "stepHead", "after acting, focus moves to the result")
+    no_scroll = pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    check(no_scroll, "the lesson step does not scroll sideways on a phone")
+    pg.click("#stepNextBtn")
+    # Every other step: act right, by tap or by choice, until the lesson is done.
+    for k in range(1, len(steps)):
+        st = steps[k]
+        if st["kind"] == "tap":
+            pg.wait_for_selector(f".k-target[data-t='{st['answer']}']")
+            pg.keyboard.press("Tab")  # the targets are reachable by keyboard
+            pg.click(f".k-target[data-t='{st['answer']}']")
+        else:
+            pg.wait_for_selector("button.opt")
+            opts = choice_texts(pg)
+            pg.query_selector_all("button.opt")[opts.index(st["answer"])].click()
+        pg.wait_for_selector("#stepNextBtn")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 3.", "the lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 3 and len(lesson[0]["data"]["answers"]) == 10
+          and all(a["role"] == "lesson" and a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"])
+          and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 1,
+          "the finished lesson is one record of type lesson with one answer per fact, role lesson, the wrong tap among them")
+    check(pg.evaluate("learnedCount()") == 0, "lesson answers change no standing")
+    pg.click("#moreBtn")
+    pg.wait_for_selector("#stage .card")
+    kinds = pg.evaluate("run.screens.map(s => s.kind)")
+    check(kinds and all(k == "counted" for k in kinds) and len(kinds) == 5,
+          "the Set after the lesson asks the taught facts as counted questions, with no first look or rule screen", kinds)
+    click_choice(pg, right=False)
+    pg.wait_for_selector("#peekBtn")
+    pg.click("#peekBtn")
+    pg.wait_for_selector("#stepNextBtn")
+    check("How this works" in pg.inner_text(".progress") and pg.query_selector(".k-ring") is not None
+          and "You picked" not in pg.inner_text("#stage") and pg.inner_text("#stepNextBtn") == "Back to the question",
+          "a wrong answer opens the fact's lesson step, shown as its result, with a way back")
+    pg.click("#stepNextBtn")
+    pg.wait_for_selector("#nextBtn")
+    check(pg.evaluate("run.answered && run.i === 0"), "back from the lesson step, the Set is where it was")
+    pg.click("#quitBtn")
+    pg.wait_for_selector("details.lessons")
+    pg.click("details.lessons summary")
+    check("You finished this lesson." in pg.inner_text("details.lessons"), "Lessons on the home screen lists the finished lesson")
+    pg.click(".lesson-open")
+    pg.wait_for_selector(".k-target")
+    check(pg.evaluate("lesson.i") == 0 and "step 1 of" in pg.inner_text(".progress"), "a lesson can be opened again from the start")
+    ctx.close()
+
+
 def main():
     if sys.argv[1:]:
         run_only(sys.argv[1:])
@@ -2239,7 +2322,7 @@ def main():
         })""")
         check(head["viewport"] == "width=device-width, initial-scale=1, viewport-fit=cover",
               "the viewport covers the whole screen, with zoom left on")
-        check(head["themes"] == [["", "#111814"]], f"theme-color is the dark background (got {head['themes']})")
+        check(head["themes"] == [["", "#181715"]], f"theme-color is the dark background (got {head['themes']})")
         check(head["title"] == "Road Ready", "the Home Screen label is Road Ready")
         check(sorted(head["links"]) == [["apple-touch-icon", "apple-touch-icon.png"], ["icon", "icon-192.png"],
                                         ["manifest", "manifest.webmanifest"]],
@@ -2292,6 +2375,7 @@ def main():
             check_study_path(browser, inst, scheme)
         check_known_facts(browser, inst)
         check_compare(browser, inst)
+        check_lessons(browser, inst)
         check_phone_screens(browser, inst)
         browser.close()
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))

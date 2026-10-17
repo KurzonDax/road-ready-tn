@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Ready TN</title>
-<meta name="theme-color" content="#111814">
+<meta name="theme-color" content="#181715">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-title" content="Road Ready">
 <link rel="manifest" href="manifest.webmanifest">
@@ -15,21 +15,30 @@
 @font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2") format("woff2"); }
 @font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2") format("woff2"); }
 @font-face { font-family: "Overpass"; font-style: normal; font-weight: 600 800; font-display: swap; src: url("fonts/overpass/overpass-variable.woff2") format("woff2"); }
-/* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. Highway guide-sign palette. */
+/* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. */
 :root {
-  /* Dark on every device, whatever its own setting: one palette. */
-  --bg: #111814;
-  --surface: #1a231e;
-  --ink: #e8eee9;
-  --muted: #9db0a4;
-  --line: #2d3a32;
-  --control-line: #66796c;
-  --guide: #3f9a6c;
-  --guide-ink: #0c1410;
-  --guide-soft: #1f3328;
-  --bad: #f08a80;
-  --bad-soft: #3d1f1c;
-  --focus: #7fb0ff;
+  /* Dark on every device, whatever its own setting: one calm palette. Warm charcoal, off-white
+     type, one muted slate-blue accent, low saturation throughout, for long sessions at night. */
+  --bg: #181715;
+  --surface: #22201e;
+  --ink: #e4e0d9;
+  --muted: #ada79f;
+  --line: #363330;
+  --control-line: #77726c;
+  --guide: #8396b3;
+  --guide-ink: #141619;
+  --guide-soft: #262d38;
+  --bad: #dba49b;
+  --bad-soft: #3a2624;
+  --focus: #dcc69a;
+  /* The lesson drawings: road surfaces and markings, cars, glass. Lane lines keep their real colors. */
+  --road: #34363a;
+  --road-edge: #b9b7b2;
+  --lane-yellow: #e0b23c;
+  --lane-white: #e6e4df;
+  --car-a: #a7adb5;
+  --car-b: #6b727b;
+  --glass: #d9dde3;
   --font-display: "Overpass", "Arial Narrow", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", Verdana, system-ui, sans-serif;
   color-scheme: dark;
@@ -86,7 +95,7 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .route-track { position: relative; height: 18px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--control-line); overflow: hidden; }
 .route-fill, .route-gain { position: absolute; top: 0; bottom: 0; left: 0; }
 .route-fill { background: var(--guide); }
-.route-gain { background: #8fe0b2; transform-origin: left; }
+.route-gain { background: #cad4e3; transform-origin: left; }
 .route .tick { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--bg); opacity: .7; }
 .route-ends { font-size: 15px; color: var(--muted); }
 .route-ends .open { color: var(--guide); font-weight: 700; }
@@ -149,7 +158,7 @@ button.opt { cursor: pointer; }
 .later { display: flex; flex-direction: column; gap: 14px; border-top: 1.5px solid var(--line); padding-top: 20px; margin-top: 6px; }
 .facts { margin: 0; }
 .why, .also, .picked { margin: 0; }
-/* After a first look, what was picked leads the screen, as large as the question; green when it was right. */
+/* After a first look, what was picked leads the screen, as large as the question; in the accent when it was right. */
 .outcome { font-family: var(--font-body); font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
 .outcome.good { color: var(--guide); }
 /* Compare: one row per fact, the fact (and its picture) beside what it means. */
@@ -161,7 +170,31 @@ button.opt { cursor: pointer; }
 .rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
 .rule { font-size: 20px; line-height: 1.45; margin: 0; }
 .back { margin: 0; color: var(--muted); }
-#nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(12 20 16 / .45); }
+/* Lesson drawings: top-down, schematic, on their own slab. Tap targets are real buttons for the keyboard and screen readers. */
+.visual .scene, .scene { display: block; width: 100%; height: auto; max-width: 400px; margin: 0 auto; background: #1f1e1c; border-radius: 12px; }
+.k-label { font-family: var(--font-body); font-size: 11px; fill: var(--ink); }
+.k-sign { font-family: var(--font-display); font-weight: 800; font-size: 5px; fill: #fff; }
+.k-plate { font-family: var(--font-display); font-weight: 800; font-size: 4px; fill: #c8323a; }
+.k-edge { stroke: var(--road-edge); stroke-width: 2; }
+.k-yellow { stroke: var(--lane-yellow); stroke-width: 3; }
+.k-white { stroke: var(--lane-white); stroke-width: 3; }
+.k-you .k-body { stroke: var(--guide); stroke-width: 2.5; }
+.k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--guide); stroke-width: 3.5; }
+.k-ring { fill: var(--guide); opacity: .25; }
+.k-target { cursor: pointer; }
+.k-target:focus { outline: none; }
+.k-target:focus-visible .k-body, .k-target:hover .k-body { stroke: var(--focus); stroke-width: 3.5; }
+.k-path { stroke: var(--guide); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+/* Only cars and pedestrians are tappable; nothing drawn over them catches the tap. */
+.scene :not(.k-target):not(.k-target *) { pointer-events: none; }
+.k-target, .k-target * { pointer-events: auto; }
+@media (prefers-reduced-motion: no-preference) { .k-flash { animation: blink 1s steps(2, start) infinite; } @keyframes blink { to { opacity: .15; } } }
+.say { font-size: 20px; font-weight: 700; line-height: 1.4; margin: 0; }
+.src { margin: 0; color: var(--muted); font-size: 16px; }
+.src figcaption { font-weight: 700; }
+.src blockquote { margin: 4px 0 0; padding-left: 12px; border-left: 3px solid var(--line); }
+.link.peek { align-self: flex-start; padding-left: 0; }
+#nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(8 7 6 / .5); }
 
 .score { font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 6vw, 30px); line-height: 1.2; margin: 0; font-variant-numeric: tabular-nums; }
 .missed { border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); padding: 0 22px; }
@@ -172,7 +205,7 @@ button.opt { cursor: pointer; }
 .missed .mq { font-weight: 700; }
 .missed .mwhy { color: var(--muted); font-size: 16px; }
 
-/* The one moment that breaks the template: a full guide sign, white border inset like the real thing. */
+/* The one moment that breaks the template: a full plate in the accent, with an inset border. */
 .sign { background: var(--guide); color: var(--guide-ink); border-radius: 16px; padding: 28px 26px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 0 6px var(--guide), inset 0 0 0 9px var(--guide-ink); }
 .sign h1, .sign h2 { color: inherit; }
 .sign h1 { font-size: clamp(38px, 10vw, 56px); }
@@ -239,6 +272,7 @@ let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.jso
 let GROUPS = [], GROUP_BY_ID = {}; // the groups of easily mixed-up facts (data/groups.json), likewise
 // Each fact's wordings, from questions.json: its own question first, then the other wordings in id order.
 let WORDINGS = {};
+let LESSONS = {}, LESSON_STEP = {}; // lessons by Section (data/lessons), and each fact's first lesson step {section, k}
 // The learning engine (docs/specs/learning-engine.md, docs/adr/0002-*). Every rule below reads these.
 const HOUR = 60 * 60 * 1000;
 const FIRST_LOOK = true;          // a new fact starts with an unscored question; false starts with its rule screen
@@ -390,7 +424,7 @@ function factFrom(answers) {
 // its counted answers}}.
 function progressFrom(records) {
   const answers = Object.fromEntries(QS.map(q => [q.id, []]));
-  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {}, byWording: {} };
+  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {}, byWording: {}, lessons: {} };
   const add = (q, at, right) => {
     const f = factOf(q);
     if (f) { answers[f].push({ at, right }); p.byWording[q] = (p.byWording[q] || 0) + 1; }
@@ -408,6 +442,7 @@ function progressFrom(records) {
       for (const a of d.answers) if (isCounted(a)) add(a.q, answerTime(a), a.right);
       if (d.type === 'test') p.tests.push(d.answers.filter(a => a.right).length);
       if (d.type === 'daily') p.sets++;
+      if (d.type === 'lesson') p.lessons[d.section] = Math.max(p.lessons[d.section] ?? -Infinity, recordTime(r));
       if (d.type === 'daily' && d.group) p.groupAt[d.group] = Math.max(p.groupAt[d.group] ?? -Infinity, recordTime(r));
     }
   }
@@ -474,8 +509,9 @@ function buildSet(p, now, firstLook = FIRST_LOOK) {
   const plan = setPlan(p, now);
   const counted = id => ({ kind: 'counted', id, ...choiceOf(wordingFor(p, id)) });
   const block = plan.group ? groupBlock(plan.group, p) : [];
-  const W = plan.fresh, k = W.length;
-  const D = shuffle([...plan.due, ...plan.fill].map(counted)), m = D.length;
+  // A new fact whose Section's lesson is finished was taught there: it is asked like a due question, with no first look.
+  const W = plan.fresh.filter(id => !taught(p, id)), k = W.length;
+  const D = shuffle([...plan.due, ...plan.fill, ...plan.fresh.filter(id => taught(p, id))].map(counted)), m = D.length;
   if (!k) return [...block, ...D];
   const h = Math.min(Math.max(0, GAP - (k - 1)), m), held = D.slice(0, h), rest = D.slice(h);
   const screens = [];
@@ -641,7 +677,7 @@ window.addEventListener('online', () => {
 
 // A finished Set's name in the Helper's History, from its record's type, Section and Set number.
 // 'day', 'redo' and 'review' are Sets from before the learning engine.
-const setName = (type, section, number) => type === 'daily' ? `Set ${number}` : type === 'test' ? 'Practice test'
+const setName = (type, section, number) => type === 'daily' ? `Set ${number}` : type === 'test' ? 'Practice test' : type === 'lesson' ? `Lesson for Section ${section}`
   : type === 'review' ? 'Review' : type === 'redo' ? `Section ${section} again` : `Section ${section}`;
 
 let painted = false, onHome = false; // onHome: the Learner's home screen is showing
@@ -655,7 +691,7 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
 // The road from no facts to Practice tests: one bar of the 120 facts learned, marked off into the 12
 // Sections like mile markers. `before` (a Progress from before a Set) adds the stretch that Set covered,
-// in a brighter green that grows in. Under it, one line says where new facts come from.
+// in a lighter tint that grows in. Under it, one line says where new facts come from.
 function route(p = S, before = null) {
   const total = QS.length, l = learnedCount(p), was = before ? Math.min(learnedCount(before), l) : l;
   const pct = n => `${(n / total * 100).toFixed(2)}%`, isReady = ready(p), open = unlocked(p);
@@ -707,7 +743,7 @@ function planLine(plan) {
 const disclaimer = `<footer class="fine"><p>This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p><button class="link" type="button" id="signOutBtn">Sign out</button></footer>`;
 
 function renderHome() {
-  run = null;
+  run = null; lesson = null;
   const saved = S.run && unpackRun(S.run);
   if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
   const plan = setPlan(S, Date.now()), open = unlocked(), isReady = ready();
@@ -718,11 +754,16 @@ function renderHome() {
   // throwing its saved answers away.
   // Once Practice tests are where the Learner is (nothing new is left, or they are Ready), they come
   // first and take the page heading; the next Set follows as a quieter block.
-  const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst ? 'h2' : 'h1';
+  // A Section's lesson comes before the Set that would first ask about its facts, as the main button.
+  const lessonDay = saved ? null : lessonNext(plan), teach = lessonDay && LESSONS[lessonDay];
+  const lessonBlock = teach ? `<section class="home"><h1 tabindex="-1">Section ${lessonDay}: ${esc(teach.title)}</h1>
+      <p class="sub">A lesson of ${teach.steps.length} steps. On each step you do something first. Then you see what the driver manual says happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
+      <button class="btn primary" type="button" id="lessonBtn">Start the lesson</button></section>` : '';
+  const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst || teach ? 'h2' : 'h1';
   const set = saved && saved.kind === 'daily'
     ? `<h1 tabindex="-1">Set ${saved.number}</h1>${stoppedLine(saved)}`
     : `<${setH} tabindex="-1">Set ${S.sets + 1}</${setH}>${saved ? stoppedLine(saved) : ''}<p class="sub">${esc(planLine(plan))}</p>
-      <button class="btn${saved || testFirst ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
+      <button class="btn${saved || testFirst || teach ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
   const scores = S.tests.slice(-5);
   const tests = !open ? '' : `<section class="home">
       ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
@@ -733,15 +774,19 @@ function renderHome() {
   paint(`
     <section class="home">
       ${testsFirst ? tests : ''}
-      ${testsFirst ? `<div class="later">${set}</div>` : set}
+      ${lessonBlock}
+      ${testsFirst || teach ? `<div class="later">${set}</div>` : set}
       ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
       ${testsFirst ? '' : tests}
       ${route()}
+      ${lessonsPanel()}
       ${sectionsPanel()}
       ${disclaimer}
     </section>`, 'h1');
   onHome = true;
   if ($('startBtn')) $('startBtn').onclick = () => startOver(saved, 'daily');
+  if ($('lessonBtn')) $('lessonBtn').onclick = () => { startLesson(lessonDay); toTop(); };
+  wireLessons();
   if ($('testBtn')) $('testBtn').onclick = () => startOver(saved, 'test');
   if (saved) {
     $('resumeBtn').onclick = () => { run = saved; renderScreen(); };
@@ -891,7 +936,9 @@ function renderQuestion() {
       ${lines.picked ? `<p class="picked">${esc(lines.picked)}</p>` : ''}
       ${lines.other ? `<p class="also">${esc(lines.other)}</p>` : ''}
     </div>` : '';
-  const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}</div>` : '';
+  // After a wrong answer on a fact a lesson teaches, its lesson step can be looked at again, without leaving the Set.
+  const peek = lines && !isRight(s) && run.kind === 'daily' && LESSON_STEP[s.id] ? '<button class="link peek" type="button" id="peekBtn">See how this works</button>' : '';
+  const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}${peek}</div>` : '';
   const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is right. This answer does not count.</p>'
     : s.kind === 'reask' ? '<p class="sub">You saw this question earlier in this set. Here it is again.</p>' : '';
   paint(`
@@ -909,7 +956,8 @@ function renderQuestion() {
       ${quitLink}
     </div>`, run.answered ? '#outcome' : '#qText');
   if (run.answered) $('nextBtn').onclick = next;
-  else document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
+  if ($('peekBtn')) $('peekBtn').onclick = () => { peekStep(s.id); toTop(); };
+  if (!run.answered) document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
   wireQuit();
 }
 
@@ -973,7 +1021,7 @@ function finish() {
 }
 
 // The end of a daily Set: what changed, in full sentences, and what comes next. No score.
-// One tile per fact the Set asked, in the order asked: a green tile with a check when its newest
+// One tile per fact the Set asked, in the order asked: an accent tile with a check when its newest
 // answer is right, an outlined tile with a return arrow when it comes back in the next Set.
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const AGAIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -1043,10 +1091,211 @@ function wireDone() {
 }
 
 document.addEventListener('keydown', e => {
-  if (!run || run.answered || !document.querySelector('button.opt') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!document.querySelector('button.opt') || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
-  if (k >= 0) { e.preventDefault(); choose(k); }
+  if (k < 0) return;
+  if (lesson) { e.preventDefault(); return lessonChoose(k); }
+  if (!run || run.answered) return;
+  e.preventDefault();
+  choose(k);
 });
+
+// Lessons (docs/specs/lessons.md). A lesson teaches one Section's facts before any question on them.
+// Every step asks the Learner to act, on a drawing or among choices, before it states the rule. The
+// drawings come from a small kit of top-down parts, so a lesson is data (data/lessons/section-N.json).
+let lesson = null; // the lesson on screen: {lesson, i, acts: {step index: {chosen, right, at}}, set_id, started_at, peek}
+
+// Intervals of [from, to] with every [a, b] in `cuts` taken out: a road's markings stop where another road crosses.
+function spans(from, to, cuts) {
+  let list = [[from, to]];
+  for (const [a, b] of cuts) list = list.flatMap(([s, e]) => b <= s || a >= e ? [[s, e]] : [[s, Math.max(s, a)], [Math.min(e, b), e]].filter(([x, y]) => y - x > 0.5));
+  return list;
+}
+const svgText = (x, y, text, anchor = 'middle', cls = 'k-label') => `<text class="${cls}" x="${x}" y="${y}" text-anchor="${anchor}">${esc(text)}</text>`;
+// One road's surface, then its edge lines and center line, broken where the other roads cross it.
+function roadMarks(r, roads) {
+  const horizontal = r.w >= r.h, others = roads.filter(o => o !== r && o.x < r.x + r.w && o.x + o.w > r.x && o.y < r.y + r.h && o.y + o.h > r.y);
+  const cuts = others.map(o => horizontal ? [o.x, o.x + o.w] : [o.y, o.y + o.h]);
+  const [from, to] = horizontal ? [r.x, r.x + r.w] : [r.y, r.y + r.h];
+  const line = (at, cls, dash) => spans(from, to, cuts).map(([s, e]) => horizontal
+    ? `<line class="${cls}" x1="${s}" y1="${at}" x2="${e}" y2="${at}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`
+    : `<line class="${cls}" x1="${at}" y1="${s}" x2="${at}" y2="${e}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`).join('');
+  const [lo, hi, mid] = horizontal ? [r.y + 1.5, r.y + r.h - 1.5, r.y + r.h / 2] : [r.x + 1.5, r.x + r.w - 1.5, r.x + r.w / 2];
+  let center = '';
+  const c = r.center || 'yellow';
+  if (c === 'yellow') center = line(mid, 'k-yellow');
+  else if (c === 'yellow-broken') center = line(mid, 'k-yellow', '14 10');
+  else if (c === 'yellow-double') center = line(mid - 2.5, 'k-yellow') + line(mid + 2.5, 'k-yellow');
+  else if (c === 'white-broken') center = line(mid, 'k-white', '14 10');
+  return line(lo, 'k-edge') + line(hi, 'k-edge') + center;
+}
+const SIGN_PARTS = {
+  stop: (x, y) => `<g transform="translate(${x} ${y})"><polygon points="-4,-10 4,-10 10,-4 10,4 4,10 -4,10 -10,4 -10,-4" fill="#c8323a" stroke="#fff" stroke-width="1.5"/>${svgText(0, 2.2, 'STOP', 'middle', 'k-sign')}</g>`,
+  yield: (x, y) => `<g transform="translate(${x} ${y})"><polygon points="-11,-9 11,-9 0,10" fill="#c8323a"/><polygon points="-7,-6.5 7,-6.5 0,5" fill="#fff"/></g>`,
+  allway: (x, y) => SIGN_PARTS.stop(x, y) + `<g transform="translate(${x} ${y + 16})"><rect x="-11" y="-4" width="22" height="8" fill="#fff" stroke="#c8323a" stroke-width="1"/>${svgText(0, 2.3, 'ALL WAY', 'middle', 'k-plate')}</g>`,
+};
+const LIGHT_COLORS = { red: '#d9534f', yellow: '#e0b23c', green: '#5aa870' };
+function lightPart(p) {
+  const on = (p.state || 'off').replace('flashing-', '').replace('green-left', 'green'), flash = (p.state || '').startsWith('flashing');
+  const lamp = (k, color) => `<circle cx="0" cy="${-8 + k * 8}" r="3" fill="${color === on ? LIGHT_COLORS[color] : '#3a3c40'}"${color === on && flash ? ' class="k-flash"' : ''}/>`;
+  const arrow = p.state === 'green-left' ? `<path d="M3 8 L-3 8 M-1 6 L-3 8 L-1 10" stroke="#111" stroke-width="1.2" fill="none"/>` : '';
+  return `<g transform="translate(${p.x} ${p.y})"><rect x="-5.5" y="-13" width="11" height="26" rx="2" fill="#202225" stroke="#6b6e73" stroke-width="1"/>${lamp(0, 'red')}${lamp(1, 'yellow')}${lamp(2, 'green')}${arrow}</g>`;
+}
+function crosswalkPart(p) {
+  const bars = [];
+  if (p.w >= p.h) for (let x = p.x + 3; x + 4 <= p.x + p.w; x += 8) bars.push(`<rect x="${x}" y="${p.y + 1}" width="4" height="${p.h - 2}" fill="var(--lane-white)"/>`);
+  else for (let y = p.y + 3; y + 4 <= p.y + p.h; y += 8) bars.push(`<rect x="${p.x + 1}" y="${y}" width="${p.w - 2}" height="4" fill="var(--lane-white)"/>`);
+  return bars.join('');
+}
+// A tap target or a highlighted part gets a soft ring; a target is a button the keyboard and a screen reader can reach.
+function wrapTarget(p, inner, { targets, highlight }) {
+  const t = targets.find(x => x.id === p.id), hi = highlight === p.id;
+  const ring = hi ? `<circle class="k-ring" cx="${p.x}" cy="${p.y}" r="26"/>` : '';
+  if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>`;
+  return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
+}
+function carPart(p, o) {
+  const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
+  const body = `<g class="k-car${p.you ? ' k-you' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="var(--car-${p.tone === 'b' ? 'b' : 'a'})"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/></g>`;
+  const you = p.you ? svgText(p.x, p.y + (p.heading === 's' || p.heading === 'n' ? 32 : 30), 'You') : '';
+  return wrapTarget(p, body + you, o);
+}
+function pedPart(p, o) {
+  const cane = p.cane ? `<line x1="${p.x + 4}" y1="${p.y + 1}" x2="${p.x + 14}" y2="${p.y + 13}" stroke="#fff" stroke-width="2"/><circle cx="${p.x + 14}" cy="${p.y + 13}" r="2" fill="#c8323a"/>` : '';
+  return wrapTarget(p, `<g><circle class="k-body" cx="${p.x}" cy="${p.y - 4}" r="4.5" fill="var(--ink)"/><ellipse cx="${p.x}" cy="${p.y + 6}" rx="6.5" ry="4" fill="var(--ink)"/>${cane}</g>`, o);
+}
+function pathPart(p) {
+  const d = p.via ? `M${p.from[0]} ${p.from[1]} Q${p.via[0]} ${p.via[1]} ${p.to[0]} ${p.to[1]}` : `M${p.from[0]} ${p.from[1]} L${p.to[0]} ${p.to[1]}`;
+  return `<path class="k-path" d="${d}" marker-end="url(#k-arrow)"/>`;
+}
+// The whole drawing: surfaces first, then markings, then everything else in the order listed.
+function drawScene(parts, o = { targets: [], highlight: null }) {
+  const roads = parts.filter(p => p.t === 'road');
+  const surfaces = roads.map(r => `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="var(--road)"/>`).join('')
+    + parts.filter(p => p.t === 'circle-road').map(p => `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r}" fill="none" stroke="var(--road)" stroke-width="${p.w}"/>` +
+      `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r + p.w / 2 - 1.5}" class="k-edge" fill="none"/><circle cx="${p.cx}" cy="${p.cy}" r="${p.r - p.w / 2 + 1.5}" class="k-edge" fill="none"/>`).join('');
+  const marks = roads.map(r => roadMarks(r, roads)).join('');
+  const isActor = p => p.t === 'car' || p.t === 'ped';
+  const rest = [...parts.filter(p => p.t !== 'road' && p.t !== 'circle-road' && !isActor(p)), ...parts.filter(isActor)].map(p => {
+    if (p.t === 'car') return carPart(p, o);
+    if (p.t === 'ped') return pedPart(p, o);
+    if (p.t === 'sign') return (SIGN_PARTS[p.kind] || SIGN_PARTS.stop)(p.x, p.y);
+    if (p.t === 'light') return lightPart(p);
+    if (p.t === 'crosswalk') return crosswalkPart(p);
+    if (p.t === 'path') return pathPart(p);
+    if (p.t === 'label') return svgText(p.x, p.y, p.text, p.anchor || 'middle');
+    return '';
+  }).join('');
+  return `<svg class="scene" viewBox="0 0 320 320" role="img" aria-label="A drawing of the situation. Everything in it is also said in words.">
+      <defs><marker id="k-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--guide)"/></marker></defs>
+      ${surfaces}${marks}${rest}</svg>`;
+}
+
+// A fact's Section has a finished lesson: the Set asks it as a plain counted question, with no first look.
+const taught = (p, id) => p.lessons[BY_ID[id].day] !== undefined;
+// The Section whose lesson should come before the next Set: the first new fact's Section that has a lesson not yet finished.
+function lessonNext(plan, p = S) {
+  const id = plan.fresh.find(id => LESSONS[BY_ID[id].day] && !taught(p, id));
+  return id ? BY_ID[id].day : null;
+}
+function lessonsPanel() {
+  const list = Object.values(LESSONS);
+  if (!list.length) return '';
+  const rows = list.map(l => `<li><div><span class="sname">Section ${l.section}: ${esc(l.title)}</span><span class="sscore">${S.lessons[l.section] !== undefined ? 'You finished this lesson.' : 'You have not done this lesson yet.'} It has ${l.steps.length} steps.</span></div>` +
+    `<button type="button" class="btn slim lesson-open" data-section="${l.section}">Open the lesson</button></li>`).join('');
+  return `<details class="scores lessons"><summary>Lessons</summary><ul>${rows}</ul></details>`;
+}
+function wireLessons() { document.querySelectorAll('.lesson-open').forEach(b => b.onclick = () => { startLesson(Number(b.dataset.section)); toTop(); }); }
+
+function startLesson(section) {
+  lesson = { lesson: LESSONS[section], i: 0, acts: {}, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), peek: false };
+  run = null;
+  renderStep();
+}
+// One lesson step, shown for a wrong answer in a Set: its result state, then back to the question.
+function peekStep(id) {
+  const at = LESSON_STEP[id];
+  lesson = { lesson: LESSONS[at.section], i: at.k, acts: { [at.k]: { chosen: null, right: true, at: null } }, peek: true };
+  renderStep();
+}
+const stepLabel = (st, value) => st.kind === 'tap' ? st.targets.find(t => t.id === value).label : value;
+function renderStep() {
+  const L = lesson, steps = L.lesson.steps, st = steps[L.i], n = steps.length, act = L.acts[L.i], last = L.i === n - 1;
+  const parts = act && st.then.parts ? st.then.parts : st.scene && st.scene.parts;
+  const scene = parts ? `<div class="visual">${drawScene(parts, { targets: !act && st.kind === 'tap' ? st.targets : [], highlight: act ? st.then.highlight || null : null })}</div>` : '';
+  const Lk = ['A', 'B', 'C', 'D'];
+  const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${st.options.map((o, k) => act
+    ? `<li class="opt ${o === st.answer ? 'right' : o === act.chosen ? 'wrong' : 'rest'}"><span class="key" aria-hidden="true">${Lk[k]}</span><span class="otext"><span>${esc(o)}</span>${o === act.chosen && !L.peek ? '<span class="tag">You picked this</span>' : o === st.answer ? '<span class="tag">The answer</span>' : ''}</span></li>`
+    : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
+  const picked = act && !L.peek && !act.right ? `<p class="picked">You picked: ${esc(act.chosen)}.</p>` : ''; // chosen is already the label
+  const after = act ? `<div class="result" id="stepResult"><h2 class="outcome${act.right && !L.peek ? ' good' : ''}" id="stepHead" tabindex="-1">${act.right && !L.peek ? (st.kind === 'tap' ? `You picked the right one: ${esc(stepLabel(st, st.answer))}.` : `You picked the right answer: ${esc(st.answer)}.`) : (st.kind === 'tap' ? `The right one is ${esc(stepLabel(st, st.answer))}.` : `The answer is: ${esc(st.answer)}.`)}</h2>${picked}</div>` : '';
+  const rule = act && st.rule ? `<div class="explain"><p class="rule">${esc(st.rule)}</p>${st.src ? `<figure class="src"><figcaption>Driver manual, page ${st.p}</figcaption><blockquote>“${esc(st.src)}”</blockquote></figure>` : ''}</div>` : '';
+  const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: step ${L.i + 1} of ${n}`;
+  const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
+    : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Next step'}</button>` : '';
+  paint(`
+    <div class="home">
+      <div class="progress"><span>${esc(where)}</span>${L.peek ? '' : `<div class="bar" aria-hidden="true"><span style="width:${Object.keys(L.acts).length / n * 100}%"></span></div>`}</div>
+      <div class="card">
+        ${after}
+        ${act ? `<p class="q asked" id="stepText">${esc(st.prompt)}</p>` : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
+        ${scene}
+        ${act ? `<p class="say">${esc(st.then.say)}</p>` : st.kind === 'tap' ? '<p class="sub">Tap one of them in the drawing.</p>' : ''}
+        ${options}
+        ${rule}
+      </div>
+      ${button}
+      ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop the lesson for now</button>'}
+    </div>`, act ? '#stepHead' : '#stepText');
+  document.querySelectorAll('.k-target').forEach(g => {
+    g.onclick = () => lessonAct(g.dataset.t);
+    g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lessonAct(g.dataset.t); } };
+  });
+  document.querySelectorAll('button.opt').forEach(b => b.onclick = () => lessonChoose(Number(b.dataset.k)));
+  if ($('stepNextBtn')) $('stepNextBtn').onclick = L.peek ? () => { lesson = null; toTop(); renderQuestion(); } : nextStep;
+  if ($('quitBtn')) $('quitBtn').onclick = () => { lesson = null; renderHome(); toTop(); };
+}
+function lessonChoose(k) { const st = lesson.lesson.steps[lesson.i]; if (st.kind !== 'tap') lessonAct(st.options[k]); }
+function lessonAct(value) {
+  const L = lesson, st = L.lesson.steps[L.i];
+  if (L.acts[L.i] || L.peek) return;
+  L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
+  toTop();
+  renderStep();
+  $('announce').textContent = [L.acts[L.i].right ? '' : `You picked: ${L.acts[L.i].chosen}.`, st.then.say, st.rule || ''].filter(Boolean).join(' ');
+}
+function nextStep() {
+  $('announce').textContent = '';
+  if (lesson.i < lesson.lesson.steps.length - 1) { lesson.i++; toTop(); renderStep(); } else finishLesson();
+}
+// A finished lesson is a record of type `lesson`: one answer per step with a fact, role `lesson`,
+// so the History has it and the Set knows the Section is taught. Lesson answers never change a standing.
+function lessonRecord(L) {
+  const now = new Date().toISOString();
+  const answers = L.lesson.steps.map((st, k) => st.fact && L.acts[k]
+    ? { q: st.fact, chosen: L.acts[k].chosen, right: L.acts[k].right, at: L.acts[k].at || now, role: 'lesson', format: st.kind === 'tap' ? 'tap' : 'choice' } : null).filter(Boolean);
+  return { id: crypto.randomUUID(), kind: 'set', reset: currentReset(copyRecords()), at: now,
+    data: { set_id: L.set_id, type: 'lesson', section: L.lesson.section, started_at: L.started_at, answers } };
+}
+function finishLesson() {
+  const L = lesson, rec = lessonRecord(L);
+  copy.pending.push(rec);
+  saveCopy();
+  workOut();
+  sendPending();
+  lesson = null;
+  const plan = setPlan(S, Date.now());
+  paint(`
+    <section class="home">
+      <h2 tabindex="-1">You finished the lesson for Section ${L.lesson.section}.</h2>
+      <p class="theme">${esc(L.lesson.title)}</p>
+      <p class="sub">The questions on these rules come in your sets, starting with Set ${S.sets + 1}. The lesson stays open under Lessons on your home screen.</p>
+      <button class="btn primary" type="button" id="moreBtn">Start Set ${S.sets + 1}</button>
+      <button class="btn" type="button" id="homeBtn">I'm done for now</button>
+    </section>`, 'h2');
+  toTop();
+  wireDone();
+}
 
 // Accounts. `me` is the signed-in account ({id, role, name}) or null. Every call to the
 // server goes through api(): a 401 while signed in means the sign-in has ended, and the
@@ -1105,6 +1354,9 @@ function begin(data) {
   for (const w of (data.wordings || []).slice().sort((a, b) => a.id < b.id ? -1 : 1)) if (WORDINGS[w.fact]) WORDINGS[w.fact].push(w.id);
   GROUPS = data.groups || [];
   GROUP_BY_ID = Object.fromEntries(GROUPS.map(g => [g.id, g]));
+  LESSONS = Object.fromEntries((data.lessons || []).map(l => [l.section, l]));
+  LESSON_STEP = {};
+  for (const l of Object.values(LESSONS)) l.steps.forEach((st, k) => { if (st.fact && !LESSON_STEP[st.fact]) LESSON_STEP[st.fact] = { section: l.section, k }; });
   if (me.role === 'helper') renderHelper();
   else openLearner();
 }

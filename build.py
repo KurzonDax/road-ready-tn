@@ -86,7 +86,21 @@ def build_data():
     # Other wordings of the app's facts (docs/QUESTIONS.md, `fact`): the page asks a fact in each of them in turn.
     wordings = [compact(q) for q in bank["questions"] if q.get("fact") in app and q["id"] not in app]
     add_also(qs, qs + wordings)
-    return {"days": days, "qs": qs, "groups": groups, "wordings": wordings}
+    return {"days": days, "qs": qs, "groups": groups, "wordings": wordings, "lessons": build_lessons(by_id)}
+
+
+def build_lessons(by_id):
+    """The lessons (data/lessons/section-N.json, docs/specs/lessons.md), in Section order. Each step with a
+    fact gets that fact's manual sentence (`src`) and page (`p`), which the player shows under the rule."""
+    lessons = []
+    for file in sorted((ROOT / "data" / "lessons").glob("section-*.json"), key=lambda f: int(f.stem.split("-")[1])):
+        lesson = json.loads(file.read_text())
+        for step in lesson["steps"]:
+            if step.get("fact"):
+                q = by_id[step["fact"]]
+                step["src"], step["p"] = q["manual_quote"], q["page"]
+        lessons.append(lesson)
+    return lessons
 
 
 def add_also(facts, qs):
@@ -193,7 +207,7 @@ def main():
     shutil.rmtree(out / "fonts", ignore_errors=True)
     shutil.copytree(SRC / "fonts", out / "fonts", ignore=shutil.ignore_patterns("README.md"))
     version = write_service_worker(out)
-    print(f"Wrote {out}: index.html, csp.json, questions.json ({len(data['qs'])} questions in {len(data['days'])} sections),"
+    print(f"Wrote {out}: index.html, csp.json, questions.json ({len(data['qs'])} questions in {len(data['days'])} sections, {len(data['lessons'])} lessons),"
           f" manifest.webmanifest, icons, fonts/, sw.js (version {version})")
 
 

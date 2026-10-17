@@ -67,6 +67,7 @@ def validate():
     if missing:
         errors.append(f"the manual's own sample questions are missing from the sections: {sorted(missing)}")
     errors += check_facts(qs, set(used))
+    errors += check_lessons(secs)
     groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
     errors += check_groups(groups, set(used))
     return errors
@@ -148,6 +149,78 @@ def check_groups(groups, used):
                 errors.append(f"group {gid}: its reverse stem needs {{answer}} exactly once")
             if len(facts) < 4:
                 errors.append(f"group {gid}: a reverse stem needs a group of 4 or more facts")
+    return errors
+
+
+STEP_KINDS = {"tap", "choose", "principle"}
+TARGET_PARTS = {"car", "ped"}
+
+
+def check_lessons(secs):
+    """data/lessons/section-N.json (docs/specs/lessons.md): a lesson teaches every fact of its Section
+    through steps the Learner acts on. Each step's answer must be one of what it offers, and every tap
+    target must be a car or pedestrian drawn in that step's scene."""
+    errors = []
+    by_section = {s["section"]: s["questions"] for s in secs}
+    for file in sorted((ROOT / "data" / "lessons").glob("section-*.json")):
+        name = file.name
+        try:
+            lesson = json.loads(file.read_text())
+        except ValueError as e:
+            errors.append(f"{name}: not valid JSON ({e})")
+            continue
+        number = lesson.get("section")
+        if f"section-{number}.json" != name or number not in by_section:
+            errors.append(f"{name}: its section must be the number in its file name, one of the sections")
+            continue
+        facts, steps, ids = set(by_section[number]), lesson.get("steps", []), set()
+        if not lesson.get("title") or not steps:
+            errors.append(f"{name}: needs a title and steps")
+        covered = set()
+        for step in steps:
+            sid = step.get("id") or "?"
+            if sid in ids:
+                errors.append(f"{name}: step id {sid} is used twice")
+            ids.add(sid)
+            kind, fact = step.get("kind"), step.get("fact")
+            if kind not in STEP_KINDS:
+                errors.append(f"{name} {sid}: kind must be one of {sorted(STEP_KINDS)}")
+            if fact is not None and fact not in facts:
+                errors.append(f"{name} {sid}: fact {fact} is not in Section {number}")
+            if fact:
+                covered.add(fact)
+                if not step.get("rule"):
+                    errors.append(f"{name} {sid}: a step with a fact needs a rule")
+            elif kind != "principle":
+                errors.append(f"{name} {sid}: only a principle step has no fact")
+            then = step.get("then") or {}
+            if not step.get("prompt") or not then.get("say"):
+                errors.append(f"{name} {sid}: needs a prompt and then.say")
+            parts = (step.get("scene") or {}).get("parts", [])
+            part_ids = {p.get("id") for p in parts if p.get("t") in TARGET_PARTS and p.get("id")}
+            after_ids = {p.get("id") for p in then.get("parts", []) if p.get("t") in TARGET_PARTS and p.get("id")}
+            if kind == "tap":
+                targets = step.get("targets", [])
+                tids = [t.get("id") for t in targets]
+                if len(targets) < 2 or not all(t.get("label") for t in targets):
+                    errors.append(f"{name} {sid}: a tap step needs 2 or more targets, each with a label")
+                for tid in tids:
+                    if tid not in part_ids:
+                        errors.append(f"{name} {sid}: target {tid!r} is not a car or pedestrian in the scene")
+                if step.get("answer") not in tids:
+                    errors.append(f"{name} {sid}: answer must be one of the targets")
+            else:
+                options = step.get("options", [])
+                if not 2 <= len(options) <= 4 or len(set(options)) != len(options):
+                    errors.append(f"{name} {sid}: needs 2 to 4 different options")
+                if step.get("answer") not in options:
+                    errors.append(f"{name} {sid}: answer must be one of the options")
+            hi = then.get("highlight")
+            if hi is not None and hi not in part_ids | after_ids:
+                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car or pedestrian in the scene")
+        missing = facts - covered
+        if missing and steps:
+            errors.append(f"{name}: no step teaches {sorted(missing)}")
     return errors
 
 
