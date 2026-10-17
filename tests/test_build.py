@@ -58,6 +58,14 @@ def test_build_writes_page_questions_and_csp(tmp):
     check(sorted(data) == ["days", "qs"] and len(data["days"]) == 12 and len(data["qs"]) == 120,
           "questions.json holds the 12 sections and 120 questions")
     check("__DATA__" not in page, "the page has no __DATA__ placeholder left")
+    by_id = {q["id"]: q for q in data["qs"]}
+    also = {q["id"]: q["also"] for q in data["qs"] if "also" in q}
+    check(sum(len(a) for a in also.values()) == 15 and len(also) == 12,
+          f"15 wrong choices across 12 questions name the question they answer (got {also})")
+    check(also.get("b-250") == {"30 feet": "b-253"} and also.get("b-253") == {"15 feet": "b-250", "50 feet": "b-251"},
+          "a wrong choice that is another question's answer names that question")
+    check(all(w in by_id[q]["o"] and by_id[r]["a"] == w for q, a in also.items() for w, r in a.items()),
+          "every also entry is a wrong choice of its question and the right answer of the one it names")
 
 
 def test_build_refuses_pages_that_break_the_csp(tmp):

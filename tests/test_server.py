@@ -1388,8 +1388,18 @@ DROP = object()
 AN_ANSWER = {"q": "q-001", "chosen": "b", "right": True, "at": "2026-10-16T14:01:00.000Z"}
 
 
+A_SIX_FIELD_ANSWER = {**AN_ANSWER, "role": "counted", "format": "choice"}
+
+
 def answers_with(**fields):
     return [changed(AN_ANSWER, **fields)]
+
+
+def a_daily(group="parking-distances", answers=None):
+    """A daily Set record as the page makes it: no Section, a group (or null), six-field answers."""
+    record = a_set(type="daily", section=None, answers=answers if answers is not None else [A_SIX_FIELD_ANSWER])
+    record["data"]["group"] = group
+    return record
 
 
 class RecordShape(RecordsTestCase):
@@ -1489,6 +1499,39 @@ class RecordShape(RecordsTestCase):
 
     def test_set_data_has_no_other_fields(self):
         self.assert_refused(changed(a_set(), data__score=10))
+
+    def test_a_daily_set_with_six_field_answers_and_a_group_is_stored(self):
+        self.assert_accepted(a_daily(), a_daily(group=None), a_daily(group="g" * 64),
+                             a_daily(answers=[AN_ANSWER, A_SIX_FIELD_ANSWER]))
+
+    def test_a_daily_set_names_no_section_and_has_a_group_of_1_to_64_characters_or_null(self):
+        self.assert_refused(changed(a_daily(), data__section=3), changed(a_daily(), data__group=DROP),
+                            a_daily(group=""), a_daily(group="g" * 65), a_daily(group=7))
+
+    def test_only_a_daily_set_has_a_group(self):
+        for t, s in (("day", 1), ("redo", 2), ("review", None), ("test", None)):
+            self.assert_refused(changed(a_set(type=t, section=s), data__group=None))
+
+    def test_an_answer_has_its_four_fields_or_those_and_a_role_and_a_format(self):
+        self.assert_refused(
+            a_daily(answers=[changed(A_SIX_FIELD_ANSWER, format=DROP)]),
+            a_daily(answers=[changed(A_SIX_FIELD_ANSWER, role=DROP)]),
+            *(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, role=r)]) for r in ("rule", "Counted", None, "")),
+            *(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, format=f)]) for f in ("compare", "Choice", None)),
+            a_daily(answers=[changed(A_SIX_FIELD_ANSWER, extra=1)]))
+        self.assert_accepted(*(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, role=r, format=f)])
+                               for r in ("counted", "first_look", "reask") for f in ("choice", "typed", "reverse")))
+
+    def test_four_field_answers_are_still_accepted_for_a_daily_set(self):
+        self.assert_accepted(a_daily(answers=[AN_ANSWER]))
+
+    def test_a_practice_test_or_an_old_set_may_have_six_field_answers(self):
+        self.assert_accepted(a_set(type="test", section=None, answers=[A_SIX_FIELD_ANSWER] * 30),
+                             a_set(type="day", section=4, answers=[A_SIX_FIELD_ANSWER]))
+
+    def test_a_daily_set_holds_up_to_50_answers(self):
+        self.assert_refused(a_daily(answers=[A_SIX_FIELD_ANSWER] * 51))
+        self.assert_accepted(a_daily(answers=[A_SIX_FIELD_ANSWER] * 19), a_daily(answers=[A_SIX_FIELD_ANSWER] * 50))
 
     def test_an_imported_record_holds_a_state_object(self):
         self.assert_refused(changed(an_import(), data__state=DROP), changed(an_import(), data__state=None),

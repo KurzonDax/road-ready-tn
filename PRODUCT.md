@@ -16,9 +16,9 @@ A second, minor audience is the Helper, who sets the app up for a Learner and ma
 
 ## Product Purpose
 
-Road Ready TN takes a learner from zero to ready for the knowledge test one small step at a time. The learner sees only the section they're on: 10 questions on one topic, the rule before each question they have never answered, an explanation after each answer with the manual's own words and page number, and a short score at the end.
+Road Ready TN takes a learner from zero to ready for the knowledge test one small step at a time, and makes them recall each fact after a gap, several times, on separate days. The learner sees one Set at a time: up to 10 counted questions, the facts that are due again and a few new ones. A new fact starts with a first look (an unscored guess), then its rule with the manual's own words and page number, and its question comes back later in the Set. After each answer the app explains it with the manual's words and page. The end of a Set says how many facts are learned, never a score.
 
-The path is fixed: Sections 1 to 12, then Review (only missed questions), then Practice tests of 30 questions. Success is "Ready for the test", meaning 27 or more of 30 on three practice tests in a row. That is a 90% bar against the real test's 80% (24 of 30), to leave room for nerves.
+New facts arrive in the order of the 12 Sections. Each fact is asked again after 12 hours, then 48 hours, then every 7 days once it is solid, and at once after a wrong answer. Practice tests of 30 questions unlock once every fact is learned. Success is "Ready for the test", meaning 27 or more of 30 on three practice tests in a row. That is a 90% bar against the real test's 80% (24 of 30), to leave room for nerves. The Helper's view shows each fact's standing and how often facts answered right are still right 12 or more hours later; that retention figure is how the app is checked.
 
 ## Positioning
 
@@ -33,13 +33,13 @@ A calm, guided path rather than a question bank. There's no menu, no topic list,
 
 ## Capabilities and Constraints
 
-- **Flow:** 12 sections of 10 questions each, easiest first the first time through. Then Review, 10 missed questions at a time. Then Practice tests of 30 questions drawn from all 120.
-- **Scoring:** every finished section shows green on the progress track, whatever its score. "See your section scores" on the home screen lists each finished section's latest score, with a button to do that section again in a new order. Getting a missed question right on a redo removes it from review.
-- **Order:** redos and review shuffle the questions. Answer choices are shuffled every time.
+- **Flow:** Sets, one after another. Each Set takes the facts that are due, then up to 5 new facts in Section order, with at least 4 screens for other facts between a new fact's rule and its question. A fact answered wrong is asked once more in the same Set and again in the next. Practice tests of 30 questions drawn from all 120 unlock once every fact is learned (`docs/specs/learning-engine.md`).
+- **Scoring:** each fact has a standing (new, seen, learned, solid) worked out from its answers; standings only rise (`docs/adr/0002-standings-and-the-due-ladder.md`). A Section shows green on the progress track once its 10 facts are learned. The home screen and Set done show how many facts are learned and solid; only a Practice test shows how many were right.
+- **Order:** new facts come easiest first within a Section; due facts are shuffled among them. Answer choices are shuffled every time.
 - **Content:** 120 app questions chosen from a bank of 803 (`data/questions.json`, `data/sections.json`), including all 29 of the manual's sample questions. Each has exactly one right answer and three wrong ones, an explanation, a page, and a quote under 25 words. Sign or color pictures appear only when they don't give the answer away.
 - **Stack:** a single HTML page (`src/app.html`) with inline styles and script, used by both the Learner and the Helper. `build.py` validates the data and writes the page (`dist/index.html`), its questions (`dist/questions.json`, fetched when the page starts and served only to someone signed in), the inline script's CSP hash (`dist/csp.json`), the Home Screen files and the service worker (`dist/sw.js`). The server (`server/`) is the Python standard library plus waitress (vendored in `vendor/`), with SQLite in the Instance folder. It stores accounts and each Learner's records, and the page works out Progress from those records (`docs/adr/0001-server-stores-records-page-works-out-progress.md`). Tests are in Python (`tests/`), and the browser test uses Playwright.
 - **Fixed:** question ids never change, because the Learner's records refer to them. The old progress key `tn-permit-daily-v1` is only read, once, to import progress saved before accounts.
-- **Terminology:** "Section", "Review", "Practice test", "Ready for the test".
+- **Terminology:** "Set", "Section", "First look", "Rule screen", "Practice test", "Ready for the test". Standing words: new, seen, learned, solid.
 
 ## Brand Commitments
 
