@@ -181,6 +181,13 @@ button.opt { cursor: pointer; }
 .k-you .k-body { stroke: var(--guide); stroke-width: 2.5; }
 .k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--guide); stroke-width: 3.5; }
 .k-ring { fill: var(--guide); opacity: .25; }
+.k-no { fill: none; stroke: var(--bad); stroke-width: 2.5; stroke-dasharray: 5 4; }
+.k-notthis .k-body { stroke: var(--bad); stroke-width: 3; stroke-dasharray: 5 4; }
+@media (prefers-reduced-motion: no-preference) {
+  .k-ring, .k-no { animation: settle 420ms cubic-bezier(.16, 1, .3, 1) both; transform-box: fill-box; transform-origin: center; }
+  @keyframes settle { from { opacity: 0; transform: scale(.7); } }
+  .k-ring { animation-fill-mode: forwards; }
+}
 .k-target { cursor: pointer; }
 .k-target:focus { outline: none; }
 .k-target:focus-visible .k-body, .k-target:hover .k-body { stroke: var(--focus); stroke-width: 3.5; }
@@ -189,7 +196,9 @@ button.opt { cursor: pointer; }
 .scene :not(.k-target):not(.k-target *) { pointer-events: none; }
 .k-target, .k-target * { pointer-events: auto; }
 @media (prefers-reduced-motion: no-preference) { .k-flash { animation: blink 1s steps(2, start) infinite; } @keyframes blink { to { opacity: .15; } } }
-.say { font-size: 20px; font-weight: 700; line-height: 1.4; margin: 0; }
+/* After acting: the result line, the drawing, one sentence. The line and the drawing's rings say the same thing. */
+.card.step.acted { gap: 14px; }
+.say { font-size: 20px; line-height: 1.45; margin: 0; text-wrap: pretty; }
 .link.peek { align-self: flex-start; padding-left: 0; }
 #nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(8 7 6 / .5); }
 
@@ -1145,10 +1154,10 @@ function crosswalkPart(p) {
   return bars.join('');
 }
 // A tap target or a highlighted part gets a soft ring; a target is a button the keyboard and a screen reader can reach.
-function wrapTarget(p, inner, { targets, highlight }) {
-  const t = targets.find(x => x.id === p.id), hi = highlight === p.id;
-  const ring = hi ? `<circle class="k-ring" cx="${p.x}" cy="${p.y}" r="26"/>` : '';
-  if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>`;
+function wrapTarget(p, inner, { targets, highlight, picked }) {
+  const t = targets.find(x => x.id === p.id), hi = highlight === p.id, no = picked === p.id;
+  const ring = hi ? `<circle class="k-ring" cx="${p.x}" cy="${p.y}" r="26"/>` : no ? `<circle class="k-no" cx="${p.x}" cy="${p.y}" r="26"/>` : '';
+  if (!t) return ring + `<g class="${hi ? 'k-hi' : no ? 'k-notthis' : ''}">${inner}</g>`;
   return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
 }
 function carPart(p, o) {
@@ -1166,7 +1175,7 @@ function pathPart(p) {
   return `<path class="k-path" d="${d}" marker-end="url(#k-arrow)"/>`;
 }
 // The whole drawing: surfaces first, then markings, then everything else in the order listed.
-function drawScene(parts, o = { targets: [], highlight: null }) {
+function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
   const roads = parts.filter(p => p.t === 'road');
   const surfaces = roads.map(r => `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="var(--road)"/>`).join('')
     + parts.filter(p => p.t === 'circle-road').map(p => `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r}" fill="none" stroke="var(--road)" stroke-width="${p.w}"/>` +
@@ -1219,27 +1228,27 @@ const stepLabel = (st, value) => st.kind === 'tap' ? st.targets.find(t => t.id =
 function renderStep() {
   const L = lesson, steps = L.lesson.steps, st = steps[L.i], n = steps.length, act = L.acts[L.i], last = L.i === n - 1;
   const parts = act && st.then.parts ? st.then.parts : st.scene && st.scene.parts;
-  const scene = parts ? `<div class="visual">${drawScene(parts, { targets: !act && st.kind === 'tap' ? st.targets : [], highlight: act ? st.then.highlight || null : null })}</div>` : '';
+  // After acting, the drawing itself says it: the right one is ringed, and a wrong tap is crossed.
+  const pickedId = act && st.kind === 'tap' && !act.right ? st.targets.find(t => t.label === act.chosen).id : null;
+  const scene = parts ? `<div class="visual">${drawScene(parts, { targets: !act && st.kind === 'tap' ? st.targets : [], highlight: act ? st.then.highlight || null : null, picked: pickedId })}</div>` : '';
   const Lk = ['A', 'B', 'C', 'D'];
   const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${st.options.map((o, k) => act
     ? `<li class="opt ${o === st.answer ? 'right' : o === act.chosen ? 'wrong' : 'rest'}"><span class="key" aria-hidden="true">${Lk[k]}</span><span class="otext"><span>${esc(o)}</span>${o === act.chosen && !L.peek ? '<span class="tag">You picked this</span>' : o === st.answer ? '<span class="tag">The answer</span>' : ''}</span></li>`
     : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
-  const picked = act && !L.peek && !act.right ? `<p class="picked">You picked: ${esc(act.chosen)}.</p>` : ''; // chosen is already the label
-  const after = act ? `<div class="result" id="stepResult"><h2 class="outcome${act.right && !L.peek ? ' good' : ''}" id="stepHead" tabindex="-1">${act.right && !L.peek ? (st.kind === 'tap' ? `You picked the right one: ${esc(stepLabel(st, st.answer))}.` : `You picked the right answer: ${esc(st.answer)}.`) : (st.kind === 'tap' ? `The right one is ${esc(stepLabel(st, st.answer))}.` : `The answer is: ${esc(st.answer)}.`)}</h2>${picked}</div>` : '';
-  const rule = act && st.rule ? `<div class="explain"><p class="rule">${esc(st.rule)}</p></div>` : '';
+  // The result is one short line, first on the card: "Right." or "Not <what was picked>."
+  const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Right.' : st.kind === 'tap' ? `Not ${act.chosen}.` : 'Not that one.';
   const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: step ${L.i + 1} of ${n}`;
   const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
     : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Next step'}</button>` : '';
   paint(`
     <div class="home">
       <div class="progress"><span>${esc(where)}</span>${L.peek ? '' : `<div class="bar" aria-hidden="true"><span style="width:${Object.keys(L.acts).length / n * 100}%"></span></div>`}</div>
-      <div class="card">
-        ${after}
-        ${act ? `<p class="q asked" id="stepText">${esc(st.prompt)}</p>` : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
+      <div class="card step${act ? ' acted' : ''}">
+        ${act ? `<h2 class="outcome${act.right && !L.peek ? ' good' : ''}" id="stepHead" tabindex="-1">${esc(lead)}</h2>`
+              : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
         ${scene}
-        ${act ? `<p class="say">${esc(st.then.say)}</p>` : st.kind === 'tap' ? '<p class="sub">Tap one of them in the drawing.</p>' : ''}
         ${options}
-        ${rule}
+        ${act ? `<p class="say" id="stepText">${esc(st.then.say)}</p>` : ''}
       </div>
       ${button}
       ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop the lesson for now</button>'}
@@ -1259,7 +1268,7 @@ function lessonAct(value) {
   L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
   toTop();
   renderStep();
-  $('announce').textContent = [L.acts[L.i].right ? '' : `You picked: ${L.acts[L.i].chosen}.`, st.then.say, st.rule || ''].filter(Boolean).join(' ');
+  $('announce').textContent = `${L.acts[L.i].right ? 'Right.' : st.kind === 'tap' ? `Not ${L.acts[L.i].chosen}.` : 'Not that one.'} ${st.then.say}`;
 }
 function nextStep() {
   $('announce').textContent = '';
