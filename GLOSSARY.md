@@ -43,6 +43,10 @@ _Avoid_: State, save
 Every Set a Learner has finished, with each answer and when it was given. Resetting Progress keeps the History.
 _Avoid_: Log, activity
 
+**Rule card**:
+The screen before a question the Learner has never answered: the rule in plain words, the manual's own words, and the page. During a Section it can be opened again before answering.
+_Avoid_: Flashcard, hint
+
 **Study session**:
 A stretch of study with no break longer than 30 minutes between answers.
 _Avoid_: Sitting, visit

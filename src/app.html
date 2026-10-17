@@ -130,6 +130,8 @@ button.opt { cursor: pointer; }
 .verdict { font-weight: 700; margin: 0; }
 .verdict.good { color: var(--guide); }
 .why { margin: 0; }
+.rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
+.rule { font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
 .back { margin: 0; color: var(--muted); }
 .src { margin: 0; display: flex; flex-direction: column; gap: 2px; }
 .src figcaption { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
@@ -559,8 +561,30 @@ function start(redoDay) {
 
 function visual(q) { return q.sign ? SIGNS[q.sign] || '' : q.swatch ? SIGNS.swatch(q.swatch) : ''; }
 
+// The rule a question asks about: its explanation and the manual's own words. It comes before a
+// question the Learner has never answered (#33), and again when asked for during a Section.
+function renderRule(again) {
+  const it = run.items[run.i], q = it.q, n = run.items.length;
+  paint(`
+    <div class="home">
+      <div class="progress"><span>${setName(run.kind, run.dayNum)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${run.i / n * 100}%"></span></div></div>
+      <div class="card">
+        <h1 class="rulehead" id="ruleHead" tabindex="-1">${again ? 'The rule for this question' : 'Read this rule first. The next question asks about it.'}</h1>
+        ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
+        <p class="rule">${esc(q.why)}</p>
+        ${q.src ? `<figure class="src"><figcaption>Driver manual, page ${q.p}</figcaption><blockquote>“${esc(q.src)}”</blockquote></figure>` : ''}
+      </div>
+      <button class="btn primary" type="button" id="ruleGoBtn">${again ? 'Go back to the question' : 'Go on to the question'}</button>
+      <button class="link" type="button" id="quitBtn">Stop for now and save my place</button>
+    </div>`, '#ruleHead');
+  $('ruleGoBtn').onclick = () => { it.ruled = true; window.scrollTo({ top: 0, behavior: 'instant' }); renderQuestion(); };
+  $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); };
+}
+
 function renderQuestion(revealFeedback) {
   const it = run.items[run.i], q = it.q, n = run.items.length, last = run.i === n - 1;
+  // `ruled` lives only on the screen's copy of the Set, so a Set picked up again shows the rule again.
+  if (!run.answered && !it.ruled && S.last[q.id] === undefined) return renderRule(false);
   const L = ['A', 'B', 'C', 'D'];
   const right = it.chosen === q.a;
   const opts = it.options.map((o, k) => {
@@ -586,6 +610,7 @@ function renderQuestion(revealFeedback) {
         ${fb}
       </div>
       ${run.answered ? `<button class="btn primary" type="button" id="nextBtn">${last ? 'See my score' : 'Next question'}</button>` : ''}
+      ${!run.answered && (run.kind === 'day' || run.kind === 'redo') ? '<button class="link" type="button" id="ruleBtn">Show me the rule again</button>' : ''}
       <button class="link" type="button" id="quitBtn">Stop for now and save my place</button>
     </div>`, run.answered ? null : '#qText');
   if (run.answered) {
@@ -593,6 +618,7 @@ function renderQuestion(revealFeedback) {
     $('nextBtn').focus({ preventScroll: true });
     if (revealFeedback) reveal();
   } else document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
+  if ($('ruleBtn')) $('ruleBtn').onclick = () => { renderRule(true); window.scrollTo({ top: 0, behavior: 'instant' }); };
   $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); };
 }
 
@@ -693,7 +719,7 @@ function finish() {
 }
 
 document.addEventListener('keydown', e => {
-  if (!run || run.answered || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!run || run.answered || !document.querySelector('button.opt') || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
   if (k >= 0) { e.preventDefault(); choose(k); }
 });

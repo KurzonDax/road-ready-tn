@@ -151,6 +151,7 @@ def answer_set(pg, miss=0, stop=None):
     """Answer every question in the current set, getting the first `miss` wrong. With `stop`, answer
     only that many and leave the last one's feedback on screen."""
     n = 0
+    past_rule(pg)
     while pg.query_selector(".opt"):
         opts = pg.query_selector_all(".opt")
         right = pg.evaluate("run.items[run.i].q.a")
@@ -165,7 +166,14 @@ def answer_set(pg, miss=0, stop=None):
         if n == stop:
             break
         pg.click("#nextBtn")
+        past_rule(pg)
     return n
+
+
+def past_rule(pg):
+    """Go on past the rule card that comes before a question the Learner has never answered."""
+    if pg.query_selector("#ruleGoBtn"):
+        pg.click("#ruleGoBtn")
 
 
 def check_go_on_first(pg, section, when):
@@ -178,7 +186,8 @@ def check_go_on_first(pg, section, when):
 
 
 def answer_one(pg):
-    """Click the right answer to the question on screen."""
+    """Click the right answer to the question on screen (after its rule card, if it has one)."""
+    past_rule(pg)
     right = pg.evaluate("run.items[run.i].q.a")
     for o in pg.query_selector_all("button.opt"):
         if o.inner_text().split("\n", 1)[-1].strip() == right:
@@ -1611,6 +1620,7 @@ def main():
         check(pg.evaluate("innerWidth") == 390, "phone lays the page out at the phone's width")
         check(pg.evaluate("document.documentElement.lang") == "en", "page language is set")
         pg.click("#startBtn")
+        past_rule(pg)
         pg.query_selector_all(".opt")[0].click()
         box = pg.query_selector("#feedback .verdict").bounding_box()
         check(box is not None and 0 <= box["y"] < 844, "after answering, the verdict is on screen")
@@ -1647,6 +1657,13 @@ def main():
             # Section 1 with 3 misses: results, redo button, then redo perfectly.
             pg.click("#startBtn")
             first = pg.evaluate("run.items.map(i => i.q.id)")
+            check(pg.query_selector("#ruleGoBtn") is not None and not pg.query_selector(".opt")
+                  and pg.inner_text(".rule") == pg.evaluate("run.items[0].q.why"),
+                  "before a question he has never answered, its rule comes first, with no answer choices yet")
+            check(pg.text_content(".src figcaption").startswith("Driver manual, page "),
+                  "the rule card shows the manual's own words and page")
+            pg.click("#ruleGoBtn")
+            check(pg.query_selector(".opt") is not None and pg.evaluate("run.i") == 0, "Go on to the question shows the question")
             answer_set(pg, miss=1, stop=1)
             feedback = " ".join(pg.inner_text("#feedback").split())
             check("Not correct" not in feedback and feedback.startswith("The right answer is: ")
@@ -1663,6 +1680,15 @@ def main():
                   "results say that doing the section again is not needed", stage_text(pg))
             check(pg.get_attribute("#againBtn", "class") == "link", "results offer to try the section again, as the quiet choice")
             pg.click("#againBtn")
+            check(pg.query_selector(".opt") is not None and not pg.query_selector("#ruleGoBtn"),
+                  "a question he has answered before comes with no rule card")
+            pg.click("#ruleBtn")
+            check(pg.inner_text("#ruleHead") == "The rule for this question"
+                  and pg.inner_text(".rule") == pg.evaluate("run.items[0].q.why"),
+                  "Show me the rule again shows that question's rule")
+            pg.click("#ruleGoBtn")
+            check(pg.query_selector(".opt") is not None and pg.evaluate("run.i") == 0 and not pg.evaluate("run.answered"),
+                  "and Go back to the question returns to it, still unanswered")
             redo = pg.evaluate("run.items.map(i => i.q.id)")
             check(sorted(redo) == sorted(first), "a redo uses the same 10 questions")
             answer_set(pg, miss=1)
@@ -1740,7 +1766,10 @@ def main():
             check(h1(pg).startswith("Practice test"), "after review come practice tests")
 
             # A practice test below the ready bar gives a count and what it is short of, not a verdict.
-            pg.click("#startBtn"); answer_set(pg, 5)
+            pg.click("#startBtn")
+            check(not pg.query_selector("#ruleBtn") and not pg.query_selector("#ruleGoBtn"),
+                  "a practice test shows no rule before an answer")
+            answer_set(pg, 5)
             end = stage_text(pg)
             check(pg.inner_text(".score") == "25 of 30 right" and "This practice test is done." in end
                   and "pass" not in end and "starts over" not in end,
