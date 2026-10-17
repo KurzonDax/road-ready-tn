@@ -258,7 +258,7 @@ Wording is exact. Everything else (type, spacing, the pinned button, the A to D 
 
 **Progress line.** On a `counted` screen: "Set 12: question 3 of 10", where the number counts counted questions and the bar shows counted answered over counted total. On a `first_look` screen: "Set 12: first look". On a `reask` screen: "Set 12: one more time". On a `rule` or `contrast` screen: "Set 12". In a Practice test: "Practice test: question 3 of 30" as today. The bar does not move on first looks, re-asks, rules or Compare screens.
 
-**First look** (`FIRST_LOOK` true). Above the question, one line in the muted style: "First look. You have not seen this rule yet. Pick what you think it is." Then the question and four choices. Choosing one goes straight to the rule screen; no coloring, no "Correct", no "right answer" on this screen.
+**First look** (`FIRST_LOOK` true). Above the question, one line in the muted style: "This is a new rule. Pick the answer you think is right. This answer does not count." Then the question and four choices. Choosing one goes straight to the rule screen; no coloring, no "Correct", no "right answer" on this screen.
 
 **Rule screen.** Heading: "Here is the rule." when it follows a first look, "Read this rule first." when `FIRST_LOOK` is false. Then the sign or color picture if the fact has one, the rule (`why`), and the manual's sentence with "Driver manual, page N" as today. After a first look, two lines: "You picked: {chosen}." and "The answer is: {answer}." Then: "This question comes back later in this set." Button: "Go on".
 
