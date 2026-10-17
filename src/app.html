@@ -135,13 +135,13 @@ button.opt { cursor: pointer; }
 .compare li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
 .compare .cfact { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
 .compare .cpic { display: block; line-height: 0; }
+.compare .cpic svg { width: 48px; height: 48px; }
 /* A typed answer: the answer's own words as a sentence, a box for each number. */
 .typed { margin: 0; font-size: clamp(20px, 5vw, 23px); line-height: 2.2; }
-.typed .box { font: inherit; width: calc(6ch + 24px); padding: 6px 10px; margin: 0 4px; border-radius: 10px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); text-align: center; }
+.typed .box { font: inherit; width: calc(6ch + 24px); min-height: 44px; padding: 6px 10px; margin: 0 4px; border-radius: 10px; border: 1.5px solid var(--control-line); background: var(--surface); color: var(--ink); text-align: center; }
 .typed .box.right { border-color: var(--guide); background: var(--guide-soft); font-weight: 700; }
 .typed .box.wrong { border-color: var(--bad); background: var(--bad-soft); }
 .typed .box:disabled { opacity: 1; -webkit-text-fill-color: var(--ink); }
-.compare .cpic svg { width: 48px; height: 48px; }
 .rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
 .rule { font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
 .back { margin: 0; color: var(--muted); }
@@ -442,7 +442,7 @@ function groupBlock(g, p) {
     return { kind: 'counted', id: f.id, group: g.id, format: 'reverse', options: shuffle([f.label, ...others]), chosen: null, at: null };
   })];
 }
-const choiceOf = id => ({ format: 'choice', options: shuffle([BY_ID[id].a, ...BY_ID[id].o]), chosen: null, at: null });
+const choiceOf = id => ({ format: 'choice', options: shuffle([BY_ID[id].a, ...BY_ID[id].o]), typed: null, chosen: null, at: null });
 // A counted question on a learned fact with numbers asks the Learner to type them; any other is a choice.
 const countedFormat = (p, id) => BY_ID[id].typed && isLearned(p.facts[id])
   ? { format: 'typed', options: null, typed: null, chosen: null, at: null } : choiceOf(id);
@@ -494,6 +494,13 @@ function packRun(r) {
     screens: r.screens.map(s => ({ kind: s.kind, id: s.id, format: s.format, options: s.options, chosen: s.chosen, typed: s.typed, at: s.at, group: s.group })) };
 }
 const sameOptions = (options, q) => Array.isArray(options) && options.slice().sort().join('\n') === [q.a, ...q.o].sort().join('\n');
+// Whether a saved question screen still fits the questions: a choice's options are the question's
+// answer and wrong choices, a reverse question's are labels of its group, a typed one has a box per number.
+function formatFits(x, q, g) {
+  if (x.format === 'choice') return sameOptions(x.options, q);
+  if (x.format === 'reverse') return reverseOptions(x, g);
+  return x.format === 'typed' && !!q.typed && (x.typed == null || (Array.isArray(x.typed) && x.typed.length === q.typed.numbers.length));
+}
 // A reverse question's choices are 4 different labels of its group, its own fact's among them.
 function reverseOptions(x, g) {
   const labels = g ? g.facts.map(f => f.label) : [], own = g && g.facts.find(f => f.id === x.id);
@@ -506,8 +513,7 @@ function unpackRun(p) {
     const screens = p.screens.map(x => {
       const q = BY_ID[x.id], g = GROUP_BY_ID[x.group];
       if (!SCREEN_KINDS.includes(x.kind) || (x.kind === 'contrast' ? !g : !q)) throw new Error('changed');
-      if (isQuestion(x) && !(x.format === 'choice' ? sameOptions(x.options, q) : x.format === 'reverse' ? reverseOptions(x, g)
-        : x.format === 'typed' && !!q.typed && (x.typed == null || (Array.isArray(x.typed) && x.typed.length === q.typed.numbers.length)))) throw new Error('changed');
+      if (isQuestion(x) && !formatFits(x, q, g)) throw new Error('changed');
       return { kind: x.kind, id: x.id, format: x.format, options: x.options, chosen: x.chosen ?? null, typed: x.typed ?? null,
         at: x.at || null, group: x.group ?? null };
     });
@@ -530,10 +536,9 @@ const answerOf = s => s.format === 'reverse' ? labelOf(s.group, s.id) : BY_ID[s.
 const questionText = s => s.format === 'reverse' ? GROUP_BY_ID[s.group].reverse.replace('{answer}', BY_ID[s.id].a) : BY_ID[s.id].q;
 // A typed answer is right when every box, trimmed and with commas taken out, is a decimal number
 // ("0.08" or ".08") equal to the fact's number in that place.
-const typedNumber = text => { const t = String(text).trim().replace(/,/g, ''); return /^(\d+(\.\d+)?|\.\d+)$/.test(t) ? Number(t) : NaN; };
-const isRight = s => s.format === 'typed'
-  ? Array.isArray(s.typed) && BY_ID[s.id].typed.numbers.every((n, k) => typedNumber(s.typed[k]) === n)
-  : s.chosen === answerOf(s);
+const typedNumber = text => { const t = String(text).trim().replace(/,/g, ''); return /^(\d+(\.\d*)?|\.\d+)$/.test(t) ? Number(t) : NaN; };
+const boxRight = (s, k) => Array.isArray(s.typed) && typedNumber(s.typed[k]) === BY_ID[s.id].typed.numbers[k];
+const isRight = s => s.format === 'typed' ? BY_ID[s.id].typed.numbers.every((_, k) => boxRight(s, k)) : s.chosen === answerOf(s);
 // A finished Set as a record. It names the latest Reset this device knows about. Every answered
 // question screen is an answer; its role says whether it counts toward the fact's standing.
 function setRecord(r) {
@@ -819,15 +824,16 @@ function renderRule() {
   wireQuit();
 }
 
-// What a counted question or re-ask says after it is answered: {verdict, also, back}. `also` names
-// the question a wrong choice answers, when it is another fact's answer, or after a wrong typed
-// answer gives the answer; `back` says when the question comes back, said plainly instead of a verdict.
+// What a counted question or re-ask says after it is answered: {lead, detail, back}. `lead` is
+// "Correct.", the right answer, or what was typed; `detail` names the question a wrong choice answers,
+// when it is another fact's answer, or gives the answer after a wrong typed one; `back` says when the
+// question comes back, said plainly instead of a verdict.
 function feedbackLines(s) {
   const q = BY_ID[s.id];
-  if (isRight(s)) return { verdict: 'Correct.', also: '', back: '' };
-  if (s.format === 'typed') return { verdict: `You typed: ${s.typed.join(' and ')}.`, also: `The answer is: ${q.a}.`, back: comesBackLine(s) };
+  if (isRight(s)) return { lead: 'Correct.', detail: '', back: '' };
+  if (s.format === 'typed') return { lead: `You typed: ${s.chosen}.`, detail: `The answer is: ${q.a}.`, back: comesBackLine(s) };
   const other = s.format === 'choice' && q.also && BY_ID[q.also[s.chosen]];
-  return { verdict: `The right answer is: ${answerOf(s)}.`, also: other ? `${s.chosen} answers a different question: ${other.q}` : '',
+  return { lead: `The right answer is: ${answerOf(s)}.`, detail: other ? `${s.chosen} answers a different question: ${other.q}` : '',
     back: comesBackLine(s) };
 }
 function comesBackLine(s) {
@@ -847,8 +853,8 @@ function renderQuestion(revealFeedback) {
   }).join('');
   const lines = run.answered ? feedbackLines(s) : null;
   const fb = lines ? `<div class="feedback" id="feedback">
-      <p class="verdict${isRight(s) ? ' good' : ''}">${esc(lines.verdict)}</p>
-      ${lines.also ? `<p class="also">${esc(lines.also)}</p>` : ''}
+      <p class="verdict${isRight(s) ? ' good' : ''}">${esc(lines.lead)}</p>
+      ${lines.detail ? `<p class="also">${esc(lines.detail)}</p>` : ''}
       <p class="why">${esc(q.why)}</p>
       ${manual(q)}
       ${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}
@@ -881,11 +887,16 @@ function renderQuestion(revealFeedback) {
 
 // A typed question's template as a sentence, with a box for each number: empty while it is asked,
 // and showing what was typed once it is answered.
+// Each box's label reads the whole sentence with "blank" for the boxes, so a screen reader gives the
+// words around it ("Between blank and blank feet: number 1 of 2").
 function typedSentence(s) {
-  const nums = BY_ID[s.id].typed.numbers, parts = BY_ID[s.id].typed.template.split('{}');
-  const box = k => `<input class="box${run.answered ? (typedNumber(s.typed[k]) === nums[k] ? ' right' : ' wrong') : ''}" type="text" inputmode="decimal"` +
-    ` autocomplete="off" autocorrect="off" spellcheck="false" size="6" aria-label="${nums.length > 1 ? `Number ${k + 1} of ${nums.length}` : 'The number'}"` +
-    (run.answered ? ` value="${esc(s.typed[k])}" disabled` : '') + '>';
+  const typed = BY_ID[s.id].typed, nums = typed.numbers, parts = typed.template.split('{}');
+  const sentence = esc(typed.template.replace(/\{\}/g, 'blank'));
+  const box = k => `<input class="box${run.answered ? (boxRight(s, k) ? ' right' : ' wrong') : ''}" type="text" inputmode="decimal"` +
+    ` autocomplete="off" autocorrect="off" spellcheck="false" size="6" maxlength="12"` +
+    ` aria-label="${sentence}: ${nums.length > 1 ? `number ${k + 1} of ${nums.length}` : 'the number'}"` +
+    (run.answered ? ` value="${esc(s.typed[k])}" disabled` : '') + '>' +
+    (run.answered && boxRight(s, k) ? '<span class="vh">It is correct.</span>' : '');
   return `<p class="typed">${parts.map((t, k) => esc(t) + (k < nums.length ? box(k) : '')).join('')}</p>`;
 }
 // "Check my answer" turns on once every box has text; Enter in a box checks too.
@@ -899,7 +910,7 @@ function wireTyped() {
   btn.onclick = () => {
     const s = run.screens[run.i];
     if (run.answered || !ready()) return;
-    s.typed = boxes.map(b => b.value);
+    s.typed = boxes.map(b => b.value.trim());
     s.chosen = s.typed.join(' and ');
     settle(s);
   };
@@ -948,7 +959,7 @@ function settle(s) {
   renderQuestion(true);
   const lines = feedbackLines(s);
   const q = BY_ID[s.id];
-  $('announce').textContent = [lines.verdict, lines.also, q.why, q.src ? `Driver manual, page ${q.p}: “${q.src}”` : '', lines.back]
+  $('announce').textContent = [lines.lead, lines.detail, q.why, q.src ? `Driver manual, page ${q.p}: “${q.src}”` : '', lines.back]
     .filter(Boolean).join(' ');
 }
 

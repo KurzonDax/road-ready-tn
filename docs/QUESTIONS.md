@@ -72,7 +72,7 @@ d-165 ("Within 50 feet but no closer than 15 feet from the nearest rail") is a w
 "typed": {"template": "Between {} and {} feet", "numbers": [15, 50]}
 ```
 
-`template` is the answer with one `{}` for each number, in the order typed; the words around them are shown, not typed. `numbers` are the numbers themselves. `tests/validate_data.py` checks that there is one `{}` per number, that the numbers are exactly the ones in the answer (written as digits or as words, so "Ten feet" types 10), and that only questions in the sections have `typed`.
+`template` is the sentence the Learner types into, with one `{}` for each number in the order typed; the words around them are shown, not typed. It usually reads like the answer, and may say more (a-003's answer is "9 o'clock and 3 o'clock"; its template is "Left hand at {} o'clock, right hand at {} o'clock"). `numbers` are the numbers themselves. `tests/validate_data.py` checks that there is one `{}` per number, that the numbers are exactly the ones in the answer (written as digits or as words, so "Ten feet" types 10), and that only questions in the sections have `typed`.
 
 `data/sections.json` lists the 12 study sections, 10 question ids each, in the order the app presents them the first time through (easiest first).
 

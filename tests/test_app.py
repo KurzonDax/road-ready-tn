@@ -791,7 +791,7 @@ def check_engine(browser, inst):
           "first looks and new facts' counted questions are never typed")
     for fact, boxes, want in (("c-097", [".08"], True), ("c-097", ["0.08"], True), ("c-097", ["8"], False),
                               ("b-077", ["15", "50"], True), ("b-077", ["15", "30"], False), ("b-077", [" 15 ", "50 "], True),
-                              ("b-031", ["70"], True), ("b-031", ["seventy"], False), ("b-031", ["7O"], False),
+                              ("b-031", ["70"], True), ("b-031", ["70."], True), ("b-031", ["seventy"], False), ("b-031", ["7O"], False),
                               ("c-050", ["5,00"], True), ("c-050", ["500.0"], True), ("b-031", [""], False)):
         got = pg.evaluate("([id, boxes]) => isRight({ format: 'typed', id, typed: boxes })", [fact, boxes])
         check(got is want, f"typing {boxes} for {fact} is {'right' if want else 'wrong'}", got)
@@ -2132,10 +2132,10 @@ def check_compare(browser, inst):
     ctx.close()
 
 
-def check_typed(browser, inst):
+def check_typed_numbers(browser, inst):
     """Learned numeric facts are typed: the boxes, the button, ".08" right for c-097, and "15" and "30"
     wrong for b-077, which comes back typed once more."""
-    print("\n[typed numbers]")
+    print("\n[typed numbers on screen]")
     ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True)
     pg = ctx.new_page()
     errors = []
@@ -2154,8 +2154,10 @@ def check_typed(browser, inst):
               and texts(pg, ".typed") == ["percent"] and not pg.query_selector("button.opt"),
               "a typed question says Type the number. and shows the answer's words with one box", stage_text(pg))
         box = pg.query_selector(".typed .box")
-        check(box.get_attribute("inputmode") == "decimal" and pg.is_disabled("#checkBtn"),
-              "the box asks for a decimal keyboard, and Check my answer is off while it is empty")
+        check(box.get_attribute("inputmode") == "decimal" and box.get_attribute("maxlength") == "12" and pg.is_disabled("#checkBtn"),
+              "the box asks for a decimal keyboard and takes at most 12 characters, and Check my answer is off while it is empty")
+        check(box.get_attribute("aria-label") == "blank percent: the number", "its label reads the sentence around it",
+              box.get_attribute("aria-label"))
         check(no_sideways_scroll(pg), "at 375 px wide, a typed question doesn't scroll sideways")
         box.fill(".08")
         check(pg.is_enabled("#checkBtn"), "typing turns Check my answer on")
@@ -2164,12 +2166,12 @@ def check_typed(browser, inst):
 
     def on_b077():
         check(stage_text(pg).count("Type the numbers.") == 1 and texts(pg, ".typed") == ["Between and feet"]
-              and pg.query_selector_all(".typed .box")[0].get_attribute("aria-label") == "Number 1 of 2",
+              and pg.query_selector_all(".typed .box")[0].get_attribute("aria-label") == "Between blank and blank feet: number 1 of 2",
               "a two-number question says Type the numbers. and has a box for each", texts(pg, ".typed"))
         boxes = pg.query_selector_all(".typed .box")
         boxes[0].fill("15")
         check(pg.is_disabled("#checkBtn"), "Check my answer stays off until every box has text")
-        boxes[1].fill("30")
+        boxes[1].fill(" 30 ")
         pg.click("#checkBtn")
         feedback = texts(pg, "#feedback p")
         check(feedback[:2] == ["You typed: 15 and 30.", "The answer is: Between 15 and 50 feet."]
@@ -2365,7 +2367,7 @@ def main():
             check_study_path(browser, inst, scheme)
         check_known_facts(browser, inst)
         check_compare(browser, inst)
-        check_typed(browser, inst)
+        check_typed_numbers(browser, inst)
         check_phone_screens(browser, inst)
         browser.close()
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
