@@ -221,6 +221,47 @@ def check_lessons(secs):
         missing = facts - covered
         if missing and steps:
             errors.append(f"{name}: no step teaches {sorted(missing)}")
+        errors += check_lesson_wording(name, steps)
+    return errors
+
+
+# Words that read two ways to a literal reader, or point at nothing. Each rule came from a review of the
+# first lesson, so none is a guess: "right" is a direction in a driving app, "yield" is a sign, "step" is
+# the data word for a screen, "both cases" names no case, and a semicolon joins what should be two sentences.
+BANNED = [
+    # "right" is fine as a direction: your right, the right, to the right, right turn, right lane, right-of-way.
+    (re.compile(r"(?<!your )(?<!the )(?<!a )(?<!turn )(?<!turns )(?<!turning )\bright\b(?![- ]of[- ]way|-hand| turn| lane| curb| side| edge| away| now)", re.I),
+     "says right; in a driving app right is a direction, so say correct, or name the side"),
+    (re.compile(r"\byield(ed|s|ing)?\b(?! sign)", re.I), "says yield; say what the driver does (wait, let it pass), unless it is a yield sign"),
+    (re.compile(r"\bsteps?\b(?! (in|into|off|out|onto|back|forward)\b)", re.I), "says step; a Learner never sees that word"),
+    (re.compile(r"\b(both|these|those|the above|the earlier|previous|the last) (cases?|ones?|screens?|examples?|questions?)\b", re.I),
+     "points at earlier screens without naming them; say which situations"),
+    (re.compile(r"\bcases?\b", re.I), "says case; say situation, and name it"),
+    (re.compile(r"[;!]"), "has a semicolon or an exclamation mark"),
+    (re.compile(r"\b(wrong|incorrect|oops|nice|great|good job|well done)\b", re.I), "has a verdict or praise word"),
+]
+# A drawing with an intersection must say what controls it, or that nothing does.
+CONTROL = re.compile(r"stop sign|yield sign|traffic light|the light|your light|green light|red light|yellow light|signal|no sign|all-way stop|crosswalk|driveway|parking lot|roundabout", re.I)
+
+
+def check_lesson_wording(name, steps):
+    errors = []
+    for step in steps:
+        sid = step.get("id") or "?"
+        texts = [("prompt", step.get("prompt", "")), ("say", (step.get("then") or {}).get("say", ""))]
+        texts += [("option", o) for o in step.get("options", [])]
+        texts += [("target label", t.get("label", "")) for t in step.get("targets", [])]
+        for field, text in texts:
+            for pattern, why in BANNED:
+                if pattern.search(text):
+                    errors.append(f"{name} {sid} {field}: {why}: {text!r}")
+        say = (step.get("then") or {}).get("say", "")
+        if len(re.findall(r"[.?]", say)) > 3:
+            errors.append(f"{name} {sid} say: more than three sentences: {say!r}")
+        parts = (step.get("scene") or {}).get("parts", [])
+        roads = [p for p in parts if p.get("t") in ("road", "circle-road")]
+        if len(roads) >= 2 and step.get("kind") == "tap" and not CONTROL.search(step.get("prompt", "")):
+            errors.append(f"{name} {sid} prompt: draws an intersection but does not say what controls it (a sign, a light, or no sign)")
     return errors
 
 

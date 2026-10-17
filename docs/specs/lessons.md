@@ -75,3 +75,7 @@ Only cars and pedestrians can be targets or highlights. Everything a step says i
 ## Validation (`tests/validate_data.py`)
 
 For every `data/lessons/section-N.json`: `section` matches the file name and is a Section in `data/sections.json`; every step `fact` is one of that Section's questions; every one of the Section's questions appears in at least one step; step ids are unique; `kind` is valid; a `tap` step has two or more targets whose ids are `car` or `ped` parts in its scene, and `answer` is one of them; a `choose` or `principle` step has two to four distinct options and `answer` is one; `prompt`, `then.say` and (with a fact) `rule` are non-empty; `then.highlight`, when present, is a part id in the scene (or in `then.parts`).
+
+## Wording lint and the review sheet
+
+`tests/validate_data.py` (`check_lesson_wording`) refuses lesson text that breaks the owner's wording rules: "yield" for waiting (only a yield sign), "right" for correct, "step", "case", unnamed references to earlier screens ("both cases", "these ones"), semicolons, exclamation marks, verdict or praise words, an explanation longer than three sentences, and a tap step that draws an intersection without saying what controls it. `tools/lesson_sheet.py <section> <out.html>` writes a lesson as one page, every screen top to bottom with its drawings before and after the correct action, so a lesson is reviewed as a document.

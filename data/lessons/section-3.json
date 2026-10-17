@@ -71,7 +71,7 @@
           }
         ]
       },
-      "prompt": "You are driving out of a driveway to turn right onto the main road, and a car is coming on the main road. Who goes first? Tap the car.",
+      "prompt": "You are driving out of a driveway and want to turn right onto the main road. There is no sign at the end of the driveway. A car on the main road is coming from your left and is close to the driveway. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "road-car",
@@ -85,7 +85,7 @@
       "answer": "road-car",
       "then": {
         "highlight": "road-car",
-        "say": "The car on the main road goes first. You are entering the road, so you wait and let it pass."
+        "say": "The car on the main road goes first. You are driving onto the main road from a driveway, so you wait and let the car pass."
       },
       "rule": "When you enter a main road from a driveway, an alley, a parking lot or the roadside, you yield to all vehicles already on the main road."
     },
@@ -141,10 +141,25 @@
             "y": 225,
             "heading": "n",
             "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              200
+            ],
+            "via": [
+              175,
+              150
+            ],
+            "to": [
+              92,
+              145
+            ]
           }
         ]
       },
-      "prompt": "Your road ends at a main road. There is no stop sign and no yield sign. A car is coming from each direction on the main road. Which car must wait? Tap the car.",
+      "prompt": "Your road ends at a main road. There is no stop sign and no yield sign. You want to turn left onto the main road. A car on the main road is coming from your left, another is coming from your right, and both are close. Which car must wait? Tap the car.",
       "targets": [
         {
           "id": "you",
@@ -161,22 +176,22 @@
       ],
       "answer": "you",
       "then": {
-        "say": "Your car waits, and both cars on the main road go first. Your road ends at the main road, so you let the traffic from both directions pass before you go, even when no sign tells you to."
+        "say": "Your car waits until both cars on the main road have passed. Your road ends at the main road, so you let the traffic from both directions go first, even when no sign tells you to."
       },
       "rule": "At a T intersection, the vehicles on the road that ends yield to the traffic from both directions on the main road."
     },
     {
       "id": "s3-03",
       "kind": "principle",
-      "prompt": "You drove out of a driveway onto a main road. Then your road ended at a main road. Both times, who waited?",
+      "prompt": "When you drove out of the driveway onto the main road, and when your road ended at the main road with no sign, who waited each time?",
       "options": [
         "You did, because you were entering a road that other cars were already on.",
         "The cars on the main road did, because they slowed down to let you in.",
-        "No one did, because the car that was going faster went first."
+        "No one did, because the faster car went first."
       ],
       "answer": "You did, because you were entering a road that other cars were already on.",
       "then": {
-        "say": "When you enter a road, you wait and let the traffic already on it go first. The law never gives anyone the right-of-way to take. It only says who must wait."
+        "say": "Each time, you were driving onto a main road, so you waited and let the traffic already on it go first. The law does not give anyone the right-of-way. It only says who must wait."
       }
     },
     {
@@ -222,10 +237,21 @@
             "y": 225,
             "heading": "n",
             "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              200
+            ],
+            "to": [
+              175,
+              92
+            ]
           }
         ]
       },
-      "prompt": "Your light has just turned green, and a car that entered before the light changed is still in the intersection. Who goes first? Tap the car.",
+      "prompt": "Your light has just turned green, and you want to drive straight across. A car from your left entered the intersection before your light turned green, and it is still in the intersection. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "cross-car",
@@ -239,7 +265,7 @@
       "answer": "cross-car",
       "then": {
         "highlight": "cross-car",
-        "say": "The car in the intersection goes first. It was there before your light changed, so you let it clear the intersection before you go."
+        "say": "The car in the intersection goes first. It was there before your light turned green, so you wait until it is out of the intersection before you go."
       },
       "rule": "When your light turns green, you still yield to pedestrians and vehicles that are still in the intersection."
     },
@@ -304,11 +330,11 @@
           }
         ]
       },
-      "prompt": "Your light is a green light, not an arrow, and you want to turn left while a car comes toward you. Who goes first? Tap the car.",
+      "prompt": "Your light is a round green light, not a green arrow, and you want to turn left. A car on the other side of the intersection is coming toward you. It is going straight across, and it is close. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "oncoming",
-          "label": "the oncoming car"
+          "label": "the car coming toward you"
         },
         {
           "id": "you",
@@ -318,7 +344,7 @@
       "answer": "oncoming",
       "then": {
         "highlight": "oncoming",
-        "say": "The oncoming car goes first. A green light lets you go, but your left turn crosses its lane, so you wait and let it pass."
+        "say": "The car coming toward you goes first. The green light lets you go, but your left turn crosses its path, so you wait and let it pass."
       },
       "rule": "When you turn left on a green light that is not an arrow, you yield to oncoming vehicles."
     },
@@ -383,10 +409,21 @@
             "y": 212,
             "heading": "n",
             "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
           }
         ]
       },
-      "prompt": "At this all-way stop, the car on your left stopped before you arrived. Who goes first? Tap the car.",
+      "prompt": "This is an all-way stop. Every corner has a stop sign with an ALL WAY sign under it. The car on your left stopped at the intersection before you got there. You both want to drive straight across. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "left-car",
@@ -400,7 +437,7 @@
       "answer": "left-car",
       "then": {
         "highlight": "left-car",
-        "say": "The car on your left goes first. It reached the intersection first, so you stop and let it go before you."
+        "say": "The car on your left goes first. It stopped at the intersection before you did, so you stay stopped until it has gone across."
       },
       "rule": "At an all-way stop, every vehicle stops, and the vehicle that reached the intersection first goes first."
     },
@@ -465,10 +502,21 @@
             "y": 212,
             "heading": "n",
             "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
           }
         ]
       },
-      "prompt": "At this all-way stop, you and the car on your right stop at the same time. Who goes first? Tap the car.",
+      "prompt": "This is an all-way stop. Every corner has a stop sign with an ALL WAY sign under it. You and the car on your right stop at the same time. You both want to drive straight across. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "right-car",
@@ -482,7 +530,7 @@
       "answer": "right-car",
       "then": {
         "highlight": "right-car",
-        "say": "The car on your right goes first. You both arrived at the same time, so you let the vehicle on your right go before you."
+        "say": "The car on your right goes first. You both stopped at the same time, and when that happens the car on the right goes first. You go after it."
       },
       "rule": "When two vehicles reach an all-way stop at the same time, the vehicle on the right goes first."
     },
@@ -529,10 +577,21 @@
             "y": 212,
             "heading": "n",
             "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
           }
         ]
       },
-      "prompt": "The traffic light is not working, and the car on your left stopped before you arrived. Who goes first? Tap the car.",
+      "prompt": "The traffic light at this intersection is not working. It is dark and shows no color, and there is no stop sign. The car on your left stopped at the intersection before you got there. You both want to drive straight across. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "left-car",
@@ -546,7 +605,7 @@
       "answer": "left-car",
       "then": {
         "highlight": "left-car",
-        "say": "The car on your left goes first. A signal that is not working makes the intersection an all-way stop, so you stop, and the car that arrived first goes first."
+        "say": "The car on your left goes first. A traffic light that is not working makes the intersection an all-way stop. Every car stops, and the car that stopped first goes first."
       },
       "rule": "When a traffic signal is not working, you treat the intersection as an all-way stop."
     },
@@ -587,11 +646,11 @@
           }
         ]
       },
-      "prompt": "A person is standing at the edge of the crosswalk, about to step in. Who goes first? Tap the person or the car.",
+      "prompt": "This street has no traffic light and no sign. A person is standing at the side of the road on your right, at one end of the crosswalk, about to walk across. Who goes first? Tap the person or your car.",
       "targets": [
         {
           "id": "ped",
-          "label": "the person at the crosswalk"
+          "label": "the person"
         },
         {
           "id": "you",
@@ -601,7 +660,7 @@
       "answer": "ped",
       "then": {
         "highlight": "ped",
-        "say": "The person goes first. When a person is in a crosswalk or about to enter it, you stop before the crosswalk and let the person cross."
+        "say": "The person goes first. When a person is in a crosswalk or about to walk into it, you stop before the crosswalk and wait until the person has crossed."
       },
       "rule": "You yield to pedestrians who are in a crosswalk or the street, or about to enter it, whether or not the crosswalk is marked."
     },
@@ -636,7 +695,7 @@
           }
         ]
       },
-      "prompt": "A person with a white cane is crossing the street where there is no crosswalk. Must you stop and let the person cross?",
+      "prompt": "A person carrying a white cane with a red tip is crossing the street ahead of you, where there is no crosswalk. Must you stop and let the person cross?",
       "options": [
         "Yes",
         "No"
@@ -644,7 +703,7 @@
       "answer": "Yes",
       "then": {
         "highlight": "cane-ped",
-        "say": "Yes, you stop and let the person cross. You always stop for a person who carries a white cane or uses a guide dog, with or without a crosswalk."
+        "say": "Yes, you stop and wait until the person has crossed. You always stop for a person who carries a white cane, even where there is no crosswalk."
       },
       "rule": "You always yield to a blind pedestrian who carries a white cane, including a white cane with a red tip, or who uses a guide dog."
     },
@@ -699,33 +758,43 @@
             "y": 225,
             "heading": "n",
             "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              200
+            ],
+            "to": [
+              175,
+              122
+            ]
           }
         ]
       },
-      "prompt": "Your light is green, but the stopped cars ahead leave no room for you past the intersection. May you enter the intersection if you cannot get all the way through it?",
+      "prompt": "Your light is green, and you want to drive straight across. Two cars are stopped in your lane just past the intersection, and there is no room for your car behind them. May you drive into the intersection now?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you wait before the intersection until the traffic ahead clears. A car that stops in the intersection blocks other traffic, even when its light is green."
+        "say": "No, you stop before you enter the intersection and wait until there is room for your car past it. You enter only when you can get all the way across without stopping. A car stopped in the intersection blocks other traffic, even when its light is green."
       },
       "rule": "You may enter an intersection only when you can get all the way through it without stopping."
     },
     {
       "id": "s3-12",
       "kind": "principle",
-      "prompt": "Every situation in this lesson, from the driveway to the green light with cars stopped ahead, answered the same question. Which question was it?",
+      "prompt": "In this lesson you drove out of a driveway, came to the end of your road at a main road, had a green light with a car still in the intersection, wanted to turn left on a green light, stopped at an all-way stop two times, came to a traffic light that was not working, met two people who were crossing or about to cross the street, and found no room past an intersection. Each time, you had to decide the same thing. Which question did you answer every time?",
       "options": [
         "Who must wait?",
-        "Who does the law give the right-of-way to?",
         "Who is driving the faster car?",
         "Which road is the bigger road?"
       ],
       "answer": "Who must wait?",
       "then": {
-        "say": "Every right-of-way rule tells you who must wait. When that is you, you let the other driver or the pedestrian go first."
+        "say": "Every right-of-way rule tells you who must wait. When that is you, you let the other driver or the person on foot go first."
       }
     }
   ]
