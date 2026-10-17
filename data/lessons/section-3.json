@@ -6,24 +6,86 @@
       "id": "s3-01",
       "fact": "b-110",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 140, "y": 190, "w": 40, "h": 130, "center": "none"},
-        {"t": "label", "x": 190, "y": 300, "text": "Driveway", "anchor": "start"},
-        {"t": "label", "x": 10, "y": 122, "text": "Main road", "anchor": "start"},
-        {"t": "car", "id": "road-car", "x": 70, "y": 175, "heading": "e", "tone": "b"},
-        {"t": "car", "id": "you", "x": 160, "y": 222, "heading": "n", "you": true},
-        {"t": "path", "from": [160, 202], "via": [162, 175], "to": [260, 175]}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 140,
+            "y": 190,
+            "w": 40,
+            "h": 130,
+            "center": "none"
+          },
+          {
+            "t": "label",
+            "x": 190,
+            "y": 300,
+            "text": "Driveway",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 10,
+            "y": 122,
+            "text": "Main road",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "road-car",
+            "x": 70,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 160,
+            "y": 222,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              160,
+              202
+            ],
+            "via": [
+              162,
+              175
+            ],
+            "to": [
+              260,
+              175
+            ]
+          }
+        ]
+      },
       "prompt": "You are driving out of a driveway to turn right onto the main road, and a car is coming on the main road. Who goes first? Tap the car.",
       "targets": [
-        {"id": "road-car", "label": "the car on the main road"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "road-car",
+          "label": "the car on the main road"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "road-car",
       "then": {
         "highlight": "road-car",
-        "say": "The car on the main road goes first. You are entering the road, so you yield to it."
+        "say": "The car on the main road goes first. You are entering the road, so you wait and let it pass."
       },
       "rule": "When you enter a main road from a driveway, an alley, a parking lot or the roadside, you yield to all vehicles already on the main road."
     },
@@ -31,30 +93,82 @@
       "id": "s3-02",
       "fact": "b-121",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 190, "w": 60, "h": 130, "center": "yellow"},
-        {"t": "label", "x": 10, "y": 122, "text": "Main road", "anchor": "start"},
-        {"t": "car", "id": "left-car", "x": 60, "y": 175, "heading": "e", "tone": "b"},
-        {"t": "car", "id": "right-car", "x": 260, "y": 145, "heading": "w", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 225, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 190,
+            "w": 60,
+            "h": 130,
+            "center": "yellow"
+          },
+          {
+            "t": "label",
+            "x": 10,
+            "y": 122,
+            "text": "Main road",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "left-car",
+            "x": 60,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "right-car",
+            "x": 260,
+            "y": 145,
+            "heading": "w",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "Your road ends at a main road, and a car is coming from each direction on the main road. Which car must wait? Tap the car.",
       "targets": [
-        {"id": "you", "label": "your car"},
-        {"id": "left-car", "label": "the car coming from your left"},
-        {"id": "right-car", "label": "the car coming from your right"}
+        {
+          "id": "you",
+          "label": "your car"
+        },
+        {
+          "id": "left-car",
+          "label": "the car coming from your left"
+        },
+        {
+          "id": "right-car",
+          "label": "the car coming from your right"
+        }
       ],
       "answer": "you",
       "then": {
-        "say": "Your car waits, and both cars on the main road go first. Your road ends at the main road, so you yield to the traffic from both directions on it."
+        "say": "Your car waits, and both cars on the main road go first. Your road ends at the main road, so you let the traffic from both directions pass before you go."
       },
       "rule": "At a T intersection, the vehicles on the road that ends yield to the traffic from both directions on the main road."
     },
     {
       "id": "s3-03",
       "kind": "principle",
-      "prompt": "In both cases, who yielded?",
+      "prompt": "In both cases, who waited?",
       "options": [
         "You did, because you were entering a road that other cars were already on.",
         "The cars on the main road did, because they slowed down to let you in.",
@@ -62,29 +176,70 @@
       ],
       "answer": "You did, because you were entering a road that other cars were already on.",
       "then": {
-        "say": "When you enter a road, you yield to the traffic already on it, because the law only says who must yield and never gives anyone the right-of-way to take."
+        "say": "When you enter a road, you wait and let the traffic already on it go first. The law never gives anyone the right-of-way to take; it only says who must wait."
       }
     },
     {
       "id": "s3-04",
       "fact": "a-150",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "light", "x": 205, "y": 112, "state": "green"},
-        {"t": "car", "id": "cross-car", "x": 160, "y": 175, "heading": "e", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 225, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 112,
+            "state": "green"
+          },
+          {
+            "t": "car",
+            "id": "cross-car",
+            "x": 160,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "Your light has just turned green, and a car that entered before the light changed is still in the intersection. Who goes first? Tap the car.",
       "targets": [
-        {"id": "cross-car", "label": "the car in the intersection"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "cross-car",
+          "label": "the car in the intersection"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "cross-car",
       "then": {
         "highlight": "cross-car",
-        "say": "The car in the intersection goes first. It was there before your light changed, so you yield to it before you go."
+        "say": "The car in the intersection goes first. It was there before your light changed, so you let it clear the intersection before you go."
       },
       "rule": "When your light turns green, you still yield to pedestrians and vehicles that are still in the intersection."
     },
@@ -92,23 +247,78 @@
       "id": "s3-05",
       "fact": "a-151",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "light", "x": 205, "y": 112, "state": "green"},
-        {"t": "car", "id": "oncoming", "x": 145, "y": 85, "heading": "s", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 225, "heading": "n", "you": true},
-        {"t": "path", "from": [175, 205], "via": [172, 148], "to": [40, 145]}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 112,
+            "state": "green"
+          },
+          {
+            "t": "car",
+            "id": "oncoming",
+            "x": 145,
+            "y": 85,
+            "heading": "s",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              205
+            ],
+            "via": [
+              172,
+              148
+            ],
+            "to": [
+              40,
+              145
+            ]
+          }
+        ]
+      },
       "prompt": "Your light is a green light, not an arrow, and you want to turn left while a car comes toward you. Who goes first? Tap the car.",
       "targets": [
-        {"id": "oncoming", "label": "the oncoming car"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "oncoming",
+          "label": "the oncoming car"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "oncoming",
       "then": {
         "highlight": "oncoming",
-        "say": "The oncoming car goes first. A green light lets you go, but your left turn crosses its lane, so you yield to it."
+        "say": "The oncoming car goes first. A green light lets you go, but your left turn crosses its lane, so you wait and let it pass."
       },
       "rule": "When you turn left on a green light that is not an arrow, you yield to oncoming vehicles."
     },
@@ -116,25 +326,81 @@
       "id": "s3-06",
       "fact": "b-118",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "sign", "kind": "allway", "x": 205, "y": 205},
-        {"t": "sign", "kind": "allway", "x": 115, "y": 205},
-        {"t": "sign", "kind": "allway", "x": 115, "y": 115},
-        {"t": "sign", "kind": "allway", "x": 205, "y": 115},
-        {"t": "car", "id": "left-car", "x": 110, "y": 175, "heading": "e", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 212, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 115
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 115
+          },
+          {
+            "t": "car",
+            "id": "left-car",
+            "x": 110,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "At this all-way stop, the car on your left stopped before you arrived. Who goes first? Tap the car.",
       "targets": [
-        {"id": "left-car", "label": "the car on your left"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "left-car",
+          "label": "the car on your left"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "left-car",
       "then": {
         "highlight": "left-car",
-        "say": "The car on your left goes first. It reached the intersection first, so you stop and yield to it."
+        "say": "The car on your left goes first. It reached the intersection first, so you stop and let it go before you."
       },
       "rule": "At an all-way stop, every vehicle stops, and the vehicle that reached the intersection first goes first."
     },
@@ -142,25 +408,81 @@
       "id": "s3-07",
       "fact": "b-119",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "sign", "kind": "allway", "x": 205, "y": 205},
-        {"t": "sign", "kind": "allway", "x": 115, "y": 205},
-        {"t": "sign", "kind": "allway", "x": 115, "y": 115},
-        {"t": "sign", "kind": "allway", "x": 205, "y": 115},
-        {"t": "car", "id": "right-car", "x": 210, "y": 145, "heading": "w", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 212, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 115
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 115
+          },
+          {
+            "t": "car",
+            "id": "right-car",
+            "x": 210,
+            "y": 145,
+            "heading": "w",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "At this all-way stop, you and the car on your right stop at the same time. Who goes first? Tap the car.",
       "targets": [
-        {"id": "right-car", "label": "the car on your right"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "right-car",
+          "label": "the car on your right"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "right-car",
       "then": {
         "highlight": "right-car",
-        "say": "The car on your right goes first. You both arrived at the same time, so you yield to the vehicle on your right."
+        "say": "The car on your right goes first. You both arrived at the same time, so you let the vehicle on your right go before you."
       },
       "rule": "When two vehicles reach an all-way stop at the same time, the vehicle on the right goes first."
     },
@@ -168,17 +490,58 @@
       "id": "s3-08",
       "fact": "a-159",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "light", "x": 205, "y": 112, "state": "off"},
-        {"t": "car", "id": "left-car", "x": 110, "y": 175, "heading": "e", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 212, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 112,
+            "state": "off"
+          },
+          {
+            "t": "car",
+            "id": "left-car",
+            "x": 110,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "The traffic light is not working, and the car on your left stopped before you arrived. Who goes first? Tap the car.",
       "targets": [
-        {"id": "left-car", "label": "the car on your left"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "left-car",
+          "label": "the car on your left"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "left-car",
       "then": {
@@ -191,21 +554,54 @@
       "id": "s3-09",
       "fact": "a-178",
       "kind": "tap",
-      "scene": {"parts": [
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "crosswalk", "x": 130, "y": 120, "w": 60, "h": 20},
-        {"t": "ped", "id": "ped", "x": 202, "y": 130},
-        {"t": "car", "id": "you", "x": 175, "y": 215, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "crosswalk",
+            "x": 130,
+            "y": 120,
+            "w": 60,
+            "h": 20
+          },
+          {
+            "t": "ped",
+            "id": "ped",
+            "x": 202,
+            "y": 130
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "A person is standing at the edge of the crosswalk, about to step in. Who goes first? Tap the person or the car.",
       "targets": [
-        {"id": "ped", "label": "the person at the crosswalk"},
-        {"id": "you", "label": "your car"}
+        {
+          "id": "ped",
+          "label": "the person at the crosswalk"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
       ],
       "answer": "ped",
       "then": {
         "highlight": "ped",
-        "say": "The person goes first. You yield to a person who is in a crosswalk or about to enter it, so you stop before the crosswalk."
+        "say": "The person goes first. When a person is in a crosswalk or about to enter it, you stop before the crosswalk and let the person cross."
       },
       "rule": "You yield to pedestrians who are in a crosswalk or the street, or about to enter it, whether or not the crosswalk is marked."
     },
@@ -213,17 +609,42 @@
       "id": "s3-10",
       "fact": "d-075",
       "kind": "choose",
-      "scene": {"parts": [
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "ped", "id": "cane-ped", "x": 150, "y": 120, "cane": true},
-        {"t": "car", "id": "you", "x": 175, "y": 225, "heading": "n", "you": true}
-      ]},
-      "prompt": "A person with a white cane is crossing the street where there is no crosswalk. Must you yield to the person?",
-      "options": ["Yes", "No"],
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "ped",
+            "id": "cane-ped",
+            "x": 150,
+            "y": 120,
+            "cane": true
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "A person with a white cane is crossing the street where there is no crosswalk. Must you stop and let the person cross?",
+      "options": [
+        "Yes",
+        "No"
+      ],
       "answer": "Yes",
       "then": {
         "highlight": "cane-ped",
-        "say": "Yes, you stop and let the person cross. You always yield to a person who carries a white cane or uses a guide dog, with or without a crosswalk."
+        "say": "Yes, you stop and let the person cross. You always stop for a person who carries a white cane or uses a guide dog, with or without a crosswalk."
       },
       "rule": "You always yield to a blind pedestrian who carries a white cane, including a white cane with a red tip, or who uses a guide dog."
     },
@@ -231,16 +652,61 @@
       "id": "s3-11",
       "fact": "b-123",
       "kind": "choose",
-      "scene": {"parts": [
-        {"t": "road", "x": 0, "y": 130, "w": 320, "h": 60, "center": "yellow"},
-        {"t": "road", "x": 130, "y": 0, "w": 60, "h": 320, "center": "yellow"},
-        {"t": "light", "x": 205, "y": 112, "state": "green"},
-        {"t": "car", "id": "ahead-1", "x": 175, "y": 100, "heading": "n", "tone": "b"},
-        {"t": "car", "id": "ahead-2", "x": 175, "y": 55, "heading": "n", "tone": "b"},
-        {"t": "car", "id": "you", "x": 175, "y": 225, "heading": "n", "you": true}
-      ]},
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 112,
+            "state": "green"
+          },
+          {
+            "t": "car",
+            "id": "ahead-1",
+            "x": 175,
+            "y": 100,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "ahead-2",
+            "x": 175,
+            "y": 55,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
       "prompt": "Your light is green, but the stopped cars ahead leave no room for you past the intersection. May you enter the intersection if you cannot get all the way through it?",
-      "options": ["Yes", "No"],
+      "options": [
+        "Yes",
+        "No"
+      ],
       "answer": "No",
       "then": {
         "say": "No, you wait before the intersection until the traffic ahead clears. A car that stops in the intersection blocks other traffic, even when its light is green."
@@ -252,14 +718,14 @@
       "kind": "principle",
       "prompt": "Every case in this lesson answered the same question. Which question was it?",
       "options": [
-        "Who must yield?",
+        "Who must wait?",
         "Who does the law give the right-of-way to?",
         "Who is driving the faster car?",
         "Which road is the bigger road?"
       ],
-      "answer": "Who must yield?",
+      "answer": "Who must wait?",
       "then": {
-        "say": "Every right-of-way rule tells you who must yield, and when that is you, you give the right-of-way to the other driver or the pedestrian."
+        "say": "Every right-of-way rule tells you who must wait. When that is you, you let the other driver or the pedestrian go first."
       }
     }
   ]
