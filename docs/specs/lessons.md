@@ -1,6 +1,6 @@
 # Lessons
 
-A lesson teaches one Section's facts before any question is asked on them. The Learner acts on every screen before the rule is stated: he taps the car that goes, or commits to a choice, then sees what the manual says happens, then the rule in one sentence. The principle of the topic is stated only after two or three cases, and he is asked to name it first. The questions on the Section's facts come after, in the Set.
+A lesson teaches one Section's facts before any question is asked on them. The Learner acts on every screen before the rule is stated: he taps the car that goes, or commits to a choice, then sees what happens, then the rule in one sentence. The principle of the topic is stated only after two or three cases, and he is asked to name it first. The questions on the Section's facts come after, in the Set.
 
 Lessons are data: one file per Section at `data/lessons/section-<N>.json`, rendered by one player in `src/app.html` from a small kit of top-down drawing parts. Writing a lesson is content work; the drawings stay consistent because the kit draws them.
 
@@ -43,7 +43,7 @@ Every one of the Section's 10 facts appears in at least one step with that `fact
 - `prompt` is one sentence ending in a question or an instruction.
 - `then.say` is one or two sentences: what happens, then why, in plain words. Shown after any action, right or wrong. When the action was wrong the screen also says "You picked: {label}." first. No other wording differs between right and wrong.
 - `then.highlight` is a part id drawn in the accent color after the action (the car that goes). `then.parts`, when present, replaces the scene after the action (the car moved through, an arrow drawn). Both optional.
-- `rule` is the fact's rule in one complete sentence, in the app's wording standard. Required when `fact` is set. The build adds the fact's manual sentence (`src`) and page (`p`) to the step from `data/questions.json`; the player shows them under the rule.
+- `rule` is the fact's rule in one complete sentence, in the app's wording standard. Required when `fact` is set. The manual's sentence and page stay in `data/questions.json` to check the step against; the Learner never sees them.
 
 ## The kit
 

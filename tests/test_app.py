@@ -2218,15 +2218,16 @@ def check_lessons(browser, inst):
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer}))")
     check(len(steps) >= 12 and {s["fact"] for s in steps} >= set(pg.evaluate("QS.filter(q => q.day === 3).map(q => q.id)")),
           "the lesson has 12 or more steps and teaches every Section 3 fact", len(steps))
-    check("Driver manual" not in pg.inner_text("#stage") and pg.query_selector("#stepNextBtn") is None,
-          "before acting, no rule, no manual sentence and no Next button are on the screen")
+    check("yield" not in pg.inner_text("#stage") and pg.query_selector("#stepNextBtn") is None,
+          "before acting, no rule and no Next button are on the screen")
     text_before = pg.inner_text("#stage")
     # Step 1: tap the wrong car, and the screen says so and still shows the rule.
     pg.click(".k-target[data-t='you']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
     check("You picked: your car." in shown and "The right one is the car on the main road." in shown
-          and "Driver manual, page 53" in shown and steps[0]["fact"] == "b-110", "a wrong tap says what was picked, the right one, and the rule with its page")
+          and "Driver manual" not in shown and "yield to all vehicles already on the main road" in shown
+          and steps[0]["fact"] == "b-110", "a wrong tap says what was picked, the right one, and the rule, with no manual quote")
     check(pg.evaluate("document.activeElement.id") == "stepHead", "after acting, focus moves to the result")
     no_scroll = pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
     check(no_scroll, "the lesson step does not scroll sideways on a phone")

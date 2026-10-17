@@ -190,9 +190,6 @@ button.opt { cursor: pointer; }
 .k-target, .k-target * { pointer-events: auto; }
 @media (prefers-reduced-motion: no-preference) { .k-flash { animation: blink 1s steps(2, start) infinite; } @keyframes blink { to { opacity: .15; } } }
 .say { font-size: 20px; font-weight: 700; line-height: 1.4; margin: 0; }
-.src { margin: 0; color: var(--muted); font-size: 16px; }
-.src figcaption { font-weight: 700; }
-.src blockquote { margin: 4px 0 0; padding-left: 12px; border-left: 3px solid var(--line); }
 .link.peek { align-self: flex-start; padding-left: 0; }
 #nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(8 7 6 / .5); }
 
@@ -757,7 +754,7 @@ function renderHome() {
   // A Section's lesson comes before the Set that would first ask about its facts, as the main button.
   const lessonDay = saved ? null : lessonNext(plan), teach = lessonDay && LESSONS[lessonDay];
   const lessonBlock = teach ? `<section class="home"><h1 tabindex="-1">Section ${lessonDay}: ${esc(teach.title)}</h1>
-      <p class="sub">A lesson of ${teach.steps.length} steps. On each step you do something first. Then you see what the driver manual says happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
+      <p class="sub">A lesson of ${teach.steps.length} steps. On each step you do something first. Then you see what happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
       <button class="btn primary" type="button" id="lessonBtn">Start the lesson</button></section>` : '';
   const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst || teach ? 'h2' : 'h1';
   const set = saved && saved.kind === 'daily'
@@ -1229,7 +1226,7 @@ function renderStep() {
     : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
   const picked = act && !L.peek && !act.right ? `<p class="picked">You picked: ${esc(act.chosen)}.</p>` : ''; // chosen is already the label
   const after = act ? `<div class="result" id="stepResult"><h2 class="outcome${act.right && !L.peek ? ' good' : ''}" id="stepHead" tabindex="-1">${act.right && !L.peek ? (st.kind === 'tap' ? `You picked the right one: ${esc(stepLabel(st, st.answer))}.` : `You picked the right answer: ${esc(st.answer)}.`) : (st.kind === 'tap' ? `The right one is ${esc(stepLabel(st, st.answer))}.` : `The answer is: ${esc(st.answer)}.`)}</h2>${picked}</div>` : '';
-  const rule = act && st.rule ? `<div class="explain"><p class="rule">${esc(st.rule)}</p>${st.src ? `<figure class="src"><figcaption>Driver manual, page ${st.p}</figcaption><blockquote>“${esc(st.src)}”</blockquote></figure>` : ''}</div>` : '';
+  const rule = act && st.rule ? `<div class="explain"><p class="rule">${esc(st.rule)}</p></div>` : '';
   const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: step ${L.i + 1} of ${n}`;
   const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
     : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Next step'}</button>` : '';

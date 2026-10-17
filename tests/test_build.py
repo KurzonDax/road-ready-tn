@@ -58,9 +58,8 @@ def test_build_writes_page_questions_and_csp(tmp):
     check(sorted(data) == ["days", "groups", "lessons", "qs", "wordings"] and len(data["days"]) == 12 and len(data["qs"]) == 120,
           "questions.json holds the 12 sections, 120 questions, the groups, the other wordings and the lessons")
     lessons = {l["section"]: l for l in data["lessons"]}
-    step = next(st for st in lessons[3]["steps"] if st.get("fact"))
-    check(3 in lessons and step["src"] and isinstance(step["p"], int),
-          "the Section 3 lesson is shipped, and each fact step carries the manual's sentence and page")
+    check(3 in lessons and not any("src" in st or "p" in st for st in lessons[3]["steps"]),
+          "the Section 3 lesson is shipped, with no manual sentence or page in any step")
     tagged = [q for q in bank["questions"] if q.get("fact") and q["fact"] != q["id"]]
     wordings = data.get("wordings", [])
     check(sorted(w["id"] for w in wordings) == sorted(q["id"] for q in tagged)

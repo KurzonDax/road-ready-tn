@@ -59,7 +59,7 @@ The screen with a Fact's answer and its explanation in plain words. It comes onc
 _Avoid_: Rule card, flashcard, hint
 
 **Lesson**:
-The screens that teach one Section's Facts before any question on them. On every step the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what the manual says happens, the rule, and the manual's sentence and page. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and its answers change no Standing.
+The screens that teach one Section's Facts before any question on them. On every step the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what happens and the rule. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and its answers change no Standing.
 _Avoid_: Tutorial, reading, chapter
 
 **Compare**:
