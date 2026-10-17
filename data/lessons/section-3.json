@@ -786,7 +786,7 @@
     {
       "id": "s3-12",
       "kind": "principle",
-      "prompt": "In this lesson you drove out of a driveway, came to the end of your road at a main road, had a green light with a car still in the intersection, wanted to turn left on a green light, stopped at an all-way stop two times, came to a traffic light that was not working, met two people who were crossing or about to cross the street, and found no room past an intersection. Each time, you had to decide the same thing. Which question did you answer every time?",
+      "prompt": "Every screen in this lesson asked you to decide the same thing. Which question did you answer every time?",
       "options": [
         "Who must wait?",
         "Who is driving the faster car?",

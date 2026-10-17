@@ -255,6 +255,12 @@ def check_lesson_wording(name, steps):
             for pattern, why in BANNED:
                 if pattern.search(text):
                     errors.append(f"{name} {sid} {field}: {why}: {text!r}")
+        for field, text in texts[:2]:
+            for sentence in re.split(r"(?<=[.?])\s+", text):
+                if len(sentence.split()) > 30:
+                    errors.append(f"{name} {sid} {field}: a sentence of more than 30 words: {sentence!r}")
+            if field == "prompt" and len(text.split()) > 60:
+                errors.append(f"{name} {sid} prompt: more than 60 words")
         say = (step.get("then") or {}).get("say", "")
         if len(re.findall(r"[.?]", say)) > 3:
             errors.append(f"{name} {sid} say: more than three sentences: {say!r}")
