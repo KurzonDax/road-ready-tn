@@ -120,14 +120,6 @@
           },
           {
             "t": "car",
-            "id": "left-car",
-            "x": 60,
-            "y": 175,
-            "heading": "e",
-            "tone": "b"
-          },
-          {
-            "t": "car",
             "id": "right-car",
             "x": 260,
             "y": 145,
@@ -159,24 +151,20 @@
           }
         ]
       },
-      "prompt": "Your road ends at a main road. There is no stop sign and no yield sign. You want to turn left onto the main road. A car on the main road is coming from your left, another is coming from your right, and both are close. Which car must wait? Tap the car.",
+      "prompt": "Your road ends at a main road. There is no stop sign and no yield sign. You want to turn left onto the main road. A car on the main road is coming from your right and is close. Who goes first? Tap the car.",
       "targets": [
-        {
-          "id": "you",
-          "label": "your car"
-        },
-        {
-          "id": "left-car",
-          "label": "the car coming from your left"
-        },
         {
           "id": "right-car",
           "label": "the car coming from your right"
+        },
+        {
+          "id": "you",
+          "label": "your car"
         }
       ],
-      "answer": "you",
+      "answer": "right-car",
       "then": {
-        "say": "Your car waits until both cars on the main road have passed. Your road ends at the main road, so you let the traffic from both directions go first, even when no sign tells you to."
+        "say": "The car on the main road goes first. Your road ends at the main road, so you wait for the traffic from both directions on it, even when no sign tells you to."
       },
       "rule": "At a T intersection, the vehicles on the road that ends yield to the traffic from both directions on the main road."
     },

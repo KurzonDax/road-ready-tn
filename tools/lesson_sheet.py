@@ -26,12 +26,13 @@ main { max-width: 760px; margin: 0 auto; }
 h1 { font-size: 28px; } h2 { font-size: 22px; margin: 48px 0 8px; border-top: 1px solid #363330; padding-top: 24px; }
 .prompt { font-size: 21px; font-weight: 700; }
 .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-.row img { width: 340px; background: #1f1e1c; border-radius: 12px; }
+.row img { width: 240px; background: #1f1e1c; border-radius: 12px; }
 .cap { font-size: 14px; color: #ada79f; margin: 4px 0 0; }
 ul { padding-left: 22px; } li.answer { font-weight: 700; } li.answer::after { content: "  ← the answer"; color: #62c27f; font-weight: 400; }
 .say { font-size: 19px; margin: 8px 0; }
 .not { color: #e8705f; } .ok { color: #62c27f; }
 .meta { color: #ada79f; font-size: 15px; }
+ul.wrongs { margin-top: 0; } ul.wrongs li { font-size: 16px; }
 """
 
 
@@ -39,53 +40,77 @@ def shot(el):
     return "data:image/png;base64," + base64.b64encode(el.screenshot()).decode()
 
 
+def walk(browser, inst, section, name, pick):
+    """Walk the lesson once as a fresh Learner, choosing with `pick(step)` (a target id or an option text),
+    and return, per question, the drawing after acting (or None) and the result line shown."""
+    lid = inst.add_learner(name, "review password")
+    store_for(inst, lid, "move", {"to": section})
+    pg = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2)
+    open_page(pg, inst.url)
+    sign_in(pg, name, "review password")
+    pg.wait_for_selector("#lessonBtn")
+    pg.click("#lessonBtn")
+    pg.wait_for_selector("#stepText")
+    lesson = pg.evaluate("lesson.lesson")
+    seen = []
+    for st in lesson["steps"]:
+        pg.wait_for_selector("#stepText")
+        before = pg.query_selector(".scene")
+        img_before = shot(before) if before else None
+        choice = pick(st)
+        if st["kind"] == "tap":
+            pg.click(f".k-target[data-t='{choice}']")
+        else:
+            labels = [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")]
+            pg.query_selector_all("button.opt")[labels.index(choice)].click()
+        pg.wait_for_selector("#stepNextBtn")
+        pg.wait_for_timeout(500)
+        after = pg.query_selector(".scene")
+        seen.append({"before": img_before, "after": shot(after) if after else None,
+                     "lead": pg.inner_text("#stepHead"), "say": pg.inner_text("#stepText")})
+        pg.click("#stepNextBtn")
+    pg.close()
+    return lesson, seen
+
+
 def main():
     section, out = int(sys.argv[1]), pathlib.Path(sys.argv[2])
     with Instance() as inst, sync_playwright() as pw:
-        lid = inst.add_learner("Review", "review password")
-        store_for(inst, lid, "move", {"to": section})
         browser = pw.chromium.launch(executable_path=os.environ.get("CHROMIUM_PATH") or None)
-        pg = browser.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=2)
-        open_page(pg, inst.url)
-        sign_in(pg, "Review", "review password")
-        pg.wait_for_selector("#lessonBtn")
-        pg.click("#lessonBtn")
-        pg.wait_for_selector("#stepText")
-        lesson = pg.evaluate("lesson.lesson")
-        parts = [f"<h1>Lesson for Section {section}: {html.escape(lesson['title'])}</h1>",
-                 f"<p class='meta'>{len(lesson['steps'])} screens. Each one is shown as the Learner sees it before acting, "
-                 "then after the correct action. The line he sees after a wrong action is given in words.</p>"]
-        for k, st in enumerate(lesson["steps"]):
-            pg.wait_for_selector("#stepText")
-            before = pg.query_selector(".scene")
-            img_before = shot(before) if before else None
-            parts.append(f"<h2>{k + 1} of {len(lesson['steps'])}<span class='meta'> · {html.escape(st['id'])}"
-                         f"{' · ' + html.escape(st['fact']) if st.get('fact') else ' · principle'}</span></h2>")
-            parts.append(f"<p class='prompt'>{html.escape(st['prompt'])}</p>")
-            if st["kind"] == "tap":
-                parts.append("<ul>" + "".join(f"<li class='{'answer' if t['id'] == st['answer'] else ''}'>Tap target: {html.escape(t['label'])}</li>"
-                                                for t in st["targets"]) + "</ul>")
-                pg.click(f".k-target[data-t='{st['answer']}']")
-            else:
-                parts.append("<ul>" + "".join(f"<li class='{'answer' if o == st['answer'] else ''}'>{html.escape(o)}</li>" for o in st["options"]) + "</ul>")
-                labels = [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")]
-                pg.query_selector_all("button.opt")[labels.index(st["answer"])].click()
-            pg.wait_for_selector("#stepNextBtn")
-            pg.wait_for_timeout(500)
-            after = pg.query_selector(".scene")
-            row = ""
-            if img_before:
-                row += f"<div><img src='{img_before}' alt=''><p class='cap'>Before acting</p></div>"
-            if after:
-                row += f"<div><img src='{shot(after)}' alt=''><p class='cap'>After the correct action</p></div>"
-            if row:
-                parts.append(f"<div class='row'>{row}</div>")
-            wrong = next((t["label"] for t in st.get("targets", []) if t["id"] != st["answer"]), None)
-            parts.append(f"<p class='say'><span class='ok'>Correct.</span> {html.escape(st['then']['say'])}</p>")
-            not_line = f"Incorrect. You picked {wrong if st['kind'] == 'tap' else next(o for o in st['options'] if o != st['answer'])}."
-            parts.append(f"<p class='meta'>After a wrong action the first line is <span class='not'>{html.escape(not_line)}</span> and the same explanation follows.</p>")
-            pg.click("#stepNextBtn")
+        lesson, right = walk(browser, inst, section, "Review", lambda st: st["answer"])
+        # A second walk picks a wrong target or option on every question, to show that path as he will see it.
+        first_wrong = lambda st: next(t["id"] for t in st["targets"] if t["id"] != st["answer"]) if st["kind"] == "tap" \
+            else next(o for o in st["options"] if o != st["answer"])
+        _, wrong = walk(browser, inst, section, "Review two", first_wrong)
         browser.close()
+    n = len(lesson["steps"])
+    parts = [f"<h1>Lesson for Section {section}: {html.escape(lesson['title'])}</h1>",
+             f"<p class='meta'>{n} questions. Each one is shown before acting, after the correct action, and after a wrong "
+             "action. Every wrong pick is listed with the exact first line it gets; the explanation under it is the same for all of them.</p>"]
+    for k, st in enumerate(lesson["steps"]):
+        r, wr = right[k], wrong[k]
+        parts.append(f"<h2>{k + 1} of {n}<span class='meta'> · {html.escape(st['id'])}"
+                     f"{' · ' + html.escape(st['fact']) if st.get('fact') else ' · principle'}</span></h2>")
+        parts.append(f"<p class='prompt'>{html.escape(st['prompt'])}</p>")
+        if st["kind"] == "tap":
+            items = [(t["label"], t["id"] == st["answer"]) for t in st["targets"]]
+            parts.append("<ul>" + "".join(f"<li class='{'answer' if ok else ''}'>Tap target: {html.escape(label)}</li>" for label, ok in items) + "</ul>")
+        else:
+            items = [(o, o == st["answer"]) for o in st["options"]]
+            parts.append("<ul>" + "".join(f"<li class='{'answer' if ok else ''}'>{html.escape(label)}</li>" for label, ok in items) + "</ul>")
+        row = ""
+        if r["before"]:
+            row += f"<div><img src='{r['before']}' alt=''><p class='cap'>Before acting</p></div>"
+        if r["after"]:
+            row += f"<div><img src='{r['after']}' alt=''><p class='cap'>After the correct action</p></div>"
+        if wr["after"]:
+            row += f"<div><img src='{wr['after']}' alt=''><p class='cap'>After a wrong action</p></div>"
+        if row:
+            parts.append(f"<div class='row'>{row}</div>")
+        parts.append(f"<p class='say'><span class='ok'>{html.escape(r['lead'])}</span> {html.escape(r['say'])}</p>")
+        wrongs = [label for label, ok in items if not ok]
+        lines = "".join(f"<li><span class='not'>Incorrect. You picked {html.escape(label)}.</span></li>" for label in wrongs)
+        parts.append(f"<p class='meta'>Each wrong pick gets its own first line, then the same explanation:</p><ul class='wrongs'>{lines}</ul>")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(f"<!doctype html><meta charset='utf-8'><title>Lesson for Section {section}</title><style>{STYLE}</style><main>{''.join(parts)}</main>\n")
     print(f"Wrote {out}")
