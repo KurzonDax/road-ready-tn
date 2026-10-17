@@ -168,7 +168,7 @@
     {
       "id": "s3-03",
       "kind": "principle",
-      "prompt": "In both cases, who waited?",
+      "prompt": "You drove out of a driveway onto a main road. Then your road ended at a main road. Both times, who waited?",
       "options": [
         "You did, because you were entering a road that other cars were already on.",
         "The cars on the main road did, because they slowed down to let you in.",
@@ -716,7 +716,7 @@
     {
       "id": "s3-12",
       "kind": "principle",
-      "prompt": "Every case in this lesson answered the same question. Which question was it?",
+      "prompt": "Every situation in this lesson, from the driveway to the green light with cars stopped ahead, answered the same question. Which question was it?",
       "options": [
         "Who must wait?",
         "Who does the law give the right-of-way to?",
