@@ -130,12 +130,14 @@ button.opt { cursor: pointer; }
 .verdict { font-weight: 700; margin: 0; }
 .verdict.good { color: var(--guide); }
 .why { margin: 0; }
+.back { margin: 0; color: var(--muted); }
 .src { margin: 0; display: flex; flex-direction: column; gap: 2px; }
 .src figcaption { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .src blockquote { margin: 0; font-size: 16px; color: var(--muted); }
 #nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(12 20 16 / .45); }
 
 .score { font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1; margin: 0; font-variant-numeric: tabular-nums; }
+.score span { font-size: 28px; }
 .missed { border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); padding: 0 22px; }
 .missed > summary { font-weight: 700; cursor: pointer; padding: 14px 0; min-height: 44px; }
 .missed ul { list-style: none; margin: 0; padding: 0 0 18px; display: flex; flex-direction: column; gap: 14px; }
@@ -546,7 +548,7 @@ function renderQuestion(revealFeedback) {
     return `<li class="opt ${c}"><span class="key" aria-hidden="true">${L[k]}</span><span class="otext"><span>${esc(o)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</span></li>`;
   }).join('');
   const fb = run.answered ? `<div class="feedback" id="feedback">
-      ${right ? '<p class="verdict good">Correct.</p>' : `<p class="verdict">Not correct. The right answer is: ${esc(q.a)}</p>`}
+      ${right ? '<p class="verdict good">Correct.</p>' : `<p class="verdict">The right answer is: ${esc(q.a)}</p>${comesBack(run.kind) ? `<p class="back">${comesBack(run.kind)}</p>` : ''}`}
       <p class="why">${esc(q.why)}</p>
       ${q.src ? `<figure class="src"><figcaption>Driver manual, page ${q.p}</figcaption><blockquote>“${esc(q.src)}”</blockquote></figure>` : ''}
     </div>` : '';
@@ -581,6 +583,14 @@ function reveal() {
   if (dy > 0) window.scrollBy({ top: dy });
 }
 
+// Where a question answered wrong comes back, said plainly instead of a verdict. Nothing once the
+// Learner is Ready for the test, when Review is no longer offered.
+function comesBack(kind) {
+  if (streak() >= READY_STREAK) return '';
+  if (kind === 'review') return 'This question stays in review, so you will see it again.';
+  return phase() === 'day' ? `This question comes back in review after Section ${TOTAL_DAYS}.` : 'This question goes into review, so you will see it again.';
+}
+
 function choose(k) {
   if (run.answered) return;
   const it = run.items[run.i];
@@ -590,7 +600,7 @@ function choose(k) {
   keepRun();
   renderQuestion(true);
   const q = it.q;
-  $('announce').textContent = it.chosen === q.a ? `Correct. ${q.a}.` : `Not correct. You chose: ${it.chosen}. The right answer is: ${q.a}.`;
+  $('announce').textContent = it.chosen === q.a ? `Correct. ${q.a}.` : `You chose: ${it.chosen}. The right answer is: ${q.a}. ${comesBack(run.kind)}`.trim();
 }
 
 function next() {
@@ -600,7 +610,7 @@ function next() {
 }
 
 function finish() {
-  const items = run.items, n = items.length, kind = run.kind, before = streak();
+  const items = run.items, n = items.length, kind = run.kind;
   const right = items.filter(it => it.chosen === it.q.a).length;
   // The finished Set waits in `pending` until the server has it; Progress is worked out again with it.
   const rec = setRecord(run), mine = copy;
@@ -634,9 +644,9 @@ function finish() {
       title = 'That counts toward ready.';
       note = `In a row so far: ${st} of ${READY_STREAK}. Get ${READY_SCORE} or more right on ${plural(READY_STREAK - st, 'more test', 'more tests')} to be ready.` + (missed.length ? ' ' + toReview : '');
     } else {
-      title = right >= PASS_SCORE ? 'That would pass the real test.' : 'This would not pass the real test yet.';
-      note = [right >= PASS_SCORE ? `To count toward ready, you need ${READY_SCORE} or more right.` : `The real test needs ${PASS_SCORE} right to pass.`,
-        before ? 'The count of tests in a row starts over.' : '', missed.length ? toReview : ''].filter(Boolean).join(' ');
+      // A count and what it is short of, never a pass or fail verdict (#35).
+      title = 'This practice test is done.';
+      note = `To count toward ready, you need ${READY_SCORE} or more right.` + (missed.length ? ' ' + toReview : '');
     }
   }
   // After a Section or a redo, going on to the next Section is the main choice; doing it again is the quiet one.
@@ -646,7 +656,7 @@ function finish() {
   const list = missed.map(it => `<li><p class="mq">${esc(it.q.q)}</p><p>Right answer: ${esc(it.q.a)}</p><p class="mwhy">${esc(it.q.why)}</p><p class="mpage">Driver manual, page ${it.q.p}</p></li>`).join('');
   paint(`
     <section class="home">
-      <p class="score">${right} of ${n}</p>
+      <p class="score">${right} of ${n}<span> right</span></p>
       ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2>${note ? `<p class="sub">${esc(note)}</p>` : ''}`}
       ${missed.length ? `<details class="missed"><summary>See the ${plural(missed.length, 'question', 'questions')} you missed</summary><ul>${list}</ul></details>` : ''}
       ${nextDay ? `<button class="btn primary" type="button" id="moreBtn">Go on to Section ${S.day}</button>` : ''}

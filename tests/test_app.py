@@ -147,8 +147,9 @@ class Instance:
             conn.close()
 
 
-def answer_set(pg, miss=0):
-    """Answer every question in the current set, getting the first `miss` wrong."""
+def answer_set(pg, miss=0, stop=None):
+    """Answer every question in the current set, getting the first `miss` wrong. With `stop`, answer
+    only that many and leave the last one's feedback on screen."""
     n = 0
     while pg.query_selector(".opt"):
         opts = pg.query_selector_all(".opt")
@@ -160,8 +161,10 @@ def answer_set(pg, miss=0):
         opts[k].click()
         if not pg.query_selector(".src"):
             failures.append(f"no manual quote shown after answering {pg.evaluate('run.items[run.i].q.id')}")
-        pg.click("#nextBtn")
         n += 1
+        if n == stop:
+            break
+        pg.click("#nextBtn")
     return n
 
 
@@ -423,7 +426,7 @@ def check_offline(browser):
         reload(pg)
         check(h1(pg) == "Section 1 of 12", "with no connection, opening the app again shows the study path")
         pg.click("#startBtn")
-        check(answer_set(pg, miss=1) == 10 and pg.inner_text(".score") == "9 of 10",
+        check(answer_set(pg, miss=1) == 10 and pg.inner_text(".score") == "9 of 10 right",
               "with no connection, a whole Set can be answered")
         pg.click("#homeBtn")
         check(h1(pg) == "Section 2 of 12", "and the home screen moves on to Section 2")
@@ -1226,7 +1229,7 @@ def check_records_on_server(browser, inst):
 
     pg.click("#startBtn")
     answer_set(pg, miss=2)
-    check(pg.inner_text(".score") == "8 of 10" and pg.inner_text(".home h2") == "Section 1 done.",
+    check(pg.inner_text(".score") == "8 of 10 right" and pg.inner_text(".home h2") == "Section 1 done.",
           "the results screen is the same as before")
     got = wait_for_records(pg, 1)
     rec = got[0] if len(got) == 1 else {}
@@ -1644,8 +1647,17 @@ def main():
             # Section 1 with 3 misses: results, redo button, then redo perfectly.
             pg.click("#startBtn")
             first = pg.evaluate("run.items.map(i => i.q.id)")
-            check(answer_set(pg, miss=3) == 10, "a section is exactly 10 questions")
-            check(pg.inner_text(".score") == "7 of 10", "results show 7 of 10")
+            answer_set(pg, miss=1, stop=1)
+            feedback = " ".join(pg.inner_text("#feedback").split())
+            check("Not correct" not in feedback and feedback.startswith("The right answer is: ")
+                  and "This question comes back in review after Section 12." in feedback,
+                  "after a wrong answer, the screen gives the right answer and says the question comes back, with no verdict",
+                  feedback)
+            check(pg.text_content("#announce").startswith("You chose: "), "and the screen reader hears no verdict either",
+                  pg.text_content("#announce"))
+            pg.click("#nextBtn")
+            check(answer_set(pg, miss=2) == 9, "a section is exactly 10 questions")
+            check(pg.inner_text(".score") == "7 of 10 right", "results show 7 of 10 right")
             check_go_on_first(pg, 2, "after a first run with misses")
             check("You do not have to do this section again before you go on." in stage_text(pg),
                   "results say that doing the section again is not needed", stage_text(pg))
@@ -1691,7 +1703,7 @@ def main():
                   "continuing picks up at the same question")
             pg.click("#nextBtn")
             answer_set(pg)
-            check(pg.inner_text(".score") == "10 of 10" and pg.query_selector("details.missed") is None,
+            check(pg.inner_text(".score") == "10 of 10 right" and pg.query_selector("details.missed") is None,
                   "a resumed section finishes normally")
             pg.click("#homeBtn")
 
@@ -1707,6 +1719,16 @@ def main():
             while h1(pg) == "Review" and rounds < 10:
                 pg.click("#startBtn"); answer_set(pg); pg.click("#homeBtn"); rounds += 1
             check(h1(pg).startswith("Practice test"), "after review come practice tests")
+
+            # A practice test below the ready bar gives a count and what it is short of, not a verdict.
+            pg.click("#startBtn"); answer_set(pg, 5)
+            end = stage_text(pg)
+            check(pg.inner_text(".score") == "25 of 30 right" and "This practice test is done." in end
+                  and "pass" not in end and "starts over" not in end,
+                  "a practice test with 25 right says so with no pass or fail sentence", end)
+            pg.click("#homeBtn")
+            while h1(pg) == "Review":
+                pg.click("#startBtn"); answer_set(pg); pg.click("#homeBtn")
 
             # Three practice tests at 28/30 reach "ready".
             for _ in range(3):
