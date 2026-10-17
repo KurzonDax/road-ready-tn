@@ -165,6 +165,15 @@ def answer_set(pg, miss=0):
     return n
 
 
+def check_go_on_first(pg, section, when):
+    """The end-of-Set screen's main button goes on to `section`; "I'm done for now" and "Do Section N again" come after it."""
+    ids = pg.eval_on_selector_all(".home button", "bs => bs.map(b => b.id)")
+    check(pg.get_attribute("#moreBtn", "class") == "btn primary" and pg.inner_text("#moreBtn") == f"Go on to Section {section}",
+          f"{when}, the main button is Go on to Section {section}", pg.inner_text(".home"))
+    check(ids == ["moreBtn", "homeBtn", "againBtn"] and pg.get_attribute("#homeBtn", "class") == "btn",
+          f"{when}, I'm done for now and then Do the section again come after it", ids)
+
+
 def answer_one(pg):
     """Click the right answer to the question on screen."""
     right = pg.evaluate("run.items[run.i].q.a")
@@ -1637,13 +1646,19 @@ def main():
             first = pg.evaluate("run.items.map(i => i.q.id)")
             check(answer_set(pg, miss=3) == 10, "a section is exactly 10 questions")
             check(pg.inner_text(".score") == "7 of 10", "results show 7 of 10")
-            check(pg.query_selector("#againBtn") is not None, "results offer to try the section again")
+            check_go_on_first(pg, 2, "after a first run with misses")
+            check("You do not have to do this section again before you go on." in stage_text(pg),
+                  "results say that doing the section again is not needed", stage_text(pg))
+            check(pg.get_attribute("#againBtn", "class") == "link", "results offer to try the section again, as the quiet choice")
             pg.click("#againBtn")
             redo = pg.evaluate("run.items.map(i => i.q.id)")
             check(sorted(redo) == sorted(first), "a redo uses the same 10 questions")
-            answer_set(pg)
+            answer_set(pg, miss=1)
             check(pg.inner_text(".home h2") == "Section 1 done." and pg.evaluate("S.day") == 2,
                   "a redo doesn't move his place forward")
+            check_go_on_first(pg, 2, "after a redo with misses")
+            pg.click("#againBtn")
+            answer_set(pg)
             pg.click("#homeBtn")
 
             # Sections 2 and 3 at 8 and 5. Scores are shown on request, not as colors.

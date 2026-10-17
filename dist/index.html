@@ -614,12 +614,12 @@ function finish() {
   const missed = items.filter(it => it.chosen !== it.q.a);
   const toReview = 'The questions you missed go into review. You will do them before the next practice test.';
   let title, note = '', sign = false;
-  if (kind === 'redo') {
+  if (kind === 'day' || kind === 'redo') {
+    // Missed questions come back in Review whatever the score, so doing the Section again now is a choice.
     title = `Section ${run.dayNum} done.`;
-    note = missed.length ? 'You can do it again now, or another day from "See your section scores".' : 'You got every one right.';
-  } else if (kind === 'day') {
-    title = `Section ${run.dayNum} done.`;
-    note = missed.length ? `You can do this section again now, or another day from "See your section scores". The questions you missed also come back in review after Section ${TOTAL_DAYS}.` : 'You got every one right.';
+    note = !missed.length ? 'You got every one right.'
+      : phase() === 'day' ? `The questions you missed come back in review after Section ${TOTAL_DAYS}. You do not have to do this section again before you go on.`
+      : phase() === 'review' ? 'The questions you missed are in review, which comes next.' : '';
   } else if (kind === 'review') {
     const left = reviewPile().length;
     title = 'This review set is done.';
@@ -639,7 +639,8 @@ function finish() {
         before ? 'The count of tests in a row starts over.' : '', missed.length ? toReview : ''].filter(Boolean).join(' ');
     }
   }
-  const nextDay = phase() === 'day' && kind === 'day';
+  // After a Section or a redo, going on to the next Section is the main choice; doing it again is the quiet one.
+  const nextDay = phase() === 'day' && (kind === 'day' || kind === 'redo');
   const againDay = run.dayNum;
   run = null;
   const list = missed.map(it => `<li><p class="mq">${esc(it.q.q)}</p><p>Right answer: ${esc(it.q.a)}</p><p class="mwhy">${esc(it.q.why)}</p><p class="mpage">Driver manual, page ${it.q.p}</p></li>`).join('');
@@ -648,9 +649,9 @@ function finish() {
       <p class="score">${right} of ${n}</p>
       ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2>${note ? `<p class="sub">${esc(note)}</p>` : ''}`}
       ${missed.length ? `<details class="missed"><summary>See the ${plural(missed.length, 'question', 'questions')} you missed</summary><ul>${list}</ul></details>` : ''}
-      ${missed.length && (kind === 'day' || kind === 'redo') ? `<button class="btn" type="button" id="againBtn">Do Section ${againDay} again</button>` : ''}
-      <button class="btn primary" type="button" id="homeBtn">I'm done for now</button>
-      ${nextDay ? `<button class="link" type="button" id="moreBtn">Go on to Section ${S.day} now</button>` : ''}
+      ${nextDay ? `<button class="btn primary" type="button" id="moreBtn">Go on to Section ${S.day}</button>` : ''}
+      <button class="btn${nextDay ? '' : ' primary'}" type="button" id="homeBtn">I'm done for now</button>
+      ${missed.length && (kind === 'day' || kind === 'redo') ? `<button class="link" type="button" id="againBtn">Do Section ${againDay} again</button>` : ''}
     </section>`, 'h2');
   window.scrollTo({ top: 0, behavior: 'instant' });
   $('homeBtn').onclick = () => { renderHome(); window.scrollTo({ top: 0, behavior: 'instant' }); };
