@@ -98,8 +98,8 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
        {"id": "a-153", "label": "A yellow arrow"},
        {"id": "a-155", "label": "A flashing yellow arrow"},
        {"id": "a-154", "label": "A red arrow", "means": "All turns are prohibited", "reverse": false}]},
-    {"id": "parking-distances", "title": "How close you may park",
-     "reverse": "You may NOT park within {answer} of which of these?",
+    {"id": "parking-distances", "title": "No-parking distances",
+     "reverse": "Which of these has a no-parking distance of {answer}?",
      "facts": [
        {"id": "b-250", "label": "A fire hydrant"},
        {"id": "b-252", "label": "A crosswalk"},
@@ -111,8 +111,8 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
        {"id": "b-260", "label": "Facing downhill, next to a curb"},
        {"id": "b-261", "label": "Facing uphill, next to a curb"},
        {"id": "b-262", "label": "On a hill with NO curb"}]},
-    {"id": "feet-rules", "title": "Rules measured in feet",
-     "reverse": "Which rule is: {answer}?",
+    {"id": "feet-rules", "title": "Distances measured in feet",
+     "reverse": "Which of these distances is {answer}?",
      "facts": [
        {"id": "b-077", "label": "How far from the tracks you stop for a train"},
        {"id": "b-147", "label": "How far before a turn you turn on your signal"},
@@ -253,6 +253,8 @@ Screen kinds: `contrast` (a group's Compare screen), `first_look`, `rule`, `coun
 Every question is multiple choice, as on the real test. In a group block a counted question is `reverse` where assigned, else `choice`.
 
 ## Screens
+
+**Revised 2026-10-17 in a design review (#55).** The wording below is the first draft. The page (`src/app.html`) now has the revised wording, and it wins where the two differ. After any answer, the result comes first on the card: "You picked the right answer: {answer}." in green, or "The answer is: {answer}." with "You picked: {chosen}." under it. The question, its choices (tagged "Your answer" and "The answer"), the explanation and the comes-back line follow. Every Learner line is a full sentence: "You finished Set N.", "You learned N new facts.", "This set has … new facts.", and so on. The app is dark mode only and never quotes the manual.
 
 Wording is exact. Everything else (type, spacing, the pinned button, the A to D keys for choices, "Stop for now and save my place") follows the page as it is. The `aria-live` announcement after an answer reads the same sentences the screen shows, in the same order.
 
