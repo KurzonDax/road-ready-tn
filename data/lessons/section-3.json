@@ -218,9 +218,10 @@
           },
           {
             "t": "light",
-            "x": 205,
-            "y": 112,
-            "state": "green"
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
           },
           {
             "t": "car",
@@ -293,9 +294,10 @@
           },
           {
             "t": "light",
-            "x": 205,
-            "y": 112,
-            "state": "green"
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
           },
           {
             "t": "car",
@@ -558,9 +560,10 @@
           },
           {
             "t": "light",
-            "x": 205,
-            "y": 112,
-            "state": "off"
+            "x": 160,
+            "y": 121,
+            "state": "off",
+            "span": 64
           },
           {
             "t": "car",
@@ -731,9 +734,10 @@
           },
           {
             "t": "light",
-            "x": 205,
-            "y": 112,
-            "state": "green"
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
           },
           {
             "t": "car",

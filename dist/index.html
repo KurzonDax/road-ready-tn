@@ -1151,11 +1151,15 @@ const SIGN_PARTS = {
   allway: (x, y) => SIGN_PARTS.stop(x, y) + `<g transform="translate(${x} ${y + 16})"><rect x="-11" y="-4" width="22" height="8" fill="#fff" stroke="#c8323a" stroke-width="1"/>${svgText(0, 2.3, 'ALL WAY', 'middle', 'k-plate')}</g>`,
 };
 const LIGHT_COLORS = { red: '#d9534f', yellow: '#e0b23c', green: '#5aa870' };
+// A traffic signal as a driver meets it: a horizontal head hung on a span across the road, over the far side
+// of the intersection, seen from above. `x`, `y` is the head's center; the span runs the width of the road.
 function lightPart(p) {
   const on = (p.state || 'off').replace('flashing-', '').replace('green-left', 'green'), flash = (p.state || '').startsWith('flashing');
-  const lamp = (k, color) => `<circle cx="0" cy="${-8 + k * 8}" r="3" fill="${color === on ? LIGHT_COLORS[color] : '#3a3c40'}"${color === on && flash ? ' class="k-flash"' : ''}/>`;
-  const arrow = p.state === 'green-left' ? `<path d="M3 8 L-3 8 M-1 6 L-3 8 L-1 10" stroke="#111" stroke-width="1.2" fill="none"/>` : '';
-  return `<g transform="translate(${p.x} ${p.y})"><rect x="-5.5" y="-13" width="11" height="26" rx="2" fill="#202225" stroke="#6b6e73" stroke-width="1"/>${lamp(0, 'red')}${lamp(1, 'yellow')}${lamp(2, 'green')}${arrow}</g>`;
+  const lamp = (k, color) => `<circle cx="${-9 + k * 9}" cy="0" r="3.2" fill="${color === on ? LIGHT_COLORS[color] : '#3a3c40'}"${color === on && flash ? ' class="k-flash"' : ''}/>`;
+  const arrow = p.state === 'green-left' ? `<path d="M12 0 L6 0 M8 -2 L6 0 L8 2" stroke="#111" stroke-width="1.2" fill="none"/>` : '';
+  const half = (p.span || 64) / 2;
+  return `<g transform="translate(${p.x} ${p.y})"><line x1="${-half}" y1="0" x2="${half}" y2="0" stroke="#6b6e73" stroke-width="1.5"/>` +
+    `<rect x="-15" y="-6" width="30" height="12" rx="2" fill="#202225" stroke="#8a8d92" stroke-width="1"/>${lamp(0, 'red')}${lamp(1, 'yellow')}${lamp(2, 'green')}${arrow}</g>`;
 }
 function crosswalkPart(p) {
   const bars = [];
