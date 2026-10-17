@@ -717,22 +717,26 @@ def check_engine(browser, inst):
                            " return {group: p.group && p.group.id, block: p.block, due: p.due, fresh: p.fresh, fill: p.fill}; }",
                            [records, hours(at_hour)])
 
-    got = plan(learned, 2)
+    check(plan(learned, 12.9)["group"] is None, "a group is not compared within 12 hours of the newest answer on its facts")
+    got = plan(learned, 13)
     check(got["group"] == "parking-distances" and got["block"] == parking and got["fresh"] == [] and got["due"] == []
-          and got["fill"] == [], "once all four parking facts are learned, the next Set is their group block, with no new facts", got)
-    got = plan(learned[:0] + [daily(31, [(q, True, 1) for q in parking[:3]])], 2)
+          and got["fill"] == [], "once all four parking facts are learned, and 12 hours later, the next Set is their group block,"
+          " with no new facts, and its facts leave the due list", got)
+    got = plan(learned[:0] + [daily(31, [(q, True, 1) for q in parking[:3]])], 13)
     check(got["group"] is None and len(got["fresh"]) == 5, "with one of them still new, there is no group block", got)
     compared = learned + [daily(32, [(q, True, 3) for q in parking], group="parking-distances")]
-    check(plan(compared, 4)["group"] is None, "after a Set with that group block, the group is not due")
+    check(plan(compared, 16)["group"] is None, "after a Set with that group block, the group is not due")
     again = compared + [daily(33, [("b-252", False, 5)])]
-    got = plan(again, 6)
+    check(plan(again, 6)["group"] is None and "b-252" in plan(again, 6)["due"],
+          "a wrong answer on one of its facts makes that fact due at once, and the group not yet")
+    got = plan(again, 17)
     check(got["group"] == "parking-distances" and "b-252" not in got["due"],
-          "a wrong counted answer on one of its facts after that Set makes the group due again, and its facts leave the due list", got)
-    got = plan([daily(34, [("b-031", True, 1), ("b-030", True, 1), (s3[0], True, 1), (s3[1], True, 1),
-                           (s3[2], True, 1), (s3[3], True, 1)])], 2)
+          "12 hours after that wrong answer the group is due again, and its facts leave the due list", got)
+    got = plan([daily(34, [("b-031", True, 1), ("b-030", True, 1), (s3[0], True, 13), (s3[1], True, 13),
+                           (s3[2], True, 13), (s3[3], True, 13)])], 14)
     check(got["group"] == "speed-limits" and got["block"] == ["b-031", "b-030"] and len(got["fill"]) == 3,
           "a group block of 2 is filled to 5 counted questions with facts not yet due", got)
-    blocks = pg.evaluate("""r => [0, 1, 2, 3, 4, 5].map(() => buildSet(progressFrom(r), Date.parse('2026-10-01T14:00:00Z'))
+    blocks = pg.evaluate("""r => [0, 1, 2, 3, 4, 5].map(() => buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z'))
         .map(s => ({kind: s.kind, id: s.id, group: s.group, format: s.format, options: s.options})))""", learned)
     labels = {"b-250": "A fire hydrant", "b-252": "A crosswalk", "b-253": "A stop sign or traffic signal", "b-251": "A railroad crossing"}
     ok = all(b[0] == {"kind": "contrast", "id": None, "group": "parking-distances", "format": None, "options": None}
@@ -742,18 +746,18 @@ def check_engine(browser, inst):
     check(ok, "the block is the Compare screen, then the 4 facts shuffled, every second one in the reverse format", blocks[0])
     check(all(sorted(s["options"]) == sorted(labels.values()) for s in reverse),
           "a reverse question's choices are the labels of its group", reverse[:2])
-    got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-01T14:00:00Z');
+    got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-02T02:00:00Z');
         return [...Array(20)].map(() => buildSet(p, now).filter(s => s.format === 'reverse').map(s => s.id)); }""",
                       [daily(35, [(q, True, 1) for q in ("a-152", "a-153", "a-155", "a-154")])])
     check(all(len(x) == 1 and x[0] != "a-154" for x in got),
           "in a group of 4 with one fact marked reverse: false, one question is reverse, and never that fact", got[:3])
-    got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-01T14:00:00Z');
+    got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-02T02:00:00Z');
         return [...Array(20)].map(() => buildSet(p, now).filter(s => s.format === 'reverse').map(s => s.id)); }""",
                       [daily(36, [(q, True, 1) for q in ("a-168", "a-175", "a-176", "a-170", "a-172", "a-166")])])
     check(all(len(x) == 1 and x[0] in ("a-170", "a-166") for x in got),
           "line colors: a-172 and a-176 are never reversed, since each one's answer is true of the other's label", got[:3])
     got = pg.evaluate("""r => { const run = { kind: 'daily', set_id: 's', number: 2, i: 0, answered: false, reasks: 0, group: 'parking-distances',
-        screens: buildSet(progressFrom(r), Date.parse('2026-10-01T14:00:00Z')) };
+        screens: buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z')) };
         const ok = !!unpackRun(packRun(run)), rev = run.screens.find(s => s.format === 'reverse');
         rev.options = [...rev.options.slice(0, 3), 'A school bus'];
         return [ok, unpackRun(packRun(run))]; }""", learned)
@@ -879,7 +883,7 @@ def check_helper_helpers(browser, inst):
     for records, want, next_set in (
             ([], "0 of 120 facts learned, 0 solid.", "Next set: 5 new."),
             ([daily_set(1, [(q, i > 1, 10, "counted") for i, q in enumerate(s1)], seq=1)],
-             "8 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 2 come back."),
+             "8 of 120 facts learned, 0 solid.", "Next set: 2 come back, 5 new."),
             ([record(1, "move", 10, {"to": 13}, seq=1), practice(2, 20, 28), practice(3, 30, 27), practice(4, 40, 29)],
              "29 of 120 facts learned, 0 solid.", "Ready for the test: 3 practice tests in a row at 27 or more")):
         got = pg.evaluate("r => [whereNow(progressFrom(r)), nextSetLine(progressFrom(r), Date.parse('2026-10-01T13:00:00Z'))]", records)
@@ -1878,21 +1882,19 @@ def check_study_path(browser, inst, scheme="light"):
     check("See the 1 question you missed" in done, "and lists the missed question once", done)
     pg.click("#homeBtn")
 
-    # Section 1's five sign colors are all learned now, so Set 3 compares them first, then asks the
-    # missed fact, and takes no new facts. Stopping partway keeps the answers.
-    check(h1(pg) == "Set 3" and "Compare: What each sign color means. 1 question comes back." in stage_text(pg),
+    # Section 1's five sign colors are all learned, but minutes ago, so they are not compared yet.
+    # Set 3 opens with the missed fact. Stopping partway keeps the answers.
+    check(h1(pg) == "Set 3" and "1 question comes back. 5 new." in stage_text(pg) and "Compare" not in stage_text(pg),
           "the home screen says what the next Set holds", stage_text(pg))
     pg.click("#startBtn")
     third = screens(pg)
-    colors = pg.evaluate("GROUP_BY_ID['sign-colors'].facts.map(f => f.id)")
-    check(third[0] == ["contrast", None] and sorted(f for _, f in third[1:6]) == sorted(colors)
-          and third[6:] == [["counted", missed]],
-          "the next Set compares the learned sign colors, then asks the fact answered wrong", third)
+    check([s for s in third if s[0] == "counted"][0] == ["counted", missed] and not gap_problems(third),
+          "the next Set opens with the fact answered wrong", third)
     answer_one(pg)
     pg.click("#nextBtn")
     answer_one(pg)
     pg.click("#quitBtn")
-    check(pg.query_selector("#resumeBtn") is not None and "You stopped partway through Set 3. You answered 2 of 6 questions." in stage_text(pg)
+    check(pg.query_selector("#resumeBtn") is not None and "You stopped partway through Set 3. You answered 7 of 11 questions." in stage_text(pg)
           and not pg.query_selector("#startBtn") and h1(pg) == "Set 3",
           "stopping partway goes home, where Continue takes the place of Start the set", stage_text(pg))
     reload(pg)
@@ -2037,7 +2039,7 @@ def check_compare(browser, inst):
     pg.on("pageerror", lambda e: errors.append(str(e)))
     parking = ["b-250", "b-252", "b-253", "b-251"]
     hal = inst.add_learner("Hal", "compare password")
-    store_history(inst, hal, [daily_at(60, [(q, True, 1) for q in parking])])
+    store_history(inst, hal, [daily_at(60, [(q, True, 13) for q in parking])])
     open_page(pg, inst.url)
     sign_in(pg, "Hal", "compare password")
     check(h1(pg) == "Set 2" and "Compare: How close you may park." in stage_text(pg),

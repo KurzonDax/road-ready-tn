@@ -68,7 +68,7 @@ d-165 ("Within 50 feet but no closer than 15 feet from the nearest rail") is a w
 
 `data/sections.json` lists the 12 study sections, 10 question ids each, in the order the app presents them the first time through (easiest first).
 
-`data/groups.json` lists groups of easily mixed-up facts, such as the four distances you may not park within. Once every fact in a group is learned, the app shows the group on one Compare screen, side by side, then asks one question on each of its facts:
+`data/groups.json` lists groups of easily mixed-up facts, such as the four distances you may not park within. Once every fact in a group is learned, and none was answered in the last 12 hours, the app shows the group on one Compare screen, side by side, then asks one question on each of its facts:
 
 ```json
 {"id": "parking-distances", "title": "How close you may park",

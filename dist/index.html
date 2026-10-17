@@ -393,10 +393,12 @@ function progressFrom(records) {
   return p;
 }
 
-// A group is due for a Compare screen once all its facts are learned, the first time, and again
-// whenever one of its facts is answered wrong after the newest Set that compared it.
-function groupDue(p, g) {
-  if (!g.facts.every(f => isLearned(p.facts[f.id]))) return false;
+// A group is due for a Compare screen once all its facts are learned and none was answered in the
+// last SPACING_MS, so it is recalled after a gap and not minutes after it was taught: the first time,
+// and again whenever one of its facts is answered wrong after the newest Set that compared it.
+function groupDue(p, g, now) {
+  const facts = g.facts.map(f => p.facts[f.id]);
+  if (!facts.every(isLearned) || Math.max(...facts.map(f => f.lastAt)) > now - SPACING_MS) return false;
   const last = p.groupAt[g.id];
   return last === undefined || g.facts.some(f => p.answers[f.id].some(a => !a.right && a.at > last));
 }
@@ -404,7 +406,7 @@ function groupDue(p, g) {
 // block: its facts; due; fresh: new facts; fill: not-yet-due facts added to reach MIN_SET}. Each but
 // group is a list of fact ids. A Set with a group block takes no new facts.
 function setPlan(p, now) {
-  const group = GROUPS.find(g => groupDue(p, g)) || null, block = group ? group.facts.map(f => f.id) : [];
+  const group = GROUPS.find(g => groupDue(p, g, now)) || null, block = group ? group.facts.map(f => f.id) : [];
   const outside = id => !block.includes(id);
   const room = COUNTED_TARGET - block.length;
   const due = dueFacts(p, now).filter(outside).slice(0, room);
