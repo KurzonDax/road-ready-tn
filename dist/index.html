@@ -482,7 +482,7 @@ const SCREEN_KINDS = ['contrast', 'first_look', 'rule', 'counted', 'reask'];
 function packRun(r) {
   return { kind: r.kind, set_id: r.set_id, started_at: r.started_at, after: r.after, number: r.number, group: r.group,
     i: r.i, answered: r.answered, reasks: r.reasks,
-    screens: r.screens.map(s => ({ kind: s.kind, id: s.id, format: s.format, options: s.options, chosen: s.chosen, typed: s.typed, at: s.at, group: s.group })) };
+    screens: r.screens.map(s => ({ kind: s.kind, id: s.id, format: s.format, options: s.options, chosen: s.chosen, at: s.at, group: s.group })) };
 }
 const sameOptions = (options, q) => Array.isArray(options) && options.slice().sort().join('\n') === [q.a, ...q.o].sort().join('\n');
 // A reverse question's choices are 4 different labels of its group, its own fact's among them.
@@ -498,8 +498,7 @@ function unpackRun(p) {
       const q = BY_ID[x.id], g = GROUP_BY_ID[x.group];
       if (!SCREEN_KINDS.includes(x.kind) || (x.kind === 'contrast' ? !g : !q)) throw new Error('changed');
       if (isQuestion(x) && !(x.format === 'choice' ? sameOptions(x.options, q) : x.format === 'reverse' && reverseOptions(x, g))) throw new Error('changed');
-      return { kind: x.kind, id: x.id, format: x.format, options: x.options, chosen: x.chosen ?? null, typed: x.typed ?? null,
-        at: x.at || null, group: x.group ?? null };
+      return { kind: x.kind, id: x.id, format: x.format, options: x.options, chosen: x.chosen ?? null, at: x.at || null, group: x.group ?? null };
     });
     if (!Number.isInteger(p.i) || p.i < 0 || p.i >= screens.length || typeof p.set_id !== 'string' || !p.set_id) return null;
     return { kind: p.kind, set_id: p.set_id, started_at: p.started_at || new Date().toISOString(), after: p.after,

@@ -53,37 +53,6 @@ All in one place near the top of the page's script, each with a one-line comment
 
 ## Data
 
-### `data/questions.json`: `typed` on 22 facts
-
-Add a `typed` field to these 22 app questions. The page uses it for the typed-number format (Phase 3). `template` holds one `{}` per number, in the order typed; the words around them are part of the answer and are shown, not typed.
-
-| id | template | numbers |
-|---|---|---|
-| b-031 | `{} mph` | 70 |
-| b-030 | `{} mph` | 55 |
-| b-077 | `Between {} and {} feet` | 15, 50 |
-| d-138 | `{} feet` | 10 |
-| a-003 | `Left hand at {} o'clock, right hand at {} o'clock` | 9, 3 |
-| b-147 | `At least {} feet` | 50 |
-| a-004 | `{} to {} inches` | 10, 12 |
-| b-228 | `{} feet` | 3 |
-| d-116 | `Right in front, on both sides, and up to {} feet behind` | 200 |
-| b-250 | `{} feet` | 15 |
-| b-252 | `{} feet` | 20 |
-| b-253 | `{} feet` | 30 |
-| b-251 | `{} feet` | 50 |
-| b-268 | `{} inches` | 18 |
-| b-001 | `From {} minutes after sunset until {} minutes before sunrise` | 30, 30 |
-| c-050 | `{} feet` | 500 |
-| c-097 | `{} percent` | 0.08 |
-| c-121 | `{} percent` | 0.02 |
-| c-132 | `{} days` | 20 |
-| b-054 | `No closer than {} seconds` | 2 |
-| b-056 | `At least {} seconds` | 4 |
-| c-090 | `About {} hours` | 3 |
-
-Stored as `"typed": {"template": "Between {} and {} feet", "numbers": [15, 50]}`. `tests/validate_data.py` checks: the count of `{}` equals the length of `numbers`; the set of `numbers` as strings equals `numbers(answer)` from the existing helper (so "Ten feet" matches 10 and "two seconds" matches 2); `typed` appears only on questions in `data/sections.json`.
-
 ### `data/groups.json`: 15 groups of easily mixed-up facts
 
 New file. Used by Phase 2. Each fact is in at most one group. `label` is the left column of the Compare screen and an answer choice in the reverse format. `means`, when present, replaces the fact's answer in the right column of the Compare screen (used where the answer is itself a name, not a meaning). `reverse` is the stem of the reverse format with `{answer}` where the fact's answer goes, or `null` when the group has none. A fact with `"reverse": false` is never the subject of a reverse question but its label still serves as a wrong choice.
@@ -202,7 +171,7 @@ a-172 and a-176 are never reversed because each one's answer is also true of the
 
 ### What `build.py` ships
 
-`compact()` adds to each question, when present: `typed` (as in the data), `group` (the group id), and `also`. `also` is computed: for each wrong choice whose text, normalized by the existing `plain()` helper, equals the normalized answer of another question in the sections, `also[wrongText] = thatQuestionId`. Today that yields 15 entries across 12 questions.
+`compact()` adds to each question, when present: `group` (the group id) and `also`. `also` is computed: for each wrong choice whose text, normalized by the existing `plain()` helper, equals the normalized answer of another question in the sections, `also[wrongText] = thatQuestionId`. Today that yields 15 entries across 12 questions.
 
 `questions.json` gains a top-level `groups` array, copied from `data/groups.json`. In Phase 5 it also gains the other wordings of each fact (see Phase 5).
 
@@ -212,7 +181,7 @@ a-172 and a-176 are never reversed because each one's answer is also true of the
 
 - `SET_TYPES` becomes `("daily", "test", "day", "redo", "review")`. The last three are accepted so that stored History still passes `check_record` in tests, and so the page can read them. The page never makes them again.
 - `_check_set`: for type `daily`, `section` must be `null` and the data has one more field, `group`, which is `null` or a string of 1 to 64 characters. For `test`, the fields are as today. For the old three types, as today.
-- An answer has either exactly the four fields it has today (`q`, `chosen`, `right`, `at`) or exactly six: those plus `role` in `("counted", "first_look", "reask")` and `format` in `("choice", "typed", "reverse")`. Both shapes are accepted for every type. The page writes six fields for every new Set.
+- An answer has either exactly the four fields it has today (`q`, `chosen`, `right`, `at`) or exactly six: those plus `role` in `("counted", "first_look", "reask")` and `format` in `("choice", "reverse")`. Both shapes are accepted for every type. The page writes six fields for every new Set.
 - `MAX_ANSWERS` stays 50. A daily Set has at most 5 first looks, 10 counted, 4 re-asks: 19.
 - `MOVE_TO` stays 13. A Move "to 13" now means "Unlock practice tests"; 1 to 12 means "Start new facts from Section N".
 - `tests/test_server.py`: a daily Set with six-field answers and a group is stored; a daily Set with a `section` is refused; an answer with `role` but no `format` is refused; a four-field answer is still accepted; a Practice test with six-field answers is accepted.
@@ -279,10 +248,9 @@ Screen kinds: `contrast` (a group's Compare screen), `first_look`, `rule`, `coun
 ## Formats
 
 - `choice`: the fact's own question (or, in Phase 5, a wording of it), four choices shuffled. Used for every first look, every re-ask of a `choice` question, every Practice test question, and counted questions not covered below.
-- `typed` (Phase 3): a counted question in a daily Set on a fact that has `typed` data and whose standing is learned or solid. The Learner types the numbers. Not in Practice tests, not in first looks.
 - `reverse` (Phase 2): only inside a group block, only in groups with a `reverse` stem and at least 4 facts, only for facts without `"reverse": false`. Within the block, eligible facts alternate: the first eligible fact in shuffled order gets `choice`, the second `reverse`, the third `choice`, and so on. The stem is the group's `reverse` with `{answer}` replaced by the fact's answer. The choices are the fact's label and the labels of 3 other facts in the group, shuffled. The right choice is the fact's label.
 
-Precedence for a counted question in a group block: `reverse` where assigned, else `typed` where eligible, else `choice`.
+Every question is multiple choice, as on the real test. In a group block a counted question is `reverse` where assigned, else `choice`.
 
 ## Screens
 
@@ -295,8 +263,6 @@ Wording is exact. Everything else (type, spacing, the pinned button, the A to D 
 **Rule screen.** Heading: "Here is the rule." when it follows a first look, "Read this rule first." when `FIRST_LOOK` is false. Then the sign or color picture if the fact has one, the rule (`why`), and the manual's sentence with "Driver manual, page N" as today. After a first look, two lines: "You picked: {chosen}." and "The answer is: {answer}." Then: "This question comes back later in this set." Button: "Go on".
 
 **Counted question, `choice`.** As today before answering. After a right answer: "Correct." then `why`, then the manual's sentence and page. After a wrong answer: "The right answer is: {answer}." then, when `also[chosen]` exists, one line: "{chosen} answers a different question: {that question's text}" (this line appears wherever `choice` feedback is shown, Practice tests included). Then `why` and the manual's sentence. Then one line: "This question comes back later in this set, and in your next set." when a re-ask was inserted, otherwise "This question comes back in your next set." Button: "Next question", or "See how it went" on the last screen.
-
-**Counted question, `typed`.** Above: "Type the number." or "Type the numbers." The template is rendered as a sentence with one input box per `{}`, `inputmode="decimal"`, width for 6 characters, the surrounding words shown as text. Button: "Check my answer", enabled once every box has text. Checking: each box is trimmed, commas removed, parsed as a decimal number; a leading "." is allowed; a box that does not parse as a number is wrong; the answer is right when every box equals its number. After a right answer: "Correct." then `why` and the manual's sentence. After a wrong answer: "You typed: {the boxes' text joined by " and "}." "The answer is: {answer}." then `why`, the manual's sentence, and the comes-back line as for `choice`.
 
 **Counted question, `reverse`.** The stem, four label choices. Feedback as for `choice`, with "The right answer is: {label}." after a wrong answer, and `why` and the manual's sentence of the fact.
 
@@ -331,7 +297,7 @@ Unchanged in length and draw (30 of the 120, shuffled, `choice`, fresh option sh
 
 ## The unfinished Set
 
-`packRun`/`unpackRun` carry the whole screen list: `{kind, id, format, options, chosen, typed, at, group}` per screen, plus `set_id`, `started_at`, `after`, `number`, `group`, `i`, `answered`, `reasks` (count inserted). `unpackRun` drops the Set when a question is missing, when a `choice` screen's options no longer match the question's answer and wrong choices, or when a `reverse` screen's options are not labels of its group. Re-asks already inserted are kept. The size stays well under the server's 16 KB limit (25 screens at under 200 bytes each).
+`packRun`/`unpackRun` carry the whole screen list: `{kind, id, format, options, chosen, at, group}` per screen, plus `set_id`, `started_at`, `after`, `number`, `group`, `i`, `answered`, `reasks` (count inserted). `unpackRun` drops the Set when a question is missing, when a `choice` screen's options no longer match the question's answer and wrong choices, or when a `reverse` screen's options are not labels of its group. Re-asks already inserted are kept. The size stays well under the server's 16 KB limit (25 screens at under 200 bytes each).
 
 ## Moves, Resets, Imports and old records
 
@@ -362,7 +328,7 @@ The "Sections" scores part and the "Review" part go away. `whereNow` returns the
 - `docs/DECISIONS.md` "App behavior": replace the Rule first, Section scores, Missed questions, Go on to Section N and Order bullets with the engine's behavior in the same style.
 - `PRODUCT.md`: Product Purpose, Flow, Scoring, Order and Terminology.
 - `README.md`: the table and the two paragraphs that describe Sections, Review and scores.
-- `docs/QUESTIONS.md`: the `typed` field (Phase 3), `data/groups.json` (Phase 2), and the note that the app now uses `fact` (Phase 5).
+- `docs/QUESTIONS.md`: `data/groups.json` (Phase 2), and the note that the app now uses `fact` (Phase 5).
 
 ## Tests
 
@@ -380,7 +346,6 @@ Browser:
 - A wrong counted answer inserts "One more time." after 3 question screens for other facts, a wrong re-ask inserts nothing, and the done screen says "1 fact comes back in your next set."; the next Set opens with that fact.
 - A fact answered right is not in the next Set started a minute later, and is in a Set started 13 hours later (records written straight into the database with timestamps).
 - The home screen shows "{L} of 120 facts learned." and no Practice test button until every fact is learned; a Learner with 120 learned facts (fixtures) sees it, and with nothing due sees "Nothing is due. This set goes over 5 facts you already know."
-- Typed (Phase 3): a learned numeric fact shows input boxes; ".08" is right for c-097; "15" and "30" are wrong for b-077 and the feedback shows "You typed: 15 and 30."
 - Compare (Phase 2): a Learner with all four parking-distance facts learned sees "Compare: How close you may park" at the start of the next Set, then four questions, two of them reverse; choosing "30 feet" for the hydrant shows "30 feet answers a different question: It is illegal to park within how many feet of a traffic signal or stop sign?"
 - Helper's view: the Facts block shows standings; the Retention sentence matches the fixture; "Needs a different question" appears after 6 wrong answers.
 - The phone layout (375 px) still scrolls nothing sideways on every new screen.
@@ -391,15 +356,15 @@ Browser:
 
 Each phase is one PR to `main`, in this order; a phase builds on the merged one before it. Each PR updates the docs listed for it, passes every test, and includes `python3 build.py` output in `dist/`.
 
-**Phase 1: the engine.** Constants; standings, due order, Section cursor, Set number; `buildSet` with first look, rule, gap and re-asks; the `choice` format with the `also` line; the Set done, home and progress track screens; Practice test gate and trend; the unfinished Set changes; server `daily` type and six-field answers; the Helper's Now, Retention and Facts blocks; ADR 0002 and the docs. Closes #33 (reworked), #34, #37. Group blocks, typed and reverse are not built yet; `buildSet` step 1 yields nothing.
+**Phase 1: the engine.** Constants; standings, due order, Section cursor, Set number; `buildSet` with first look, rule, gap and re-asks; the `choice` format with the `also` line; the Set done, home and progress track screens; Practice test gate and trend; the unfinished Set changes; server `daily` type and six-field answers; the Helper's Now, Retention and Facts blocks; ADR 0002 and the docs. Closes #33 (reworked), #34, #37. Group blocks and reverse are not built yet; `buildSet` step 1 yields nothing.
 
 **Phase 2: Compare.** `data/groups.json` and its validation; `group` and `groups` in the build; the group block in `buildSet`; the Compare screen; the `reverse` format. Closes the confusable-pairs part of #41.
 
-**Phase 3: typed numbers.** `typed` on the 22 facts and its validation; the `typed` format and screen.
+**Phase 3: dropped.** It was typed-number answers for 22 numeric facts. It was built (#46) and removed the same day: the real knowledge test is multiple choice, and the app practices the test as it is. Every question stays multiple choice. Do not bring typed answers back.
 
 **Phase 4: the retention check.** Nothing to build: after two weeks of real use, the Helper reads the Retention block. If the all-time figure is below 70 percent, open an issue with the Facts block's standings attached. This phase exists so no one skips the measurement.
 
-**Phase 5: other wordings (#36).** Page half: standings key by `BY_ID[q].fact`; a counted `choice` question for a fact uses the wording with the fewest counted answers (ties: the app's own question first, then id order); the first look, the `typed` format and Practice tests use the app's own question; `build.py` ships every bank question that has a `fact`, with `fact` on each, and computes `also` for every shipped question against the 120 facts' answers. Data half: for every fact in `data/groups.json` that has exactly one wording (44 facts as of 2026-10-17), write one more wording into `data/questions.json` following every rule in `docs/QUESTIONS.md` (one right answer, three wrong and clearly wrong, under-25-word verbatim quote, page, `fact` set), so `validate_data.py` and `check_quotes.py` pass. Each new id is the next unused number in the fact's own prefix series (as of 2026-10-17 the highest are a-184, b-276, c-162, d-182). Nothing else in the bank changes.
+**Phase 5: other wordings (#36).** Page half: standings key by `BY_ID[q].fact`; a counted `choice` question for a fact uses the wording with the fewest counted answers (ties: the app's own question first, then id order); the first look and Practice tests use the app's own question; `build.py` ships every bank question that has a `fact`, with `fact` on each, and computes `also` for every shipped question against the 120 facts' answers. Data half: for every fact in `data/groups.json` that has exactly one wording (44 facts as of 2026-10-17), write one more wording into `data/questions.json` following every rule in `docs/QUESTIONS.md` (one right answer, three wrong and clearly wrong, under-25-word verbatim quote, page, `fact` set), so `validate_data.py` and `check_quotes.py` pass. Each new id is the next unused number in the fact's own prefix series (as of 2026-10-17 the highest are a-184, b-276, c-162, d-182). Nothing else in the bank changes.
 
 ## Done when
 
@@ -409,7 +374,7 @@ Each phase is one PR to `main`, in this order; a phase builds on the merged one 
 - The home screen and the Set done screen show standings and never a Section score.
 - Practice tests appear only when every fact is learned, and their wrong answers feed the next Set.
 - The Helper's view shows every fact's standing and the retention figure.
-- Compare screens and reverse questions appear once a group is learned; typed numbers appear for learned numeric facts.
+- Compare screens and reverse questions appear once a group is learned. Every question is multiple choice, as on the real test.
 - Every test listed above passes; `check_dist.py` passes; the docs describe only the new flow.
 
 ## Verified against (2026-10-17, commit 5bedba0)
@@ -423,7 +388,7 @@ Each phase is one PR to `main`, in this order; a phase builds on the merged one 
 - Build output fields: `compact()` (`build.py:48-65`).
 - `numbers()` and `plain()` helpers, and `check_facts` (`tests/validate_data.py:73-115`).
 - Counts: 120 app facts in 12 Sections; 803 bank questions; 149 tagged with `fact`; 96 app facts with one wording, 21 with two, 2 with three, 1 with five; 22 app facts whose answer is a number (19 as digits, 3 as words); 15 wrong choices across 12 facts equal another fact's answer (Python over `data/`, 2026-10-17).
-- The 22 typed templates match `numbers(answer)` and the 15 groups name 56 distinct facts, all in the sections (checked 2026-10-17).
+- The 15 groups name 56 distinct facts, all in the sections (checked 2026-10-17).
 
 ## Not verified
 

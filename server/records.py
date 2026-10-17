@@ -48,7 +48,7 @@ MAX_ANSWERS = 50
 MAX_GROUP = 64                                 # characters in a daily Set's group id
 ANSWER_FIELDS = ("q", "chosen", "right", "at")
 ROLES = ("counted", "first_look", "reask")     # only a counted answer changes a fact's standing
-FORMATS = ("choice", "typed", "reverse")
+FORMATS = ("choice", "reverse")             # every question is multiple choice, as on the real test
 
 
 def _fields(value, what, names):

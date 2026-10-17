@@ -1517,10 +1517,10 @@ class RecordShape(RecordsTestCase):
             a_daily(answers=[changed(A_SIX_FIELD_ANSWER, format=DROP)]),
             a_daily(answers=[changed(A_SIX_FIELD_ANSWER, role=DROP)]),
             *(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, role=r)]) for r in ("rule", "Counted", None, "")),
-            *(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, format=f)]) for f in ("compare", "Choice", None)),
+            *(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, format=f)]) for f in ("compare", "Choice", None, "typed")),
             a_daily(answers=[changed(A_SIX_FIELD_ANSWER, extra=1)]))
         self.assert_accepted(*(a_daily(answers=[changed(A_SIX_FIELD_ANSWER, role=r, format=f)])
-                               for r in ("counted", "first_look", "reask") for f in ("choice", "typed", "reverse")))
+                               for r in ("counted", "first_look", "reask") for f in ("choice", "reverse")))
 
     def test_four_field_answers_are_still_accepted_for_a_daily_set(self):
         self.assert_accepted(a_daily(answers=[AN_ANSWER]))
