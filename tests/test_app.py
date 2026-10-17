@@ -16,7 +16,8 @@ Learner takes (docs/specs/learning-engine.md): a new Learner's first Set of firs
 rule screens and counted questions with the gap between them, a wrong answer's re-ask,
 Set done, the next Set opening with the missed fact, a fact due again 13 hours later
 but not a minute later, the line naming the question a wrong choice answers, a Compare
-screen and its reverse questions once a group is learned, every fact
+screen and its reverse questions once a group is learned, typed numbers for learned
+numeric facts, every fact
 learned, Practice tests up to the "ready" screen, saving a Set across a reload and picking
 it up again, and every screen at 375 px wide. The learning engine runs on fixtures in the
 page: standings, the due order, the Section cursor, old records, retention, and buildSet()'s
@@ -163,8 +164,18 @@ def choice_texts(pg):
     return [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")]
 
 
+def type_answer(pg, values):
+    """Type into a typed question's boxes, one value each, and press Check my answer."""
+    for box, value in zip(pg.query_selector_all(".typed .box"), values):
+        box.fill(value)
+    pg.click("#checkBtn")
+
+
 def click_choice(pg, right=True):
-    """Click the right answer to the question on screen, or the one after it in the list."""
+    """Answer the question on screen: click the right choice, or the one after it in the list; or, for a
+    typed question, type its numbers (or each number plus one)."""
+    if pg.evaluate("run.screens[run.i].format") == "typed":
+        return type_answer(pg, [str(n if right else n + 1) for n in pg.evaluate("BY_ID[run.screens[run.i].id].typed.numbers")])
     opts = pg.query_selector_all("button.opt")
     want = pg.evaluate("answerOf(run.screens[run.i])")
     k = choice_texts(pg).index(want)
@@ -740,10 +751,11 @@ def check_engine(browser, inst):
         .map(s => ({kind: s.kind, id: s.id, group: s.group, format: s.format, options: s.options})))""", learned)
     labels = {"b-250": "A fire hydrant", "b-252": "A crosswalk", "b-253": "A stop sign or traffic signal", "b-251": "A railroad crossing"}
     ok = all(b[0] == {"kind": "contrast", "id": None, "group": "parking-distances", "format": None, "options": None}
-             and [s["format"] for s in b[1:]] == ["choice", "reverse", "choice", "reverse"]
+             and [s["format"] for s in b[1:]] == ["typed", "reverse", "typed", "reverse"]
              and all(s["group"] == "parking-distances" for s in b[1:]) for b in blocks)
     reverse = [s for b in blocks for s in b[1:] if s["format"] == "reverse"]
-    check(ok, "the block is the Compare screen, then the 4 facts shuffled, every second one in the reverse format", blocks[0])
+    check(ok, "the block is the Compare screen, then the 4 facts shuffled, every second one in the reverse format"
+              " (the others typed, since parking distances are numbers)", blocks[0])
     check(all(sorted(s["options"]) == sorted(labels.values()) for s in reverse),
           "a reverse question's choices are the labels of its group", reverse[:2])
     got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-02T02:00:00Z');
@@ -762,6 +774,27 @@ def check_engine(browser, inst):
         rev.options = [...rev.options.slice(0, 3), 'A school bus'];
         return [ok, unpackRun(packRun(run))]; }""", learned)
     check(got == [True, None], "a saved Set whose reverse question's choices are not labels of its group is dropped", got)
+
+    print("\n[typed numbers]")
+    got = pg.evaluate("""r => buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z'))
+        .filter(s => s.kind === 'counted').map(s => [s.id, s.format, s.options])""",
+                      [daily(50, [("b-031", True, 1), ("c-097", False, 1), (s3[0], True, 1)])])
+    formats = {i: (f, o) for i, f, o in got}
+    check(formats.get("b-031") == ("typed", None) and formats.get("c-097", ("",))[0] == "choice"
+          and formats.get(s3[0], ("",))[0] == "choice" and all(f == "choice" for i, f, _ in got if i not in ("b-031",)),
+          "a learned numeric fact is typed; a numeric fact not yet answered right, and any other fact, is a choice", got)
+    got = pg.evaluate("""r => [...Array(10)].map(() => buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z'))
+        .filter(s => s.kind === 'counted').map(s => s.format).join())""", [daily(51, [(q, True, 1) for q in parking])])
+    check(all(sorted(x.split(",")) == ["reverse", "reverse", "typed", "typed"] for x in got),
+          "in a group block, a question is reverse where assigned, else typed where the fact has numbers", got[:2])
+    check(pg.evaluate("buildSet(progressFrom([]), Date.now()).every(s => s.format !== 'typed')"),
+          "first looks and new facts' counted questions are never typed")
+    for fact, boxes, want in (("c-097", [".08"], True), ("c-097", ["0.08"], True), ("c-097", ["8"], False),
+                              ("b-077", ["15", "50"], True), ("b-077", ["15", "30"], False), ("b-077", [" 15 ", "50 "], True),
+                              ("b-031", ["70"], True), ("b-031", ["seventy"], False), ("b-031", ["7O"], False),
+                              ("c-050", ["5,00"], True), ("c-050", ["500.0"], True), ("b-031", [""], False)):
+        got = pg.evaluate("([id, boxes]) => isRight({ format: 'typed', id, typed: boxes })", [fact, boxes])
+        check(got is want, f"typing {boxes} for {fact} is {'right' if want else 'wrong'}", got)
 
     print("\n[retention]")
     for answers, want, what in (
@@ -2031,7 +2064,7 @@ def check_known_facts(browser, inst):
 
 def check_compare(browser, inst):
     """A Learner with all four parking facts learned: the Compare screen, then the four questions, two
-    of them reverse, and the line naming the question a wrong choice answers."""
+    of them reverse and two typed (parking distances are numbers)."""
     print("\n[Compare]")
     ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True)
     pg = ctx.new_page()
@@ -2044,11 +2077,7 @@ def check_compare(browser, inst):
     sign_in(pg, "Hal", "compare password")
     check(h1(pg) == "Set 2" and "Compare: How close you may park." in stage_text(pg),
           "the home screen says the next Set compares the parking distances", stage_text(pg))
-    for _ in range(20):  # the hydrant's question has to be a choice one, not reverse, for the last check
-        pg.click("#startBtn") if pg.query_selector("#startBtn") else pg.click("#overBtn")
-        if pg.evaluate("run.screens.find(s => s.id === 'b-250').format") == "choice":
-            break
-        pg.click("#quitBtn")
+    pg.click("#startBtn")
     check(stage_text(pg).startswith("Set 2 Compare: How close you may park These 4 rules are easy to mix up. "
                                     "Here they are side by side."),
           "the Set opens with the Compare screen", stage_text(pg))
@@ -2059,10 +2088,10 @@ def check_compare(browser, inst):
     pg.click("#compareGoBtn")
     got = pg.evaluate("run.screens.map(s => [s.kind, s.id, s.format || null])")
     check(len(got) == 5 and [k for k, _, _ in got[1:]] == ["counted"] * 4 and sorted(f for _, f, _ in got[1:]) == sorted(parking)
-          and [f for _, _, f in got[1:]].count("reverse") == 2,
-          "then the four facts' questions, two of them reverse", got)
+          and sorted(f for _, _, f in got[1:]) == ["reverse", "reverse", "typed", "typed"],
+          "then the four facts' questions, two of them reverse and two typed", got)
     labels = ["A fire hydrant", "A crosswalk", "A stop sign or traffic signal", "A railroad crossing"]
-    wrong_reverse = False
+    wrong_reverse = wrong_typed = False
     while screen_kind(pg) == "counted":
         fact, fmt = pg.evaluate("[run.screens[run.i].id, run.screens[run.i].format]")
         if fmt == "reverse":
@@ -2081,12 +2110,13 @@ def check_compare(browser, inst):
             else:
                 click_choice(pg)
                 check(pg.inner_text("#feedback .verdict") == "Correct.", "a right reverse answer says Correct.")
-        elif fact == "b-250":
-            k = choice_texts(pg).index("30 feet")
-            pg.query_selector_all("button.opt")[k].click()
-            check(pg.inner_text(".also") == "30 feet answers a different question: It is illegal to park within how many feet "
-                                            "of a traffic signal or stop sign?",
-                  "choosing 30 feet for the hydrant names the question 30 feet answers", pg.inner_text(".also"))
+        elif not wrong_typed:
+            wrong_typed = True
+            answer = pg.evaluate("BY_ID[run.screens[run.i].id].a")
+            type_answer(pg, ["30" if answer != "30 feet" else "15"])
+            check(texts(pg, "#feedback .verdict, #feedback .also")[:2] == [f"You typed: {'30' if answer != '30 feet' else '15'}.",
+                                                                           f"The answer is: {answer}."],
+                  "after a wrong typed answer, the screen says what was typed and the answer", texts(pg, "#feedback p"))
         else:
             click_choice(pg)
         pg.click("#nextBtn")
@@ -2094,10 +2124,93 @@ def check_compare(browser, inst):
     check(pg.inner_text(".home h2") == "Set done.", "the Set ends on Set done")
     rec = wait_until(lambda: [r for r in db_state(inst, hal)[0] if r["data"].get("group")])
     formats = sorted(a["format"] for a in rec[0]["data"]["answers"]) if rec else []
-    check(rec and rec[0]["data"]["group"] == "parking-distances" and formats.count("reverse") >= 2,
-          "the Set's record names the group, and its reverse answers say so", rec)
+    check(rec and rec[0]["data"]["group"] == "parking-distances" and formats.count("reverse") >= 2 and formats.count("typed") >= 2,
+          "the Set's record names the group, and its reverse and typed answers say so", rec)
     pg.click("#homeBtn")
     check("Compare:" not in stage_text(pg), "the next Set does not compare the same group again", stage_text(pg))
+    check(not errors, "no page errors" + (f": {errors}" if errors else ""))
+    ctx.close()
+
+
+def check_typed(browser, inst):
+    """Learned numeric facts are typed: the boxes, the button, ".08" right for c-097, and "15" and "30"
+    wrong for b-077, which comes back typed once more."""
+    print("\n[typed numbers]")
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True)
+    pg = ctx.new_page()
+    errors = []
+    pg.on("pageerror", lambda e: errors.append(str(e)))
+    jo = inst.add_learner("Jo", "typed password")
+    store_history(inst, jo, [daily_at(70, [("c-097", True, 13), ("b-077", True, 13)])])
+    open_page(pg, inst.url)
+    sign_in(pg, "Jo", "typed password")
+    pg.click("#startBtn")
+    got = pg.evaluate("run.screens.filter(s => ['c-097', 'b-077'].includes(s.id)).map(s => [s.id, s.kind, s.format])")
+    check(sorted(got) == [["b-077", "counted", "typed"], ["c-097", "counted", "typed"]],
+          "the two learned numeric facts come back as typed questions", got)
+
+    def on_c097():
+        check(stage_text(pg).count("Type the number.") == 1 and len(pg.query_selector_all(".typed .box")) == 1
+              and texts(pg, ".typed") == ["percent"] and not pg.query_selector("button.opt"),
+              "a typed question says Type the number. and shows the answer's words with one box", stage_text(pg))
+        box = pg.query_selector(".typed .box")
+        check(box.get_attribute("inputmode") == "decimal" and pg.is_disabled("#checkBtn"),
+              "the box asks for a decimal keyboard, and Check my answer is off while it is empty")
+        check(no_sideways_scroll(pg), "at 375 px wide, a typed question doesn't scroll sideways")
+        box.fill(".08")
+        check(pg.is_enabled("#checkBtn"), "typing turns Check my answer on")
+        box.press("Enter")
+        check(pg.inner_text("#feedback .verdict") == "Correct.", ".08 is right for 0.08 percent", pg.inner_text("#feedback .verdict"))
+
+    def on_b077():
+        check(stage_text(pg).count("Type the numbers.") == 1 and texts(pg, ".typed") == ["Between and feet"]
+              and pg.query_selector_all(".typed .box")[0].get_attribute("aria-label") == "Number 1 of 2",
+              "a two-number question says Type the numbers. and has a box for each", texts(pg, ".typed"))
+        boxes = pg.query_selector_all(".typed .box")
+        boxes[0].fill("15")
+        check(pg.is_disabled("#checkBtn"), "Check my answer stays off until every box has text")
+        boxes[1].fill("30")
+        pg.click("#checkBtn")
+        feedback = texts(pg, "#feedback p")
+        check(feedback[:2] == ["You typed: 15 and 30.", "The answer is: Between 15 and 50 feet."]
+              and feedback[-1] == "This question comes back later in this set, and in your next set.",
+              "15 and 30 is wrong for b-077: the feedback says what was typed, the answer, and that it comes back", feedback)
+        check(pg.get_attribute(".typed .box:nth-of-type(2)", "class") == "box wrong", "the wrong box is marked")
+        check(pg.text_content("#announce").startswith("You typed: 15 and 30. The answer is: Between 15 and 50 feet."),
+              "the screen reader hears the same sentences", pg.text_content("#announce"))
+        check(no_sideways_scroll(pg), "at 375 px wide, typed feedback doesn't scroll sideways")
+        reload(pg)
+        pg.click("#resumeBtn")
+        check(pg.evaluate("run.answered") and texts(pg, "#feedback p")[0] == "You typed: 15 and 30.",
+              "a typed answer is kept when the Set is picked up again", texts(pg, "#feedback p"))
+
+    def on_reask():
+        check(stage_text(pg).startswith("Set 2: one more time One more time. Type the numbers.")
+              and not any(b.input_value() for b in pg.query_selector_all(".typed .box")),
+              "the re-ask is typed too, with empty boxes", stage_text(pg))
+        type_answer(pg, ["15", "50"])
+        check(pg.inner_text("#feedback .verdict") == "Correct.", "15 and 50 is right")
+
+    handlers = {("c-097", "counted"): on_c097, ("b-077", "counted"): on_b077, ("b-077", "reask"): on_reask}
+    seen = set()
+    while (kind := screen_kind(pg)) is not None:
+        here = (pg.evaluate("run.screens[run.i].id"), kind)
+        if kind in ("rule", "contrast"):
+            go_on(pg)
+            continue
+        if here in handlers:
+            seen.add(here)
+            handlers[here]()
+        else:
+            click_choice(pg)
+        if kind != "first_look":
+            pg.click("#nextBtn")
+    check(seen == set(handlers), "the Set asked c-097, b-077 and b-077's re-ask", seen)
+    rec = wait_until(lambda: [r for r in db_state(inst, jo)[0] if r["id"] != "record-000000000070"])
+    typed = [a for a in rec[0]["data"]["answers"] if a["format"] == "typed"] if rec else []
+    check(sorted((a["q"], a["chosen"], a["right"], a["role"]) for a in typed) ==
+          [("b-077", "15 and 30", False, "counted"), ("b-077", "15 and 50", True, "reask"), ("c-097", ".08", True, "counted")],
+          "the record keeps what was typed, as each answer's chosen", typed)
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
     ctx.close()
 
@@ -2252,6 +2365,7 @@ def main():
             check_study_path(browser, inst, scheme)
         check_known_facts(browser, inst)
         check_compare(browser, inst)
+        check_typed(browser, inst)
         check_phone_screens(browser, inst)
         browser.close()
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
