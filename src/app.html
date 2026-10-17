@@ -803,11 +803,12 @@ function renderRule() {
     <div class="home">
       ${progressLine()}
       <div class="card">
-        <h1 class="rulehead" id="ruleHead" tabindex="-1">${look ? 'Here is the rule.' : 'Read this rule first.'}</h1>
+        <h1 class="rulehead" id="ruleHead" tabindex="-1">${look ? 'Here is the answer.' : 'Read this first.'}</h1>
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
         ${manual(q)}
-        ${look ? `<p class="picked">You picked: ${esc(look.chosen)}.</p><p class="picked">The answer is: ${esc(q.a)}.</p>` : ''}
+        ${!look ? '' : look.chosen === q.a ? `<p class="picked">You picked the right answer: ${esc(q.a)}.</p>`
+          : `<p class="picked">You picked: ${esc(look.chosen)}.</p><p class="picked">The answer is: ${esc(q.a)}.</p>`}
         <p class="back">This question comes back later in this set.</p>
       </div>
       <button class="btn primary" type="button" id="ruleGoBtn">Go on</button>
