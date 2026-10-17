@@ -147,9 +147,11 @@ class Instance:
             conn.close()
 
 
-def answer_set(pg, miss=0):
-    """Answer every question in the current set, getting the first `miss` wrong."""
+def answer_set(pg, miss=0, stop=None):
+    """Answer every question in the current set, getting the first `miss` wrong. With `stop`, answer
+    only that many and leave the last one's feedback on screen."""
     n = 0
+    past_rule(pg)
     while pg.query_selector(".opt"):
         opts = pg.query_selector_all(".opt")
         right = pg.evaluate("run.items[run.i].q.a")
@@ -160,13 +162,32 @@ def answer_set(pg, miss=0):
         opts[k].click()
         if not pg.query_selector(".src"):
             failures.append(f"no manual quote shown after answering {pg.evaluate('run.items[run.i].q.id')}")
-        pg.click("#nextBtn")
         n += 1
+        if n == stop:
+            break
+        pg.click("#nextBtn")
+        past_rule(pg)
     return n
 
 
+def past_rule(pg):
+    """Go on past the rule card that comes before a question the Learner has never answered."""
+    if pg.query_selector("#ruleGoBtn"):
+        pg.click("#ruleGoBtn")
+
+
+def check_go_on_first(pg, section, when):
+    """The end-of-Set screen's main button goes on to `section`; "I'm done for now" and "Do Section N again" come after it."""
+    ids = pg.eval_on_selector_all(".home button", "bs => bs.map(b => b.id)")
+    check(pg.get_attribute("#moreBtn", "class") == "btn primary" and pg.inner_text("#moreBtn") == f"Go on to Section {section}",
+          f"{when}, the main button is Go on to Section {section}", pg.inner_text(".home"))
+    check(ids == ["moreBtn", "homeBtn", "againBtn"] and pg.get_attribute("#homeBtn", "class") == "btn",
+          f"{when}, I'm done for now and then Do the section again come after it", ids)
+
+
 def answer_one(pg):
-    """Click the right answer to the question on screen."""
+    """Click the right answer to the question on screen (after its rule card, if it has one)."""
+    past_rule(pg)
     right = pg.evaluate("run.items[run.i].q.a")
     for o in pg.query_selector_all("button.opt"):
         if o.inner_text().split("\n", 1)[-1].strip() == right:
@@ -414,7 +435,7 @@ def check_offline(browser):
         reload(pg)
         check(h1(pg) == "Section 1 of 12", "with no connection, opening the app again shows the study path")
         pg.click("#startBtn")
-        check(answer_set(pg, miss=1) == 10 and pg.inner_text(".score") == "9 of 10",
+        check(answer_set(pg, miss=1) == 10 and pg.inner_text(".score") == "9 of 10 right",
               "with no connection, a whole Set can be answered")
         pg.click("#homeBtn")
         check(h1(pg) == "Section 2 of 12", "and the home screen moves on to Section 2")
@@ -1217,7 +1238,7 @@ def check_records_on_server(browser, inst):
 
     pg.click("#startBtn")
     answer_set(pg, miss=2)
-    check(pg.inner_text(".score") == "8 of 10" and pg.inner_text(".home h2") == "Section 1 done.",
+    check(pg.inner_text(".score") == "8 of 10 right" and pg.inner_text(".home h2") == "Section 1 done.",
           "the results screen is the same as before")
     got = wait_for_records(pg, 1)
     rec = got[0] if len(got) == 1 else {}
@@ -1599,6 +1620,7 @@ def main():
         check(pg.evaluate("innerWidth") == 390, "phone lays the page out at the phone's width")
         check(pg.evaluate("document.documentElement.lang") == "en", "page language is set")
         pg.click("#startBtn")
+        past_rule(pg)
         pg.query_selector_all(".opt")[0].click()
         box = pg.query_selector("#feedback .verdict").bounding_box()
         check(box is not None and 0 <= box["y"] < 844, "after answering, the verdict is on screen")
@@ -1635,15 +1657,46 @@ def main():
             # Section 1 with 3 misses: results, redo button, then redo perfectly.
             pg.click("#startBtn")
             first = pg.evaluate("run.items.map(i => i.q.id)")
-            check(answer_set(pg, miss=3) == 10, "a section is exactly 10 questions")
-            check(pg.inner_text(".score") == "7 of 10", "results show 7 of 10")
-            check(pg.query_selector("#againBtn") is not None, "results offer to try the section again")
+            check(pg.query_selector("#ruleGoBtn") is not None and not pg.query_selector(".opt")
+                  and pg.inner_text(".rule") == pg.evaluate("run.items[0].q.why"),
+                  "before a question he has never answered, its rule comes first, with no answer choices yet")
+            check(pg.text_content(".src figcaption").startswith("Driver manual, page "),
+                  "the rule card shows the manual's own words and page")
+            pg.click("#ruleGoBtn")
+            check(pg.query_selector(".opt") is not None and pg.evaluate("run.i") == 0, "Go on to the question shows the question")
+            answer_set(pg, miss=1, stop=1)
+            feedback = " ".join(pg.inner_text("#feedback").split())
+            check("Not correct" not in feedback and feedback.startswith("The right answer is: ")
+                  and "This question comes back in review after Section 12." in feedback,
+                  "after a wrong answer, the screen gives the right answer and says the question comes back, with no verdict",
+                  feedback)
+            check(pg.text_content("#announce").startswith("You chose: "), "and the screen reader hears no verdict either",
+                  pg.text_content("#announce"))
+            pg.click("#nextBtn")
+            check(answer_set(pg, miss=2) == 9, "a section is exactly 10 questions")
+            check(pg.inner_text(".score") == "7 of 10 right", "results show 7 of 10 right")
+            check_go_on_first(pg, 2, "after a first run with misses")
+            check("You do not have to do this section again before you go on." in stage_text(pg),
+                  "results say that doing the section again is not needed", stage_text(pg))
+            check(pg.get_attribute("#againBtn", "class") == "link", "results offer to try the section again, as the quiet choice")
             pg.click("#againBtn")
+            check(pg.query_selector(".opt") is not None and not pg.query_selector("#ruleGoBtn"),
+                  "a question he has answered before comes with no rule card")
+            pg.click("#ruleBtn")
+            check(pg.inner_text("#ruleHead") == "The rule for this question"
+                  and pg.inner_text(".rule") == pg.evaluate("run.items[0].q.why"),
+                  "Show me the rule again shows that question's rule")
+            pg.click("#ruleGoBtn")
+            check(pg.query_selector(".opt") is not None and pg.evaluate("run.i") == 0 and not pg.evaluate("run.answered"),
+                  "and Go back to the question returns to it, still unanswered")
             redo = pg.evaluate("run.items.map(i => i.q.id)")
             check(sorted(redo) == sorted(first), "a redo uses the same 10 questions")
-            answer_set(pg)
+            answer_set(pg, miss=1)
             check(pg.inner_text(".home h2") == "Section 1 done." and pg.evaluate("S.day") == 2,
                   "a redo doesn't move his place forward")
+            check_go_on_first(pg, 2, "after a redo with misses")
+            pg.click("#againBtn")
+            answer_set(pg)
             pg.click("#homeBtn")
 
             # Sections 2 and 3 at 8 and 5. Scores are shown on request, not as colors.
@@ -1669,6 +1722,17 @@ def main():
             pg.click("#quitBtn")
             check(pg.query_selector("#resumeBtn") is not None and "answered 2 of 10" in pg.inner_text(".home"),
                   "stopping partway shows how far you got")
+            check(h1(pg) == "Section 4 of 12" and pg.query_selector(".road") and pg.query_selector(".scores")
+                  and not pg.query_selector("#startBtn"),
+                  "stopping partway goes back to the home screen, where Continue takes the place of Start", stage_text(pg))
+            # Starting a different Set asks first, and No leaves the saved answers alone.
+            pg.click(".scores summary")
+            pg.click('.redo[data-day="1"]')
+            check(pg.inner_text(".home h2") == "Start Section 1 again?"
+                  and "the 2 answers you gave there will be cleared" in stage_text(pg),
+                  "starting a different Set asks first and says the saved answers will be cleared", stage_text(pg))
+            pg.click("#newSetNo")
+            check(pg.query_selector("#resumeBtn") is not None, "No goes back to the home screen with the Set still saved")
             reload(pg)
             check(pg.query_selector("#resumeBtn") is not None, "a half-finished section survives a reload")
             pg.click("#resumeBtn")
@@ -1676,13 +1740,21 @@ def main():
                   "continuing picks up at the same question")
             pg.click("#nextBtn")
             answer_set(pg)
-            check(pg.inner_text(".score") == "10 of 10" and pg.query_selector("details.missed") is None,
+            check(pg.inner_text(".score") == "10 of 10 right" and pg.query_selector("details.missed") is None,
                   "a resumed section finishes normally")
             pg.click("#homeBtn")
 
             # Progress survives a reload.
             reload(pg)
             check(h1(pg) == "Section 5 of 12", "progress is saved across a reload")
+
+            # Yes clears the saved answers and starts the other Set.
+            pg.click("#startBtn"); answer_one(pg); pg.click("#quitBtn")
+            pg.click(".scores summary"); pg.click('.redo[data-day="2"]'); pg.click("#newSetYes")
+            check(pg.evaluate("[run.kind, run.dayNum, run.i]") == ["redo", 2, 0], "Yes starts the other Set from its first question")
+            answer_set(pg); pg.click("#homeBtn")
+            check(h1(pg) == "Section 5 of 12" and not pg.query_selector(".stopped"),
+                  "and the Set stopped partway through is gone", stage_text(pg))
 
             # Finish the rest, missing 2 in each.
             for _ in range(5, 13):
@@ -1692,6 +1764,19 @@ def main():
             while h1(pg) == "Review" and rounds < 10:
                 pg.click("#startBtn"); answer_set(pg); pg.click("#homeBtn"); rounds += 1
             check(h1(pg).startswith("Practice test"), "after review come practice tests")
+
+            # A practice test below the ready bar gives a count and what it is short of, not a verdict.
+            pg.click("#startBtn")
+            check(not pg.query_selector("#ruleBtn") and not pg.query_selector("#ruleGoBtn"),
+                  "a practice test shows no rule before an answer")
+            answer_set(pg, 5)
+            end = stage_text(pg)
+            check(pg.inner_text(".score") == "25 of 30 right" and "This practice test is done." in end
+                  and "pass" not in end and "starts over" not in end,
+                  "a practice test with 25 right says so with no pass or fail sentence", end)
+            pg.click("#homeBtn")
+            while h1(pg) == "Review":
+                pg.click("#startBtn"); answer_set(pg); pg.click("#homeBtn")
 
             # Three practice tests at 28/30 reach "ready".
             for _ in range(3):

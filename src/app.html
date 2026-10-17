@@ -130,12 +130,16 @@ button.opt { cursor: pointer; }
 .verdict { font-weight: 700; margin: 0; }
 .verdict.good { color: var(--guide); }
 .why { margin: 0; }
+.rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
+.rule { font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
+.back { margin: 0; color: var(--muted); }
 .src { margin: 0; display: flex; flex-direction: column; gap: 2px; }
 .src figcaption { font-family: var(--font-display); font-weight: 800; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .src blockquote { margin: 0; font-size: 16px; color: var(--muted); }
 #nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(12 20 16 / .45); }
 
 .score { font-family: var(--font-display); font-weight: 800; font-size: 56px; line-height: 1; margin: 0; font-variant-numeric: tabular-nums; }
+.score span { font-size: 28px; }
 .missed { border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); padding: 0 22px; }
 .missed > summary { font-weight: 700; cursor: pointer; padding: 14px 0; min-height: 44px; }
 .missed ul { list-style: none; margin: 0; padding: 0 0 18px; display: flex; flex-direction: column; gap: 14px; }
@@ -150,6 +154,8 @@ button.opt { cursor: pointer; }
 .sign h1 { font-size: clamp(38px, 10vw, 56px); }
 .sign p { margin: 0; font-size: 20px; }
 
+.stopped { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); }
+.stopped p { margin: 0; }
 .streak { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ticks { display: flex; gap: 6px; }
 .ticks span { width: 22px; height: 22px; border-radius: 5px; border: 1.5px solid var(--control-line); background: var(--surface); }
@@ -421,7 +427,7 @@ window.addEventListener('online', () => {
 // A Set's name from its type ('day', 'redo', 'review' or 'test') and Section number.
 const setName = (type, section) => type === 'review' ? 'Review' : type === 'test' ? 'Practice test' : `Section ${section}`;
 
-let painted = false, onHome = false; // onHome: the Learner's home screen (or its "You stopped partway" form) is showing
+let painted = false, onHome = false; // onHome: the Learner's home screen is showing
 function paint(html, focus) {
   onHome = false;
   $('stage').innerHTML = html;
@@ -457,7 +463,6 @@ function renderHome() {
   run = null;
   const saved = S.run && unpackRun(S.run);
   if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
-  if (saved) return renderResume(saved);
   const ph = phase(), st = streak(), ready = ph === 'test' && st >= READY_STREAK;
   let top, sub = '', btn, extra = '';
   if (ph === 'day') {
@@ -482,40 +487,62 @@ function renderHome() {
     extra = `<div class="streak"><span class="ticks" aria-hidden="true">${[0, 1, 2].map(i => `<span class="${i < st ? 'on' : ''}"></span>`).join('')}</span><span>In a row so far: <strong>${st} of ${READY_STREAK}</strong></span></div>`;
     btn = 'Start practice test';
   }
+  // A Set stopped partway through is one line on the home screen (#32). When it is the Set the main
+  // button would start, its Continue takes that button's place; otherwise it comes first and the
+  // main button becomes a plain one that asks before throwing the saved answers away.
+  const same = saved && saved.kind === ph && (ph !== 'day' || saved.dayNum === S.day);
+  const startBtn = same ? stoppedLine(saved) : `<button class="btn${saved ? '' : ' primary'}" type="button" id="startBtn">${btn}</button>`;
   paint(`
     <section class="home">
       ${top}
+      ${saved && !same ? stoppedLine(saved) : ''}
       ${sub ? `<p class="sub">${esc(sub)}</p>` : ''}
       ${extra}
       ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
-      <button class="btn primary" type="button" id="startBtn">${btn}</button>
+      ${startBtn}
       ${roadMarkers()}
       ${scoresPanel()}
       ${disclaimer}
     </section>`, 'h1');
   onHome = true;
-  $('startBtn').onclick = () => start();
-  document.querySelectorAll('.redo').forEach(b => b.onclick = () => start(Number(b.dataset.day)));
+  if ($('startBtn')) $('startBtn').onclick = () => startOver(saved);
+  document.querySelectorAll('.redo').forEach(b => b.onclick = () => startOver(saved, Number(b.dataset.day)));
+  if (saved) {
+    $('resumeBtn').onclick = () => { run = saved; renderQuestion(); };
+    $('overBtn').onclick = () => { dropUnfinished(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
+  }
   $('signOutBtn').onclick = () => confirmSignOut(renderHome);
 }
 
-function renderResume(saved) {
-  const n = saved.items.length, done = saved.i + (saved.answered ? 1 : 0);
-  const name = setName(saved.kind, saved.dayNum);
-  const head = saved.kind === 'day' ? `Section ${saved.dayNum} of ${TOTAL_DAYS}` : saved.kind === 'redo' ? `Section ${saved.dayNum} again` : name;
-  paint(`
-    <section class="home">
-      <h1 tabindex="-1">${head}</h1>
-      <p class="theme">You stopped partway through.</p>
-      <p class="sub">You answered ${done} of ${n} questions. Your answers are saved.</p>
+// What the Learner was doing in a Set stopped partway through, for a sentence ("You stopped partway through …").
+const doing = saved => saved.kind === 'day' ? `Section ${saved.dayNum}` : saved.kind === 'redo' ? `doing Section ${saved.dayNum} again`
+  : saved.kind === 'review' ? 'a review set' : 'a practice test';
+const answeredSoFar = saved => saved.i + (saved.answered ? 1 : 0);
+function stoppedLine(saved) {
+  return `<div class="stopped">
+      <p>You stopped partway through ${doing(saved)}. You answered ${answeredSoFar(saved)} of ${saved.items.length} questions. Your answers are saved.</p>
       <button class="btn primary" type="button" id="resumeBtn">Continue where I stopped</button>
       <button class="link" type="button" id="overBtn">Start over from question 1 (this clears these answers)</button>
-      ${disclaimer}
-    </section>`, 'h1');
-  onHome = true;
-  $('signOutBtn').onclick = () => confirmSignOut(renderHome);
-  $('resumeBtn').onclick = () => { run = saved; renderQuestion(); };
-  $('overBtn').onclick = () => { copy.unfinished = S.run = null; saveCopy(); start(saved.kind === 'redo' ? saved.dayNum : undefined); };
+    </div>`;
+}
+function dropUnfinished() { copy.unfinished = S.run = null; saveCopy(); }
+
+// Starts the next Set (or a redo of `redoDay`). With answers saved in a Set stopped partway through,
+// it asks first and says that those answers will be cleared.
+function startOver(saved, redoDay) {
+  if (!saved || !answeredSoFar(saved)) { if (saved) dropUnfinished(); return start(redoDay); }
+  const ph = phase(), n = answeredSoFar(saved);
+  const what = redoDay ? `Section ${redoDay} again` : ph === 'day' ? `Section ${S.day}` : ph === 'review' ? 'a review set' : 'a practice test';
+  paint(`
+    <section class="home">
+      <h2 tabindex="-1">Start ${what}?</h2>
+      <p class="sub">You stopped partway through ${doing(saved)}. If you start ${what} now, the ${plural(n, 'answer', 'answers')} you gave there will be cleared. They will not count.</p>
+      <button class="btn primary" type="button" id="newSetYes">Yes, start ${what}</button>
+      <button class="btn" type="button" id="newSetNo">No, go back</button>
+    </section>`, 'h2');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+  $('newSetNo').onclick = () => { renderHome(); window.scrollTo({ top: 0, behavior: 'instant' }); };
+  $('newSetYes').onclick = () => { dropUnfinished(); start(redoDay); };
 }
 
 function start(redoDay) {
@@ -534,8 +561,30 @@ function start(redoDay) {
 
 function visual(q) { return q.sign ? SIGNS[q.sign] || '' : q.swatch ? SIGNS.swatch(q.swatch) : ''; }
 
+// The rule a question asks about: its explanation and the manual's own words. It comes before a
+// question the Learner has never answered (#33), and again when asked for during a Section.
+function renderRule(again) {
+  const it = run.items[run.i], q = it.q, n = run.items.length;
+  paint(`
+    <div class="home">
+      <div class="progress"><span>${setName(run.kind, run.dayNum)}: question ${run.i + 1} of ${n}</span><div class="bar" aria-hidden="true"><span style="width:${run.i / n * 100}%"></span></div></div>
+      <div class="card">
+        <h1 class="rulehead" id="ruleHead" tabindex="-1">${again ? 'The rule for this question' : 'Read this rule first. The next question asks about it.'}</h1>
+        ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
+        <p class="rule">${esc(q.why)}</p>
+        ${q.src ? `<figure class="src"><figcaption>Driver manual, page ${q.p}</figcaption><blockquote>“${esc(q.src)}”</blockquote></figure>` : ''}
+      </div>
+      <button class="btn primary" type="button" id="ruleGoBtn">${again ? 'Go back to the question' : 'Go on to the question'}</button>
+      <button class="link" type="button" id="quitBtn">Stop for now and save my place</button>
+    </div>`, '#ruleHead');
+  $('ruleGoBtn').onclick = () => { it.ruled = true; window.scrollTo({ top: 0, behavior: 'instant' }); renderQuestion(); };
+  $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); };
+}
+
 function renderQuestion(revealFeedback) {
   const it = run.items[run.i], q = it.q, n = run.items.length, last = run.i === n - 1;
+  // `ruled` lives only on the screen's copy of the Set, so a Set picked up again shows the rule again.
+  if (!run.answered && !it.ruled && S.last[q.id] === undefined) return renderRule(false);
   const L = ['A', 'B', 'C', 'D'];
   const right = it.chosen === q.a;
   const opts = it.options.map((o, k) => {
@@ -546,7 +595,7 @@ function renderQuestion(revealFeedback) {
     return `<li class="opt ${c}"><span class="key" aria-hidden="true">${L[k]}</span><span class="otext"><span>${esc(o)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</span></li>`;
   }).join('');
   const fb = run.answered ? `<div class="feedback" id="feedback">
-      ${right ? '<p class="verdict good">Correct.</p>' : `<p class="verdict">Not correct. The right answer is: ${esc(q.a)}</p>`}
+      ${right ? '<p class="verdict good">Correct.</p>' : `<p class="verdict">The right answer is: ${esc(q.a)}</p>${comesBack(run.kind) ? `<p class="back">${comesBack(run.kind)}</p>` : ''}`}
       <p class="why">${esc(q.why)}</p>
       ${q.src ? `<figure class="src"><figcaption>Driver manual, page ${q.p}</figcaption><blockquote>“${esc(q.src)}”</blockquote></figure>` : ''}
     </div>` : '';
@@ -561,6 +610,7 @@ function renderQuestion(revealFeedback) {
         ${fb}
       </div>
       ${run.answered ? `<button class="btn primary" type="button" id="nextBtn">${last ? 'See my score' : 'Next question'}</button>` : ''}
+      ${!run.answered && (run.kind === 'day' || run.kind === 'redo') ? '<button class="link" type="button" id="ruleBtn">Show me the rule again</button>' : ''}
       <button class="link" type="button" id="quitBtn">Stop for now and save my place</button>
     </div>`, run.answered ? null : '#qText');
   if (run.answered) {
@@ -568,6 +618,7 @@ function renderQuestion(revealFeedback) {
     $('nextBtn').focus({ preventScroll: true });
     if (revealFeedback) reveal();
   } else document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
+  if ($('ruleBtn')) $('ruleBtn').onclick = () => { renderRule(true); window.scrollTo({ top: 0, behavior: 'instant' }); };
   $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); };
 }
 
@@ -581,6 +632,14 @@ function reveal() {
   if (dy > 0) window.scrollBy({ top: dy });
 }
 
+// Where a question answered wrong comes back, said plainly instead of a verdict. Nothing once the
+// Learner is Ready for the test, when Review is no longer offered.
+function comesBack(kind) {
+  if (streak() >= READY_STREAK) return '';
+  if (kind === 'review') return 'This question stays in review, so you will see it again.';
+  return phase() === 'day' ? `This question comes back in review after Section ${TOTAL_DAYS}.` : 'This question goes into review, so you will see it again.';
+}
+
 function choose(k) {
   if (run.answered) return;
   const it = run.items[run.i];
@@ -590,7 +649,7 @@ function choose(k) {
   keepRun();
   renderQuestion(true);
   const q = it.q;
-  $('announce').textContent = it.chosen === q.a ? `Correct. ${q.a}.` : `Not correct. You chose: ${it.chosen}. The right answer is: ${q.a}.`;
+  $('announce').textContent = it.chosen === q.a ? `Correct. ${q.a}.` : `You chose: ${it.chosen}. The right answer is: ${q.a}. ${comesBack(run.kind)}`.trim();
 }
 
 function next() {
@@ -600,7 +659,7 @@ function next() {
 }
 
 function finish() {
-  const items = run.items, n = items.length, kind = run.kind, before = streak();
+  const items = run.items, n = items.length, kind = run.kind;
   const right = items.filter(it => it.chosen === it.q.a).length;
   // The finished Set waits in `pending` until the server has it; Progress is worked out again with it.
   const rec = setRecord(run), mine = copy;
@@ -614,12 +673,12 @@ function finish() {
   const missed = items.filter(it => it.chosen !== it.q.a);
   const toReview = 'The questions you missed go into review. You will do them before the next practice test.';
   let title, note = '', sign = false;
-  if (kind === 'redo') {
+  if (kind === 'day' || kind === 'redo') {
+    // Missed questions come back in Review whatever the score, so doing the Section again now is a choice.
     title = `Section ${run.dayNum} done.`;
-    note = missed.length ? 'You can do it again now, or another day from "See your section scores".' : 'You got every one right.';
-  } else if (kind === 'day') {
-    title = `Section ${run.dayNum} done.`;
-    note = missed.length ? `You can do this section again now, or another day from "See your section scores". The questions you missed also come back in review after Section ${TOTAL_DAYS}.` : 'You got every one right.';
+    note = !missed.length ? 'You got every one right.'
+      : phase() === 'day' ? `The questions you missed come back in review after Section ${TOTAL_DAYS}. You do not have to do this section again before you go on.`
+      : phase() === 'review' ? 'The questions you missed are in review, which comes next.' : '';
   } else if (kind === 'review') {
     const left = reviewPile().length;
     title = 'This review set is done.';
@@ -634,23 +693,24 @@ function finish() {
       title = 'That counts toward ready.';
       note = `In a row so far: ${st} of ${READY_STREAK}. Get ${READY_SCORE} or more right on ${plural(READY_STREAK - st, 'more test', 'more tests')} to be ready.` + (missed.length ? ' ' + toReview : '');
     } else {
-      title = right >= PASS_SCORE ? 'That would pass the real test.' : 'This would not pass the real test yet.';
-      note = [right >= PASS_SCORE ? `To count toward ready, you need ${READY_SCORE} or more right.` : `The real test needs ${PASS_SCORE} right to pass.`,
-        before ? 'The count of tests in a row starts over.' : '', missed.length ? toReview : ''].filter(Boolean).join(' ');
+      // A count and what it is short of, never a pass or fail verdict (#35).
+      title = 'This practice test is done.';
+      note = `To count toward ready, you need ${READY_SCORE} or more right.` + (missed.length ? ' ' + toReview : '');
     }
   }
-  const nextDay = phase() === 'day' && kind === 'day';
+  // After a Section or a redo, going on to the next Section is the main choice; doing it again is the quiet one.
+  const nextDay = phase() === 'day' && (kind === 'day' || kind === 'redo');
   const againDay = run.dayNum;
   run = null;
   const list = missed.map(it => `<li><p class="mq">${esc(it.q.q)}</p><p>Right answer: ${esc(it.q.a)}</p><p class="mwhy">${esc(it.q.why)}</p><p class="mpage">Driver manual, page ${it.q.p}</p></li>`).join('');
   paint(`
     <section class="home">
-      <p class="score">${right} of ${n}</p>
+      <p class="score">${right} of ${n}<span> right</span></p>
       ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2>${note ? `<p class="sub">${esc(note)}</p>` : ''}`}
       ${missed.length ? `<details class="missed"><summary>See the ${plural(missed.length, 'question', 'questions')} you missed</summary><ul>${list}</ul></details>` : ''}
-      ${missed.length && (kind === 'day' || kind === 'redo') ? `<button class="btn" type="button" id="againBtn">Do Section ${againDay} again</button>` : ''}
-      <button class="btn primary" type="button" id="homeBtn">I'm done for now</button>
-      ${nextDay ? `<button class="link" type="button" id="moreBtn">Go on to Section ${S.day} now</button>` : ''}
+      ${nextDay ? `<button class="btn primary" type="button" id="moreBtn">Go on to Section ${S.day}</button>` : ''}
+      <button class="btn${nextDay ? '' : ' primary'}" type="button" id="homeBtn">I'm done for now</button>
+      ${missed.length && (kind === 'day' || kind === 'redo') ? `<button class="link" type="button" id="againBtn">Do Section ${againDay} again</button>` : ''}
     </section>`, 'h2');
   window.scrollTo({ top: 0, behavior: 'instant' });
   $('homeBtn').onclick = () => { renderHome(); window.scrollTo({ top: 0, behavior: 'instant' }); };
@@ -659,7 +719,7 @@ function finish() {
 }
 
 document.addEventListener('keydown', e => {
-  if (!run || run.answered || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!run || run.answered || !document.querySelector('button.opt') || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
   if (k >= 0) { e.preventDefault(); choose(k); }
 });

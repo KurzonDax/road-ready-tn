@@ -6,7 +6,7 @@ I am developing this specifically for my son who is on the autism spectrum and s
 
 I am not an educator by trade or training.  In fact, I'm pretty terrible at trying to teach anything, so I'm trying to build a tool that will help my son learn what he needs to pass the test.
 
-This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees only the section they're on: 10 questions, an explanation after each answer with the manual's own words and page number, and a short score at the end. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
+This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees only the section they're on: 10 questions, the rule before each question they have never answered, an explanation after each answer with the manual's own words and page number, and a short score at the end. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
 
 Since this app is in active development, the content of this README may not always be up to date.  
 

@@ -16,7 +16,7 @@ A second, minor audience is the Helper, who sets the app up for a Learner and ma
 
 ## Product Purpose
 
-Road Ready TN takes a learner from zero to ready for the knowledge test one small step at a time. The learner sees only the section they're on: 10 questions on one topic, an explanation after each answer with the manual's own words and page number, and a short score at the end.
+Road Ready TN takes a learner from zero to ready for the knowledge test one small step at a time. The learner sees only the section they're on: 10 questions on one topic, the rule before each question they have never answered, an explanation after each answer with the manual's own words and page number, and a short score at the end.
 
 The path is fixed: Sections 1 to 12, then Review (only missed questions), then Practice tests of 30 questions. Success is "Ready for the test", meaning 27 or more of 30 on three practice tests in a row. That is a 90% bar against the real test's 80% (24 of 30), to leave room for nerves.
 
