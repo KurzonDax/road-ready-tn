@@ -1325,8 +1325,8 @@ def check_manage_learner(browser):
               and sessions[1].endswith("Section 1: 10 of 10 Section 2: 9 of 10"),
               "Study sessions still shows the old Sets, under a Progress reset by a Helper line", sessions)
         reload(cpg)
-        wait_for_stage_text(cpg, "Facts learned 0 of 120")
-        check("This set has 5 new facts." in stage_text(cpg), "the Learner's next app open starts from no facts learned",
+        wait_for_stage_text(cpg, "Questions learned 0 of 120")
+        check("This set has 5 new questions." in stage_text(cpg), "the Learner's next app open starts from no facts learned",
               stage_text(cpg))
         check_set_dropped(cpg, inst, casey, "Reset progress")
         # This time the Set is still on the Learner's screen when the Helper moves them.
@@ -1365,8 +1365,8 @@ def check_manage_learner(browser):
         check(wait_until(lambda: (db_state(inst, casey)[1] or {}).get("i") == i),
               "an answer given after the Move sends that Set to the server again")
         reload(cpg)
-        wait_for_stage_text(cpg, "Facts learned 0 of 120")
-        check(cpg.evaluate("setPlan(S, Date.now()).fresh") == ids["4"][:5] and texts(cpg, ".route-where") == [f"New facts come from Section 4: {SECTION_TITLES[4]}."],
+        wait_for_stage_text(cpg, "Questions learned 0 of 120")
+        check(cpg.evaluate("setPlan(S, Date.now()).fresh") == ids["4"][:5] and texts(cpg, ".route-where") == [f"New questions come from Section 4: {SECTION_TITLES[4]}."],
               "the Learner's next app open takes new facts from Section 4", texts(cpg, ".route-where"))
         check_set_dropped(cpg, inst, casey, "Move")
         pg.get_by_role("button", name="Move", exact=True).click()
@@ -1485,23 +1485,23 @@ def check_records_on_server(browser, inst):
     pg.click("#homeBtn")
     check(h1(pg) == "Set 2", "home then shows Set 2")
     reload(pg)
-    check(h1(pg) == "Set 2" and "Facts learned 3 of 120" in stage_text(pg), "reloading keeps Progress", stage_text(pg))
+    check(h1(pg) == "Set 2" and "Questions learned 3 of 120" in stage_text(pg), "reloading keeps Progress", stage_text(pg))
 
     other = browser.new_context()
     pg2 = other.new_page()
     open_page(pg2, inst.url)
     sign_in(pg2, name, password)
-    check(h1(pg2) == "Set 2" and "Facts learned 3 of 120" in stage_text(pg2), "signing in on a fresh browser shows the same")
+    check(h1(pg2) == "Set 2" and "Questions learned 3 of 120" in stage_text(pg2), "signing in on a fresh browser shows the same")
     other.close()
 
     reset = store_for(inst, learner, "reset", {})
     reload(pg)
-    check(wait_for_h1(pg, "Set 1") == "Set 1" and "Facts learned 0 of 120" in stage_text(pg),
+    check(wait_for_h1(pg, "Set 1") == "Set 1" and "Questions learned 0 of 120" in stage_text(pg),
           "a Reset put into the database shows on the Learner's next app open")
     store_for(inst, learner, "move", {"to": 4})
     reload(pg)
     wait_for_stage_text(pg, "Section 4, where your new facts come from")
-    check(texts(pg, ".route-where") == [f"New facts come from Section 4: {SECTION_TITLES[4]}."],
+    check(texts(pg, ".route-where") == [f"New questions come from Section 4: {SECTION_TITLES[4]}."],
           "a Move to Section 4 put into the database shows on the Learner's next app open", texts(pg, ".route-where"))
     pg.click("#startBtn")
     check(pg.evaluate("run.screens.filter(s => s.kind === 'rule').map(s => BY_ID[s.id].day)") == [4] * 5,
@@ -1703,14 +1703,14 @@ def check_offline_and_sync(browser, inst):
     pg.wait_for_selector("#signInForm")
 
     sign_in(pg, name, password)
-    wait_for_stage_text(pg, "Facts learned 3 of 120")
-    check("Facts learned 3 of 120" in stage_text(pg), "the Learner's first sign-in picks up the old progress",
+    wait_for_stage_text(pg, "Questions learned 3 of 120")
+    check("Questions learned 3 of 120" in stage_text(pg), "the Learner's first sign-in picks up the old progress",
           stage_text(pg))
     got = wait_until(lambda: db_state(inst, ash)[0])
     check(len(got) == 1 and got[0]["kind"] == "imported" and got[0]["data"] == {"state": old_state},
           "the old progress becomes one imported record holding the old saved state", got)
     reload(pg)
-    check("Facts learned 3 of 120" in stage_text(pg), "the imported progress stays after a reload")
+    check("Questions learned 3 of 120" in stage_text(pg), "the imported progress stays after a reload")
 
     # Sign-out sends what is waiting first. The record can't be sent when the Set finishes...
     block_record_posts(ctx)
@@ -1755,7 +1755,7 @@ def check_offline_and_sync(browser, inst):
     pg.wait_for_selector("#signInForm")
     cy = inst.add_learner("Cy", "second import password")
     sign_in(pg, "Cy", "second import password")
-    check(h1(pg) == "Set 1" and "Facts learned 0 of 120" in stage_text(pg),
+    check(h1(pg) == "Set 1" and "Questions learned 0 of 120" in stage_text(pg),
           "a second Learner signing in on that device starts from nothing", h1(pg))
     time.sleep(0.5)
     imports = [r for body in posts for r in body["records"] if r["kind"] == "imported"]
@@ -1771,15 +1771,15 @@ def check_offline_and_sync(browser, inst):
     pg.evaluate("([k, v]) => localStorage.setItem(k, v)", [OLD_KEY, json.dumps({"day": 3, "last": {first[0]: True}, "tests": [], "scores": {}})])
     block_record_posts(ctx)
     sign_in(pg, name, password)
-    wait_for_stage_text(pg, "Facts learned 1 of 120")
-    check("Facts learned 1 of 120" in stage_text(pg), "the import counts at once, before the server has it")
+    wait_for_stage_text(pg, "Questions learned 1 of 120")
+    check("Questions learned 1 of 120" in stage_text(pg), "the import counts at once, before the server has it")
     reload(pg)
     pending = json.loads(local_item(pg, copy_key(bo)))["pending"]
     check([r["kind"] for r in pending] == ["imported"], "opening the app again doesn't make a second imported record", pending)
     ctx.unroute("**/api/records")
     reload(pg)
     got = wait_until(lambda: db_state(inst, bo)[0])
-    check(len(got) == 1 and got[0]["kind"] == "imported" and "Facts learned 1 of 120" in stage_text(pg),
+    check(len(got) == 1 and got[0]["kind"] == "imported" and "Questions learned 1 of 120" in stage_text(pg),
           "it is sent on the next app open", got)
     ctx.close()
 
@@ -1832,8 +1832,8 @@ def check_study_path(browser, inst, scheme="light"):
 
     check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(17, 24, 20)",
           f"the page is dark even when the device is set to {scheme}")
-    check(h1(pg) == "Set 1" and "This set has 5 new facts. You see them one at a time. There is no time limit." in stage_text(pg)
-          and "Facts learned 0 of 120" in stage_text(pg),
+    check(h1(pg) == "Set 1" and "This set has 5 new questions. You see them one at a time. There is no time limit." in stage_text(pg)
+          and "Questions learned 0 of 120" in stage_text(pg),
           "a new Learner's home screen: Set 1, 5 new facts, none learned yet", stage_text(pg))
     check(not pg.query_selector("#testBtn") and "Practice tests" not in texts(pg, ".home h2"),
           "no Practice test until every fact is learned")
@@ -1853,24 +1853,24 @@ def check_study_path(browser, inst, scheme="light"):
     picked = pg.evaluate("run.screens[0].chosen")
     q = pg.evaluate("BY_ID[run.screens[1].id]")
     check(pg.inner_text("#ruleHead") == f"The answer is: {q['a']}." and texts(pg, ".picked") == [f"You picked: {picked}. This answer does not count."]
-          and stage_text(pg).startswith(f"Set 1: a new fact The answer is: {q['a']}. You picked: {picked}.") and pg.inner_text(".rule") == q["why"]
+          and stage_text(pg).startswith(f"Set 1: the answer The answer is: {q['a']}. You picked: {picked}.") and pg.inner_text(".rule") == q["why"]
           and not pg.query_selector("blockquote") and "Driver manual" not in stage_text(pg)
           and "This question comes back later in this set." in stage_text(pg),
           "choosing goes straight to the next screen: what was picked, the answer and its explanation, and no manual quote",
           stage_text(pg))
     check(not pg.query_selector(".opt.right, .opt.wrong, .verdict") and "Correct" not in stage_text(pg),
           "a first look is not scored: no colors and no Correct")
-    check(pg.inner_text(".progress") == "Set 1: a new fact" and pg.inner_text("#ruleGoBtn") == "Go on",
+    check(pg.inner_text(".progress") == "Set 1: the answer" and pg.inner_text("#ruleGoBtn") == "Go on",
           "the screen after a first look says it is a new fact, and its button is Go on")
     pg.click("#ruleGoBtn")
     click_choice(pg)
     q = pg.evaluate("BY_ID[run.screens[run.i].id]")
     check(pg.inner_text("#ruleHead") == f"You picked the right answer: {q['a']}." and "good" in pg.get_attribute("#ruleHead", "class")
-          and stage_text(pg).startswith(f"Set 1: a new fact You picked the right answer: {q['a']}.") and not pg.query_selector(".picked"),
+          and stage_text(pg).startswith(f"Set 1: the answer You picked the right answer: {q['a']}.") and not pg.query_selector(".picked"),
           "after a right pick, the screen says so first, as its heading", stage_text(pg)[:120])
     answer_set(pg)
     done = stage_text(pg)
-    check(done.startswith("You finished Set 1. Answered right You learned 5 new facts. Facts learned 5 of 120")
+    check(done.startswith("You finished Set 1. Answered right You learned the answers to 5 new questions. Questions learned 5 of 120")
           and len(pg.query_selector_all(".strip .tile.got")) == 5 and not pg.query_selector(".strip .tile.back"),
           "with every answer right, Set done says 5 new facts learned", done)
     check("right out of" not in done and "score" not in done.lower(), "Set done shows no score", done)
@@ -1919,7 +1919,7 @@ def check_study_path(browser, inst, scheme="light"):
     pg.click("#nextBtn")
     answer_set(pg)
     done = stage_text(pg)
-    check(done.startswith("You finished Set 2. Answered right Comes back in your next set You learned 4 new facts. Facts learned 9 of 120")
+    check(done.startswith("You finished Set 2. Answered right Comes back in your next set You learned the answers to 4 new questions. Questions learned 9 of 120")
           and len(pg.query_selector_all(".strip .tile.got")) == 4 and len(pg.query_selector_all(".strip .tile.back")) == 1,
           "Set done counts the new facts learned and the one that comes back", done)
     check("See the 1 question you missed" in done, "and lists the missed question once", done)
@@ -1927,7 +1927,7 @@ def check_study_path(browser, inst, scheme="light"):
 
     # Section 1's five sign colors are all learned, but minutes ago, so they are not compared yet.
     # Set 3 opens with the missed fact. Stopping partway keeps the answers.
-    check(h1(pg) == "Set 3" and "This set has 1 question to answer again and 5 new facts." in stage_text(pg) and "Compare" not in stage_text(pg),
+    check(h1(pg) == "Set 3" and "This set has 1 question to answer again and 5 new questions." in stage_text(pg) and "Compare" not in stage_text(pg),
           "the home screen says what the next Set holds", stage_text(pg))
     pg.click("#startBtn")
     third = screens(pg)
@@ -1951,7 +1951,7 @@ def check_study_path(browser, inst, scheme="light"):
     pg.click("#homeBtn")
     reload(pg)
     check(h1(pg) == "Set 4", "progress is kept across a reload")
-    check(texts(pg, ".route-where") == [f"New facts come from Section 2: {SECTION_TITLES[2]}."] and texts(pg, ".route-count") == ["15 of 120"],
+    check(texts(pg, ".route-where") == [f"New questions come from Section 2: {SECTION_TITLES[2]}."] and texts(pg, ".route-count") == ["15 of 120"],
           "once all 10 of Section 1's facts are learned, new facts come from Section 2", texts(pg, ".route"))
     check(not errors, f"no page errors in {scheme} mode" + (f": {errors}" if errors else ""))
     ctx.close()
@@ -1972,7 +1972,7 @@ def check_known_facts(browser, inst):
     store_history(inst, a, [daily_at(1, [(s1[0], True, 13)]), daily_at(2, [(s1[1], True, 1 / 60)])])
     open_page(pg, inst.url)
     sign_in(pg, "Dana", "timed password")
-    check("This set has 1 question to answer again and 5 new facts." in stage_text(pg), "a fact answered right 13 hours ago comes back", stage_text(pg))
+    check("This set has 1 question to answer again and 5 new questions." in stage_text(pg), "a fact answered right 13 hours ago comes back", stage_text(pg))
     pg.click("#startBtn")
     ids = {f for _, f in screens(pg)}
     check(s1[0] in ids and s1[1] not in ids, "it is in the Set; one answered right a minute ago is not", screens(pg))
@@ -2018,12 +2018,12 @@ def check_known_facts(browser, inst):
     sign_in(pg, "Finn", "known password")
     home = stage_text(pg)
     check(h1(pg) == "Practice tests" and pg.inner_text(".later h2") == "Set 19" and "Nothing is due. This set asks 5 questions you already know." in home
-          and "Facts learned 120 of 120" in home,
+          and "Questions learned 120 of 120" in home,
           "with every fact learned and nothing due, the home screen says the Set goes over known facts", home)
     check(home.startswith("Practice tests To pass the real test, you need 24 or more right out of 30. You are Ready for the test when you get 27 or more right on 3 practice tests in a row.")
           and pg.get_attribute("#testBtn", "class") == "btn primary" and pg.get_attribute("#startBtn", "class") == "btn",
           "Practice tests appear, and Start a practice test is the main button", home)
-    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-where") == ["Every fact is learned. Practice tests are open to you."],
+    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-where") == ["You have learned every question. Practice tests are open to you."],
           "the road is full and says Practice tests are open", texts(pg, ".route"))
     pg.click("#startBtn")
     check([k for k, _ in screens(pg)] == ["counted"] * 5, "the fill Set is 5 counted questions")
@@ -2086,14 +2086,14 @@ def check_compare(browser, inst):
     store_history(inst, hal, [daily_at(60, [(q, True, 13) for q in parking])])
     open_page(pg, inst.url)
     sign_in(pg, "Hal", "compare password")
-    check(h1(pg) == "Set 2" and "This set starts by showing 4 facts side by side: No-parking distances." in stage_text(pg),
+    check(h1(pg) == "Set 2" and "This set starts by showing 4 answers side by side: No-parking distances." in stage_text(pg),
           "the home screen says the next Set compares the parking distances", stage_text(pg))
     for _ in range(20):  # the hydrant's question has to be a choice one, not reverse, for the last check
         pg.click("#startBtn") if pg.query_selector("#startBtn") else pg.click("#overBtn")
         if pg.evaluate("run.screens.find(s => s.id === 'b-250').format") == "choice":
             break
         pg.click("#quitBtn")
-    check(stage_text(pg).startswith("Set 2: facts side by side No-parking distances These 4 facts are easy to confuse with each other. "
+    check(stage_text(pg).startswith("Set 2: answers side by side No-parking distances These 4 answers are easy to confuse with each other. "
                                     "Here they are side by side. The questions on them come next."),
           "the Set opens with the Compare screen", stage_text(pg))
     check(texts(pg, ".compare li") == ["A fire hydrant 15 feet", "A crosswalk 20 feet", "A stop sign or traffic signal 30 feet",
