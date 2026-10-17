@@ -1024,8 +1024,8 @@ def check_helper_view(browser):
         check(texts(pg, ".now p") == ["45 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 5 come back.",
                                       "Unfinished: Set 2, 5 of 10 answered"],
               "Now: the facts learned, what the next Set holds, and the unfinished Set", texts(pg, ".now p"))
-        check(texts(pg, ".retention p") == ["Of 3 times a fact was answered right and asked again at least 12 hours later, "
-                                            "it was right 1 time.", "In the last 14 days: 0 of 0."],
+        check(texts(pg, ".retention p") == ["Of 3 times a fact was answered correctly and asked again at least 12 hours later, "
+                                            "it was correct 1 time.", "In the last 14 days: 0 of 0."],
               "Retention counts each right answer asked again 12 or more hours later", texts(pg, ".retention p"))
         sections = texts(pg, ".facts > ul > li > details > summary")
         check(len(sections) == 12 and sections[:3] == [
@@ -1050,7 +1050,7 @@ def check_helper_view(browser):
         missed = texts(pg, ".missedmost li")
         q = qs[s1[0]]
         check(len(missed) == 2 and missed[0].startswith(qs[s2[5]]["q"]) and "Missed 6 of 7 times" in missed[0]
-              and missed[1] == f"{q['q']} Right answer: {q['a']} Wrong answer chosen most often: {q['o'][0]} "
+              and missed[1] == f"{q['q']} Correct answer: {q['a']} Wrong answer chosen most often: {q['o'][0]} "
                                f"Missed 2 of 2 times Driver manual, page {q['p']}",
               "Questions missed most counts only since the Reset and shows the question, answers, count and page", missed)
         check(texts(pg, ".sessions > li") == [
@@ -1076,7 +1076,7 @@ def check_helper_view(browser):
         pg.wait_for_selector("#stage .part")
         check(no_sideways_scroll(pg), "a long name doesn't make the Learner's page scroll sideways")
         check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next set: 5 new."]
-              and texts(pg, ".retention p") == ["No fact has been asked again 12 or more hours after a right answer yet."]
+              and texts(pg, ".retention p") == ["No fact has been asked again 12 or more hours after a correct answer yet."]
               and texts(pg, ".history p") == ["No Study sessions yet."]
               and texts(pg, ".tests p") == ["No Practice tests yet."]
               and texts(pg, ".missedmost p") == ["No question has been missed two or more times."],
@@ -1851,7 +1851,7 @@ def check_study_path(browser, inst, scheme="light"):
     check([k for k, _ in first] == ["first_look", "rule"] * 5 + ["counted"] * 5 and not gap_problems(first),
           "the first Set is 5 first looks, each with its rule screen, then 5 counted questions, none right after its rule",
           first)
-    check(stage_text(pg).startswith("Set 1: a new question This is a new question. Pick the answer you think is right. This answer does not count."),
+    check(stage_text(pg).startswith("Set 1: a new question This is a new question. Pick the answer you think is correct. This answer does not count."),
           "a first look says so above the question", stage_text(pg))
     click_choice(pg, right=False)
     picked = pg.evaluate("run.screens[0].chosen")
@@ -1869,15 +1869,15 @@ def check_study_path(browser, inst, scheme="light"):
     pg.click("#ruleGoBtn")
     click_choice(pg)
     q = pg.evaluate("BY_ID[run.screens[run.i].id]")
-    check(pg.inner_text("#ruleHead") == f"You picked the right answer: {q['a']}." and "good" in pg.get_attribute("#ruleHead", "class")
-          and stage_text(pg).startswith(f"Set 1: the answer You picked the right answer: {q['a']}.") and not pg.query_selector(".picked"),
+    check(pg.inner_text("#ruleHead") == f"You picked the correct answer: {q['a']}." and "good" in pg.get_attribute("#ruleHead", "class")
+          and stage_text(pg).startswith(f"Set 1: the answer You picked the correct answer: {q['a']}.") and not pg.query_selector(".picked"),
           "after a right pick, the screen says so first, as its heading", stage_text(pg)[:120])
     answer_set(pg)
     done = stage_text(pg)
-    check(done.startswith("You finished Set 1. Answered right You learned the answers to 5 new questions. Questions learned 5 of 120")
+    check(done.startswith("You finished Set 1. Correct You learned the answers to 5 new questions. Questions learned 5 of 120")
           and len(pg.query_selector_all(".strip .tile.got")) == 5 and not pg.query_selector(".strip .tile.back"),
           "with every answer right, Set done says 5 new facts learned", done)
-    check("right out of" not in done and "score" not in done.lower(), "Set done shows no score", done)
+    check("correct out of" not in done and "score" not in done.lower(), "Set done shows no score", done)
     check(pg.get_attribute("#moreBtn", "class") == "btn primary" and pg.inner_text("#homeBtn") == "I'm done for now",
           "with more to do, Another set is the main button and I'm done for now comes after it")
 
@@ -1923,7 +1923,7 @@ def check_study_path(browser, inst, scheme="light"):
     pg.click("#nextBtn")
     answer_set(pg)
     done = stage_text(pg)
-    check(done.startswith("You finished Set 2. Answered right Comes back in your next set You learned the answers to 4 new questions. Questions learned 9 of 120")
+    check(done.startswith("You finished Set 2. Correct Comes back in your next set You learned the answers to 4 new questions. Questions learned 9 of 120")
           and len(pg.query_selector_all(".strip .tile.got")) == 4 and len(pg.query_selector_all(".strip .tile.back")) == 1,
           "Set done counts the new facts learned and the one that comes back", done)
     check("See the 1 question you missed" in done, "and lists the missed question once", done)
@@ -2024,7 +2024,7 @@ def check_known_facts(browser, inst):
     check(h1(pg) == "Practice tests" and pg.inner_text(".later h2") == "Set 19" and "Nothing is due. This set asks 5 questions you already know." in home
           and "Questions learned 120 of 120" in home,
           "with every fact learned and nothing due, the home screen says the Set goes over known facts", home)
-    check(home.startswith("Practice tests To pass the real test, you need 24 or more right out of 30. You are Ready for the test when you get 27 or more right on 3 practice tests in a row.")
+    check(home.startswith("Practice tests To pass the real test, you need 24 or more correct out of 30. You are Ready for the test when you get 27 or more correct on 3 practice tests in a row.")
           and pg.get_attribute("#testBtn", "class") == "btn primary" and pg.get_attribute("#startBtn", "class") == "btn",
           "Practice tests appear, and Start a practice test is the main button", home)
     check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-where") == ["You have learned every question. Practice tests are open to you."],
@@ -2054,13 +2054,13 @@ def check_known_facts(browser, inst):
     pg.click("#nextBtn")
     check(answer_set(pg, miss=5) == 29, "the rest of the Practice test is answered")
     end = stage_text(pg)
-    check(pg.inner_text(".score") == "You got 25 right out of 30." and "You finished this practice test." in end
+    check(pg.inner_text(".score") == "You got 25 correct out of 30." and "You finished this practice test." in end
           and "The questions you missed come back in your next set." in end and "pass" not in end,
           "a Practice test with 25 right says so, says the missed ones come back, with no pass or fail", end)
     pg.click("#homeBtn")
     missed = pg.evaluate("copyRecords().filter(r => r.data && r.data.type === 'test').pop().data.answers.filter(a => !a.right).map(a => a.q)")
     coming = pg.evaluate("(p => [...p.block, ...p.due])(setPlan(S, Date.now()))")
-    check("Your last practice test: 25 right out of 30." in stage_text(pg) and len(missed) == 5 and set(missed) <= set(coming)
+    check("Your last practice test: 25 correct out of 30." in stage_text(pg) and len(missed) == 5 and set(missed) <= set(coming)
           and pg.get_attribute("#startBtn", "class") == "btn primary",
           "the home screen lists the Practice test score, and the missed questions come back in the next Set", stage_text(pg))
     for n in range(3):
@@ -2068,7 +2068,7 @@ def check_known_facts(browser, inst):
         answer_set(pg, 2)
         pg.click("#homeBtn")
     check(texts(pg, ".sign h1") == ["Ready for the test"] and pg.inner_text("#testBtn") == "Take another practice test"
-          and "Your last 4 practice tests, oldest first: 25, 28, 28, 28 right out of 30." in stage_text(pg),
+          and "Your last 4 practice tests, oldest first: 25, 28, 28, 28 correct out of 30." in stage_text(pg),
           "three Practice tests in a row at 27 or more shows Ready for the test", stage_text(pg))
     reload(pg)
     check(texts(pg, ".sign h1") == ["Ready for the test"], "Ready for the test is still shown after a reload")
@@ -2128,7 +2128,7 @@ def check_compare(browser, inst):
                       "after a wrong reverse answer, the answer is the fact's label", pg.inner_text("#outcome"))
             else:
                 click_choice(pg)
-                check(pg.inner_text("#outcome").startswith("You picked the right answer: "), "a right reverse answer says so")
+                check(pg.inner_text("#outcome").startswith("You picked the correct answer: "), "a right reverse answer says so")
         elif fact == "b-250":
             check(pg.inner_text("#qText") == "What is the closest you may park to a fire hydrant?",
                   "the hydrant, answered before in its own wording, is asked in its other wording", pg.inner_text("#qText"))

@@ -728,7 +728,7 @@ function sectionsPanel() {
 function factsLine(p = S) {
   const l = learnedCount(p), s = solidCount(p);
   return `You have learned ${l} of the ${QS.length} questions.` +
-    (s ? ` ${s === 1 ? '1 of them is' : `${s} of them are`} solid: you answered ${s === 1 ? 'it' : 'each one'} right 3 times, at least 12 hours apart.` : '');
+    (s ? ` ${s === 1 ? '1 of them is' : `${s} of them are`} solid: you answered ${s === 1 ? 'it' : 'each one'} correctly 3 times, at least 12 hours apart.` : '');
 }
 // A Set made of fill facts only: nothing is due and nothing is new.
 const fillOnly = plan => !plan.block.length && !plan.due.length && !plan.fresh.length;
@@ -772,9 +772,9 @@ function renderHome() {
       <button class="btn${saved || testFirst || teach ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
   const scores = S.tests.slice(-5);
   const tests = !open ? '' : `<section class="home">
-      ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
-        : `<${testsH} tabindex="-1">Practice tests</${testsH}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more right out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p>`}
-      ${scores.length ? `<p class="sub">${scores.length === 1 ? 'Your last practice test' : `Your last ${scores.length} practice tests, oldest first`}: ${scores.join(', ')} right out of ${TEST_LEN}.</p>` : ''}
+      ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p></div>`
+        : `<${testsH} tabindex="-1">Practice tests</${testsH}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more correct out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p>`}
+      ${scores.length ? `<p class="sub">${scores.length === 1 ? 'Your last practice test' : `Your last ${scores.length} practice tests, oldest first`}: ${scores.join(', ')} correct out of ${TEST_LEN}.</p>` : ''}
       ${saved && saved.kind === 'test' ? '' : `<button class="btn${testFirst ? ' primary' : ''}" type="button" id="testBtn">${isReady ? 'Take another practice test' : 'Start a practice test'}</button>`}
     </section>`;
   paint(`
@@ -900,7 +900,7 @@ function renderRule() {
       ${progressLine()}
       <div class="card">
         ${!look ? '<h1 class="outcome" id="ruleHead" tabindex="-1">Read this first.</h1>'
-          : look.chosen === q.a ? `<h1 class="outcome good" id="ruleHead" tabindex="-1">You picked the right answer: ${esc(q.a)}.</h1>`
+          : look.chosen === q.a ? `<h1 class="outcome good" id="ruleHead" tabindex="-1">You picked the correct answer: ${esc(q.a)}.</h1>`
           : `<h1 class="outcome" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
@@ -918,7 +918,7 @@ function renderRule() {
 // question a wrong choice is the answer to; `back` says when the question comes back.
 function feedbackLines(s) {
   const q = asked(s);
-  if (isRight(s)) return { lead: `You picked the right answer: ${answerOf(s)}.`, picked: '', other: '', back: '' };
+  if (isRight(s)) return { lead: `You picked the correct answer: ${answerOf(s)}.`, picked: '', other: '', back: '' };
   const other = s.format === 'choice' && q.also && BY_ID[q.also[s.chosen]];
   const reasked = run.kind === 'daily' && s.kind === 'counted' && run.screens.some((x, j) => j > run.i && x.kind === 'reask' && x.id === s.id);
   return { lead: `The answer is: ${answerOf(s)}.`, picked: `You picked: ${s.chosen}.`,
@@ -945,7 +945,7 @@ function renderQuestion() {
   // After a wrong answer on a fact a lesson teaches, its lesson step can be looked at again, without leaving the Set.
   const peek = lines && !isRight(s) && run.kind === 'daily' && LESSON_STEP[s.id] ? '<button class="link peek" type="button" id="peekBtn">See how this works</button>' : '';
   const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}${peek}</div>` : '';
-  const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is right. This answer does not count.</p>'
+  const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is correct. This answer does not count.</p>'
     : s.kind === 'reask' ? '<p class="sub">You saw this question earlier in this set. Here it is again.</p>' : '';
   paint(`
     <div class="home">
@@ -1035,8 +1035,8 @@ function setStrip(ids) {
   const got = ids.filter(id => S.facts[id].lastRight !== false).length, back = ids.length - got;
   const tiles = ids.map((id, k) => S.facts[id].lastRight === false ? `<li class="tile back" style="--k:${k}">${AGAIN}</li>` : `<li class="tile got" style="--k:${k}">${CHECK}</li>`).join('');
   return `<div class="strip-wrap">
-      <ul class="strip" aria-label="${plural(got, 'question', 'questions')} answered right. ${plural(back, 'question comes', 'questions come')} back in your next set.">${tiles}</ul>
-      <p class="strip-key" aria-hidden="true"><span class="key-item"><span class="tile mini got">${CHECK}</span>Answered right</span>${back ? `<span class="key-item"><span class="tile mini back">${AGAIN}</span>Comes back in your next set</span>` : ''}</p>
+      <ul class="strip" aria-label="${plural(got, 'question', 'questions')} answered correctly. ${plural(back, 'question comes', 'questions come')} back in your next set.">${tiles}</ul>
+      <p class="strip-key" aria-hidden="true"><span class="key-item"><span class="tile mini got">${CHECK}</span>Correct</span>${back ? `<span class="key-item"><span class="tile mini back">${AGAIN}</span>Comes back in your next set</span>` : ''}</p>
     </div>`;
 }
 function setDone(r, before, missed, missedList) {
@@ -1045,7 +1045,7 @@ function setDone(r, before, missed, missedList) {
   const solid = ids.filter(id => !isSolid(before.facts[id]) && isSolid(S.facts[id])).length;
   const back = ids.filter(id => S.facts[id].lastRight === false).length;
   const lines = [learned ? `You learned the answers to ${plural(learned, 'new question', 'new questions')}.` : '',
-    solid ? `${plural(solid, 'question is', 'questions are')} now solid: you answered ${solid === 1 ? 'it' : 'each one'} right 3 times, at least 12 hours apart.` : ''].filter(Boolean);
+    solid ? `${plural(solid, 'question is', 'questions are')} now solid: you answered ${solid === 1 ? 'it' : 'each one'} correctly 3 times, at least 12 hours apart.` : ''].filter(Boolean);
   const plan = setPlan(S, Date.now()), more = !fillOnly(plan), nextSet = `Start Set ${S.sets + 1}`;
   const buttons = more
     ? `<button class="btn primary" type="button" id="moreBtn">${nextSet}</button><button class="btn" type="button" id="homeBtn">I'm done for now</button>`
@@ -1071,18 +1071,18 @@ function testDone(r, missed, missedList) {
   if (st >= READY_STREAK) {
     sign = true;
     title = 'You are ready for the real test.';
-    note = `You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.`;
+    note = `You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.`;
   } else if (right >= READY_SCORE) {
     title = 'This practice test counts toward Ready for the test.';
-    note = `You have ${st} of ${READY_STREAK} in a row. Get ${READY_SCORE} or more right on ${plural(READY_STREAK - st, 'more practice test', 'more practice tests')} to be ready.` + back;
+    note = `You have ${st} of ${READY_STREAK} in a row. Get ${READY_SCORE} or more correct on ${plural(READY_STREAK - st, 'more practice test', 'more practice tests')} to be ready.` + back;
   } else {
     title = 'You finished this practice test.';
-    note = `A practice test counts toward Ready for the test when you get ${READY_SCORE} or more right.` + back;
+    note = `A practice test counts toward Ready for the test when you get ${READY_SCORE} or more correct.` + back;
   }
   paint(`
     <section class="home">
       ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2>`}
-      <p class="score">You got ${right} right out of ${counted.length}.</p>
+      <p class="score">You got ${right} correct out of ${counted.length}.</p>
       ${sign ? (missed.length ? `<p class="sub">${back.trim()}</p>` : '') : `<p class="sub">${esc(note)}</p>`}
       <button class="btn primary" type="button" id="homeBtn">I'm done for now</button>
       <button class="btn" type="button" id="testBtn">Take another practice test</button>
@@ -1235,8 +1235,8 @@ function renderStep() {
   const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${st.options.map((o, k) => act
     ? `<li class="opt ${o === st.answer ? 'right' : o === act.chosen ? 'wrong' : 'rest'}"><span class="key" aria-hidden="true">${Lk[k]}</span><span class="otext"><span>${esc(o)}</span>${o === act.chosen && !L.peek ? '<span class="tag">You picked this</span>' : o === st.answer ? '<span class="tag">The answer</span>' : ''}</span></li>`
     : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
-  // The result is one short line, first on the card: "Right." or "Not <what was picked>."
-  const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Right.' : st.kind === 'tap' ? `Not ${act.chosen}.` : 'Not that one.';
+  // The result is one short line, first on the card: "Correct." (never "Right", a direction in this app) or "Not <what was picked>."
+  const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Correct.' : st.kind === 'tap' ? `Not ${act.chosen}.` : 'Not that one.';
   const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: ${L.i + 1} of ${n}`;
   const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
     : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Go on'}</button>` : '';
@@ -1268,7 +1268,7 @@ function lessonAct(value) {
   L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
   toTop();
   renderStep();
-  $('announce').textContent = `${L.acts[L.i].right ? 'Right.' : st.kind === 'tap' ? `Not ${L.acts[L.i].chosen}.` : 'Not that one.'} ${st.then.say}`;
+  $('announce').textContent = `${L.acts[L.i].right ? 'Correct.' : st.kind === 'tap' ? `Not ${L.acts[L.i].chosen}.` : 'Not that one.'} ${st.then.say}`;
 }
 function nextStep() {
   $('announce').textContent = '';
@@ -1737,9 +1737,9 @@ function learnerPage({ records, unfinished }, learner) {
   // whether the app is working.
   const ret = retention(p, Date.now()), gap = SPACING_MS / HOUR;
   const kept = ret.all.of
-    ? `<p>Of ${plural(ret.all.of, 'time', 'times')} a fact was answered right and asked again at least ${gap} hours later, it was right ${plural(ret.all.right, 'time', 'times')}.</p>` +
+    ? `<p>Of ${plural(ret.all.of, 'time', 'times')} a fact was answered correctly and asked again at least ${gap} hours later, it was correct ${plural(ret.all.right, 'time', 'times')}.</p>` +
       `<p>In the last 14 days: ${ret.recent.right} of ${ret.recent.of}.</p>`
-    : `<p>No fact has been asked again ${gap} or more hours after a right answer yet.</p>`;
+    : `<p>No fact has been asked again ${gap} or more hours after a correct answer yet.</p>`;
 
   const word = { new: 'New', seen: 'Seen', learned: 'Learned', solid: 'Solid' };
   const facts = DAYS.map(d => {
@@ -1763,7 +1763,7 @@ function learnerPage({ records, unfinished }, learner) {
 
   const missed = missedMost(records);
   const missedList = missed.length ? (reset ? '<p class="sub small">Only answers since the latest Reset count here.</p>' : '') +
-    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p>` +
+    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Correct answer: ${esc(q.a)}</p>` +
       `<p>Wrong answer chosen most often: ${esc(m.wrong)}</p><p class="mcount">Missed ${m.missed} of ${m.answered} times</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('')}</ul>`
     : `<p>No question has been missed two or more times${reset ? ' since the latest Reset' : ''}.</p>`;
 
