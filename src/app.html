@@ -1256,7 +1256,7 @@ function renderStep() {
   // The result is the first line on the card: "Correct." (never "Right", a direction in this app), or "Incorrect."
   // with what was picked and what the correct one is, said in full.
   const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Correct.'
-    : `Incorrect. You picked ${act.chosen}.`; // the explanation says what the correct one is and why, once
+    : st.kind === 'tap' ? `Incorrect. You picked ${act.chosen}.` : 'Incorrect.'; // a choice list already marks what was picked; the explanation names the correct one once
   const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: ${L.i + 1} of ${n}`;
   const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
     : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Go on'}</button>` : '';

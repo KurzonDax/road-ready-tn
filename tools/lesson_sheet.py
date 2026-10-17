@@ -109,7 +109,8 @@ def main():
             parts.append(f"<div class='row'>{row}</div>")
         parts.append(f"<p class='say'><span class='ok'>{html.escape(r['lead'])}</span> {html.escape(r['say'])}</p>")
         wrongs = [label for label, ok in items if not ok]
-        lines = "".join(f"<li><span class='not'>Incorrect. You picked {html.escape(label)}.</span></li>" for label in wrongs)
+        lines = "".join(f"<li><span class='not'>{'Incorrect. You picked ' + html.escape(label) + '.' if st['kind'] == 'tap' else 'Incorrect.'}</span>"
+                        f"{'' if st['kind'] == 'tap' else ' (the list marks ' + html.escape(label) + ' as picked)'}</li>" for label in wrongs)
         parts.append(f"<p class='meta'>Each wrong pick gets its own first line, then the same explanation:</p><ul class='wrongs'>{lines}</ul>")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(f"<!doctype html><meta charset='utf-8'><title>Lesson for Section {section}</title><style>{STYLE}</style><main>{''.join(parts)}</main>\n")
