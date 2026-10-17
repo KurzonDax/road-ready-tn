@@ -1845,7 +1845,7 @@ def check_study_path(browser, inst, scheme="light"):
     check([k for k, _ in first] == ["first_look", "rule"] * 5 + ["counted"] * 5 and not gap_problems(first),
           "the first Set is 5 first looks, each with its rule screen, then 5 counted questions, none right after its rule",
           first)
-    check(stage_text(pg).startswith("Set 1: first look This is a new rule. Pick the answer you think is right. This answer does not count."),
+    check(stage_text(pg).startswith("Set 1: first look You have not had this question before. Pick the answer you think is right. This answer does not count."),
           "a first look says so above the question", stage_text(pg))
     click_choice(pg, right=False)
     picked = pg.evaluate("run.screens[0].chosen")
