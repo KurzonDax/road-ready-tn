@@ -2225,9 +2225,9 @@ def check_lessons(browser, inst):
     pg.click(".k-target[data-t='you']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith("Lesson for Section 3: 1 of 12 Not your car.") and "The car on the main road goes first." in shown
+    check(shown.startswith("Lesson for Section 3: 1 of 12 Incorrect. You picked your car. The correct one is the car on the main road.") and "The car on the main road goes first." in shown
           and "Driver manual" not in shown and "Tap the car" not in shown and pg.query_selector(".k-no") is not None
-          and steps[0]["fact"] == "b-110", "a wrong tap leads with Not your car, then the one reason, with the wrong pick crossed on the drawing and nothing else", shown[:120])
+          and steps[0]["fact"] == "b-110", "a wrong tap leads with Incorrect, what was picked and the correct one, then the one reason, with the wrong pick crossed on the drawing and nothing else", shown[:120])
     check(pg.evaluate("document.activeElement.id") == "stepHead", "after acting, focus moves to the result")
     no_scroll = pg.evaluate("document.documentElement.scrollWidth <= innerWidth")
     check(no_scroll, "the lesson step does not scroll sideways on a phone")

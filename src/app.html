@@ -1253,8 +1253,10 @@ function renderStep() {
   const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${st.options.map((o, k) => act
     ? `<li class="opt ${o === st.answer ? 'right' : o === act.chosen ? 'wrong' : 'rest'}"><span class="key" aria-hidden="true">${Lk[k]}</span><span class="otext"><span>${esc(o)}</span>${o === act.chosen && !L.peek ? '<span class="tag">You picked this</span>' : o === st.answer ? '<span class="tag">The answer</span>' : ''}</span></li>`
     : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
-  // The result is one short line, first on the card: "Correct." (never "Right", a direction in this app) or "Not <what was picked>."
-  const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Correct.' : st.kind === 'tap' ? `Not ${act.chosen}.` : 'Not that one.';
+  // The result is the first line on the card: "Correct." (never "Right", a direction in this app), or "Incorrect."
+  // with what was picked and what the correct one is, said in full.
+  const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Correct.'
+    : st.kind === 'tap' ? `Incorrect. You picked ${act.chosen}. The correct one is ${stepLabel(st, st.answer)}.` : `Incorrect. You picked ${act.chosen}. The correct answer is ${st.answer}.`;
   const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: ${L.i + 1} of ${n}`;
   const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
     : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Go on'}</button>` : '';
@@ -1286,7 +1288,7 @@ function lessonAct(value) {
   L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
   toTop();
   renderStep();
-  $('announce').textContent = `${L.acts[L.i].right ? 'Correct.' : st.kind === 'tap' ? `Not ${L.acts[L.i].chosen}.` : 'Not that one.'} ${st.then.say}`;
+  $('announce').textContent = `${$('stepHead').textContent} ${st.then.say}`;
 }
 function nextStep() {
   $('announce').textContent = '';

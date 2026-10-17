@@ -82,7 +82,9 @@ def main():
                 parts.append(f"<div class='row'>{row}</div>")
             wrong = next((t["label"] for t in st.get("targets", []) if t["id"] != st["answer"]), None)
             parts.append(f"<p class='say'><span class='ok'>Correct.</span> {html.escape(st['then']['say'])}</p>")
-            not_line = f"Not {wrong}." if st["kind"] == "tap" else "Not that one."
+            right_label = next((t["label"] for t in st.get("targets", []) if t["id"] == st["answer"]), st["answer"])
+            not_line = (f"Incorrect. You picked {wrong}. The correct one is {right_label}." if st["kind"] == "tap"
+                        else f"Incorrect. You picked {next(o for o in st['options'] if o != st['answer'])}. The correct answer is {st['answer']}.")
             parts.append(f"<p class='meta'>After a wrong action the first line is <span class='not'>{html.escape(not_line)}</span> and the same explanation follows.</p>")
             pg.click("#stepNextBtn")
         browser.close()
