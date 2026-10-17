@@ -55,8 +55,13 @@ def test_build_writes_page_questions_and_csp(tmp):
     leaked = [q["id"] for q in bank["questions"] if q["question"] in page or q["manual_quote"] in page]
     check(not leaked, f"the page has no question text in it (found {leaked[:3]})")
     data = json.loads((out / "questions.json").read_text())
-    check(sorted(data) == ["days", "qs"] and len(data["days"]) == 12 and len(data["qs"]) == 120,
-          "questions.json holds the 12 sections and 120 questions")
+    check(sorted(data) == ["days", "groups", "qs"] and len(data["days"]) == 12 and len(data["qs"]) == 120,
+          "questions.json holds the 12 sections, 120 questions and the groups")
+    groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
+    check(data.get("groups") == groups, "the groups are data/groups.json's, as they are")
+    grouped = {q["id"]: q["group"] for q in data["qs"] if "group" in q}
+    check(len(grouped) == 56 and grouped.get("b-250") == "parking-distances" and grouped.get("a-084") == "sign-colors",
+          f"the 56 grouped questions name their group (got {len(grouped)})")
     check("__DATA__" not in page, "the page has no __DATA__ placeholder left")
     by_id = {q["id"]: q for q in data["qs"]}
     also = {q["id"]: q["also"] for q in data["qs"] if "also" in q}
@@ -169,6 +174,38 @@ def test_check_dist_catches_a_stale_dist(tmp):
           "check_dist fails, saying the hash does not match, when csp.json's hash is wrong")
 
 
+def test_group_rules_catch_each_mistake():
+    """The rules validate_data.py checks data/groups.json against, each shown catching its mistake."""
+    sys.path.insert(0, str(ROOT / "tests"))
+    from validate_data import check_groups
+    used = {"q-1", "q-2", "q-3", "q-4", "q-5"}
+
+    def group(gid="g", facts=("q-1", "q-2"), reverse=None, **extra):
+        return {"id": gid, "title": "A title", "reverse": reverse,
+                "facts": [{"id": f, "label": f"Label {f}"} for f in facts], **extra}
+
+    check(check_groups([group(), group("h", ("q-3", "q-4", "q-5"))], used) == [],
+          "groups of facts in the sections, each in one group, pass")
+    four = ("q-1", "q-2", "q-3", "q-4")
+    for groups, want, what in (
+            ([group(facts=("q-1", "x-9"))], "x-9", "a fact not in the sections"),
+            ([group(), group("h", ("q-2", "q-3"))], "q-2", "a fact in two groups"),
+            ([group(facts=("q-1",))], "2 or more", "a group of one fact"),
+            ([dict(group(), facts=[{"id": "q-1", "label": ""}, {"id": "q-2", "label": "B"}])], "label", "an empty label"),
+            ([dict(group(), facts=[{"id": "q-1", "label": "Same"}, {"id": "q-2", "label": "Same"}])], "label",
+             "two facts with one label"),
+            ([group(facts=four, reverse="Which one: {answer} or {answer}?")], "{answer}", "a stem with {answer} twice"),
+            ([group(facts=four, reverse="Which one?")], "{answer}", "a stem with no {answer}"),
+            ([group(facts=("q-1", "q-2", "q-3"), reverse="Which one: {answer}?")], "4 or more",
+             "a reverse stem on a group of 3"),
+            ([group(), group()], "id", "two groups with one id"),
+            ([group(facts=four, reverse=7)], "{answer}", "a stem that is not text")):
+        errors = check_groups(groups, used)
+        check(any(want in e for e in errors), f"check_groups catches {what} (got {errors})")
+    check(check_groups([group(facts=four, reverse="Which one: {answer}?")], used) == [],
+          "a reverse stem with {answer} once, on 4 facts, passes")
+
+
 def main():
     with tempfile.TemporaryDirectory() as t:
         tmp = pathlib.Path(t)
@@ -180,6 +217,8 @@ def main():
         test_build_refuses_pages_that_break_the_csp(tmp)
         print("\n[check_dist]")
         test_check_dist_catches_a_stale_dist(tmp)
+        print("\n[groups.json rules]")
+        test_group_rules_catch_each_mistake()
     print("\nAll checks passed." if not failures else f"\n{len(failures)} check(s) failed.")
     raise SystemExit(1 if failures else 0)
 

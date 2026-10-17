@@ -112,9 +112,9 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
      "facts": [
        {"id": "a-168", "label": "Lines that separate traffic going in opposite directions", "reverse": false},
        {"id": "a-175", "label": "Lines that separate lanes going the same direction", "reverse": false},
-       {"id": "a-176", "label": "Broken white lines between lanes"},
+       {"id": "a-176", "label": "Broken white lines between lanes", "reverse": false},
        {"id": "a-170", "label": "Two solid yellow lines between lanes"},
-       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side"},
+       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side", "reverse": false},
        {"id": "a-166", "label": "A yellow line on your right and a white line on your left"}]},
     {"id": "lights", "title": "Red and yellow lights",
      "reverse": null,
@@ -128,7 +128,7 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
        {"id": "a-152", "label": "A green arrow"},
        {"id": "a-153", "label": "A yellow arrow"},
        {"id": "a-155", "label": "A flashing yellow arrow"},
-       {"id": "a-154", "label": "A red arrow", "reverse": false}]},
+       {"id": "a-154", "label": "A red arrow", "means": "All turns are prohibited", "reverse": false}]},
     {"id": "parking-distances", "title": "How close you may park",
      "reverse": "You may NOT park within {answer} of which of these?",
      "facts": [
@@ -196,6 +196,8 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
 }
 ```
 
+a-172 and a-176 are never reversed because each one's answer is also true of the other's label ("You may pass when it is safe", "You may change lanes or pass if it is safe"), and a-154's `means` replaces an answer that only reads as a reply to its own yes-or-no question (both changed 2026-10-17 in review of Phase 2).
+
 `tests/validate_data.py` checks: every fact id is in `data/sections.json`; no fact is in two groups; every group has 2 or more facts; every `label` is non-empty; a `reverse` stem contains `{answer}` exactly once; a group with a `reverse` stem has at least 4 facts.
 
 ### What `build.py` ships
@@ -259,7 +261,7 @@ Due facts are ordered: first those with `lastRight` false, oldest `lastAt` first
 
 Screen kinds: `contrast` (a group's Compare screen), `first_look`, `rule`, `counted`, `reask`. A "question screen" is any kind but `contrast` and `rule`. A "screen for another fact" is any screen whose fact is not the one in question; a `contrast` screen counts as a screen for another fact.
 
-1. **Group block** (Phase 2; before Phase 2 this step yields nothing). Take the first group in `groups.json` order that is due. A group is due when all its facts are learned or solid, and either no daily record has that group id since the latest Reset, or a fact in the group has a wrong counted answer whose `at` is later than the `at` of the newest daily record with that group id. If there is one, the block is: `contrast` for the group, then one `counted` question per fact in the group, shuffled. These facts are excluded from steps 2 to 4. A Set with a group block takes no new facts (step 3 is skipped), so the gap rule below never has to hold across the block.
+1. **Group block** (Phase 2; before Phase 2 this step yields nothing). Take the first group in `groups.json` order that is due. A group is due when all its facts are learned or solid, the newest counted answer on any of them is at least `SPACING_MS` old (so the Compare is a recall after a gap, not a re-ask minutes after the facts were taught; added 2026-10-17 in review of Phase 2), and either no daily record has that group id since the latest Reset, or a fact in the group has a wrong counted answer whose `at` is later than the `at` of the newest daily record with that group id. If there is one, the block is: `contrast` for the group, then one `counted` question per fact in the group, shuffled. These facts are excluded from steps 2 to 4. A Set with a group block takes no new facts (step 3 is skipped), so the gap rule below never has to hold across the block.
 2. **Due facts**: `room = COUNTED_TARGET − (group block size)`. Take the first `room` due facts in due order.
 3. **New facts**: skipped when there is a group block. Otherwise `room2 = room − (due taken)`. Take up to `min(NEW_PER_SET, room2)` new facts in Section-cursor order, within a Section in the order listed in `sections.json`.
 4. **Fill**: if the counted questions so far (group block, due and new) are fewer than `MIN_SET`, add not-yet-due facts (learned or solid, not due) with the oldest `lastAt` first, ties in `sections.json` order, until `MIN_SET` or none are left. These are counted questions. They are called fill facts on the home screen.
@@ -272,7 +274,7 @@ Screen kinds: `contrast` (a group's Compare screen), `first_look`, `rule`, `coun
 
 **Re-asks** are inserted while the Set runs. A wrong re-ask never inserts another. After a wrong counted answer at screen index `p`, if fewer than `RE_ASK_CAP` re-asks have been inserted in this Set, insert a `reask` for that fact right after the `RE_ASK_GAP`th question screen for another fact that follows `p`; if fewer remain, append it at the end. A re-ask uses the same format and, for `choice`, a fresh shuffle of the same options.
 
-**There is always a Set.** `buildSet(now)` never yields fewer than `min(MIN_SET, 120)` counted questions: new facts are always taken when they exist, and a fact that is not new is either due or a fill fact. When nothing is due and nothing is new, the Set is made of fill facts only; the home screen and the Set done screen say so (see those screens) and do not push it.
+**There is always a Set.** `buildSet(now)` never yields fewer than `min(MIN_SET, 120)` counted questions, except a Set with a group block when too few other facts are learned to fill it (four parking facts learned and nothing else gives four questions): without a block, new facts are always taken when they exist, and a fact that is not new is either due or a fill fact. When nothing is due and nothing is new, the Set is made of fill facts only; the home screen and the Set done screen say so (see those screens) and do not push it.
 
 ## Formats
 

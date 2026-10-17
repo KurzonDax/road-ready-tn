@@ -67,3 +67,19 @@ Ids are grouped by manual range: `a-` pages 25-44 (vehicle, seat belts, signs, s
 d-165 ("Within 50 feet but no closer than 15 feet from the nearest rail") is a wording of b-077. A question with no `fact` tests something the app does not use. A fact may have just one wording, the app's own question. `tests/validate_data.py` checks that every question in the sections is its own fact, that every `fact` names one of them, and that the wordings of a fact share one answer: none gives another's right answer as a wrong choice, and all of their right answers have the same numbers. The app does not use `fact` yet, and `build.py` leaves it out.
 
 `data/sections.json` lists the 12 study sections, 10 question ids each, in the order the app presents them the first time through (easiest first).
+
+`data/groups.json` lists groups of easily mixed-up facts, such as the four distances you may not park within. Once every fact in a group is learned, and none was answered in the last 12 hours, the app shows the group on one Compare screen, side by side, then asks one question on each of its facts:
+
+```json
+{"id": "parking-distances", "title": "How close you may park",
+ "reverse": "You may NOT park within {answer} of which of these?",
+ "facts": [
+   {"id": "b-250", "label": "A fire hydrant"},
+   {"id": "b-252", "label": "A crosswalk"}, ...]}
+```
+
+- `title` follows "Compare:" on the screen.
+- `label` names a fact in the Compare screen's left column. Its answer goes in the right column, or `means` instead, when the answer is itself a name and not a meaning (a-109's answer is "Rectangle"; its `means` says what a rectangle sign is for).
+- `reverse` is the stem of a reverse question, with `{answer}` where a fact's answer goes. Its choices are the group's labels, and the right one is the fact's own label. `null` when the group has none. A fact with `"reverse": false` is never asked the reverse way, but its label is still a wrong choice.
+
+`tests/validate_data.py` checks that every fact is a question in the sections and in at most one group, that a group has 2 or more facts with a label of its own each, and that a `reverse` stem has `{answer}` exactly once and is only on a group of 4 or more. `build.py` adds each fact's `group` to it and ships the groups as they are.

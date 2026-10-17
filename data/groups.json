@@ -1,0 +1,105 @@
+{
+  "groups": [
+    {"id": "sign-colors", "title": "What each sign color means", "reverse": "Which sign means: {answer}?",
+     "facts": [
+       {"id": "a-084", "label": "A yellow sign"},
+       {"id": "a-085", "label": "An orange sign"},
+       {"id": "a-086", "label": "A green sign"},
+       {"id": "a-087", "label": "A blue sign"},
+       {"id": "a-089", "label": "A fluorescent yellow-green sign"}
+     ]},
+    {"id": "sign-shapes", "title": "What each sign shape means", "reverse": "Which sign means: {answer}?",
+     "facts": [
+       {"id": "a-095", "label": "An eight-sided sign (octagon)"},
+       {"id": "a-099", "label": "A triangle pointing down"},
+       {"id": "a-101", "label": "A round sign"},
+       {"id": "a-108", "label": "A diamond-shaped sign"},
+       {"id": "a-109", "label": "A rectangle", "means": "Regulatory signs, like speed limits and lane use", "reverse": false}
+     ]},
+    {"id": "line-colors", "title": "Yellow lines and white lines", "reverse": "Which lines mean: {answer}?",
+     "facts": [
+       {"id": "a-168", "label": "Lines that separate traffic going in opposite directions", "reverse": false},
+       {"id": "a-175", "label": "Lines that separate lanes going the same direction", "reverse": false},
+       {"id": "a-176", "label": "Broken white lines between lanes", "reverse": false},
+       {"id": "a-170", "label": "Two solid yellow lines between lanes"},
+       {"id": "a-172", "label": "A solid yellow line and a broken yellow line, with the broken line on your side", "reverse": false},
+       {"id": "a-166", "label": "A yellow line on your right and a white line on your left"}
+     ]},
+    {"id": "lights", "title": "Red and yellow lights", "reverse": null,
+     "facts": [
+       {"id": "a-156", "label": "A flashing red light"},
+       {"id": "a-157", "label": "A flashing yellow light"},
+       {"id": "a-147", "label": "A steady yellow light"}
+     ]},
+    {"id": "arrows", "title": "Turn arrows", "reverse": "Which arrow means: {answer}?",
+     "facts": [
+       {"id": "a-152", "label": "A green arrow"},
+       {"id": "a-153", "label": "A yellow arrow"},
+       {"id": "a-155", "label": "A flashing yellow arrow"},
+       {"id": "a-154", "label": "A red arrow", "means": "All turns are prohibited", "reverse": false}
+     ]},
+    {"id": "parking-distances", "title": "How close you may park", "reverse": "You may NOT park within {answer} of which of these?",
+     "facts": [
+       {"id": "b-250", "label": "A fire hydrant"},
+       {"id": "b-252", "label": "A crosswalk"},
+       {"id": "b-253", "label": "A stop sign or traffic signal"},
+       {"id": "b-251", "label": "A railroad crossing"}
+     ]},
+    {"id": "hill-parking", "title": "Which way to turn your wheels when you park on a hill", "reverse": null,
+     "facts": [
+       {"id": "b-260", "label": "Facing downhill, next to a curb"},
+       {"id": "b-261", "label": "Facing uphill, next to a curb"},
+       {"id": "b-262", "label": "On a hill with NO curb"}
+     ]},
+    {"id": "feet-rules", "title": "Rules measured in feet", "reverse": "Which rule is: {answer}?",
+     "facts": [
+       {"id": "b-077", "label": "How far from the tracks you stop for a train"},
+       {"id": "b-147", "label": "How far before a turn you turn on your signal"},
+       {"id": "b-228", "label": "How much space you leave when you pass a bicycle"},
+       {"id": "c-050", "label": "How close another vehicle is when you dim your high beams"},
+       {"id": "d-116", "label": "How far behind a truck its blind spot reaches", "means": "Up to 200 feet", "reverse": false},
+       {"id": "d-138", "label": "How far from a school bus children stay"}
+     ]},
+    {"id": "speed-limits", "title": "Speed limits set by law", "reverse": null,
+     "facts": [
+       {"id": "b-031", "label": "Interstate highways"},
+       {"id": "b-030", "label": "Primary and secondary state and federal highways, unless another speed is posted"}
+     ]},
+    {"id": "following-distance", "title": "Following distance", "reverse": null,
+     "facts": [
+       {"id": "b-054", "label": "Under normal conditions"},
+       {"id": "b-056", "label": "In bad weather, at night, at higher interstate speeds, or behind a motorcycle"},
+       {"id": "b-055", "label": "The speeds at which the two-second rule holds true"}
+     ]},
+    {"id": "bac", "title": "Blood alcohol limits", "reverse": null,
+     "facts": [
+       {"id": "c-097", "label": "Drivers 21 and older"},
+       {"id": "c-121", "label": "Drivers 16 to 20"}
+     ]},
+    {"id": "school-bus", "title": "School bus lights", "reverse": null,
+     "facts": [
+       {"id": "b-084", "label": "Yellow lights flashing"},
+       {"id": "b-085", "label": "Red lights flashing and the stop arm out: when you may go"},
+       {"id": "b-086", "label": "Stopped at an intersection: who must stop"},
+       {"id": "b-089", "label": "Stopped on the other side of a median you cannot drive on"}
+     ]},
+    {"id": "turn-lanes", "title": "Which lane to use for a turn", "reverse": null,
+     "facts": [
+       {"id": "b-169", "label": "A right turn: the lane to turn into"},
+       {"id": "b-159", "label": "A left turn from a two-way street onto a two-way street: the lane to turn into"},
+       {"id": "b-163", "label": "A left turn from a one-way street: the lane to be in before the turn"}
+     ]},
+    {"id": "who-goes-first", "title": "Who goes first", "reverse": null,
+     "facts": [
+       {"id": "b-118", "label": "At an all-way stop"},
+       {"id": "b-119", "label": "Two vehicles reach an all-way stop at the same time"},
+       {"id": "a-159", "label": "A traffic signal is not working at all"}
+     ]},
+    {"id": "emergency-vehicles", "title": "Emergency vehicles", "reverse": null,
+     "facts": [
+       {"id": "b-124", "label": "One with a siren is approaching"},
+       {"id": "b-126", "label": "You are in the middle of an intersection when one approaches"},
+       {"id": "b-136", "label": "One is stopped on the roadside with its lights flashing"}
+     ]}
+  ]
+}
