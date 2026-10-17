@@ -66,6 +66,14 @@ Ids are grouped by manual range: `a-` pages 25-44 (vehicle, seat belts, signs, s
 
 d-165 ("Within 50 feet but no closer than 15 feet from the nearest rail") is a wording of b-077. A question with no `fact` tests something the app does not use. A fact may have just one wording, the app's own question. `tests/validate_data.py` checks that every question in the sections is its own fact, that every `fact` names one of them, and that the wordings of a fact share one answer: none gives another's right answer as a wrong choice, and all of their right answers have the same numbers. The app does not use `fact` yet, and `build.py` leaves it out.
 
+`typed` is on the 22 app questions whose answer is a number. Once the Learner has such a fact learned, its counted questions ask them to type the number instead of picking it:
+
+```json
+"typed": {"template": "Between {} and {} feet", "numbers": [15, 50]}
+```
+
+`template` is the sentence the Learner types into, with one `{}` for each number in the order typed; the words around them are shown, not typed. It usually reads like the answer, and may say more (a-003's answer is "9 o'clock and 3 o'clock"; its template is "Left hand at {} o'clock, right hand at {} o'clock"). `numbers` are the numbers themselves. `tests/validate_data.py` checks that there is one `{}` per number, that the numbers are exactly the ones in the answer (written as digits or as words, so "Ten feet" types 10), and that only questions in the sections have `typed`.
+
 `data/sections.json` lists the 12 study sections, 10 question ids each, in the order the app presents them the first time through (easiest first).
 
 `data/groups.json` lists groups of easily mixed-up facts, such as the four distances you may not park within. Once every fact in a group is learned, and none was answered in the last 12 hours, the app shows the group on one Compare screen, side by side, then asks one question on each of its facts:
