@@ -144,7 +144,7 @@
           }
         ]
       },
-      "prompt": "Your road ends at a main road, and a car is coming from each direction on the main road. Which car must wait? Tap the car.",
+      "prompt": "Your road ends at a main road. There is no stop sign and no yield sign. A car is coming from each direction on the main road. Which car must wait? Tap the car.",
       "targets": [
         {
           "id": "you",
@@ -161,7 +161,7 @@
       ],
       "answer": "you",
       "then": {
-        "say": "Your car waits, and both cars on the main road go first. Your road ends at the main road, so you let the traffic from both directions pass before you go."
+        "say": "Your car waits, and both cars on the main road go first. Your road ends at the main road, so you let the traffic from both directions pass before you go, even when no sign tells you to."
       },
       "rule": "At a T intersection, the vehicles on the road that ends yield to the traffic from both directions on the main road."
     },
