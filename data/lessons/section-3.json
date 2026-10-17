@@ -176,7 +176,7 @@
       ],
       "answer": "You did, because you were entering a road that other cars were already on.",
       "then": {
-        "say": "When you enter a road, you wait and let the traffic already on it go first. The law never gives anyone the right-of-way to take; it only says who must wait."
+        "say": "When you enter a road, you wait and let the traffic already on it go first. The law never gives anyone the right-of-way to take. It only says who must wait."
       }
     },
     {

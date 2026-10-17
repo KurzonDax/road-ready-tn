@@ -28,7 +28,11 @@
   --guide: #8396b3;
   --guide-ink: #141619;
   --guide-soft: #262d38;
-  --bad: #dba49b;
+  /* Results: green means correct, red means wrong. Nothing else uses these two. */
+  --good: #62c27f;
+  --good-ink: #0f1a13;
+  --good-soft: #1d2e22;
+  --bad: #e8705f;
   --bad-soft: #3a2624;
   --focus: #dcc69a;
   /* The lesson drawings: road surfaces and markings, cars, glass. Lane lines keep their real colors. */
@@ -76,7 +80,7 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .strip { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tile { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; }
 .tile svg { width: 26px; height: 26px; }
-.tile.got { background: var(--guide); color: var(--guide-ink); }
+.tile.got { background: var(--good); color: var(--good-ink); }
 .tile.back { border: 2px dashed var(--ink); color: var(--ink); }
 .tile.mini { width: 24px; height: 24px; border-radius: 6px; flex: none; }
 .tile.mini.back { border-width: 1.5px; }
@@ -149,18 +153,20 @@ button.opt { cursor: pointer; }
 .opt .tag { font-size: 15px; font-weight: 700; }
 .opt.rest { border-color: var(--line); color: var(--muted); }
 .opt.rest .key { border-color: var(--line); }
-.opt.right { border-color: var(--guide); background: var(--guide-soft); font-weight: 700; }
-.opt.right .key { background: var(--guide); border-color: var(--guide); color: var(--guide-ink); }
-/* A wrong pick is marked by its tag and a dashed outline, not an alarm color: the answer is what stands out. */
-.opt.wrong { border-style: dashed; border-color: var(--ink); }
+.opt.right { border-color: var(--good); background: var(--good-soft); font-weight: 700; }
+.opt.right .key { background: var(--good); border-color: var(--good); color: var(--good-ink); }
+/* A wrong pick is marked in red by its border and key; the correct answer in green. */
+.opt.wrong { border-color: var(--bad); }
+.opt.wrong .key { border-color: var(--bad); color: var(--bad); }
 .feedback { border-top: 2px dashed var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
 .result { display: flex; flex-direction: column; gap: 6px; }
 .later { display: flex; flex-direction: column; gap: 14px; border-top: 1.5px solid var(--line); padding-top: 20px; margin-top: 6px; }
 .facts { margin: 0; }
 .why, .also, .picked { margin: 0; }
-/* After a first look, what was picked leads the screen, as large as the question; in the accent when it was right. */
+/* After an answer, the result leads the screen, as large as the question: green when correct, red when not. */
 .outcome { font-family: var(--font-body); font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
-.outcome.good { color: var(--guide); }
+.outcome.good { color: var(--good); }
+.outcome.not { color: var(--bad); }
 /* Compare: one row per fact, the fact (and its picture) beside what it means. */
 .compare { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .compare li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
@@ -179,12 +185,12 @@ button.opt { cursor: pointer; }
 .k-yellow { stroke: var(--lane-yellow); stroke-width: 3; }
 .k-white { stroke: var(--lane-white); stroke-width: 3; }
 .k-you .k-body { stroke: var(--guide); stroke-width: 2.5; }
-.k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--guide); stroke-width: 3.5; }
-.k-ring { fill: var(--guide); opacity: .25; }
+.k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--good); stroke-width: 3.5; }
+.k-ring { fill: var(--good); opacity: .28; }
 .k-no { fill: none; stroke: var(--bad); stroke-width: 2; }
 .k-badge circle { stroke: var(--bg); stroke-width: 2; }
-.k-badge.k-yes circle { fill: var(--guide); }
-.k-badge.k-yes path { stroke: var(--guide-ink); }
+.k-badge.k-yes circle { fill: var(--good); }
+.k-badge.k-yes path { stroke: var(--good-ink); }
 .k-badge.k-not circle { fill: var(--bad); }
 .k-badge.k-not path { stroke: var(--bad-soft); }
 @media (prefers-reduced-motion: no-preference) {
@@ -905,7 +911,7 @@ function renderRule() {
       <div class="card">
         ${!look ? '<h1 class="outcome" id="ruleHead" tabindex="-1">Read this first.</h1>'
           : look.chosen === q.a ? `<h1 class="outcome good" id="ruleHead" tabindex="-1">You picked the correct answer: ${esc(q.a)}.</h1>`
-          : `<h1 class="outcome" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
+          : `<h1 class="outcome not" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
         <p class="back">This question comes back later in this set.</p>
@@ -942,7 +948,7 @@ function renderQuestion() {
   const lines = run.answered ? feedbackLines(s) : null;
   // Answered, the result is the first thing on the card; the explanation follows the choices.
   const result = lines ? `<div class="result" id="feedback">
-      <h2 class="outcome${isRight(s) ? ' good' : ''}" id="outcome" tabindex="-1">${esc(lines.lead)}</h2>
+      <h2 class="outcome${isRight(s) ? ' good' : ' not'}" id="outcome" tabindex="-1">${esc(lines.lead)}</h2>
       ${lines.picked ? `<p class="picked">${esc(lines.picked)}</p>` : ''}
       ${lines.other ? `<p class="also">${esc(lines.other)}</p>` : ''}
     </div>` : '';
@@ -1252,7 +1258,7 @@ function renderStep() {
     <div class="home">
       <div class="progress"><span>${esc(where)}</span>${L.peek ? '' : `<div class="bar" aria-hidden="true"><span style="width:${Object.keys(L.acts).length / n * 100}%"></span></div>`}</div>
       <div class="card step${act ? ' acted' : ''}">
-        ${act ? `<h2 class="outcome${act.right && !L.peek ? ' good' : ''}" id="stepHead" tabindex="-1">${esc(lead)}</h2>`
+        ${act ? `<h2 class="outcome${L.peek ? '' : act.right ? ' good' : ' not'}" id="stepHead" tabindex="-1">${esc(lead)}</h2>`
               : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
         ${scene}
         ${options}
