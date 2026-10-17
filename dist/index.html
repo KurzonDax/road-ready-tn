@@ -130,6 +130,12 @@ button.opt { cursor: pointer; }
 .verdict { font-weight: 700; margin: 0; }
 .verdict.good { color: var(--guide); }
 .why, .also, .picked { margin: 0; }
+/* Compare: one row per fact, the fact (and its picture) beside what it means. */
+.compare { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.compare li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.compare .cfact { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+.compare .cpic { display: block; line-height: 0; }
+.compare .cpic svg { width: 48px; height: 48px; }
 .rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
 .rule { font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
 .back { margin: 0; color: var(--muted); }
@@ -212,6 +218,7 @@ const SIGNS = {
   swatch: c => `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="10" y="22" width="80" height="56" rx="6" fill="${c}" stroke="#555" stroke-width="2"/></svg>`
 };
 let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.json when the page starts
+let GROUPS = [], GROUP_BY_ID = {}; // the groups of easily mixed-up facts (data/groups.json), likewise
 // The learning engine (docs/specs/learning-engine.md, docs/adr/0002-*). Every rule below reads these.
 const HOUR = 60 * 60 * 1000;
 const FIRST_LOOK = true;          // a new fact starts with an unscored question; false starts with its rule screen
@@ -357,10 +364,11 @@ function factFrom(answers) {
 }
 // A Learner's Progress from their records (docs/adr/0001-*, 0002-*), counting only those after the
 // latest Reset: {facts: {id: factFrom()}, answers: {id: [{at, right}]}, tests: [right counts],
-// cursor: the Section new facts come from, unlockMove: the latest Move is to 13, sets: daily Sets so far}.
+// cursor: the Section new facts come from, unlockMove: the latest Move is to 13, sets: daily Sets so far,
+// groupAt: {group id: when the newest daily Set with that group block finished}}.
 function progressFrom(records) {
   const answers = Object.fromEntries(QS.map(q => [q.id, []]));
-  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0 };
+  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {} };
   const add = (q, at, right) => { const f = factOf(q); if (f) answers[f].push({ at, right }); };
   for (const r of countedRecords(records)) {
     if (r.kind === 'imported') {
@@ -375,6 +383,7 @@ function progressFrom(records) {
       for (const a of d.answers) if (isCounted(a)) add(a.q, answerTime(a), a.right);
       if (d.type === 'test') p.tests.push(d.answers.filter(a => a.right).length);
       if (d.type === 'daily') p.sets++;
+      if (d.type === 'daily' && d.group) p.groupAt[d.group] = Math.max(p.groupAt[d.group] ?? -Infinity, recordTime(r));
     }
   }
   for (const q of QS) {
@@ -384,13 +393,21 @@ function progressFrom(records) {
   return p;
 }
 
-// The facts the next Set asks about, by the spec's steps 1 to 4: {group and block: the group block and
-// its group (Phase 2; none yet), due, fresh: new facts, fill: not-yet-due facts added to reach MIN_SET}.
-// Each but group is a list of fact ids.
+// A group is due for a Compare screen once all its facts are learned, the first time, and again
+// whenever one of its facts is answered wrong after the newest Set that compared it.
+function groupDue(p, g) {
+  if (!g.facts.every(f => isLearned(p.facts[f.id]))) return false;
+  const last = p.groupAt[g.id];
+  return last === undefined || g.facts.some(f => p.answers[f.id].some(a => !a.right && a.at > last));
+}
+// The facts the next Set asks about, by the spec's steps 1 to 4: {group: the first due group, or null;
+// block: its facts; due; fresh: new facts; fill: not-yet-due facts added to reach MIN_SET}. Each but
+// group is a list of fact ids. A Set with a group block takes no new facts.
 function setPlan(p, now) {
-  const group = null, block = [];
+  const group = GROUPS.find(g => groupDue(p, g)) || null, block = group ? group.facts.map(f => f.id) : [];
+  const outside = id => !block.includes(id);
   const room = COUNTED_TARGET - block.length;
-  const due = dueFacts(p, now).slice(0, room);
+  const due = dueFacts(p, now).filter(outside).slice(0, room);
   let fresh = [];
   if (!block.length) {
     const room2 = room - due.length;
@@ -400,26 +417,40 @@ function setPlan(p, now) {
   let fill = [];
   const short = MIN_SET - (block.length + due.length + fresh.length);
   if (short > 0) {
-    fill = QS.filter(q => p.facts[q.id].asked && !isDue(p.facts[q.id], now))
+    fill = QS.filter(q => p.facts[q.id].asked && !isDue(p.facts[q.id], now) && outside(q.id))
       .sort((a, b) => p.facts[a.id].lastAt - p.facts[b.id].lastAt).slice(0, short).map(q => q.id);
   }
   return { group, block, due, fresh, fill };
 }
-// The next Set as a list of screens ({kind, id, format, options, chosen, at}), from setPlan by the
-// spec's step 5: each new fact's first look and rule screen, with due and fill questions spread
-// between them, and its counted question at least GAP screens for other facts later.
+// A group block: the group's Compare screen, then one counted question per fact, shuffled. In a group
+// with a reverse stem and 4 or more facts, every second fact that may be reversed is asked the other
+// way round: the stem with the fact's answer, and the group's labels as the choices.
+function groupBlock(g) {
+  const reversible = g.reverse !== null && g.facts.length >= 4;
+  let n = 0;
+  return [{ kind: 'contrast', id: null, group: g.id }, ...shuffle(g.facts).map(f => {
+    if (!(reversible && f.reverse !== false && n++ % 2 === 1)) return { kind: 'counted', id: f.id, group: g.id, ...choiceOf(f.id) };
+    const others = shuffle(g.facts.filter(o => o !== f)).slice(0, 3).map(o => o.label);
+    return { kind: 'counted', id: f.id, group: g.id, format: 'reverse', options: shuffle([f.label, ...others]), chosen: null, at: null };
+  })];
+}
+const choiceOf = id => ({ format: 'choice', options: shuffle([BY_ID[id].a, ...BY_ID[id].o]), chosen: null, at: null });
+// The next Set as a list of screens ({kind, id, format, options, chosen, at, group}), from setPlan
+// by the spec's step 5: the group block, if any, then each new fact's first look and rule screen,
+// with due and fill questions spread between them, and its counted question at least GAP screens
+// for other facts later.
 function buildSet(p, now, firstLook = FIRST_LOOK) {
   const plan = setPlan(p, now);
-  const choice = id => ({ format: 'choice', options: shuffle([BY_ID[id].a, ...BY_ID[id].o]), chosen: null, at: null });
-  const counted = id => ({ kind: 'counted', id, ...choice(id) });
+  const counted = id => ({ kind: 'counted', id, ...choiceOf(id) });
+  const block = plan.group ? groupBlock(plan.group) : [];
   const W = plan.fresh, k = W.length;
   const D = shuffle([...plan.due, ...plan.fill].map(counted)), m = D.length;
-  if (!k) return D;
+  if (!k) return [...block, ...D];
   const h = Math.min(Math.max(0, GAP - (k - 1)), m), held = D.slice(0, h), rest = D.slice(h);
   const screens = [];
   let used = 0;
   W.forEach((id, i) => {
-    if (firstLook) screens.push({ kind: 'first_look', id, ...choice(id) });
+    if (firstLook) screens.push({ kind: 'first_look', id, ...choiceOf(id) });
     screens.push({ kind: 'rule', id });
     const n = Math.floor(rest.length / k) + (i < rest.length % k ? 1 : 0);
     screens.push(...rest.slice(used, used + n));
@@ -452,13 +483,19 @@ function packRun(r) {
     screens: r.screens.map(s => ({ kind: s.kind, id: s.id, format: s.format, options: s.options, chosen: s.chosen, typed: s.typed, at: s.at, group: s.group })) };
 }
 const sameOptions = (options, q) => Array.isArray(options) && options.slice().sort().join('\n') === [q.a, ...q.o].sort().join('\n');
+// A reverse question's choices are 4 different labels of its group, its own fact's among them.
+function reverseOptions(x, g) {
+  const labels = g ? g.facts.map(f => f.label) : [], own = g && g.facts.find(f => f.id === x.id);
+  return !!own && Array.isArray(x.options) && x.options.length === 4 && new Set(x.options).size === 4
+    && x.options.every(o => labels.includes(o)) && x.options.includes(own.label);
+}
 function unpackRun(p) {
   try {
     if ((p.kind !== 'daily' && p.kind !== 'test') || !Array.isArray(p.screens) || !p.screens.length) return null;
     const screens = p.screens.map(x => {
-      const q = BY_ID[x.id];
-      if (!q || !SCREEN_KINDS.includes(x.kind)) throw new Error('changed');
-      if (isQuestion(x) && (x.format !== 'choice' || !sameOptions(x.options, q))) throw new Error('changed');
+      const q = BY_ID[x.id], g = GROUP_BY_ID[x.group];
+      if (!SCREEN_KINDS.includes(x.kind) || (x.kind === 'contrast' ? !g : !q)) throw new Error('changed');
+      if (isQuestion(x) && !(x.format === 'choice' ? sameOptions(x.options, q) : x.format === 'reverse' && reverseOptions(x, g))) throw new Error('changed');
       return { kind: x.kind, id: x.id, format: x.format, options: x.options, chosen: x.chosen ?? null, typed: x.typed ?? null,
         at: x.at || null, group: x.group ?? null };
     });
@@ -475,7 +512,11 @@ function keepRun() {
   sendUnfinished();
 }
 
-const isRight = s => s.chosen === BY_ID[s.id].a;
+// A reverse question's answer is its fact's label in the group; any other question's is the fact's answer.
+const labelOf = (group, id) => GROUP_BY_ID[group].facts.find(f => f.id === id).label;
+const answerOf = s => s.format === 'reverse' ? labelOf(s.group, s.id) : BY_ID[s.id].a;
+const questionText = s => s.format === 'reverse' ? GROUP_BY_ID[s.group].reverse.replace('{answer}', BY_ID[s.id].a) : BY_ID[s.id].q;
+const isRight = s => s.chosen === answerOf(s);
 // A finished Set as a record. It names the latest Reset this device knows about. Every answered
 // question screen is an answer; its role says whether it counts toward the fact's standing.
 function setRecord(r) {
@@ -689,7 +730,7 @@ function start(kind) {
     : buildSet(S, Date.now());
   const change = latestChange(copyRecords());
   run = { kind, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), after: change && change.id,
-    number: S.sets + 1, group: null, i: 0, answered: false, reasks: 0, screens };
+    number: S.sets + 1, group: (screens.find(s => s.kind === 'contrast') || {}).group ?? null, i: 0, answered: false, reasks: 0, screens };
   keepRun();
   renderScreen();
 }
@@ -711,7 +752,31 @@ function progressLine() {
 }
 
 function renderScreen(revealFeedback) {
-  return run.screens[run.i].kind === 'rule' ? renderRule() : renderQuestion(revealFeedback);
+  const kind = run.screens[run.i].kind;
+  return kind === 'rule' ? renderRule() : kind === 'contrast' ? renderCompare() : renderQuestion(revealFeedback);
+}
+
+// A group's Compare screen: its easily mixed-up facts side by side, before the questions on them.
+function renderCompare() {
+  const g = GROUP_BY_ID[run.screens[run.i].group];
+  const rows = g.facts.map(f => {
+    const q = BY_ID[f.id];
+    return `<li><div class="cfact">${visual(q) ? `<span class="cpic">${visual(q)}</span>` : ''}<span>${esc(f.label)}</span></div>` +
+      `<div class="cmeans">${esc(f.means || q.a)}</div></li>`;
+  }).join('');
+  paint(`
+    <div class="home">
+      ${progressLine()}
+      <div class="card">
+        <h1 class="q" id="compareHead" tabindex="-1">Compare: ${esc(g.title)}</h1>
+        <p class="sub">These ${g.facts.length} rules are easy to mix up. Here they are side by side.</p>
+        <ul class="compare">${rows}</ul>
+      </div>
+      <button class="btn primary" type="button" id="compareGoBtn">Go on to the questions</button>
+      ${quitLink}
+    </div>`, '#compareHead');
+  $('compareGoBtn').onclick = () => { toTop(); next(); };
+  wireQuit();
 }
 
 // A fact's rule: its explanation and the manual's own words. It comes once, when the Learner first
@@ -743,19 +808,19 @@ function renderRule() {
 function feedbackLines(s) {
   const q = BY_ID[s.id];
   if (isRight(s)) return { verdict: 'Correct.', also: '', back: '' };
-  const other = q.also && BY_ID[q.also[s.chosen]];
+  const other = s.format === 'choice' && q.also && BY_ID[q.also[s.chosen]];
   const reasked = run.kind === 'daily' && s.kind === 'counted' && run.screens.some((x, j) => j > run.i && x.kind === 'reask' && x.id === s.id);
-  return { verdict: `The right answer is: ${q.a}.`, also: other ? `${s.chosen} answers a different question: ${other.q}` : '',
+  return { verdict: `The right answer is: ${answerOf(s)}.`, also: other ? `${s.chosen} answers a different question: ${other.q}` : '',
     back: reasked ? 'This question comes back later in this set, and in your next set.' : 'This question comes back in your next set.' };
 }
 
 function renderQuestion(revealFeedback) {
-  const s = run.screens[run.i], q = BY_ID[s.id], last = run.i === run.screens.length - 1;
+  const s = run.screens[run.i], q = BY_ID[s.id], last = run.i === run.screens.length - 1, right = answerOf(s);
   const L = ['A', 'B', 'C', 'D'];
   const opts = s.options.map((o, k) => {
     if (!run.answered) return `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${L[k]}"><span class="key">${L[k]}</span><span class="otext">${esc(o)}</span></button></li>`;
     let c = 'rest', tag = '';
-    if (o === q.a) { c = 'right'; tag = o === s.chosen ? 'Your answer. It is correct.' : 'Correct answer'; }
+    if (o === right) { c = 'right'; tag = o === s.chosen ? 'Your answer. It is correct.' : 'Correct answer'; }
     else if (o === s.chosen) { c = 'wrong'; tag = 'Your answer'; }
     return `<li class="opt ${c}"><span class="key" aria-hidden="true">${L[k]}</span><span class="otext"><span>${esc(o)}</span>${tag ? `<span class="tag">${tag}</span>` : ''}</span></li>`;
   }).join('');
@@ -774,8 +839,8 @@ function renderQuestion(revealFeedback) {
       ${progressLine()}
       <div class="card">
         ${above}
-        ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
-        <h1 class="q" id="qText" tabindex="-1">${esc(q.q)}</h1>
+        ${visual(q) && s.format !== 'reverse' ? `<div class="visual">${visual(q)}</div>` : ''}
+        <h1 class="q" id="qText" tabindex="-1">${esc(questionText(s))}</h1>
         <ul class="options" aria-labelledby="qText">${opts}</ul>
         ${fb}
       </div>
@@ -811,7 +876,7 @@ function insertReask(r, p) {
     if (isQuestion(r.screens[j]) && r.screens[j].id !== s.id && ++seen === RE_ASK_GAP) { at = j + 1; break; }
   }
   if (at < r.screens.length && r.screens[at - 1].kind === 'first_look') at++;
-  r.screens.splice(at, 0, { kind: 'reask', id: s.id, format: s.format, options: shuffle(s.options), chosen: null, at: null });
+  r.screens.splice(at, 0, { kind: 'reask', id: s.id, group: s.group, format: s.format, options: shuffle(s.options), chosen: null, at: null });
   r.reasks++;
   return true;
 }
@@ -973,6 +1038,8 @@ function keepQuestions() {
 function begin(data) {
   DAYS = data.days; QS = data.qs; TOTAL_DAYS = DAYS.length;
   BY_ID = Object.fromEntries(QS.map(q => [q.id, q]));
+  GROUPS = data.groups || [];
+  GROUP_BY_ID = Object.fromEntries(GROUPS.map(g => [g.id, g]));
   if (me.role === 'helper') renderHelper();
   else openLearner();
 }

@@ -3,7 +3,7 @@
 
 Run on its own (python3 tests/validate_data.py) or automatically from build.py.
 Every rule here exists because the mistake it catches actually happened, except the
-fact rules, which guard the grouping of wordings done by hand (see check_facts).
+fact and group rules, which guard groupings done by hand (see check_facts and check_groups).
 """
 import json
 import pathlib
@@ -67,6 +67,8 @@ def validate():
     if missing:
         errors.append(f"the manual's own sample questions are missing from the sections: {sorted(missing)}")
     errors += check_facts(qs, set(used))
+    groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
+    errors += check_groups(groups, set(used))
     return errors
 
 
@@ -112,6 +114,40 @@ def check_facts(qs, used):
                 if plain(q["answer"]) in {plain(w) for w in other["wrong"]}:
                     errors.append(f"{q['id']}: its right answer is a wrong choice in {other['id']}, another"
                                   f" wording of fact {f}")
+    return errors
+
+
+def check_groups(groups, used):
+    """data/groups.json: groups of easily mixed-up facts, shown side by side on a Compare screen.
+
+    Every fact is in the sections and in at most one group, a group has 2 or more facts, each with
+    its own label (the labels are the answer choices of a reverse question), and a `reverse` stem
+    has {answer} exactly once and is only on a group of 4 or more, so it always has 3 wrong choices.
+    """
+    errors, seen, ids = [], {}, set()
+    for g in groups:
+        gid = g.get("id")
+        if not gid or gid in ids:
+            errors.append(f"group {gid!r}: needs an id of its own")
+        ids.add(gid)
+        facts = g.get("facts", [])
+        if len(facts) < 2:
+            errors.append(f"group {gid}: needs 2 or more facts")
+        labels = [f.get("label", "") for f in facts]
+        if not all(labels) or len(set(labels)) != len(labels):
+            errors.append(f"group {gid}: every fact needs a label of its own")
+        for f in facts:
+            if f["id"] not in used:
+                errors.append(f"group {gid}: {f['id']} is not a question in the sections")
+            elif f["id"] in seen:
+                errors.append(f"group {gid}: {f['id']} is already in group {seen[f['id']]}")
+            seen[f["id"]] = gid
+        stem = g.get("reverse")
+        if stem is not None:
+            if stem.count("{answer}") != 1:
+                errors.append(f"group {gid}: its reverse stem needs {{answer}} exactly once")
+            if len(facts) < 4:
+                errors.append(f"group {gid}: a reverse stem needs a group of 4 or more facts")
     return errors
 
 

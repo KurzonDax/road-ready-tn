@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Build the study app.
 
-Reads the question bank (data/questions.json) and the 12-section study plan
-(data/sections.json), checks them, and writes to dist/:
+Reads the question bank (data/questions.json), the 12-section study plan
+(data/sections.json) and the groups of easily mixed-up facts (data/groups.json),
+checks them, and writes to dist/:
 
 - index.html      the page (src/app.html), with no questions in it
 - questions.json  the questions the page fetches when it starts
@@ -45,8 +46,9 @@ sys.path.insert(0, str(ROOT / "tests"))
 from validate_data import plain, validate  # noqa: E402
 
 
-def compact(q, section):
-    """Convert a bank question to the short field names the page uses."""
+def compact(q, section, group=None):
+    """Convert a bank question to the short field names the page uses. `group` is the id of the
+    data/groups.json group its fact is in, if any."""
     item = {
         "id": q["id"],
         "q": q["question"],
@@ -62,6 +64,8 @@ def compact(q, section):
         item["sign"] = q["sign"]
     if q.get("color"):
         item["swatch"] = q["color"]
+    if group:
+        item["group"] = group
     item["day"] = section  # the page calls sections "days" internally
     return item
 
@@ -69,13 +73,15 @@ def compact(q, section):
 def build_data():
     bank = json.loads((ROOT / "data" / "questions.json").read_text())
     plan = json.loads((ROOT / "data" / "sections.json").read_text())
+    groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
     by_id = {q["id"]: q for q in bank["questions"]}
+    group_of = {f["id"]: g["id"] for g in groups for f in g["facts"]}
     days, qs = [], []
     for sec in plan["sections"]:
         days.append({"day": sec["section"], "title": sec["title"]})
-        qs.extend(compact(by_id[i], sec["section"]) for i in sec["questions"])
+        qs.extend(compact(by_id[i], sec["section"], group_of.get(i)) for i in sec["questions"])
     add_also(qs)
-    return {"days": days, "qs": qs}
+    return {"days": days, "qs": qs, "groups": groups}
 
 
 def add_also(qs):

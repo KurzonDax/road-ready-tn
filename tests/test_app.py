@@ -15,7 +15,8 @@ landing on its own screen, sign-out, and a sign-in that has ended) and the path 
 Learner takes (docs/specs/learning-engine.md): a new Learner's first Set of first looks,
 rule screens and counted questions with the gap between them, a wrong answer's re-ask,
 Set done, the next Set opening with the missed fact, a fact due again 13 hours later
-but not a minute later, the line naming the question a wrong choice answers, every fact
+but not a minute later, the line naming the question a wrong choice answers, a Compare
+screen and its reverse questions once a group is learned, every fact
 learned, Practice tests up to the "ready" screen, saving a Set across a reload and picking
 it up again, and every screen at 375 px wide. The learning engine runs on fixtures in the
 page: standings, the due order, the Section cursor, old records, retention, and buildSet()'s
@@ -160,7 +161,7 @@ def screen_kind(pg):
 def click_choice(pg, right=True):
     """Click the right answer to the question on screen, or the one after it in the list."""
     opts = pg.query_selector_all("button.opt")
-    want = pg.evaluate("BY_ID[run.screens[run.i].id].a")
+    want = pg.evaluate("answerOf(run.screens[run.i])")
     k = [o.inner_text().split("\n", 1)[-1].strip() for o in opts].index(want)
     opts[k if right else (k + 1) % len(opts)].click()
 
@@ -172,8 +173,8 @@ def answer_set(pg, miss=0, stop=None):
     leave the last one's feedback on screen. Returns how many counted questions and re-asks were answered."""
     n = missed = 0
     while (kind := screen_kind(pg)) is not None:
-        if kind == "rule":
-            pg.click("#ruleGoBtn")
+        if kind in ("rule", "contrast"):
+            go_on(pg)
             continue
         wrong = kind == "counted" and missed < miss
         missed += wrong
@@ -190,13 +191,18 @@ def answer_set(pg, miss=0, stop=None):
 
 
 def answer_one(pg, right=True):
-    """Go on past first looks and rule screens to the next counted question or re-ask, and answer it."""
-    while screen_kind(pg) in ("first_look", "rule"):
-        if screen_kind(pg) == "rule":
-            pg.click("#ruleGoBtn")
-        else:
+    """Go on past first looks, rule and Compare screens to the next counted question or re-ask, and answer it."""
+    while screen_kind(pg) in ("first_look", "rule", "contrast"):
+        if screen_kind(pg) == "first_look":
             click_choice(pg)
+        else:
+            go_on(pg)
     click_choice(pg, right)
+
+
+def go_on(pg):
+    """Press the button that goes on from a rule screen or a Compare screen."""
+    pg.click("#ruleGoBtn" if screen_kind(pg) == "rule" else "#compareGoBtn")
 
 
 def open_page(pg, url):
@@ -566,7 +572,10 @@ BUILD_SET_PROPERTIES = """n => {
       const screens = buildSet(p, now, firstLook), say = what => problems.push(`history ${k}, FIRST_LOOK ${firstLook}: ${what}`);
       const counted = screens.filter(s => s.kind === 'counted'), rules = screens.filter(s => s.kind === 'rule');
       if (counted.length > COUNTED_TARGET) say(`${counted.length} counted questions`);
-      if (counted.length < Math.min(MIN_SET, ids.length)) say(`only ${counted.length} counted questions`);
+      // A group block takes no new facts, so with too few other facts to fill it, a Set can be short.
+      const blockOf = screens[0] && screens[0].kind === 'contrast' ? GROUPS.find(g => g.id === screens[0].group).facts.map(f => f.id) : [];
+      const spare = QS.filter(q => p.facts[q.id].asked && !blockOf.includes(q.id)).length;
+      if (counted.length < Math.min(MIN_SET, blockOf.length ? blockOf.length + spare : ids.length)) say(`only ${counted.length} counted questions`);
       if (new Set(counted.map(s => s.id)).size !== counted.length) say('a fact asked twice');
       if (rules.length > NEW_PER_SET) say(`${rules.length} new facts`);
       if (due >= 10 && rules.length) say(`${due} due and still ${rules.length} new facts`);
@@ -581,7 +590,15 @@ BUILD_SET_PROPERTIES = """n => {
         least = Math.min(least, j - i - 1);
         if (j - i - 1 < GAP) say(`only ${j - i - 1} screens between the rule and counted question for ${s.id}`);
       });
-      if (!due && answered <= ids.length - NEW_PER_SET && (rules.length !== NEW_PER_SET || least !== GAP))
+      const block = screens.filter(s => s.kind === 'contrast');
+      if (block.length) {
+        const g = GROUPS.find(g => g.id === block[0].group), inBlock = screens.slice(1, 1 + g.facts.length);
+        if (screens[0].kind !== 'contrast' || block.length > 1) say('a Compare screen that is not the first and only one');
+        if (rules.length) say(`a group block and still ${rules.length} new facts`);
+        if (inBlock.map(s => s.id).sort().join() !== g.facts.map(f => f.id).sort().join() || inBlock.some(s => s.kind !== 'counted'))
+          say(`the block after Compare: ${g.id} is not one counted question per fact of the group`);
+      }
+      if (!due && !block.length && answered <= ids.length - NEW_PER_SET && (rules.length !== NEW_PER_SET || least !== GAP))
         say(`nothing due: ${rules.length} new facts and a gap of ${least}`);
     }
   }
@@ -675,13 +692,62 @@ def check_engine(browser, inst):
     got = pg.evaluate("r => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z'))",
                       [daily(1, [(q, False, 1) for q in s1 + s2[:2]])])
     check(len(got["due"]) == 10 and got["fresh"] == [] and got["fill"] == [], "with 10 or more due, a Set is 10 due facts and no new ones", got)
-    everything = [daily(1, [(q["id"], True, 1) for q in pg.evaluate("QS")])]
+    # Every fact right, and every group compared after that, so no group block is due.
+    groups = pg.evaluate("GROUPS.map(g => [g.id, g.facts[0].id])")
+    everything = [daily(1, [(q["id"], True, 1) for q in pg.evaluate("QS")])] + \
+        [daily(40 + k, [(first, True, 1.5)], group=g) for k, (g, first) in enumerate(groups)]
     got = pg.evaluate("r => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z'))", everything)
     check(got["due"] == [] and got["fresh"] == [] and len(got["fill"]) == 5,
           "with nothing due and nothing new, a Set is 5 fill facts", got)
     problems = pg.evaluate(BUILD_SET_PROPERTIES, 500)
     check(problems == [], "over 500 random histories, in both FIRST_LOOK modes: at least GAP screens for other facts "
           "between each rule and its counted question, at most 5 new and 10 counted, never fewer than 5", problems[:5])
+
+    print("\n[group blocks]")
+    parking = ["b-250", "b-252", "b-253", "b-251"]
+    learned = [daily(30, [(q, True, 1) for q in parking])]
+
+    def plan(records, at_hour):
+        return pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now));"
+                           " return {group: p.group && p.group.id, block: p.block, due: p.due, fresh: p.fresh, fill: p.fill}; }",
+                           [records, hours(at_hour)])
+
+    got = plan(learned, 2)
+    check(got["group"] == "parking-distances" and got["block"] == parking and got["fresh"] == [] and got["due"] == []
+          and got["fill"] == [], "once all four parking facts are learned, the next Set is their group block, with no new facts", got)
+    got = plan(learned[:0] + [daily(31, [(q, True, 1) for q in parking[:3]])], 2)
+    check(got["group"] is None and len(got["fresh"]) == 5, "with one of them still new, there is no group block", got)
+    compared = learned + [daily(32, [(q, True, 3) for q in parking], group="parking-distances")]
+    check(plan(compared, 4)["group"] is None, "after a Set with that group block, the group is not due")
+    again = compared + [daily(33, [("b-252", False, 5)])]
+    got = plan(again, 6)
+    check(got["group"] == "parking-distances" and "b-252" not in got["due"],
+          "a wrong counted answer on one of its facts after that Set makes the group due again, and its facts leave the due list", got)
+    got = plan([daily(34, [("b-031", True, 1), ("b-030", True, 1), (s3[0], True, 1), (s3[1], True, 1),
+                           (s3[2], True, 1), (s3[3], True, 1)])], 2)
+    check(got["group"] == "speed-limits" and got["block"] == ["b-031", "b-030"] and len(got["fill"]) == 3,
+          "a group block of 2 is filled to 5 counted questions with facts not yet due", got)
+    blocks = pg.evaluate("""r => [0, 1, 2, 3, 4, 5].map(() => buildSet(progressFrom(r), Date.parse('2026-10-01T14:00:00Z'))
+        .map(s => ({kind: s.kind, id: s.id, group: s.group, format: s.format, options: s.options})))""", learned)
+    labels = {"b-250": "A fire hydrant", "b-252": "A crosswalk", "b-253": "A stop sign or traffic signal", "b-251": "A railroad crossing"}
+    ok = all(b[0] == {"kind": "contrast", "id": None, "group": "parking-distances", "format": None, "options": None}
+             and [s["format"] for s in b[1:]] == ["choice", "reverse", "choice", "reverse"]
+             and all(s["group"] == "parking-distances" for s in b[1:]) for b in blocks)
+    reverse = [s for b in blocks for s in b[1:] if s["format"] == "reverse"]
+    check(ok, "the block is the Compare screen, then the 4 facts shuffled, every second one in the reverse format", blocks[0])
+    check(all(sorted(s["options"]) == sorted(labels.values()) for s in reverse),
+          "a reverse question's choices are the labels of its group", reverse[:2])
+    got = pg.evaluate("""r => { const p = progressFrom(r), now = Date.parse('2026-10-01T14:00:00Z');
+        return [...Array(20)].map(() => buildSet(p, now).filter(s => s.format === 'reverse').map(s => s.id)); }""",
+                      [daily(35, [(q, True, 1) for q in ("a-152", "a-153", "a-155", "a-154")])])
+    check(all(len(x) == 1 and x[0] != "a-154" for x in got),
+          "in a group of 4 with one fact marked reverse: false, one question is reverse, and never that fact", got[:3])
+    got = pg.evaluate("""r => { const run = { kind: 'daily', set_id: 's', number: 2, i: 0, answered: false, reasks: 0, group: 'parking-distances',
+        screens: buildSet(progressFrom(r), Date.parse('2026-10-01T14:00:00Z')) };
+        const ok = !!unpackRun(packRun(run)), rev = run.screens.find(s => s.format === 'reverse');
+        rev.options = [...rev.options.slice(0, 3), 'A school bus'];
+        return [ok, unpackRun(packRun(run))]; }""", learned)
+    check(got == [True, None], "a saved Set whose reverse question's choices are not labels of its group is dropped", got)
 
     print("\n[retention]")
     for answers, want, what in (
@@ -803,7 +869,7 @@ def check_helper_helpers(browser, inst):
     for records, want, next_set in (
             ([], "0 of 120 facts learned, 0 solid.", "Next set: 5 new."),
             ([daily_set(1, [(q, i > 1, 10, "counted") for i, q in enumerate(s1)], seq=1)],
-             "8 of 120 facts learned, 0 solid.", "Next set: 2 come back, 5 new."),
+             "8 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 2 come back."),
             ([record(1, "move", 10, {"to": 13}, seq=1), practice(2, 20, 28), practice(3, 30, 27), practice(4, 40, 29)],
              "29 of 120 facts learned, 0 solid.", "Ready for the test: 3 practice tests in a row at 27 or more")):
         got = pg.evaluate("r => [whereNow(progressFrom(r)), nextSetLine(progressFrom(r), Date.parse('2026-10-01T13:00:00Z'))]", records)
@@ -905,7 +971,7 @@ def check_helper_view(browser):
         pg.get_by_role("button", name="Casey").click()
         pg.wait_for_selector("#stage .part")
         check(pg.inner_text("#stage h1") == "Casey", "the Learner's page opens with the Learner's name")
-        check(texts(pg, ".now p") == ["45 of 120 facts learned, 0 solid.", "Next set: 10 come back.",
+        check(texts(pg, ".now p") == ["45 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 5 come back.",
                                       "Unfinished: Set 2, 5 of 10 answered"],
               "Now: the facts learned, what the next Set holds, and the unfinished Set", texts(pg, ".now p"))
         check(texts(pg, ".retention p") == ["Of 3 times a fact was answered right and asked again at least 12 hours later, "
@@ -1201,7 +1267,7 @@ def check_manage_learner(browser):
         check(stage_text(pg).startswith(want), "Reset progress asks first, in the decided words", stage_text(pg))
         pg.click("#confirmNo")
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["19 of 120 facts learned, 0 solid.", "Next set: 10 come back.",
+        check(texts(pg, ".now p") == ["19 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 5 come back.",
                                       "Unfinished: Set 1, 2 of 10 answered"],
               "saying no to Reset progress changes nothing", texts(pg, ".now p"))
         pg.get_by_role("button", name="Reset progress").click()
@@ -1695,12 +1761,12 @@ def ago(hours_back):
     return t.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
-def daily_at(n, answers):
+def daily_at(n, answers, group=None):
     """A daily Set finished in the past: `answers` is a list of (question id, right, hours ago). Record ids are
     unique across the whole Instance, so each Learner's fixtures need their own `n`."""
     oldest = max(h for _, _, h in answers)
     return {"id": f"record-{n:012d}", "kind": "set", "reset": None, "at": ago(min(h for _, _, h in answers)), "data": {
-        "set_id": f"set-{n}", "type": "daily", "section": None, "group": None, "started_at": ago(oldest),
+        "set_id": f"set-{n}", "type": "daily", "section": None, "group": group, "started_at": ago(oldest),
         "answers": [{"q": q, "chosen": "an answer", "right": right, "at": ago(h), "role": "counted", "format": "choice"}
                     for q, right, h in answers]}}
 
@@ -1763,7 +1829,7 @@ def check_study_path(browser, inst, scheme="light"):
     check(not {f for _, f in second} & {f for _, f in first},
           "a fact answered right is not in the next Set started a minute later", second)
     while screen_kind(pg) != "counted":
-        pg.click("#ruleGoBtn") if screen_kind(pg) == "rule" else click_choice(pg)
+        go_on(pg) if screen_kind(pg) in ("rule", "contrast") else click_choice(pg)
     p = pg.evaluate("run.i")
     check(pg.inner_text(".progress") == "Set 2: question 1 of 5", "a counted question says which of the Set's counted questions it is",
           pg.inner_text(".progress"))
@@ -1802,18 +1868,21 @@ def check_study_path(browser, inst, scheme="light"):
     check("See the 1 question you missed" in done, "and lists the missed question once", done)
     pg.click("#homeBtn")
 
-    # Set 3 opens with the missed fact. Stopping partway keeps the answers.
-    check(h1(pg) == "Set 3" and "1 question comes back. 5 new." in stage_text(pg),
+    # Section 1's five sign colors are all learned now, so Set 3 compares them first, then asks the
+    # missed fact, and takes no new facts. Stopping partway keeps the answers.
+    check(h1(pg) == "Set 3" and "Compare: What each sign color means. 1 question comes back." in stage_text(pg),
           "the home screen says what the next Set holds", stage_text(pg))
     pg.click("#startBtn")
     third = screens(pg)
-    check([s for s in third if s[0] == "counted"][0] == ["counted", missed] and not gap_problems(third),
-          "the next Set opens with the fact answered wrong", third)
+    colors = pg.evaluate("GROUP_BY_ID['sign-colors'].facts.map(f => f.id)")
+    check(third[0] == ["contrast", None] and sorted(f for _, f in third[1:6]) == sorted(colors)
+          and third[6:] == [["counted", missed]],
+          "the next Set compares the learned sign colors, then asks the fact answered wrong", third)
     answer_one(pg)
     pg.click("#nextBtn")
     answer_one(pg)
     pg.click("#quitBtn")
-    check(pg.query_selector("#resumeBtn") is not None and "You stopped partway through Set 3. You answered 7 of 11 questions." in stage_text(pg)
+    check(pg.query_selector("#resumeBtn") is not None and "You stopped partway through Set 3. You answered 2 of 6 questions." in stage_text(pg)
           and not pg.query_selector("#startBtn") and h1(pg) == "Set 3",
           "stopping partway goes home, where Continue takes the place of Start the set", stage_text(pg))
     reload(pg)
@@ -1865,8 +1934,8 @@ def check_known_facts(browser, inst):
     sign_in(pg2, "Eli", "also password")
     pg2.click("#startBtn")
     while pg2.evaluate("run.screens[run.i].id") != "b-250" or screen_kind(pg2) != "counted":
-        if screen_kind(pg2) == "rule":
-            pg2.click("#ruleGoBtn")
+        if screen_kind(pg2) in ("rule", "contrast"):
+            go_on(pg2)
         else:
             click_choice(pg2)
             if pg2.query_selector("#nextBtn"):
@@ -1880,16 +1949,19 @@ def check_known_facts(browser, inst):
 
     print("\n[every fact learned]")
     c = inst.add_learner("Finn", "known password")
+    # Every fact answered right an hour ago, and every group compared half an hour ago.
+    groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
     store_history(inst, c, [daily_at(21, [(q, True, 1) for q in all_ids[:50]]),
                             daily_at(22, [(q, True, 1) for q in all_ids[50:100]]),
-                            daily_at(23, [(q, True, 1) for q in all_ids[100:]])])
+                            daily_at(23, [(q, True, 1) for q in all_ids[100:]])] +
+                  [daily_at(40 + k, [(g["facts"][0]["id"], True, 0.5)], group=g["id"]) for k, g in enumerate(groups)])
     ctx = browser.new_context(viewport={"width": 400, "height": 900})
     pg = ctx.new_page()
     pg.on("pageerror", lambda e: errors.append(str(e)))
     open_page(pg, inst.url)
     sign_in(pg, "Finn", "known password")
     home = stage_text(pg)
-    check(h1(pg) == "Set 4" and "Nothing is due. This set goes over 5 facts you already know." in home
+    check(h1(pg) == "Set 19" and "Nothing is due. This set goes over 5 facts you already know." in home
           and "120 of 120 facts learned. 0 solid." in home,
           "with every fact learned and nothing due, the home screen says the Set goes over known facts", home)
     check("Practice tests The real test passes at 24 of 30. The app's goal is 27 of 30 on three practice tests in a row." in home
@@ -1926,7 +1998,9 @@ def check_known_facts(browser, inst):
           and "The questions you missed come back in your next set." in end and "pass" not in end,
           "a Practice test with 25 right says so, says the missed ones come back, with no pass or fail", end)
     pg.click("#homeBtn")
-    check("Your last practice tests: 25" in stage_text(pg) and "5 questions come back." in stage_text(pg)
+    missed = pg.evaluate("copyRecords().filter(r => r.data && r.data.type === 'test').pop().data.answers.filter(a => !a.right).map(a => a.q)")
+    coming = pg.evaluate("(p => [...p.block, ...p.due])(setPlan(S, Date.now()))")
+    check("Your last practice tests: 25" in stage_text(pg) and len(missed) == 5 and set(missed) <= set(coming)
           and pg.get_attribute("#startBtn", "class") == "btn primary",
           "the home screen lists the Practice test score, and the missed questions come back in the next Set", stage_text(pg))
     for n in range(3):
@@ -1939,6 +2013,79 @@ def check_known_facts(browser, inst):
     reload(pg)
     check(texts(pg, ".sign h2") == ["Ready for the test"], "Ready for the test is still shown after a reload")
     check(texts(pg, ".road .done")[-1] == "Practice tests Practice tests, ready", "and the track shows it")
+    check(not errors, "no page errors" + (f": {errors}" if errors else ""))
+    ctx.close()
+
+
+def check_compare(browser, inst):
+    """A Learner with all four parking facts learned: the Compare screen, then the four questions, two
+    of them reverse, and the line naming the question a wrong choice answers."""
+    print("\n[Compare]")
+    ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True)
+    pg = ctx.new_page()
+    errors = []
+    pg.on("pageerror", lambda e: errors.append(str(e)))
+    parking = ["b-250", "b-252", "b-253", "b-251"]
+    hal = inst.add_learner("Hal", "compare password")
+    store_history(inst, hal, [daily_at(60, [(q, True, 1) for q in parking])])
+    open_page(pg, inst.url)
+    sign_in(pg, "Hal", "compare password")
+    check(h1(pg) == "Set 2" and "Compare: How close you may park." in stage_text(pg),
+          "the home screen says the next Set compares the parking distances", stage_text(pg))
+    for _ in range(20):  # the hydrant's question has to be a choice one, not reverse, for the last check
+        pg.click("#startBtn") if pg.query_selector("#startBtn") else pg.click("#overBtn")
+        if pg.evaluate("run.screens.find(s => s.id === 'b-250').format") == "choice":
+            break
+        pg.click("#quitBtn")
+    check(stage_text(pg).startswith("Set 2 Compare: How close you may park These 4 rules are easy to mix up. "
+                                    "Here they are side by side."),
+          "the Set opens with the Compare screen", stage_text(pg))
+    check(texts(pg, ".compare li") == ["A fire hydrant 15 feet", "A crosswalk 20 feet", "A stop sign or traffic signal 30 feet",
+                                       "A railroad crossing 50 feet"],
+          "it shows each fact beside its answer, in the group's order", texts(pg, ".compare li"))
+    check(no_sideways_scroll(pg), "at 375 px wide, the Compare screen doesn't scroll sideways")
+    pg.click("#compareGoBtn")
+    got = pg.evaluate("run.screens.map(s => [s.kind, s.id, s.format || null])")
+    check(len(got) == 5 and [k for k, _, _ in got[1:]] == ["counted"] * 4 and sorted(f for _, f, _ in got[1:]) == sorted(parking)
+          and [f for _, _, f in got[1:]].count("reverse") == 2,
+          "then the four facts' questions, two of them reverse", got)
+    labels = ["A fire hydrant", "A crosswalk", "A stop sign or traffic signal", "A railroad crossing"]
+    wrong_reverse = False
+    while screen_kind(pg) == "counted":
+        fact, fmt = pg.evaluate("[run.screens[run.i].id, run.screens[run.i].format]")
+        if fmt == "reverse":
+            answer = pg.evaluate("BY_ID[run.screens[run.i].id].a")
+            opts = [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")]
+            check(pg.inner_text("#qText") == f"You may NOT park within {answer} of which of these?" and sorted(opts) == sorted(labels)
+                  and not pg.query_selector(".visual"),
+                  "a reverse question gives the answer in the stem and the group's labels as the choices", [pg.inner_text("#qText"), opts])
+            check(no_sideways_scroll(pg), "at 375 px wide, a reverse question doesn't scroll sideways")
+            if not wrong_reverse:
+                click_choice(pg, right=False)
+                wrong_reverse = True
+                label = pg.evaluate("labelOf('parking-distances', run.screens[run.i].id)")
+                check(pg.inner_text("#feedback .verdict") == f"The right answer is: {label}.",
+                      "after a wrong reverse answer, the right answer is the fact's label", pg.inner_text("#feedback .verdict"))
+            else:
+                click_choice(pg)
+                check(pg.inner_text("#feedback .verdict") == "Correct.", "a right reverse answer says Correct.")
+        elif fact == "b-250":
+            k = [o.inner_text().split("\n", 1)[-1].strip() for o in pg.query_selector_all("button.opt")].index("30 feet")
+            pg.query_selector_all("button.opt")[k].click()
+            check(pg.inner_text(".also") == "30 feet answers a different question: It is illegal to park within how many feet "
+                                            "of a traffic signal or stop sign?",
+                  "choosing 30 feet for the hydrant names the question 30 feet answers", pg.inner_text(".also"))
+        else:
+            click_choice(pg)
+        pg.click("#nextBtn")
+    answer_set(pg)
+    check(pg.inner_text(".home h2") == "Set done.", "the Set ends on Set done")
+    rec = wait_until(lambda: [r for r in db_state(inst, hal)[0] if r["data"].get("group")])
+    formats = sorted(a["format"] for a in rec[0]["data"]["answers"]) if rec else []
+    check(rec and rec[0]["data"]["group"] == "parking-distances" and formats.count("reverse") >= 2,
+          "the Set's record names the group, and its reverse answers say so", rec)
+    pg.click("#homeBtn")
+    check("Compare:" not in stage_text(pg), "the next Set does not compare the same group again", stage_text(pg))
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
     ctx.close()
 
@@ -1963,8 +2110,8 @@ def check_phone_screens(browser, inst):
     missed = 0
     while (kind := screen_kind(pg)) is not None:
         look(kind)
-        if kind == "rule":
-            pg.click("#ruleGoBtn")
+        if kind in ("rule", "contrast"):
+            go_on(pg)
             continue
         wrong = kind in ("counted", "reask") and missed < 2
         missed += wrong
@@ -2092,6 +2239,7 @@ def main():
         for scheme in ("light", "dark"):
             check_study_path(browser, inst, scheme)
         check_known_facts(browser, inst)
+        check_compare(browser, inst)
         check_phone_screens(browser, inst)
         browser.close()
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
