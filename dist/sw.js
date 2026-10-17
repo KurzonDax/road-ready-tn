@@ -6,7 +6,7 @@
 // - Fonts, icons and the manifest (STATIC_FILES, as build.py lists them): cache first, in
 //   rrtn-static-<version>.
 // - Everything else, every /api/ request among it, goes to the network and is never kept.
-const VERSION = '33c41779ca2f';
+const VERSION = '0c4e82c84690';
 const STATIC_FILES = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2", "fonts/overpass/overpass-variable.woff2", "icon-192.png", "icon-512.png", "manifest.webmanifest"];
 const PAGES = 'rrtn-pages';
 const STATIC = 'rrtn-static-' + VERSION;

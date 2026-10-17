@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Ready TN</title>
-<meta name="theme-color" content="#f3f5f2" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#111814" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#111814">
+<meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-title" content="Road Ready">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -17,32 +17,22 @@
 @font-face { font-family: "Overpass"; font-style: normal; font-weight: 600 800; font-display: swap; src: url("fonts/overpass/overpass-variable.woff2") format("woff2"); }
 /* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. Highway guide-sign palette. */
 :root {
-  --bg: #f3f5f2;
-  --surface: #ffffff;
-  --ink: #17221c;
-  --muted: #5b6a61;
-  --line: #d6ddd7;
-  --control-line: #7f8d84;
-  --guide: #1f5f3f;
-  --guide-ink: #ffffff;
-  --guide-soft: #e2efe7;
-  --bad: #b3261e;
-  --bad-soft: #fbe3e1;
-  --focus: #2a6fdb;
+  /* Dark on every device, whatever its own setting: one palette. */
+  --bg: #111814;
+  --surface: #1a231e;
+  --ink: #e8eee9;
+  --muted: #9db0a4;
+  --line: #2d3a32;
+  --control-line: #66796c;
+  --guide: #3f9a6c;
+  --guide-ink: #0c1410;
+  --guide-soft: #1f3328;
+  --bad: #f08a80;
+  --bad-soft: #3d1f1c;
+  --focus: #7fb0ff;
   --font-display: "Overpass", "Arial Narrow", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", Verdana, system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #111814; --surface: #1a231e; --ink: #e8eee9; --muted: #9db0a4; --line: #2d3a32; --control-line: #66796c;
-    --guide: #3f9a6c; --guide-ink: #0c1410; --guide-soft: #1f3328;
-    --bad: #f08a80; --bad-soft: #3d1f1c; --focus: #7fb0ff; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #111814; --surface: #1a231e; --ink: #e8eee9; --muted: #9db0a4; --line: #2d3a32; --control-line: #66796c;
-  --guide: #3f9a6c; --guide-ink: #0c1410; --guide-soft: #1f3328;
-  --bad: #f08a80; --bad-soft: #3d1f1c; --focus: #7fb0ff; color-scheme: dark;
+  color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
