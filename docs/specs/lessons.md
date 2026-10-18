@@ -57,13 +57,14 @@ The scene is an SVG with `viewBox="0 0 320 320"`, top-down, north up. Roads are 
 | `circle-road` | `cx, cy, r, w` | a roundabout: a ring road of width `w`. |
 | `car` | `id, x, y, heading` (`n`, `e`, `s`, `w`), `you` (bool), `tone` (`a` or `b`, default `a`) | a car centered at x,y with a windshield wedge toward its heading. `you: true` draws it in the accent outline with a "You" label. `id` makes it a tap target or a highlight. |
 | `sign` | `kind` (`stop`, `yield`, `allway`), `x, y` | the sign as the manual draws it, small, at a corner. `allway` is a stop sign with an ALL WAY plate. |
+| `roadsign` | `kind` (`octagon`, `triangle` pointing down, `diamond`, `circle`, `rectangle`), `color` (`red`, `yellow`, `orange`, `green`, `blue`, `yellow-green`, `white`, `brown`), `x, y`, `id`, `wide` (bool, a rectangle wider than tall) | a sign face about 36 across, drawn by shape and color alone, with no words or symbols on it, so the drawing never says what the sign means. The colors are the ones `data/questions.json` uses. A red triangle has the white middle of a yield sign. Beside a road or on its own. `id` makes it a tap target or a highlight. |
 | `light` | `x, y, state` (`red`, `yellow`, `green`, `off`, `green-left`, `flashing-red`, `flashing-yellow`), `span` (default 64) | a traffic signal as the driver meets it: a vertical head, red on top, on a span across the road, over the far side of the intersection. For a car heading north on the standard intersection, `x` 160, `y` 121. |
 | `crosswalk` | `x, y, w, h` | white stripes across the road. |
 | `ped` | `id, x, y`, `cane` (bool) | a pedestrian as a dot with shoulders; `cane: true` adds a white cane with a red tip. |
 | `path` | `from: [x, y]`, `to: [x, y]`, `via: [x, y]` (optional) | a dashed arrow for where a vehicle intends to go. |
 | `label` | `x, y, text`, `anchor` (`start`, `middle`, `end`) | a small text label on the drawing. |
 
-Only cars and pedestrians can be targets or highlights. Everything a step says in words is also in `prompt`, `say` and `rule`; the drawing never carries a fact on its own.
+Only cars, pedestrians and road signs can be targets or highlights. Everything a step says in words is also in `prompt`, `say` and `rule`; the drawing never carries a fact on its own.
 
 ## How a lesson fits the engine
 
@@ -76,7 +77,7 @@ Only cars and pedestrians can be targets or highlights. Everything a step says i
 
 ## Validation (`tests/validate_data.py`)
 
-For every `data/lessons/section-N.json`: `section` matches the file name and is a Section in `data/sections.json`; every step `fact` is one of that Section's questions; every one of the Section's questions appears in at least one step; step ids are unique; `kind` is valid; a `tap` step has two or more targets whose ids are `car` or `ped` parts in its scene, and `answer` is one of them; a `choose` or `principle` step has two to four distinct options and `answer` is one; `prompt`, `then.say` and (with a fact) `rule` are non-empty; `then.highlight`, when present, is a part id in the scene (or in `then.parts`).
+For every `data/lessons/section-N.json`: `section` matches the file name and is a Section in `data/sections.json`; every step `fact` is one of that Section's questions; every one of the Section's questions appears in at least one step; step ids are unique; `kind` is valid; a `tap` step has two or more targets whose ids are `car`, `ped` or `roadsign` parts in its scene, and `answer` is one of them; a `choose` or `principle` step has two to four distinct options and `answer` is one; `prompt`, `then.say` and (with a fact) `rule` are non-empty; `then.highlight`, when present, is a part id in the scene (or in `then.parts`).
 
 ## Wording lint and the review sheet
 

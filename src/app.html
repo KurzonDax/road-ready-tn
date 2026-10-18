@@ -202,7 +202,7 @@ button.opt { cursor: pointer; }
 .k-target:focus { outline: none; }
 .k-target:focus-visible .k-body, .k-target:hover .k-body { stroke: var(--focus); stroke-width: 3.5; }
 .k-path { stroke: var(--guide); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
-/* Only cars and pedestrians are tappable; nothing drawn over them catches the tap. */
+/* Only cars, pedestrians and road signs are tappable; nothing drawn over them catches the tap. */
 .scene :not(.k-target):not(.k-target *) { pointer-events: none; }
 .k-target, .k-target * { pointer-events: auto; }
 @media (prefers-reduced-motion: no-preference) { .k-flash { animation: blink 1s steps(2, start) infinite; } @keyframes blink { to { opacity: .15; } } }
@@ -1150,6 +1150,21 @@ const SIGN_PARTS = {
   yield: (x, y) => `<g transform="translate(${x} ${y})"><polygon points="-11,-9 11,-9 0,10" fill="#c8323a"/><polygon points="-7,-6.5 7,-6.5 0,5" fill="#fff"/></g>`,
   allway: (x, y) => SIGN_PARTS.stop(x, y) + `<g transform="translate(${x} ${y + 16})"><rect x="-11" y="-4" width="22" height="8" fill="#fff" stroke="#c8323a" stroke-width="1"/>${svgText(0, 2.3, 'ALL WAY', 'middle', 'k-plate')}</g>`,
 };
+// A road sign drawn by shape and color alone, with no words on it, so the shape and the color carry the
+// meaning (Section 1). The colors are the ones data/questions.json uses for its sign colors. About 36 across.
+const SIGN_COLORS = { red: '#ed3929', yellow: '#faee1a', orange: '#f27423', green: '#12a850', blue: '#0777be', 'yellow-green': '#c3d53c', white: '#ffffff', brown: '#40371a' };
+function roadsignPart(p, o) {
+  const fill = SIGN_COLORS[p.color] || SIGN_COLORS.white, dark = p.color === 'red' || p.color === 'green' || p.color === 'blue' || p.color === 'brown';
+  const edge = `stroke="${dark ? '#ffffff' : '#231f20'}" stroke-width="1.8"`;
+  let face;
+  if (p.kind === 'octagon') face = `<polygon class="k-body" points="-7.5,-18 7.5,-18 18,-7.5 18,7.5 7.5,18 -7.5,18 -18,7.5 -18,-7.5" fill="${fill}" ${edge}/>`;
+  else if (p.kind === 'triangle') face = `<polygon class="k-body" points="-19,-16 19,-16 0,17 " fill="${fill}" ${edge}/>` + (p.color === 'red' ? '<polygon points="-12,-12 12,-12 0,9" fill="#ffffff"/>' : '');
+  else if (p.kind === 'diamond') face = `<polygon class="k-body" points="0,-19 19,0 0,19 -19,0" fill="${fill}" ${edge}/>`;
+  else if (p.kind === 'circle') face = `<circle class="k-body" r="18" fill="${fill}" ${edge}/>`;
+  else if (p.wide) face = `<rect class="k-body" x="-20" y="-13" width="40" height="26" rx="2" fill="${fill}" ${edge}/>`;
+  else face = `<rect class="k-body" x="-14" y="-18" width="28" height="36" rx="2" fill="${fill}" ${edge}/>`;
+  return wrapTarget(p, `<g class="k-roadsign" transform="translate(${p.x} ${p.y})">${face}</g>`, o);
+}
 const LIGHT_COLORS = { red: '#d9534f', yellow: '#e0b23c', green: '#5aa870' };
 // A traffic signal as a driver meets it: a vertical head, red on top, hung on a span across the road over
 // the far side of the intersection. `x`, `y` is the head's center; the span runs the width of the road.
@@ -1199,10 +1214,11 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     + parts.filter(p => p.t === 'circle-road').map(p => `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r}" fill="none" stroke="var(--road)" stroke-width="${p.w}"/>` +
       `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r + p.w / 2 - 1.5}" class="k-edge" fill="none"/><circle cx="${p.cx}" cy="${p.cy}" r="${p.r - p.w / 2 + 1.5}" class="k-edge" fill="none"/>`).join('');
   const marks = roads.map(r => roadMarks(r, roads)).join('');
-  const isActor = p => p.t === 'car' || p.t === 'ped';
+  const isActor = p => p.t === 'car' || p.t === 'ped' || p.t === 'roadsign';
   const rest = [...parts.filter(p => p.t !== 'road' && p.t !== 'circle-road' && !isActor(p)), ...parts.filter(isActor)].map(p => {
     if (p.t === 'car') return carPart(p, o);
     if (p.t === 'ped') return pedPart(p, o);
+    if (p.t === 'roadsign') return roadsignPart(p, o);
     if (p.t === 'sign') return (SIGN_PARTS[p.kind] || SIGN_PARTS.stop)(p.x, p.y);
     if (p.t === 'light') return lightPart(p);
     if (p.t === 'crosswalk') return crosswalkPart(p);

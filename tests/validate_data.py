@@ -153,13 +153,13 @@ def check_groups(groups, used):
 
 
 STEP_KINDS = {"tap", "choose", "principle"}
-TARGET_PARTS = {"car", "ped"}
+TARGET_PARTS = {"car", "ped", "roadsign"}
 
 
 def check_lessons(secs):
     """data/lessons/section-N.json (docs/specs/lessons.md): a lesson teaches every fact of its Section
     through steps the Learner acts on. Each step's answer must be one of what it offers, and every tap
-    target must be a car or pedestrian drawn in that step's scene."""
+    target must be a car, pedestrian or road sign drawn in that step's scene."""
     errors = []
     by_section = {s["section"]: s["questions"] for s in secs}
     for file in sorted((ROOT / "data" / "lessons").glob("section-*.json")):
@@ -206,7 +206,7 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: a tap step needs 2 or more targets, each with a label")
                 for tid in tids:
                     if tid not in part_ids:
-                        errors.append(f"{name} {sid}: target {tid!r} is not a car or pedestrian in the scene")
+                        errors.append(f"{name} {sid}: target {tid!r} is not a car, pedestrian or road sign in the scene")
                 if step.get("answer") not in tids:
                     errors.append(f"{name} {sid}: answer must be one of the targets")
             else:
@@ -217,7 +217,7 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: answer must be one of the options")
             hi = then.get("highlight")
             if hi is not None and hi not in part_ids | after_ids:
-                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car or pedestrian in the scene")
+                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car, pedestrian or road sign in the scene")
         missing = facts - covered
         if missing and steps:
             errors.append(f"{name}: no step teaches {sorted(missing)}")
