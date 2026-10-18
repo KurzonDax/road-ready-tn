@@ -801,7 +801,7 @@ def check_engine(browser, inst):
         copy = { records: [], pending: [] };  // setRecord names the latest Reset in the device copy; a Helper's page has none
         const rec = setRecord(run).data.answers.find(a => a.q === 'd-165');
         copy = null;
-        s.q = 'd-138';
+        s.q = 'b-064';
         return [ok, rec && [rec.right, rec.role], unpackRun(packRun(run))]; }""", [daily(85, [("b-077", True, 1)])])
     check(got == [True, [True, "counted"], None],
           "a record names the wording asked, and a saved Set whose question is not a wording of its fact is dropped", got)
@@ -2552,8 +2552,8 @@ def check_stop_lesson(browser, inst):
     check(any(any(p["t"] == "median" for p in s["parts"]) and "median" in s["prompt"] for s in steps if s["fact"] == "b-089"),
           "the divided-highway question draws the median the prompt names")
     sirens = [s for s in steps if "siren" in s["prompt"]]
-    check(len(sirens) == 2 and all(any(p["t"] == "car" and p.get("emergency") for p in s["parts"]) for s in sirens),
-          "both emergency-vehicle questions draw a vehicle with its lights, and name the siren")
+    check(len(sirens) == 3 and all(any(p["t"] == "car" and p.get("emergency") for p in s["parts"]) for s in sirens),
+          "every emergency-vehicle question draws a vehicle with its lights, and name the siren")
     # The distance from the tracks is asked as the test asks it, then used: a tap where the prompt says the stop line is 30 feet from the tracks.
     distance = [s for s in steps if s["fact"] == "b-077"]
     check(len(distance) == 2 and distance[0]["kind"] == "choose" and distance[0]["answer"] == "Between 15 and 50 feet from the tracks."

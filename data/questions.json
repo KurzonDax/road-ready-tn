@@ -5058,6 +5058,7 @@
     },
     {
       "id": "b-127",
+      "fact": "b-127",
       "topic": "road",
       "question": "You are stopped at a red light when an emergency vehicle approaches. The light turns green before it passes. What should you do?",
       "answer": "Stay stopped until it passes",
@@ -12230,22 +12231,6 @@
       "manual_sample": false
     },
     {
-      "id": "d-138",
-      "fact": "d-138",
-      "topic": "sharing",
-      "question": "How far away from a school bus should children stay?",
-      "answer": "Ten feet",
-      "wrong": [
-        "Two feet",
-        "Five feet",
-        "Three feet"
-      ],
-      "explanation": "The Danger Zone is on all sides of the bus. Children should stay ten feet away and NEVER go behind the bus.",
-      "page": 111,
-      "manual_quote": "Children should stay ten feet away from the school bus and NEVER go behind the bus.",
-      "manual_sample": false
-    },
-    {
       "id": "d-139",
       "topic": "sharing",
       "question": "Children are taught to take \"five giant steps\" away from the school bus. What does this mean for drivers?",
@@ -12924,22 +12909,6 @@
       "explanation": "A truck's blind spots, or No-Zones, are right in front of it, on both sides, and up to 200 feet behind it.",
       "page": 109,
       "manual_quote": "A truck’s blind spots are immediate in front, on either side of the car and up to 200 feet in the rear.",
-      "manual_sample": false
-    },
-    {
-      "id": "d-184",
-      "fact": "d-138",
-      "topic": "sharing",
-      "question": "Children getting off a school bus should stay how far away from the bus?",
-      "answer": "Ten feet",
-      "wrong": [
-        "Two feet",
-        "Five feet",
-        "Three feet"
-      ],
-      "explanation": "The area all around a school bus is the Danger Zone. Children should stay ten feet away and never go behind the bus.",
-      "page": 111,
-      "manual_quote": "Children should stay ten feet away from the school bus and NEVER go behind the bus.",
       "manual_sample": false
     }
   ]

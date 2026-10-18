@@ -118,8 +118,7 @@ New file. Used by Phase 2. Each fact is in at most one group. `label` is the lef
        {"id": "b-147", "label": "How far before a turn you turn on your signal"},
        {"id": "b-228", "label": "How much space you leave when you pass a bicycle"},
        {"id": "c-050", "label": "How close another vehicle is when you dim your high beams"},
-       {"id": "d-116", "label": "How far behind a truck its blind spot reaches", "means": "Up to 200 feet", "reverse": false},
-       {"id": "d-138", "label": "How far from a school bus children stay"}]},
+       {"id": "d-116", "label": "How far behind a truck its blind spot reaches", "means": "Up to 200 feet", "reverse": false}]},
     {"id": "speed-limits", "title": "Speed limits set by law",
      "reverse": null,
      "facts": [

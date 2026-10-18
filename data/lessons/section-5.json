@@ -1033,48 +1033,6 @@
     },
     {
       "id": "s5-13",
-      "fact": "d-138",
-      "kind": "choose",
-      "scene": {
-        "parts": [
-          {
-            "t": "road",
-            "x": 130,
-            "y": 0,
-            "w": 60,
-            "h": 320,
-            "center": "yellow"
-          },
-          {
-            "t": "bus",
-            "x": 175,
-            "y": 140,
-            "heading": "n",
-            "lights": "red",
-            "arm": true
-          },
-          {
-            "t": "ped",
-            "id": "child",
-            "x": 212,
-            "y": 118
-          }
-        ]
-      },
-      "prompt": "A child has just gotten off a stopped school bus. How far from the bus should the child stay?",
-      "options": [
-        "The child stays ten feet away.",
-        "The child stays two feet away.",
-        "The child stays five feet away."
-      ],
-      "answer": "The child stays ten feet away.",
-      "then": {
-        "say": "The child stays ten feet away and never goes behind the bus. Closer than that, on any side, is the Danger Zone, where children are most likely to be hit."
-      },
-      "rule": "Children stay ten feet away from a school bus and never go behind it, because the Danger Zone is on all sides of the bus."
-    },
-    {
-      "id": "s5-14",
       "fact": "b-124",
       "kind": "tap",
       "scene": {
@@ -1280,7 +1238,7 @@
       "rule": "When an emergency vehicle with a siren comes, you drive to the right edge or curb of the road and stop, and stay stopped until it has passed or a police officer directs you to move."
     },
     {
-      "id": "s5-15",
+      "id": "s5-14",
       "fact": "b-126",
       "kind": "choose",
       "scene": {
@@ -1338,6 +1296,66 @@
         "say": "You drive on through, then pull over to the right and stop. Stopped in the intersection, you block the police car's way."
       },
       "rule": "If you are in an intersection when an emergency vehicle comes, you drive on through the intersection before you pull over, so you do not block its path."
+    },
+    {
+      "id": "s5-15",
+      "fact": "b-127",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "em",
+            "x": 55,
+            "y": 175,
+            "heading": "e",
+            "emergency": true,
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are stopped at a red light. An emergency vehicle with its siren on is coming on the cross road. The light turns green before it has passed. What do you do?",
+      "options": [
+        "You stay stopped until it has passed.",
+        "You go, because the light is green.",
+        "You pull into the intersection and stop there."
+      ],
+      "answer": "You stay stopped until it has passed.",
+      "then": {
+        "say": "You stay stopped until the emergency vehicle has passed or has turned onto another street. A green light does not let you go in front of it."
+      },
+      "rule": "When the light turns green before an emergency vehicle has passed, you stay stopped until it has passed or turned onto another street."
     }
   ]
 }
