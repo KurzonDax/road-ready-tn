@@ -1508,6 +1508,16 @@ class RecordShape(RecordsTestCase):
         self.assert_refused(changed(a_daily(), data__section=3), changed(a_daily(), data__group=DROP),
                             a_daily(group=""), a_daily(group="g" * 65), a_daily(group=7))
 
+    def test_a_lesson_names_its_section_and_its_answers_may_be_taps(self):
+        lesson = a_set(type="lesson", section=3, answers=[changed(A_SIX_FIELD_ANSWER, role="lesson", format="tap"),
+                                                           changed(A_SIX_FIELD_ANSWER, role="lesson", format="choice")])
+        self.assert_accepted(lesson)
+
+    def test_a_lesson_without_a_section_or_with_a_group_is_refused(self):
+        lesson = a_set(type="lesson", section=3, answers=[changed(A_SIX_FIELD_ANSWER, role="lesson", format="tap")])
+        self.assert_refused(changed(lesson, data__section=None), changed(lesson, data__section=13),
+                            changed(lesson, data__group=None))
+
     def test_only_a_daily_set_has_a_group(self):
         for t, s in (("day", 1), ("redo", 2), ("review", None), ("test", None)):
             self.assert_refused(changed(a_set(type=t, section=s), data__group=None))

@@ -58,6 +58,10 @@ _Avoid_: Pre-test, guess
 The screen with a Fact's answer and its explanation in plain words. It comes once, when the Learner first meets the Fact.
 _Avoid_: Rule card, flashcard, hint
 
+**Lesson**:
+The screens that teach one Section's Facts before any question on them. On every screen the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what happens and the rule. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and its answers change no Standing.
+_Avoid_: Tutorial, reading, chapter
+
 **Compare**:
 One screen that shows a group of easily mixed-up Facts side by side, followed by questions on just that group.
 _Avoid_: Contrast, review

@@ -1,0 +1,793 @@
+{
+  "section": 3,
+  "title": "Right of way and intersections",
+  "steps": [
+    {
+      "id": "s3-01",
+      "fact": "b-110",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 140,
+            "y": 190,
+            "w": 40,
+            "h": 130,
+            "center": "none"
+          },
+          {
+            "t": "label",
+            "x": 190,
+            "y": 300,
+            "text": "Driveway",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 10,
+            "y": 122,
+            "text": "Main road",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "road-car",
+            "x": 70,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 160,
+            "y": 222,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              160,
+              202
+            ],
+            "via": [
+              162,
+              175
+            ],
+            "to": [
+              260,
+              175
+            ]
+          }
+        ]
+      },
+      "prompt": "You are driving out of a driveway and want to turn right onto the main road. There is no sign at the end of the driveway. A car on the main road is coming from your left and is close to the driveway. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "road-car",
+          "label": "the car on the main road"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "road-car",
+      "then": {
+        "highlight": "road-car",
+        "say": "The car on the main road goes first. You are driving onto the main road from a driveway, so you wait and let the car pass."
+      },
+      "rule": "When you enter a main road from a driveway, an alley, a parking lot or the roadside, you yield to all vehicles already on the main road."
+    },
+    {
+      "id": "s3-02",
+      "fact": "b-121",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 190,
+            "w": 60,
+            "h": 130,
+            "center": "yellow"
+          },
+          {
+            "t": "label",
+            "x": 10,
+            "y": 122,
+            "text": "Main road",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "right-car",
+            "x": 260,
+            "y": 145,
+            "heading": "w",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              200
+            ],
+            "via": [
+              175,
+              150
+            ],
+            "to": [
+              92,
+              145
+            ]
+          }
+        ]
+      },
+      "prompt": "Your road ends at a main road. There is no stop sign and no yield sign. You want to turn left onto the main road. A car on the main road is coming from your right and is close. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "right-car",
+          "label": "the car coming from your right"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "right-car",
+      "then": {
+        "say": "The car on the main road goes first. Your road ends at the main road, so you wait for the traffic from both directions on it, even when no sign tells you to."
+      },
+      "rule": "At a T intersection, the vehicles on the road that ends yield to the traffic from both directions on the main road."
+    },
+    {
+      "id": "s3-03",
+      "kind": "principle",
+      "prompt": "When you drove out of the driveway onto the main road, and when your road ended at the main road with no sign, who waited each time?",
+      "options": [
+        "You did, because you were entering a road that other cars were already on.",
+        "The cars on the main road did, because they slowed down to let you in.",
+        "No one did, because the faster car went first."
+      ],
+      "answer": "You did, because you were entering a road that other cars were already on.",
+      "then": {
+        "say": "Each time, you were driving onto a main road, so you waited and let the traffic already on it go first. The law does not give anyone the right-of-way. It only says who must wait."
+      }
+    },
+    {
+      "id": "s3-04",
+      "fact": "a-150",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "cross-car",
+            "x": 160,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              200
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "The light ahead of you has just turned green, and you want to drive straight across. A car from your left entered the intersection before the light turned green, and it is still in the intersection. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "cross-car",
+          "label": "the car in the intersection"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "cross-car",
+      "then": {
+        "highlight": "cross-car",
+        "say": "The car in the intersection goes first. It was there before the light turned green, so you wait until it is out of the intersection before you go."
+      },
+      "rule": "When the light turns green, you still yield to pedestrians and vehicles that are still in the intersection."
+    },
+    {
+      "id": "s3-05",
+      "fact": "a-151",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "oncoming",
+            "x": 145,
+            "y": 85,
+            "heading": "s",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              205
+            ],
+            "via": [
+              172,
+              148
+            ],
+            "to": [
+              40,
+              145
+            ]
+          }
+        ]
+      },
+      "prompt": "You are coming up to a steady green light, not a green arrow, and you want to turn left. A car on the other side of the intersection is coming toward you. It is going straight across, and it is close. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "oncoming",
+          "label": "the car coming toward you"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "oncoming",
+      "then": {
+        "highlight": "oncoming",
+        "say": "The car coming toward you goes first. The green light lets you go, but your left turn crosses its path, so you wait and let it pass."
+      },
+      "rule": "When you turn left on a green light that is not an arrow, you yield to oncoming vehicles."
+    },
+    {
+      "id": "s3-06",
+      "fact": "b-118",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 115
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 115
+          },
+          {
+            "t": "car",
+            "id": "left-car",
+            "x": 110,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "This is an all-way stop. Every corner has a stop sign with an ALL WAY sign under it. The car on your left stopped at the intersection before you got there. You both want to drive straight across. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "left-car",
+          "label": "the car on your left"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "left-car",
+      "then": {
+        "highlight": "left-car",
+        "say": "The car on your left goes first. It stopped at the intersection before you did, so you stay stopped until it has gone across."
+      },
+      "rule": "At an all-way stop, every vehicle stops, and the vehicle that reached the intersection first goes first."
+    },
+    {
+      "id": "s3-07",
+      "fact": "b-119",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 205
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 115,
+            "y": 115
+          },
+          {
+            "t": "sign",
+            "kind": "allway",
+            "x": 205,
+            "y": 115
+          },
+          {
+            "t": "car",
+            "id": "right-car",
+            "x": 210,
+            "y": 145,
+            "heading": "w",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "This is an all-way stop. Every corner has a stop sign with an ALL WAY sign under it. You and the car on your right stop at the same time. You both want to drive straight across. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "right-car",
+          "label": "the car on your right"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "right-car",
+      "then": {
+        "highlight": "right-car",
+        "say": "The car on your right goes first. You both stopped at the same time, and when that happens the car on the right goes first. You go after it."
+      },
+      "rule": "When two vehicles reach an all-way stop at the same time, the vehicle on the right goes first."
+    },
+    {
+      "id": "s3-08",
+      "fact": "a-159",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "off",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "left-car",
+            "x": 110,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "The traffic light at this intersection is not working. It is dark and shows no color, and there is no stop sign. The car on your left stopped at the intersection before you got there. You both want to drive straight across. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "left-car",
+          "label": "the car on your left"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "left-car",
+      "then": {
+        "highlight": "left-car",
+        "say": "The car on your left goes first. A traffic light that is not working makes the intersection an all-way stop. Every car stops, and the car that stopped first goes first."
+      },
+      "rule": "When a traffic signal is not working, you treat the intersection as an all-way stop."
+    },
+    {
+      "id": "s3-09",
+      "fact": "a-178",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "crosswalk",
+            "x": 130,
+            "y": 120,
+            "w": 60,
+            "h": 20
+          },
+          {
+            "t": "ped",
+            "id": "ped",
+            "x": 202,
+            "y": 130
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "This street has no traffic light and no sign. A person is standing at the side of the road on your right, at one end of the crosswalk, about to walk across. Who goes first? Tap the person or your car.",
+      "targets": [
+        {
+          "id": "ped",
+          "label": "the person"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "ped",
+      "then": {
+        "highlight": "ped",
+        "say": "The person goes first. When a person is in a crosswalk or about to walk into it, you stop before the crosswalk and wait until the person has crossed."
+      },
+      "rule": "You yield to pedestrians who are in a crosswalk or the street, or about to enter it, whether or not the crosswalk is marked."
+    },
+    {
+      "id": "s3-10",
+      "fact": "d-075",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "ped",
+            "id": "cane-ped",
+            "x": 150,
+            "y": 120,
+            "cane": true
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "A person carrying a white cane with a red tip is crossing the street ahead of you, where there is no crosswalk. Must you stop and let the person cross?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "highlight": "cane-ped",
+        "say": "Yes, you stop and wait until the person has crossed. You always stop for a person who carries a white cane, even where there is no crosswalk."
+      },
+      "rule": "You always yield to a blind pedestrian who carries a white cane, including a white cane with a red tip, or who uses a guide dog."
+    },
+    {
+      "id": "s3-11",
+      "fact": "b-123",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "ahead-1",
+            "x": 175,
+            "y": 100,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "ahead-2",
+            "x": 175,
+            "y": 55,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 225,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              200
+            ],
+            "to": [
+              175,
+              122
+            ]
+          }
+        ]
+      },
+      "prompt": "You are coming up to a green light and want to drive straight across. Two cars are stopped in your lane just past the intersection, and there is no room for your car behind them. May you drive into the intersection now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "No, you stop before you enter the intersection and wait until there is room for your car past it. You enter only when you can get all the way across without stopping. A car stopped in the intersection blocks other traffic, even when its light is green."
+      },
+      "rule": "You may enter an intersection only when you can get all the way through it without stopping."
+    },
+    {
+      "id": "s3-12",
+      "kind": "principle",
+      "prompt": "Every question in this lesson came down to one thing. What was it?",
+      "options": [
+        "Who must wait?",
+        "Who is driving the faster car?",
+        "Which road is the bigger road?"
+      ],
+      "answer": "Who must wait?",
+      "then": {
+        "say": "Every right-of-way rule tells you who must wait. When that is you, you let the other driver or the person on foot go first."
+      }
+    }
+  ]
+}

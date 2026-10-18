@@ -67,6 +67,7 @@ def validate():
     if missing:
         errors.append(f"the manual's own sample questions are missing from the sections: {sorted(missing)}")
     errors += check_facts(qs, set(used))
+    errors += check_lessons(secs)
     groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
     errors += check_groups(groups, set(used))
     return errors
@@ -148,6 +149,128 @@ def check_groups(groups, used):
                 errors.append(f"group {gid}: its reverse stem needs {{answer}} exactly once")
             if len(facts) < 4:
                 errors.append(f"group {gid}: a reverse stem needs a group of 4 or more facts")
+    return errors
+
+
+STEP_KINDS = {"tap", "choose", "principle"}
+TARGET_PARTS = {"car", "ped", "roadsign"}
+
+
+def check_lessons(secs):
+    """data/lessons/section-N.json (docs/specs/lessons.md): a lesson teaches every fact of its Section
+    through steps the Learner acts on. Each step's answer must be one of what it offers, and every tap
+    target must be a car, pedestrian or road sign drawn in that step's scene."""
+    errors = []
+    by_section = {s["section"]: s["questions"] for s in secs}
+    for file in sorted((ROOT / "data" / "lessons").glob("section-*.json")):
+        name = file.name
+        try:
+            lesson = json.loads(file.read_text())
+        except ValueError as e:
+            errors.append(f"{name}: not valid JSON ({e})")
+            continue
+        number = lesson.get("section")
+        if f"section-{number}.json" != name or number not in by_section:
+            errors.append(f"{name}: its section must be the number in its file name, one of the sections")
+            continue
+        facts, steps, ids = set(by_section[number]), lesson.get("steps", []), set()
+        if not lesson.get("title") or not steps:
+            errors.append(f"{name}: needs a title and steps")
+        covered = set()
+        for step in steps:
+            sid = step.get("id") or "?"
+            if sid in ids:
+                errors.append(f"{name}: step id {sid} is used twice")
+            ids.add(sid)
+            kind, fact = step.get("kind"), step.get("fact")
+            if kind not in STEP_KINDS:
+                errors.append(f"{name} {sid}: kind must be one of {sorted(STEP_KINDS)}")
+            if fact is not None and fact not in facts:
+                errors.append(f"{name} {sid}: fact {fact} is not in Section {number}")
+            if fact:
+                covered.add(fact)
+                if not step.get("rule"):
+                    errors.append(f"{name} {sid}: a step with a fact needs a rule")
+            elif kind != "principle":
+                errors.append(f"{name} {sid}: only a principle step has no fact")
+            then = step.get("then") or {}
+            if not step.get("prompt") or not then.get("say"):
+                errors.append(f"{name} {sid}: needs a prompt and then.say")
+            parts = (step.get("scene") or {}).get("parts", [])
+            part_ids = {p.get("id") for p in parts if p.get("t") in TARGET_PARTS and p.get("id")}
+            after_ids = {p.get("id") for p in then.get("parts", []) if p.get("t") in TARGET_PARTS and p.get("id")}
+            if kind == "tap":
+                targets = step.get("targets", [])
+                tids = [t.get("id") for t in targets]
+                if len(targets) < 2 or not all(t.get("label") for t in targets):
+                    errors.append(f"{name} {sid}: a tap step needs 2 or more targets, each with a label")
+                for tid in tids:
+                    if tid not in part_ids:
+                        errors.append(f"{name} {sid}: target {tid!r} is not a car, pedestrian or road sign in the scene")
+                if step.get("answer") not in tids:
+                    errors.append(f"{name} {sid}: answer must be one of the targets")
+            else:
+                options = step.get("options", [])
+                if not 2 <= len(options) <= 4 or len(set(options)) != len(options):
+                    errors.append(f"{name} {sid}: needs 2 to 4 different options")
+                if step.get("answer") not in options:
+                    errors.append(f"{name} {sid}: answer must be one of the options")
+            hi = then.get("highlight")
+            if hi is not None and hi not in part_ids | after_ids:
+                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car, pedestrian or road sign in the scene")
+        missing = facts - covered
+        if missing and steps:
+            errors.append(f"{name}: no step teaches {sorted(missing)}")
+        errors += check_lesson_wording(name, steps)
+    return errors
+
+
+# Words that read two ways to a literal reader, or point at nothing. Each rule came from a review of the
+# first lesson, so none is a guess: "right" is a direction in a driving app, "yield" is a sign, "step" is
+# the data word for a screen, "both cases" names no case, and a semicolon joins what should be two sentences.
+BANNED = [
+    # "right" is fine as a direction: your right, the right, to the right, right turn, right lane, right-of-way.
+    (re.compile(r"(?<!your )(?<!the )(?<!a )(?<!turn )(?<!turns )(?<!turning )\bright\b(?![- ]of[- ]way|-hand| turn| lane| curb| side| edge| away| now)", re.I),
+     "says right; in a driving app right is a direction, so say correct, or name the side"),
+    (re.compile(r"\byield(ed|s|ing)?\b(?! sign)", re.I), "says yield; say what the driver does (wait, let it pass), unless it is a yield sign"),
+    (re.compile(r"\bsteps?\b(?! (in|into|off|out|onto|back|forward)\b)", re.I), "says step; a Learner never sees that word"),
+    (re.compile(r"\b(both|these|those|the above|the earlier|previous|the last) (cases?|ones?|screens?|examples?|questions?)\b", re.I),
+     "points at earlier screens without naming them; say which situations"),
+    (re.compile(r"\bcases?\b", re.I), "says case; say situation, and name it"),
+    (re.compile(r"\bscreens?\b", re.I), "says screen; to the Learner these are questions"),
+    (re.compile(r"\bround\b(?= (steady |flashing )?(red|yellow|green)? ?(light|arrow))", re.I), "calls a light round; there are no square lights, so name it by its color and whether it flashes"),
+    (re.compile(r"\byour (traffic )?light\b", re.I), "says your light; the Learner does not own a light, he comes up to one (the light ahead of you, a steady yellow light)"),
+    (re.compile(r"[;!]"), "has a semicolon or an exclamation mark"),
+    (re.compile(r"\b(wrong|incorrect|oops|nice|great|good job|well done)\b", re.I), "has a verdict or praise word"),
+]
+# A drawing with an intersection must say what controls it, or that nothing does.
+CONTROL = re.compile(r"stop sign|yield sign|traffic light|the light|green light|red light|yellow light|signal|no sign|all-way stop|crosswalk|driveway|parking lot|roundabout", re.I)
+
+
+def check_lesson_wording(name, steps):
+    errors = []
+    for step in steps:
+        sid = step.get("id") or "?"
+        texts = [("prompt", step.get("prompt", "")), ("say", (step.get("then") or {}).get("say", ""))]
+        texts += [("option", o) for o in step.get("options", [])]
+        texts += [("target label", t.get("label", "")) for t in step.get("targets", [])]
+        for field, text in texts:
+            for pattern, why in BANNED:
+                if pattern.search(text):
+                    errors.append(f"{name} {sid} {field}: {why}: {text!r}")
+        for field, text in texts[:2]:
+            for sentence in re.split(r"(?<=[.?])\s+", text):
+                if len(sentence.split()) > 30:
+                    errors.append(f"{name} {sid} {field}: a sentence of more than 30 words: {sentence!r}")
+            if field == "prompt" and len(text.split()) > 60:
+                errors.append(f"{name} {sid} prompt: more than 60 words")
+        say = (step.get("then") or {}).get("say", "")
+        if len(re.findall(r"[.?]", say)) > 3:
+            errors.append(f"{name} {sid} say: more than three sentences: {say!r}")
+        parts = (step.get("scene") or {}).get("parts", [])
+        roads = [p for p in parts if p.get("t") in ("road", "circle-road")]
+        if len(roads) >= 2 and step.get("kind") == "tap" and not CONTROL.search(step.get("prompt", "")):
+            errors.append(f"{name} {sid} prompt: draws an intersection but does not say what controls it (a sign, a light, or no sign)")
     return errors
 
 

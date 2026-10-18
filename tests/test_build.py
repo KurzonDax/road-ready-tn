@@ -55,8 +55,11 @@ def test_build_writes_page_questions_and_csp(tmp):
     leaked = [q["id"] for q in bank["questions"] if q["question"] in page or q["manual_quote"] in page]
     check(not leaked, f"the page has no question text in it (found {leaked[:3]})")
     data = json.loads((out / "questions.json").read_text())
-    check(sorted(data) == ["days", "groups", "qs", "wordings"] and len(data["days"]) == 12 and len(data["qs"]) == 120,
-          "questions.json holds the 12 sections, 120 questions, the groups and the other wordings")
+    check(sorted(data) == ["days", "groups", "lessons", "qs", "wordings"] and len(data["days"]) == 12 and len(data["qs"]) == 120,
+          "questions.json holds the 12 sections, 120 questions, the groups, the other wordings and the lessons")
+    lessons = {l["section"]: l for l in data["lessons"]}
+    check(3 in lessons and not any("src" in st or "p" in st for st in lessons[3]["steps"]),
+          "the Section 3 lesson is shipped, with no manual sentence or page in any step")
     tagged = [q for q in bank["questions"] if q.get("fact") and q["fact"] != q["id"]]
     wordings = data.get("wordings", [])
     check(sorted(w["id"] for w in wordings) == sorted(q["id"] for q in tagged)

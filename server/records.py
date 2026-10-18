@@ -40,15 +40,15 @@ UTC_TIME = re.compile(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{1,6})?(Z|\+00:00)")
 # The page's own names for a Set from Start the set to Set done, and a Practice test. The page made
 # "day" (a Section), "redo" and "review" Sets before the learning engine; they are still accepted
 # so stored History keeps its shape, but the page never makes them again.
-SET_TYPES = ("daily", "test", "day", "redo", "review")
-SECTION_TYPES = ("day", "redo")                # the types that name a Section
+SET_TYPES = ("daily", "test", "lesson", "day", "redo", "review")
+SECTION_TYPES = ("day", "redo", "lesson")                # the types that name a Section
 SECTIONS = 12
 MOVE_TO = SECTIONS + 1                         # a Move "to 13" unlocks Practice tests; 1 to 12 sets where new facts come from
 MAX_ANSWERS = 50
 MAX_GROUP = 64                                 # characters in a daily Set's group id
 ANSWER_FIELDS = ("q", "chosen", "right", "at")
-ROLES = ("counted", "first_look", "reask")     # only a counted answer changes a fact's standing
-FORMATS = ("choice", "reverse")             # every question is multiple choice, as on the real test
+ROLES = ("counted", "first_look", "reask", "lesson")  # only a counted answer changes a fact's standing
+FORMATS = ("choice", "reverse", "tap")      # every question is multiple choice, as on the real test; a lesson step may be a tap on a drawing
 
 
 def _fields(value, what, names):

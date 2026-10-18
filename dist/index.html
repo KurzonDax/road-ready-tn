@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Road Ready TN</title>
-<meta name="theme-color" content="#111814">
+<meta name="theme-color" content="#181715">
 <meta name="color-scheme" content="dark">
 <meta name="apple-mobile-web-app-title" content="Road Ready">
 <link rel="manifest" href="manifest.webmanifest">
@@ -15,21 +15,34 @@
 @font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 400; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2") format("woff2"); }
 @font-face { font-family: "Atkinson Hyperlegible"; font-style: normal; font-weight: 700; font-display: swap; src: url("fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2") format("woff2"); }
 @font-face { font-family: "Overpass"; font-style: normal; font-weight: 600 800; font-display: swap; src: url("fonts/overpass/overpass-variable.woff2") format("woff2"); }
-/* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. Highway guide-sign palette. */
+/* Layout: one calm column. Home shows only what's next; a question screen; a short results screen. */
 :root {
-  /* Dark on every device, whatever its own setting: one palette. */
-  --bg: #111814;
-  --surface: #1a231e;
-  --ink: #e8eee9;
-  --muted: #9db0a4;
-  --line: #2d3a32;
-  --control-line: #66796c;
-  --guide: #3f9a6c;
-  --guide-ink: #0c1410;
-  --guide-soft: #1f3328;
-  --bad: #f08a80;
-  --bad-soft: #3d1f1c;
-  --focus: #7fb0ff;
+  /* Dark on every device, whatever its own setting: one calm palette. Warm charcoal, off-white
+     type, one muted slate-blue accent, low saturation throughout, for long sessions at night. */
+  --bg: #181715;
+  --surface: #22201e;
+  --ink: #e4e0d9;
+  --muted: #ada79f;
+  --line: #363330;
+  --control-line: #77726c;
+  --guide: #8396b3;
+  --guide-ink: #141619;
+  --guide-soft: #262d38;
+  /* Results: green means correct, red means wrong. Nothing else uses these two. */
+  --good: #62c27f;
+  --good-ink: #0f1a13;
+  --good-soft: #1d2e22;
+  --bad: #e8705f;
+  --bad-soft: #3a2624;
+  --focus: #dcc69a;
+  /* The lesson drawings: road surfaces and markings, cars, glass. Lane lines keep their real colors. */
+  --road: #34363a;
+  --road-edge: #b9b7b2;
+  --lane-yellow: #e0b23c;
+  --lane-white: #e6e4df;
+  --car-a: #a7adb5;
+  --car-b: #6b727b;
+  --glass: #d9dde3;
   --font-display: "Overpass", "Arial Narrow", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", Verdana, system-ui, sans-serif;
   color-scheme: dark;
@@ -67,7 +80,7 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .strip { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tile { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; }
 .tile svg { width: 26px; height: 26px; }
-.tile.got { background: var(--guide); color: var(--guide-ink); }
+.tile.got { background: var(--good); color: var(--good-ink); }
 .tile.back { border: 2px dashed var(--ink); color: var(--ink); }
 .tile.mini { width: 24px; height: 24px; border-radius: 6px; flex: none; }
 .tile.mini.back { border-width: 1.5px; }
@@ -86,7 +99,7 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .route-track { position: relative; height: 18px; border-radius: 999px; background: var(--surface); border: 1.5px solid var(--control-line); overflow: hidden; }
 .route-fill, .route-gain { position: absolute; top: 0; bottom: 0; left: 0; }
 .route-fill { background: var(--guide); }
-.route-gain { background: #8fe0b2; transform-origin: left; }
+.route-gain { background: #cad4e3; transform-origin: left; }
 .route .tick { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--bg); opacity: .7; }
 .route-ends { font-size: 15px; color: var(--muted); }
 .route-ends .open { color: var(--guide); font-weight: 700; }
@@ -140,18 +153,20 @@ button.opt { cursor: pointer; }
 .opt .tag { font-size: 15px; font-weight: 700; }
 .opt.rest { border-color: var(--line); color: var(--muted); }
 .opt.rest .key { border-color: var(--line); }
-.opt.right { border-color: var(--guide); background: var(--guide-soft); font-weight: 700; }
-.opt.right .key { background: var(--guide); border-color: var(--guide); color: var(--guide-ink); }
-/* A wrong pick is marked by its tag and a dashed outline, not an alarm color: the answer is what stands out. */
-.opt.wrong { border-style: dashed; border-color: var(--ink); }
+.opt.right { border-color: var(--good); background: var(--good-soft); font-weight: 700; }
+.opt.right .key { background: var(--good); border-color: var(--good); color: var(--good-ink); }
+/* A wrong pick is marked in red by its border and key; the correct answer in green. */
+.opt.wrong { border-color: var(--bad); }
+.opt.wrong .key { border-color: var(--bad); color: var(--bad); }
 .feedback { border-top: 2px dashed var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 10px; }
 .result { display: flex; flex-direction: column; gap: 6px; }
 .later { display: flex; flex-direction: column; gap: 14px; border-top: 1.5px solid var(--line); padding-top: 20px; margin-top: 6px; }
 .facts { margin: 0; }
 .why, .also, .picked { margin: 0; }
-/* After a first look, what was picked leads the screen, as large as the question; green when it was right. */
+/* After an answer, the result leads the screen, as large as the question: green when correct, red when not. */
 .outcome { font-family: var(--font-body); font-size: clamp(21px, 5vw, 25px); font-weight: 700; line-height: 1.3; margin: 0; }
-.outcome.good { color: var(--guide); }
+.outcome.good { color: var(--good); }
+.outcome.not { color: var(--bad); }
 /* Compare: one row per fact, the fact (and its picture) beside what it means. */
 .compare { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .compare li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
@@ -161,7 +176,41 @@ button.opt { cursor: pointer; }
 .rulehead { font-family: var(--font-body); font-size: 18px; font-weight: 700; line-height: 1.3; color: var(--muted); }
 .rule { font-size: 20px; line-height: 1.45; margin: 0; }
 .back { margin: 0; color: var(--muted); }
-#nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(12 20 16 / .45); }
+/* Lesson drawings: top-down, schematic, on their own slab. Tap targets are real buttons for the keyboard and screen readers. */
+.visual .scene, .scene { display: block; width: 100%; height: auto; max-width: 400px; margin: 0 auto; background: #1f1e1c; border-radius: 12px; }
+.k-label { font-family: var(--font-body); font-size: 11px; fill: var(--ink); }
+.k-sign { font-family: var(--font-display); font-weight: 800; font-size: 5px; fill: #fff; }
+.k-plate { font-family: var(--font-display); font-weight: 800; font-size: 4px; fill: #c8323a; }
+.k-edge { stroke: var(--road-edge); stroke-width: 2; }
+.k-yellow { stroke: var(--lane-yellow); stroke-width: 3; }
+.k-white { stroke: var(--lane-white); stroke-width: 3; }
+.k-you .k-body { stroke: var(--guide); stroke-width: 2.5; }
+.k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--good); stroke-width: 3.5; }
+.k-ring { fill: var(--good); opacity: .28; }
+.k-no { fill: none; stroke: var(--bad); stroke-width: 2; }
+.k-badge circle { stroke: var(--bg); stroke-width: 2; }
+.k-badge.k-yes circle { fill: var(--good); }
+.k-badge.k-yes path { stroke: var(--good-ink); }
+.k-badge.k-not circle { fill: var(--bad); }
+.k-badge.k-not path { stroke: var(--bad-soft); }
+@media (prefers-reduced-motion: no-preference) {
+  .k-ring, .k-no, .k-badge { animation: settle 420ms cubic-bezier(.16, 1, .3, 1) both; transform-box: fill-box; transform-origin: center; }
+  @keyframes settle { from { opacity: 0; transform: scale(.7); } }
+  .k-ring { animation-fill-mode: forwards; }
+}
+.k-target { cursor: pointer; }
+.k-target:focus { outline: none; }
+.k-target:focus-visible .k-body, .k-target:hover .k-body { stroke: var(--focus); stroke-width: 3.5; }
+.k-path { stroke: var(--guide); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+/* Only cars, pedestrians and road signs are tappable; nothing drawn over them catches the tap. */
+.scene :not(.k-target):not(.k-target *) { pointer-events: none; }
+.k-target, .k-target * { pointer-events: auto; }
+@media (prefers-reduced-motion: no-preference) { .k-flash { animation: blink 1s steps(2, start) infinite; } @keyframes blink { to { opacity: .15; } } }
+/* After acting: the result line, the drawing, one sentence. The line and the drawing's rings say the same thing. */
+.card.step.acted { gap: 14px; }
+.say { font-size: 20px; line-height: 1.45; margin: 0; text-wrap: pretty; }
+.link.peek { align-self: flex-start; padding-left: 0; }
+#nextBtn { position: sticky; bottom: 16px; box-shadow: 0 8px 20px -8px rgb(8 7 6 / .5); }
 
 .score { font-family: var(--font-display); font-weight: 800; font-size: clamp(24px, 6vw, 30px); line-height: 1.2; margin: 0; font-variant-numeric: tabular-nums; }
 .missed { border: 1.5px solid var(--line); border-radius: 16px; background: var(--surface); padding: 0 22px; }
@@ -172,7 +221,7 @@ button.opt { cursor: pointer; }
 .missed .mq { font-weight: 700; }
 .missed .mwhy { color: var(--muted); font-size: 16px; }
 
-/* The one moment that breaks the template: a full guide sign, white border inset like the real thing. */
+/* The one moment that breaks the template: a full plate in the accent, with an inset border. */
 .sign { background: var(--guide); color: var(--guide-ink); border-radius: 16px; padding: 28px 26px; display: flex; flex-direction: column; gap: 10px; box-shadow: inset 0 0 0 6px var(--guide), inset 0 0 0 9px var(--guide-ink); }
 .sign h1, .sign h2 { color: inherit; }
 .sign h1 { font-size: clamp(38px, 10vw, 56px); }
@@ -239,6 +288,7 @@ let DAYS = [], QS = [], TOTAL_DAYS = 0, BY_ID = {}; // filled from questions.jso
 let GROUPS = [], GROUP_BY_ID = {}; // the groups of easily mixed-up facts (data/groups.json), likewise
 // Each fact's wordings, from questions.json: its own question first, then the other wordings in id order.
 let WORDINGS = {};
+let LESSONS = {}, LESSON_STEP = {}; // lessons by Section (data/lessons), and each fact's first lesson step {section, k}
 // The learning engine (docs/specs/learning-engine.md, docs/adr/0002-*). Every rule below reads these.
 const HOUR = 60 * 60 * 1000;
 const FIRST_LOOK = true;          // a new fact starts with an unscored question; false starts with its rule screen
@@ -390,7 +440,7 @@ function factFrom(answers) {
 // its counted answers}}.
 function progressFrom(records) {
   const answers = Object.fromEntries(QS.map(q => [q.id, []]));
-  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {}, byWording: {} };
+  const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {}, byWording: {}, lessons: {} };
   const add = (q, at, right) => {
     const f = factOf(q);
     if (f) { answers[f].push({ at, right }); p.byWording[q] = (p.byWording[q] || 0) + 1; }
@@ -408,6 +458,7 @@ function progressFrom(records) {
       for (const a of d.answers) if (isCounted(a)) add(a.q, answerTime(a), a.right);
       if (d.type === 'test') p.tests.push(d.answers.filter(a => a.right).length);
       if (d.type === 'daily') p.sets++;
+      if (d.type === 'lesson') p.lessons[d.section] = Math.max(p.lessons[d.section] ?? -Infinity, recordTime(r));
       if (d.type === 'daily' && d.group) p.groupAt[d.group] = Math.max(p.groupAt[d.group] ?? -Infinity, recordTime(r));
     }
   }
@@ -474,8 +525,9 @@ function buildSet(p, now, firstLook = FIRST_LOOK) {
   const plan = setPlan(p, now);
   const counted = id => ({ kind: 'counted', id, ...choiceOf(wordingFor(p, id)) });
   const block = plan.group ? groupBlock(plan.group, p) : [];
-  const W = plan.fresh, k = W.length;
-  const D = shuffle([...plan.due, ...plan.fill].map(counted)), m = D.length;
+  // A new fact whose Section's lesson is finished was taught there: it is asked like a due question, with no first look.
+  const W = plan.fresh.filter(id => !taught(p, id)), k = W.length;
+  const D = shuffle([...plan.due, ...plan.fill, ...plan.fresh.filter(id => taught(p, id))].map(counted)), m = D.length;
   if (!k) return [...block, ...D];
   const h = Math.min(Math.max(0, GAP - (k - 1)), m), held = D.slice(0, h), rest = D.slice(h);
   const screens = [];
@@ -641,7 +693,7 @@ window.addEventListener('online', () => {
 
 // A finished Set's name in the Helper's History, from its record's type, Section and Set number.
 // 'day', 'redo' and 'review' are Sets from before the learning engine.
-const setName = (type, section, number) => type === 'daily' ? `Set ${number}` : type === 'test' ? 'Practice test'
+const setName = (type, section, number) => type === 'daily' ? `Set ${number}` : type === 'test' ? 'Practice test' : type === 'lesson' ? `Lesson for Section ${section}`
   : type === 'review' ? 'Review' : type === 'redo' ? `Section ${section} again` : `Section ${section}`;
 
 let painted = false, onHome = false; // onHome: the Learner's home screen is showing
@@ -655,7 +707,7 @@ const toTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
 // The road from no facts to Practice tests: one bar of the 120 facts learned, marked off into the 12
 // Sections like mile markers. `before` (a Progress from before a Set) adds the stretch that Set covered,
-// in a brighter green that grows in. Under it, one line says where new facts come from.
+// in a lighter tint that grows in. Under it, one line says where new facts come from.
 function route(p = S, before = null) {
   const total = QS.length, l = learnedCount(p), was = before ? Math.min(learnedCount(before), l) : l;
   const pct = n => `${(n / total * 100).toFixed(2)}%`, isReady = ready(p), open = unlocked(p);
@@ -686,7 +738,7 @@ function sectionsPanel() {
 function factsLine(p = S) {
   const l = learnedCount(p), s = solidCount(p);
   return `You have learned ${l} of the ${QS.length} questions.` +
-    (s ? ` ${s === 1 ? '1 of them is' : `${s} of them are`} solid: you answered ${s === 1 ? 'it' : 'each one'} right 3 times, at least 12 hours apart.` : '');
+    (s ? ` ${s === 1 ? '1 of them is' : `${s} of them are`} solid: you answered ${s === 1 ? 'it' : 'each one'} correctly 3 times, at least 12 hours apart.` : '');
 }
 // A Set made of fill facts only: nothing is due and nothing is new.
 const fillOnly = plan => !plan.block.length && !plan.due.length && !plan.fresh.length;
@@ -707,7 +759,7 @@ function planLine(plan) {
 const disclaimer = `<footer class="fine"><p>This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p><button class="link" type="button" id="signOutBtn">Sign out</button></footer>`;
 
 function renderHome() {
-  run = null;
+  run = null; lesson = null;
   const saved = S.run && unpackRun(S.run);
   if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
   const plan = setPlan(S, Date.now()), open = unlocked(), isReady = ready();
@@ -718,30 +770,39 @@ function renderHome() {
   // throwing its saved answers away.
   // Once Practice tests are where the Learner is (nothing new is left, or they are Ready), they come
   // first and take the page heading; the next Set follows as a quieter block.
-  const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst ? 'h2' : 'h1';
+  // A Section's lesson comes before the Set that would first ask about its facts, as the main button.
+  const lessonDay = saved ? null : lessonNext(plan), teach = lessonDay && LESSONS[lessonDay];
+  const lessonBlock = teach ? `<section class="home"><h1 tabindex="-1">Section ${lessonDay}: ${esc(teach.title)}</h1>
+      <p class="sub">This lesson has ${teach.steps.length} questions. On each one you do something first. Then you see what happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
+      <button class="btn primary" type="button" id="lessonBtn">Start the lesson</button></section>` : '';
+  const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst || teach ? 'h2' : 'h1';
   const set = saved && saved.kind === 'daily'
     ? `<h1 tabindex="-1">Set ${saved.number}</h1>${stoppedLine(saved)}`
     : `<${setH} tabindex="-1">Set ${S.sets + 1}</${setH}>${saved ? stoppedLine(saved) : ''}<p class="sub">${esc(planLine(plan))}</p>
-      <button class="btn${saved || testFirst ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
+      <button class="btn${saved || testFirst || teach ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
   const scores = S.tests.slice(-5);
   const tests = !open ? '' : `<section class="home">
-      ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p></div>`
-        : `<${testsH} tabindex="-1">Practice tests</${testsH}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more right out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.</p>`}
-      ${scores.length ? `<p class="sub">${scores.length === 1 ? 'Your last practice test' : `Your last ${scores.length} practice tests, oldest first`}: ${scores.join(', ')} right out of ${TEST_LEN}.</p>` : ''}
+      ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p></div>`
+        : `<${testsH} tabindex="-1">Practice tests</${testsH}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more correct out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p>`}
+      ${scores.length ? `<p class="sub">${scores.length === 1 ? 'Your last practice test' : `Your last ${scores.length} practice tests, oldest first`}: ${scores.join(', ')} correct out of ${TEST_LEN}.</p>` : ''}
       ${saved && saved.kind === 'test' ? '' : `<button class="btn${testFirst ? ' primary' : ''}" type="button" id="testBtn">${isReady ? 'Take another practice test' : 'Start a practice test'}</button>`}
     </section>`;
   paint(`
     <section class="home">
       ${testsFirst ? tests : ''}
-      ${testsFirst ? `<div class="later">${set}</div>` : set}
+      ${lessonBlock}
+      ${testsFirst || teach ? `<div class="later">${set}</div>` : set}
       ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
       ${testsFirst ? '' : tests}
       ${route()}
+      ${lessonsPanel()}
       ${sectionsPanel()}
       ${disclaimer}
     </section>`, 'h1');
   onHome = true;
   if ($('startBtn')) $('startBtn').onclick = () => startOver(saved, 'daily');
+  if ($('lessonBtn')) $('lessonBtn').onclick = () => { startLesson(lessonDay); toTop(); };
+  wireLessons();
   if ($('testBtn')) $('testBtn').onclick = () => startOver(saved, 'test');
   if (saved) {
     $('resumeBtn').onclick = () => { run = saved; renderScreen(); };
@@ -849,8 +910,8 @@ function renderRule() {
       ${progressLine()}
       <div class="card">
         ${!look ? '<h1 class="outcome" id="ruleHead" tabindex="-1">Read this first.</h1>'
-          : look.chosen === q.a ? `<h1 class="outcome good" id="ruleHead" tabindex="-1">You picked the right answer: ${esc(q.a)}.</h1>`
-          : `<h1 class="outcome" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
+          : look.chosen === q.a ? `<h1 class="outcome good" id="ruleHead" tabindex="-1">You picked the correct answer: ${esc(q.a)}.</h1>`
+          : `<h1 class="outcome not" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
         <p class="back">This question comes back later in this set.</p>
@@ -867,7 +928,7 @@ function renderRule() {
 // question a wrong choice is the answer to; `back` says when the question comes back.
 function feedbackLines(s) {
   const q = asked(s);
-  if (isRight(s)) return { lead: `You picked the right answer: ${answerOf(s)}.`, picked: '', other: '', back: '' };
+  if (isRight(s)) return { lead: `You picked the correct answer: ${answerOf(s)}.`, picked: '', other: '', back: '' };
   const other = s.format === 'choice' && q.also && BY_ID[q.also[s.chosen]];
   const reasked = run.kind === 'daily' && s.kind === 'counted' && run.screens.some((x, j) => j > run.i && x.kind === 'reask' && x.id === s.id);
   return { lead: `The answer is: ${answerOf(s)}.`, picked: `You picked: ${s.chosen}.`,
@@ -887,12 +948,14 @@ function renderQuestion() {
   const lines = run.answered ? feedbackLines(s) : null;
   // Answered, the result is the first thing on the card; the explanation follows the choices.
   const result = lines ? `<div class="result" id="feedback">
-      <h2 class="outcome${isRight(s) ? ' good' : ''}" id="outcome" tabindex="-1">${esc(lines.lead)}</h2>
+      <h2 class="outcome${isRight(s) ? ' good' : ' not'}" id="outcome" tabindex="-1">${esc(lines.lead)}</h2>
       ${lines.picked ? `<p class="picked">${esc(lines.picked)}</p>` : ''}
       ${lines.other ? `<p class="also">${esc(lines.other)}</p>` : ''}
     </div>` : '';
-  const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}</div>` : '';
-  const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is right. This answer does not count.</p>'
+  // After a wrong answer on a fact a lesson teaches, its lesson step can be looked at again, without leaving the Set.
+  const peek = lines && !isRight(s) && run.kind === 'daily' && LESSON_STEP[s.id] ? '<button class="link peek" type="button" id="peekBtn">See how this works</button>' : '';
+  const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}${peek}</div>` : '';
+  const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is correct. This answer does not count.</p>'
     : s.kind === 'reask' ? '<p class="sub">You saw this question earlier in this set. Here it is again.</p>' : '';
   paint(`
     <div class="home">
@@ -909,7 +972,8 @@ function renderQuestion() {
       ${quitLink}
     </div>`, run.answered ? '#outcome' : '#qText');
   if (run.answered) $('nextBtn').onclick = next;
-  else document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
+  if ($('peekBtn')) $('peekBtn').onclick = () => { peekStep(s.id); toTop(); };
+  if (!run.answered) document.querySelectorAll('button.opt').forEach(b => b.onclick = () => choose(Number(b.dataset.k)));
   wireQuit();
 }
 
@@ -973,7 +1037,7 @@ function finish() {
 }
 
 // The end of a daily Set: what changed, in full sentences, and what comes next. No score.
-// One tile per fact the Set asked, in the order asked: a green tile with a check when its newest
+// One tile per fact the Set asked, in the order asked: an accent tile with a check when its newest
 // answer is right, an outlined tile with a return arrow when it comes back in the next Set.
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const AGAIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -981,8 +1045,8 @@ function setStrip(ids) {
   const got = ids.filter(id => S.facts[id].lastRight !== false).length, back = ids.length - got;
   const tiles = ids.map((id, k) => S.facts[id].lastRight === false ? `<li class="tile back" style="--k:${k}">${AGAIN}</li>` : `<li class="tile got" style="--k:${k}">${CHECK}</li>`).join('');
   return `<div class="strip-wrap">
-      <ul class="strip" aria-label="${plural(got, 'question', 'questions')} answered right. ${plural(back, 'question comes', 'questions come')} back in your next set.">${tiles}</ul>
-      <p class="strip-key" aria-hidden="true"><span class="key-item"><span class="tile mini got">${CHECK}</span>Answered right</span>${back ? `<span class="key-item"><span class="tile mini back">${AGAIN}</span>Comes back in your next set</span>` : ''}</p>
+      <ul class="strip" aria-label="${plural(got, 'question', 'questions')} answered correctly. ${plural(back, 'question comes', 'questions come')} back in your next set.">${tiles}</ul>
+      <p class="strip-key" aria-hidden="true"><span class="key-item"><span class="tile mini got">${CHECK}</span>Correct</span>${back ? `<span class="key-item"><span class="tile mini back">${AGAIN}</span>Comes back in your next set</span>` : ''}</p>
     </div>`;
 }
 function setDone(r, before, missed, missedList) {
@@ -991,7 +1055,7 @@ function setDone(r, before, missed, missedList) {
   const solid = ids.filter(id => !isSolid(before.facts[id]) && isSolid(S.facts[id])).length;
   const back = ids.filter(id => S.facts[id].lastRight === false).length;
   const lines = [learned ? `You learned the answers to ${plural(learned, 'new question', 'new questions')}.` : '',
-    solid ? `${plural(solid, 'question is', 'questions are')} now solid: you answered ${solid === 1 ? 'it' : 'each one'} right 3 times, at least 12 hours apart.` : ''].filter(Boolean);
+    solid ? `${plural(solid, 'question is', 'questions are')} now solid: you answered ${solid === 1 ? 'it' : 'each one'} correctly 3 times, at least 12 hours apart.` : ''].filter(Boolean);
   const plan = setPlan(S, Date.now()), more = !fillOnly(plan), nextSet = `Start Set ${S.sets + 1}`;
   const buttons = more
     ? `<button class="btn primary" type="button" id="moreBtn">${nextSet}</button><button class="btn" type="button" id="homeBtn">I'm done for now</button>`
@@ -1017,18 +1081,18 @@ function testDone(r, missed, missedList) {
   if (st >= READY_STREAK) {
     sign = true;
     title = 'You are ready for the real test.';
-    note = `You got ${READY_SCORE} or more right on ${READY_STREAK} practice tests in a row.`;
+    note = `You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.`;
   } else if (right >= READY_SCORE) {
     title = 'This practice test counts toward Ready for the test.';
-    note = `You have ${st} of ${READY_STREAK} in a row. Get ${READY_SCORE} or more right on ${plural(READY_STREAK - st, 'more practice test', 'more practice tests')} to be ready.` + back;
+    note = `You have ${st} of ${READY_STREAK} in a row. Get ${READY_SCORE} or more correct on ${plural(READY_STREAK - st, 'more practice test', 'more practice tests')} to be ready.` + back;
   } else {
     title = 'You finished this practice test.';
-    note = `A practice test counts toward Ready for the test when you get ${READY_SCORE} or more right.` + back;
+    note = `A practice test counts toward Ready for the test when you get ${READY_SCORE} or more correct.` + back;
   }
   paint(`
     <section class="home">
       ${sign ? `<div class="sign"><h2 tabindex="-1">${title}</h2><p>${esc(note)}</p></div>` : `<h2 tabindex="-1">${title}</h2>`}
-      <p class="score">You got ${right} right out of ${counted.length}.</p>
+      <p class="score">You got ${right} correct out of ${counted.length}.</p>
       ${sign ? (missed.length ? `<p class="sub">${back.trim()}</p>` : '') : `<p class="sub">${esc(note)}</p>`}
       <button class="btn primary" type="button" id="homeBtn">I'm done for now</button>
       <button class="btn" type="button" id="testBtn">Take another practice test</button>
@@ -1043,10 +1107,249 @@ function wireDone() {
 }
 
 document.addEventListener('keydown', e => {
-  if (!run || run.answered || !document.querySelector('button.opt') || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (!document.querySelector('button.opt') || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = ['a', 'b', 'c', 'd'].indexOf(e.key.toLowerCase());
-  if (k >= 0) { e.preventDefault(); choose(k); }
+  if (k < 0) return;
+  if (lesson) { e.preventDefault(); return lessonChoose(k); }
+  if (!run || run.answered) return;
+  e.preventDefault();
+  choose(k);
 });
+
+// Lessons (docs/specs/lessons.md). A lesson teaches one Section's facts before any question on them.
+// Every step asks the Learner to act, on a drawing or among choices, before it states the rule. The
+// drawings come from a small kit of top-down parts, so a lesson is data (data/lessons/section-N.json).
+let lesson = null; // the lesson on screen: {lesson, i, acts: {step index: {chosen, right, at}}, set_id, started_at, peek}
+
+// Intervals of [from, to] with every [a, b] in `cuts` taken out: a road's markings stop where another road crosses.
+function spans(from, to, cuts) {
+  let list = [[from, to]];
+  for (const [a, b] of cuts) list = list.flatMap(([s, e]) => b <= s || a >= e ? [[s, e]] : [[s, Math.max(s, a)], [Math.min(e, b), e]].filter(([x, y]) => y - x > 0.5));
+  return list;
+}
+const svgText = (x, y, text, anchor = 'middle', cls = 'k-label') => `<text class="${cls}" x="${x}" y="${y}" text-anchor="${anchor}">${esc(text)}</text>`;
+// One road's surface, then its edge lines and center line, broken where the other roads cross it.
+function roadMarks(r, roads) {
+  const horizontal = r.w >= r.h, others = roads.filter(o => o !== r && o.x < r.x + r.w && o.x + o.w > r.x && o.y < r.y + r.h && o.y + o.h > r.y);
+  const cuts = others.map(o => horizontal ? [o.x, o.x + o.w] : [o.y, o.y + o.h]);
+  const [from, to] = horizontal ? [r.x, r.x + r.w] : [r.y, r.y + r.h];
+  const line = (at, cls, dash) => spans(from, to, cuts).map(([s, e]) => horizontal
+    ? `<line class="${cls}" x1="${s}" y1="${at}" x2="${e}" y2="${at}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`
+    : `<line class="${cls}" x1="${at}" y1="${s}" x2="${at}" y2="${e}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`).join('');
+  const [lo, hi, mid] = horizontal ? [r.y + 1.5, r.y + r.h - 1.5, r.y + r.h / 2] : [r.x + 1.5, r.x + r.w - 1.5, r.x + r.w / 2];
+  let center = '';
+  const c = r.center || 'yellow';
+  if (c === 'yellow') center = line(mid, 'k-yellow');
+  else if (c === 'yellow-broken') center = line(mid, 'k-yellow', '14 10');
+  else if (c === 'yellow-double') center = line(mid - 2.5, 'k-yellow') + line(mid + 2.5, 'k-yellow');
+  else if (c === 'white-broken') center = line(mid, 'k-white', '14 10');
+  // A solid and a broken yellow line: `yellow-pass-n` / `-e` puts the broken line on the side of the driver
+  // heading north or east (the high side), `yellow-pass-s` / `-w` on the other side.
+  else if (c === 'yellow-pass-n' || c === 'yellow-pass-e') center = line(mid - 2.5, 'k-yellow') + line(mid + 2.5, 'k-yellow', '14 10');
+  else if (c === 'yellow-pass-s' || c === 'yellow-pass-w') center = line(mid - 2.5, 'k-yellow', '14 10') + line(mid + 2.5, 'k-yellow');
+  // `lanes: 2` splits each direction into two lanes with a broken white line (a four-lane road).
+  const quarter = (horizontal ? r.h : r.w) / 4;
+  if (r.lanes === 2) center += line(mid - quarter, 'k-white', '14 10') + line(mid + quarter, 'k-white', '14 10');
+  return line(lo, 'k-edge') + line(hi, 'k-edge') + center;
+}
+const SIGN_PARTS = {
+  stop: (x, y) => `<g transform="translate(${x} ${y})"><polygon points="-4,-10 4,-10 10,-4 10,4 4,10 -4,10 -10,4 -10,-4" fill="#c8323a" stroke="#fff" stroke-width="1.5"/>${svgText(0, 2.2, 'STOP', 'middle', 'k-sign')}</g>`,
+  yield: (x, y) => `<g transform="translate(${x} ${y})"><polygon points="-11,-9 11,-9 0,10" fill="#c8323a"/><polygon points="-7,-6.5 7,-6.5 0,5" fill="#fff"/></g>`,
+  allway: (x, y) => SIGN_PARTS.stop(x, y) + `<g transform="translate(${x} ${y + 16})"><rect x="-11" y="-4" width="22" height="8" fill="#fff" stroke="#c8323a" stroke-width="1"/>${svgText(0, 2.3, 'ALL WAY', 'middle', 'k-plate')}</g>`,
+};
+// A road sign drawn by shape and color alone, with no words on it, so the shape and the color carry the
+// meaning (Section 1). The colors are the ones data/questions.json uses for its sign colors. About 36 across.
+const SIGN_COLORS = { red: '#ed3929', yellow: '#faee1a', orange: '#f27423', green: '#12a850', blue: '#0777be', 'yellow-green': '#c3d53c', white: '#ffffff', brown: '#40371a' };
+function roadsignPart(p, o) {
+  const fill = SIGN_COLORS[p.color] || SIGN_COLORS.white, dark = p.color === 'red' || p.color === 'green' || p.color === 'blue' || p.color === 'brown';
+  const edge = `stroke="${dark ? '#ffffff' : '#231f20'}" stroke-width="1.8"`;
+  let face;
+  if (p.kind === 'octagon') face = `<polygon class="k-body" points="-7.5,-18 7.5,-18 18,-7.5 18,7.5 7.5,18 -7.5,18 -18,7.5 -18,-7.5" fill="${fill}" ${edge}/>`;
+  else if (p.kind === 'triangle') face = `<polygon class="k-body" points="-19,-16 19,-16 0,17 " fill="${fill}" ${edge}/>` + (p.color === 'red' ? '<polygon points="-12,-12 12,-12 0,9" fill="#ffffff"/>' : '');
+  else if (p.kind === 'diamond') face = `<polygon class="k-body" points="0,-19 19,0 0,19 -19,0" fill="${fill}" ${edge}/>`;
+  else if (p.kind === 'circle') face = `<circle class="k-body" r="18" fill="${fill}" ${edge}/>`;
+  else if (p.wide) face = `<rect class="k-body" x="-20" y="-13" width="40" height="26" rx="2" fill="${fill}" ${edge}/>`;
+  else face = `<rect class="k-body" x="-14" y="-18" width="28" height="36" rx="2" fill="${fill}" ${edge}/>`;
+  return wrapTarget(p, `<g class="k-roadsign" transform="translate(${p.x} ${p.y})">${face}</g>`, o);
+}
+const LIGHT_COLORS = { red: '#d9534f', yellow: '#e0b23c', green: '#5aa870' };
+// A traffic signal as a driver meets it: a vertical head, red on top, hung on a span across the road over
+// the far side of the intersection. `x`, `y` is the head's center; the span runs the width of the road
+// (`span` 0 draws no span, for a second head on the same span). A state is a color (`red`, `yellow`,
+// `green`), `off`, `flashing-red` or `flashing-yellow`; with `-left` the lit lamp is a left arrow
+// (`green-left`, `yellow-left`, `red-left`, `flashing-yellow-left`).
+function lightPart(p) {
+  const state = p.state || 'off', flash = state.startsWith('flashing-'), left = state.endsWith('-left');
+  const on = state.replace('flashing-', '').replace('-left', '');
+  const lamp = (k, color) => `<circle cx="0" cy="${-8.5 + k * 8.5}" r="3.2" fill="${color === on ? LIGHT_COLORS[color] : '#3a3c40'}"${color === on && flash ? ' class="k-flash"' : ''}/>`;
+  const row = { red: 0, yellow: 1, green: 2 }[on];
+  const arrow = left && row !== undefined ? `<path transform="translate(0 ${-8.5 + row * 8.5})" d="M3 0 L-3 0 M-1 -2 L-3 0 L-1 2" stroke="#111" stroke-width="1.2" fill="none"${flash ? ' class="k-flash"' : ''}/>` : '';
+  const half = (p.span === undefined ? 64 : p.span) / 2, mid = p.spanX === undefined ? 0 : p.spanX - p.x;
+  return `<g transform="translate(${p.x} ${p.y})">${half ? `<line x1="${mid - half}" y1="0" x2="${mid + half}" y2="0" stroke="#6b6e73" stroke-width="1.5"/>` : ''}` +
+    `<rect x="-6" y="-14" width="12" height="28" rx="2" fill="#202225" stroke="#8a8d92" stroke-width="1"/>${lamp(0, 'red')}${lamp(1, 'yellow')}${lamp(2, 'green')}${arrow}</g>`;
+}
+function crosswalkPart(p) {
+  const bars = [];
+  if (p.w >= p.h) for (let x = p.x + 3; x + 4 <= p.x + p.w; x += 8) bars.push(`<rect x="${x}" y="${p.y + 1}" width="4" height="${p.h - 2}" fill="var(--lane-white)"/>`);
+  else for (let y = p.y + 3; y + 4 <= p.y + p.h; y += 8) bars.push(`<rect x="${p.x + 1}" y="${y}" width="${p.w - 2}" height="4" fill="var(--lane-white)"/>`);
+  return bars.join('');
+}
+// A tap target or a highlighted part gets a soft ring; a target is a button the keyboard and a screen reader can reach.
+function wrapTarget(p, inner, { targets, highlight, picked }) {
+  const t = targets.find(x => x.id === p.id), hi = highlight === p.id, no = picked === p.id;
+  // After acting: the one that goes gets a filled ring and a check badge; a wrong pick a thin ring and a cross badge.
+  const badge = (cls, icon) => `<g transform="translate(${p.x + 22} ${p.y - 22})"><g class="k-badge ${cls}"><circle r="13"/><g transform="scale(1.5)">${icon}</g></g></g>`;
+  const ring = hi ? `<circle class="k-ring" cx="${p.x}" cy="${p.y}" r="26"/>` : no ? `<circle class="k-no" cx="${p.x}" cy="${p.y}" r="26"/>` : '';
+  const mark = hi ? badge('k-yes', '<path d="M-4.5 0.5l3 3 6-6" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')
+    : no ? badge('k-not', '<path d="M-3.5 -3.5l7 7M3.5 -3.5l-7 7" fill="none" stroke-width="2.4" stroke-linecap="round"/>') : '';
+  if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>` + mark;
+  return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
+}
+function carPart(p, o) {
+  const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
+  const body = `<g class="k-car${p.you ? ' k-you' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="var(--car-${p.tone === 'b' ? 'b' : 'a'})"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/></g>`;
+  const you = p.you ? svgText(p.x, p.y + (p.heading === 's' || p.heading === 'n' ? 32 : 30), 'You') : '';
+  return wrapTarget(p, body + you, o);
+}
+function pedPart(p, o) {
+  const cane = p.cane ? `<line x1="${p.x + 4}" y1="${p.y + 1}" x2="${p.x + 14}" y2="${p.y + 13}" stroke="#fff" stroke-width="2"/><circle cx="${p.x + 14}" cy="${p.y + 13}" r="2" fill="#c8323a"/>` : '';
+  return wrapTarget(p, `<g><circle class="k-body" cx="${p.x}" cy="${p.y - 4}" r="4.5" fill="var(--ink)"/><ellipse cx="${p.x}" cy="${p.y + 6}" rx="6.5" ry="4" fill="var(--ink)"/>${cane}</g>`, o);
+}
+function pathPart(p) {
+  const d = p.via ? `M${p.from[0]} ${p.from[1]} Q${p.via[0]} ${p.via[1]} ${p.to[0]} ${p.to[1]}` : `M${p.from[0]} ${p.from[1]} L${p.to[0]} ${p.to[1]}`;
+  return `<path class="k-path" d="${d}" marker-end="url(#k-arrow)"/>`;
+}
+// The whole drawing: surfaces first, then markings, then everything else in the order listed.
+function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
+  const roads = parts.filter(p => p.t === 'road');
+  const surfaces = roads.map(r => `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="var(--road)"/>`).join('')
+    + parts.filter(p => p.t === 'circle-road').map(p => `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r}" fill="none" stroke="var(--road)" stroke-width="${p.w}"/>` +
+      `<circle cx="${p.cx}" cy="${p.cy}" r="${p.r + p.w / 2 - 1.5}" class="k-edge" fill="none"/><circle cx="${p.cx}" cy="${p.cy}" r="${p.r - p.w / 2 + 1.5}" class="k-edge" fill="none"/>`).join('');
+  const marks = roads.map(r => roadMarks(r, roads)).join('');
+  const isActor = p => p.t === 'car' || p.t === 'ped' || p.t === 'roadsign';
+  const rest = [...parts.filter(p => p.t !== 'road' && p.t !== 'circle-road' && !isActor(p)), ...parts.filter(isActor)].map(p => {
+    if (p.t === 'car') return carPart(p, o);
+    if (p.t === 'ped') return pedPart(p, o);
+    if (p.t === 'roadsign') return roadsignPart(p, o);
+    if (p.t === 'sign') return (SIGN_PARTS[p.kind] || SIGN_PARTS.stop)(p.x, p.y);
+    if (p.t === 'light') return lightPart(p);
+    if (p.t === 'crosswalk') return crosswalkPart(p);
+    if (p.t === 'path') return pathPart(p);
+    if (p.t === 'label') return svgText(p.x, p.y, p.text, p.anchor || 'middle');
+    return '';
+  }).join('');
+  return `<svg class="scene" viewBox="0 0 320 320" role="img" aria-label="A drawing of the situation. Everything in it is also said in words.">
+      <defs><marker id="k-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="var(--guide)"/></marker></defs>
+      ${surfaces}${marks}${rest}</svg>`;
+}
+
+// A fact's Section has a finished lesson: the Set asks it as a plain counted question, with no first look.
+const taught = (p, id) => p.lessons[BY_ID[id].day] !== undefined;
+// The Section whose lesson should come before the next Set: the first new fact's Section that has a lesson not yet finished.
+function lessonNext(plan, p = S) {
+  const id = plan.fresh.find(id => LESSONS[BY_ID[id].day] && !taught(p, id));
+  return id ? BY_ID[id].day : null;
+}
+function lessonsPanel() {
+  const list = Object.values(LESSONS);
+  if (!list.length) return '';
+  const rows = list.map(l => `<li><div><span class="sname">Section ${l.section}: ${esc(l.title)}</span><span class="sscore">${S.lessons[l.section] !== undefined ? 'You finished this lesson.' : 'You have not done this lesson yet.'} It has ${l.steps.length} questions.</span></div>` +
+    `<button type="button" class="btn slim lesson-open" data-section="${l.section}">Open the lesson</button></li>`).join('');
+  return `<details class="scores lessons"><summary>Lessons</summary><ul>${rows}</ul></details>`;
+}
+function wireLessons() { document.querySelectorAll('.lesson-open').forEach(b => b.onclick = () => { startLesson(Number(b.dataset.section)); toTop(); }); }
+
+function startLesson(section) {
+  lesson = { lesson: LESSONS[section], i: 0, acts: {}, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), peek: false };
+  run = null;
+  renderStep();
+}
+// One lesson step, shown for a wrong answer in a Set: its result state, then back to the question.
+function peekStep(id) {
+  const at = LESSON_STEP[id];
+  lesson = { lesson: LESSONS[at.section], i: at.k, acts: { [at.k]: { chosen: null, right: true, at: null } }, peek: true };
+  renderStep();
+}
+const stepLabel = (st, value) => st.kind === 'tap' ? st.targets.find(t => t.id === value).label : value;
+function renderStep() {
+  const L = lesson, steps = L.lesson.steps, st = steps[L.i], n = steps.length, act = L.acts[L.i], last = L.i === n - 1;
+  const parts = act && st.then.parts ? st.then.parts : st.scene && st.scene.parts;
+  // After acting, the drawing itself says it: the correct one gets a ring and a check, and a wrong tap a ring and a cross.
+  const pickedId = act && st.kind === 'tap' && !act.right ? st.targets.find(t => t.label === act.chosen).id : null;
+  const scene = parts ? `<div class="visual">${drawScene(parts, { targets: !act && st.kind === 'tap' ? st.targets : [], highlight: act ? (st.kind === 'tap' ? st.answer : st.then.highlight || null) : null, picked: pickedId })}</div>` : '';
+  const Lk = ['A', 'B', 'C', 'D'];
+  const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${st.options.map((o, k) => act
+    ? `<li class="opt ${o === st.answer ? 'right' : o === act.chosen ? 'wrong' : 'rest'}"><span class="key" aria-hidden="true">${Lk[k]}</span><span class="otext"><span>${esc(o)}</span>${o === act.chosen && !L.peek ? '<span class="tag">You picked this</span>' : o === st.answer ? '<span class="tag">The answer</span>' : ''}</span></li>`
+    : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
+  // The result is the first line on the card: "Correct." (never "Right", a direction in this app), or "Incorrect."
+  // with what was picked and what the correct one is, said in full.
+  const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Correct.'
+    : st.kind === 'tap' ? `Incorrect. You picked ${act.chosen}.` : 'Incorrect.'; // a choice list already marks what was picked; the explanation names the correct one once
+  const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: ${L.i + 1} of ${n}`;
+  const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
+    : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Go on'}</button>` : '';
+  paint(`
+    <div class="home">
+      <div class="progress"><span>${esc(where)}</span>${L.peek ? '' : `<div class="bar" aria-hidden="true"><span style="width:${Object.keys(L.acts).length / n * 100}%"></span></div>`}</div>
+      <div class="card step${act ? ' acted' : ''}">
+        ${act ? `<h2 class="outcome${L.peek ? '' : act.right ? ' good' : ' not'}" id="stepHead" tabindex="-1">${esc(lead)}</h2>`
+              : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
+        ${scene}
+        ${options}
+        ${act ? `<p class="say" id="stepText">${esc(st.then.say)}</p>` : ''}
+      </div>
+      ${button}
+      ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop the lesson for now</button>'}
+    </div>`, act ? '#stepHead' : '#stepText');
+  document.querySelectorAll('.k-target').forEach(g => {
+    g.onclick = () => lessonAct(g.dataset.t);
+    g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); lessonAct(g.dataset.t); } };
+  });
+  document.querySelectorAll('button.opt').forEach(b => b.onclick = () => lessonChoose(Number(b.dataset.k)));
+  if ($('stepNextBtn')) $('stepNextBtn').onclick = L.peek ? () => { lesson = null; toTop(); renderQuestion(); } : nextStep;
+  if ($('quitBtn')) $('quitBtn').onclick = () => { lesson = null; renderHome(); toTop(); };
+}
+function lessonChoose(k) { const st = lesson.lesson.steps[lesson.i]; if (st.kind !== 'tap') lessonAct(st.options[k]); }
+function lessonAct(value) {
+  const L = lesson, st = L.lesson.steps[L.i];
+  if (L.acts[L.i] || L.peek) return;
+  L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
+  toTop();
+  renderStep();
+  $('announce').textContent = `${$('stepHead').textContent} ${st.then.say}`;
+}
+function nextStep() {
+  $('announce').textContent = '';
+  if (lesson.i < lesson.lesson.steps.length - 1) { lesson.i++; toTop(); renderStep(); } else finishLesson();
+}
+// A finished lesson is a record of type `lesson`: one answer per step with a fact, role `lesson`,
+// so the History has it and the Set knows the Section is taught. Lesson answers never change a standing.
+function lessonRecord(L) {
+  const now = new Date().toISOString();
+  const answers = L.lesson.steps.map((st, k) => st.fact && L.acts[k]
+    ? { q: st.fact, chosen: L.acts[k].chosen, right: L.acts[k].right, at: L.acts[k].at || now, role: 'lesson', format: st.kind === 'tap' ? 'tap' : 'choice' } : null).filter(Boolean);
+  return { id: crypto.randomUUID(), kind: 'set', reset: currentReset(copyRecords()), at: now,
+    data: { set_id: L.set_id, type: 'lesson', section: L.lesson.section, started_at: L.started_at, answers } };
+}
+function finishLesson() {
+  const L = lesson, rec = lessonRecord(L);
+  copy.pending.push(rec);
+  saveCopy();
+  workOut();
+  sendPending();
+  lesson = null;
+  const plan = setPlan(S, Date.now());
+  paint(`
+    <section class="home">
+      <h2 tabindex="-1">You finished the lesson for Section ${L.lesson.section}.</h2>
+      <p class="theme">${esc(L.lesson.title)}</p>
+      <p class="sub">The questions on these rules come in your sets, starting with Set ${S.sets + 1}. The lesson stays open under Lessons on your home screen.</p>
+      <button class="btn primary" type="button" id="moreBtn">Start Set ${S.sets + 1}</button>
+      <button class="btn" type="button" id="homeBtn">I'm done for now</button>
+    </section>`, 'h2');
+  toTop();
+  wireDone();
+}
 
 // Accounts. `me` is the signed-in account ({id, role, name}) or null. Every call to the
 // server goes through api(): a 401 while signed in means the sign-in has ended, and the
@@ -1105,6 +1408,9 @@ function begin(data) {
   for (const w of (data.wordings || []).slice().sort((a, b) => a.id < b.id ? -1 : 1)) if (WORDINGS[w.fact]) WORDINGS[w.fact].push(w.id);
   GROUPS = data.groups || [];
   GROUP_BY_ID = Object.fromEntries(GROUPS.map(g => [g.id, g]));
+  LESSONS = Object.fromEntries((data.lessons || []).map(l => [l.section, l]));
+  LESSON_STEP = {};
+  for (const l of Object.values(LESSONS)) l.steps.forEach((st, k) => { if (st.fact && !LESSON_STEP[st.fact]) LESSON_STEP[st.fact] = { section: l.section, k }; });
   if (me.role === 'helper') renderHelper();
   else openLearner();
 }
@@ -1479,9 +1785,9 @@ function learnerPage({ records, unfinished }, learner) {
   // whether the app is working.
   const ret = retention(p, Date.now()), gap = SPACING_MS / HOUR;
   const kept = ret.all.of
-    ? `<p>Of ${plural(ret.all.of, 'time', 'times')} a fact was answered right and asked again at least ${gap} hours later, it was right ${plural(ret.all.right, 'time', 'times')}.</p>` +
+    ? `<p>Of ${plural(ret.all.of, 'time', 'times')} a fact was answered correctly and asked again at least ${gap} hours later, it was correct ${plural(ret.all.right, 'time', 'times')}.</p>` +
       `<p>In the last 14 days: ${ret.recent.right} of ${ret.recent.of}.</p>`
-    : `<p>No fact has been asked again ${gap} or more hours after a right answer yet.</p>`;
+    : `<p>No fact has been asked again ${gap} or more hours after a correct answer yet.</p>`;
 
   const word = { new: 'New', seen: 'Seen', learned: 'Learned', solid: 'Solid' };
   const facts = DAYS.map(d => {
@@ -1505,7 +1811,7 @@ function learnerPage({ records, unfinished }, learner) {
 
   const missed = missedMost(records);
   const missedList = missed.length ? (reset ? '<p class="sub small">Only answers since the latest Reset count here.</p>' : '') +
-    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Right answer: ${esc(q.a)}</p>` +
+    `<ul>${missed.map(m => { const q = BY_ID[m.q]; return `<li><p class="mq">${esc(q.q)}</p><p>Correct answer: ${esc(q.a)}</p>` +
       `<p>Wrong answer chosen most often: ${esc(m.wrong)}</p><p class="mcount">Missed ${m.missed} of ${m.answered} times</p><p class="mpage">Driver manual, page ${q.p}</p></li>`; }).join('')}</ul>`
     : `<p>No question has been missed two or more times${reset ? ' since the latest Reset' : ''}.</p>`;
 

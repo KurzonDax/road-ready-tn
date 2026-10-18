@@ -14,6 +14,7 @@ Since this app is in active development, the content of this README may not alwa
 
 | Step | What the learner does | Done when |
 | --- | --- | --- |
+| Lessons | One per Section, before its first Set: on each step the learner acts on a drawing or a choice first, then sees the rule | The Section's facts are taught |
 | Sets | Up to 10 counted questions: facts due again, then up to 5 new facts in Section order. Each new fact gets a first look, its rule, and its question a few screens later | Every fact is learned |
 | Practice tests | 30 questions drawn from all 120, like the real test | 27 or more right, three times in a row |
 
@@ -70,6 +71,7 @@ tests/
 tools/
   extract_manual.py      rebuilds the manual text from the PDF
   make_icons.py          draws the Home Screen icons (needs Pillow)
+  lesson_sheet.py        writes one lesson as a single page to review (python3 tools/lesson_sheet.py 3 out.html)
 docs/
   QUESTIONS.md           how questions are written, checked, and worded
   DECISIONS.md           manual quirks and app behavior choices
