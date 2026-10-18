@@ -39,7 +39,7 @@
             "x": 250,
             "y": 140,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -47,11 +47,12 @@
             "x": 250,
             "y": 262,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "You are on a road with two lanes each way, in the lane nearest the right edge. A slow car is ahead of you in your lane. A broken white line separates your lane from the empty lane on your left. Left of that lane are two solid yellow lines. Which lane do you pass in? Tap the lane.",
+      "prompt": "You are the red car. You want to pass the blue car. Which lane do you use to pass? Tap the lane.",
       "targets": [
         {
           "id": "left-lane",
@@ -89,7 +90,7 @@
             "x": 250,
             "y": 140,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -97,12 +98,13 @@
             "x": 190,
             "y": 170,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
-        "say": "You pass in the lane on your left. You may cross a broken white line to pass or change lanes when it is safe, and that lane is for cars going your way.",
+        "say": "You pass in the lane on your left. The line between your lane and that lane is a broken white line, and you may cross a broken white line to pass or change lanes when it is safe.",
         "wrong": {
-          "oncoming-lane": "Two solid yellow lines lie between you and that lane, and they are never crossed to pass, from either direction. You pass in the lane on your left, across the broken white line."
+          "oncoming-lane": "Two solid yellow lines lie between your lane and that lane, and they are never crossed to pass, from either direction. You pass in the lane on your left, across the broken white line."
         }
       },
       "rule": "You may cross a broken white line between lanes to pass or change lanes when it is safe."
@@ -127,7 +129,7 @@
             "x": 175,
             "y": 150,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -135,20 +137,21 @@
             "x": 175,
             "y": 240,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "The center of this road has two solid yellow lines. A slow car is ahead of you in your lane, and no car is coming toward you. May you cross the lines to pass it?",
+      "prompt": "You are the red car. The blue car is slow, and no car is coming toward you. The center of the road has two solid yellow lines. May you cross them to pass the blue car?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stay behind the slow car. Two solid yellow lines may not be crossed to pass from either direction, even when no car is coming toward you. You may cross them to turn into a driveway or a side road when it is safe.",
+        "say": "No, you stay behind the blue car. Two solid yellow lines may not be crossed to pass from either direction, even when no car is coming toward you. You may cross them to turn into a driveway or a side road when it is safe.",
         "wrong": {
-          "Yes": "No car is coming, but two solid yellow lines may not be crossed to pass from either direction, even then. You stay behind the slow car."
+          "Yes": "No car is coming, but two solid yellow lines may not be crossed to pass from either direction, even then. You stay behind the blue car."
         }
       },
       "rule": "Two solid yellow lines mean you may not cross them to pass from either direction, even when no car is coming toward you."
@@ -187,7 +190,7 @@
             "x": 175,
             "y": 170,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -195,11 +198,12 @@
             "x": 175,
             "y": 255,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "A slow car is ahead of you in your lane. The center of the road has a solid yellow line and a broken yellow line, and the broken one is on your side. Ahead, the road goes over the top of a hill, and you cannot see the shaded part of the road beyond it. May you pass now?",
+      "prompt": "You are the red car. The blue car is slow. The center line on your side is a broken yellow line. The road goes over the top of a hill, and you cannot see the shaded part beyond it. May you pass the blue car now?",
       "options": [
         "Yes",
         "No"
@@ -234,7 +238,8 @@
             "id": "hidden",
             "x": 145,
             "y": 40,
-            "heading": "s"
+            "heading": "s",
+            "color": "white"
           },
           {
             "t": "car",
@@ -242,7 +247,7 @@
             "x": 175,
             "y": 170,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -250,12 +255,13 @@
             "x": 175,
             "y": 255,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
-        "say": "No, you stay behind the slow car until you can see the road ahead. Beyond the top of the hill a car is coming toward you, where you could not see it. You do not pass when coming up to a hill or a curve, even where the broken yellow line is on your side.",
+        "say": "No, you stay behind the blue car until you can see the road ahead. Beyond the top of the hill a car is coming toward you, where you could not see it. You do not pass when coming up to a hill or a curve, even where the broken yellow line is on your side.",
         "wrong": {
-          "Yes": "The broken yellow line on your side allows passing only when you can see that no car is coming, and the hill hides the road beyond its top. At a hill you do not pass, even where the broken line is on your side. You stay behind the slow car."
+          "Yes": "The broken yellow line on your side allows passing only when you can see that no car is coming, and the hill hides the road beyond its top. At a hill you do not pass, even where the broken line is on your side. You stay behind the blue car."
         }
       },
       "rule": "You do not pass when you are coming up to a hill or a curve, because you cannot see the cars coming toward you."
@@ -281,11 +287,12 @@
             "x": 130,
             "y": 220,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "You are on a road with two lanes each way. Two solid yellow lines are on your right, and a broken white line is on your left. What do the lines tell you?",
+      "prompt": "You are the red car. Two solid yellow lines are on your right, and a broken white line is on your left. What do the lines tell you?",
       "options": [
         "You are going the wrong way.",
         "You are in a passing zone.",
@@ -309,7 +316,7 @@
             "x": 130,
             "y": 60,
             "heading": "s",
-            "tone": "b"
+            "color": "white"
           },
           {
             "t": "car",
@@ -317,7 +324,8 @@
             "x": 130,
             "y": 220,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
         "say": "You are going the wrong way. Yellow lines belong on a driver's left, so yellow on your right means this lane is for cars coming toward you. You move out of it as soon as it is safe.",
@@ -371,11 +379,12 @@
             "x": 195,
             "y": 272,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "You are on a road with two lanes going your way, split by a broken white line. A motorcycle is ahead of you in your lane, riding near its right edge. The lane on your left is empty. Which lane do you pass in? Tap the lane.",
+      "prompt": "You are the red car. You want to pass the motorcycle. Which lane do you use to pass? Tap the lane.",
       "targets": [
         {
           "id": "left-lane",
@@ -419,7 +428,8 @@
             "x": 125,
             "y": 160,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
         "say": "You pass in the lane on your left. A motorcycle has the use of its whole lane, even when the rider is near one edge, so you pass it as you would pass a car.",
@@ -455,11 +465,12 @@
             "x": 190,
             "y": 255,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "A bicycle is ahead of you near the right edge of your lane, going your way. When you pass it, how much space does the law require between your car and the bicycle?",
+      "prompt": "You are the red car. You want to pass the bicycle. How much space does the law require between your car and the bicycle?",
       "options": [
         "The law requires at least 1 foot.",
         "The law requires at least 3 feet.",
@@ -501,7 +512,8 @@
             "x": 176,
             "y": 130,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
         "say": "The law requires at least 3 feet between your car and the bicycle. You keep that space until you are past the bicycle, and you pass slowly.",
@@ -539,7 +551,7 @@
             "x": 125,
             "y": 208,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -547,7 +559,8 @@
             "x": 195,
             "y": 180,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           },
           {
             "t": "path",
@@ -566,7 +579,7 @@
           }
         ]
       },
-      "prompt": "You want to move into the lane on your left. A car is in that lane just behind your door, in the shaded spot that neither of your mirrors shows. How do you check for it before you move over?",
+      "prompt": "You are the red car. You want to move into the lane on your left. The blue car is in that lane just behind your door, in the shaded spot that neither of your mirrors shows. How do you check for it before you move over?",
       "options": [
         "You turn your head and look over your left shoulder.",
         "You check your inside mirror only.",
@@ -576,8 +589,8 @@
       "then": {
         "say": "You turn your head and look over your left shoulder. Your mirrors leave a blind spot beside and just behind your car, so you look over your shoulder in the direction you will move.",
         "wrong": {
-          "You check your inside mirror only.": "The inside mirror shows the road behind you, not the spot beside you, so the car stays hidden. You turn your head and look over your left shoulder.",
-          "You check your outside mirror only.": "The outside mirror leaves a blind spot beside and just behind your car, and the other car is in it. You turn your head and look over your left shoulder."
+          "You check your inside mirror only.": "The inside mirror shows the road behind you, not the spot beside you, so the blue car stays hidden. You turn your head and look over your left shoulder.",
+          "You check your outside mirror only.": "The outside mirror leaves a blind spot beside and just behind your car, and the blue car is in it. You turn your head and look over your left shoulder."
         }
       },
       "rule": "Before you change lanes, you turn your head and look over your shoulder in the direction you will move, because your mirrors leave a blind spot."
@@ -602,7 +615,7 @@
             "x": 190,
             "y": 190,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -610,7 +623,8 @@
             "x": 130,
             "y": 140,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           },
           {
             "t": "path",
@@ -629,13 +643,13 @@
           }
         ]
       },
-      "prompt": "You are passing a car on a two-lane road. You are in the lane for cars coming toward you, and your car is just ahead of the car you are passing. When do you move back into your lane?",
+      "prompt": "You are the red car, passing the blue car on a two-lane road. When do you move back into your lane?",
       "options": [
-        "You move back when you can see both of its headlights in your rearview mirror.",
-        "You move back as soon as your front bumper is past its front bumper.",
-        "You move back when its driver waves you over."
+        "You move back when you can see both of the blue car's headlights in your rearview mirror.",
+        "You move back as soon as your front bumper is past the blue car's front bumper.",
+        "You move back when the blue car's driver waves you over."
       ],
-      "answer": "You move back when you can see both of its headlights in your rearview mirror.",
+      "answer": "You move back when you can see both of the blue car's headlights in your rearview mirror.",
       "then": {
         "parts": [
           {
@@ -652,7 +666,7 @@
             "x": 190,
             "y": 250,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -660,13 +674,14 @@
             "x": 190,
             "y": 90,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
-        "say": "You move back when you can see both of its headlights in your rearview mirror. Then there is room between your car and the car you passed, and you do not count on its driver to make room for you.",
+        "say": "You move back when you can see both of the blue car's headlights in your rearview mirror. Then there is room between your car and the blue car, and you do not count on its driver to make room for you.",
         "wrong": {
-          "You move back as soon as your front bumper is past its front bumper.": "With only your front bumper past, most of your car is still beside the other car, and moving over would hit it. Even now, just ahead of it, you are too close to its front to move over. You wait until you can see both of its headlights in your rearview mirror.",
-          "You move back when its driver waves you over.": "You do not count on another driver to make room for you, and a wave does not show you the room between your car and the car you passed. You wait until you can see both of its headlights in your rearview mirror."
+          "You move back as soon as your front bumper is past the blue car's front bumper.": "With only your front bumper past, most of your car is still beside the blue car, and moving over would hit it. Even now, just ahead of it, you are too close to its front to move over. You wait until you can see both of its headlights in your rearview mirror.",
+          "You move back when the blue car's driver waves you over.": "You do not count on another driver to make room for you, and a wave does not show you the room between your car and the blue car. You wait until you can see both of its headlights in your rearview mirror."
         }
       },
       "rule": "After you pass a car, you move back into your lane when you can see both of its headlights in your rearview mirror."
@@ -706,7 +721,7 @@
             "x": 176,
             "y": 150,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -714,7 +729,8 @@
             "x": 192,
             "y": 262,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           },
           {
             "t": "path",
@@ -733,7 +749,7 @@
           }
         ]
       },
-      "prompt": "You are on a two-lane road. The car ahead of you has its left turn signal on and is slowing to turn left into a driveway. There is room to pass it on its right side without leaving your lane. May you pass it on the right?",
+      "prompt": "You are the red car. The blue car has its left turn signal on and is slowing to turn left into the driveway. There is room to pass it on its right side without leaving your lane. May you pass the blue car on the right?",
       "options": [
         "Yes",
         "No"
@@ -770,7 +786,7 @@
             "x": 120,
             "y": 112,
             "heading": "w",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -778,12 +794,13 @@
             "x": 196,
             "y": 80,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
-        "say": "Yes, you may pass it on the right when it is safe. On a two-lane road, passing on the right is allowed only when the car ahead is turning left. You never pass on the left of a car that is turning left.",
+        "say": "Yes, you may pass the blue car on the right when it is safe. On a two-lane road, passing on the right is allowed only when the car ahead is turning left. You never pass on the left of a car that is turning left.",
         "wrong": {
-          "No": "The car ahead is turning left, and that is the one time a two-lane road allows passing on the right, when it is safe. You may pass it on the right, staying in your lane."
+          "No": "The blue car is turning left, and that is the one time a two-lane road allows passing on the right, when it is safe. You may pass it on the right, staying in your lane."
         }
       },
       "rule": "On a two-lane road, you may pass on the right only when the car ahead is turning left and it is safe."
@@ -823,7 +840,7 @@
             "x": 190,
             "y": 150,
             "heading": "n",
-            "tone": "b"
+            "color": "blue"
           },
           {
             "t": "car",
@@ -831,7 +848,8 @@
             "x": 190,
             "y": 262,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           },
           {
             "t": "path",
@@ -850,16 +868,16 @@
           }
         ]
       },
-      "prompt": "You are on a two-lane road behind a slow car that is going straight. A paved shoulder runs along the right edge of the road. May you pass the slow car on the shoulder?",
+      "prompt": "You are the red car. The blue car is slow and going straight. A paved shoulder runs along the right edge of the road. May you pass the blue car on the shoulder?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stay behind the slow car. You never drive on the shoulder to pass, even when it is paved. On a two-lane road you pass on the right only when the car ahead is turning left.",
+        "say": "No, you stay behind the blue car. You never drive on the shoulder to pass, even when it is paved. On a two-lane road you pass on the right only when the car ahead is turning left.",
         "wrong": {
-          "Yes": "The shoulder is not a lane, and you never drive on it to pass, even when it is paved. On a two-lane road you pass on the right only when the car ahead is turning left, and this one is going straight."
+          "Yes": "The shoulder is not a lane, and you never drive on it to pass, even when it is paved. On a two-lane road you pass on the right only when the car ahead is turning left, and the blue car is going straight."
         }
       },
       "rule": "You never pass another vehicle by driving on the shoulder."
@@ -903,11 +921,12 @@
             "x": 190,
             "y": 240,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "You are driving 100 feet behind a large truck, in the same lane. Can the truck driver see your car?",
+      "prompt": "You are the red car, 100 feet behind the truck in the same lane. Can the truck driver see your car?",
       "options": [
         "Yes",
         "No"
@@ -989,7 +1008,8 @@
             "x": 190,
             "y": 240,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
         "say": "No, the truck driver cannot see your car. The shaded areas are the truck's blind spots: directly in front of it, on both sides, and up to 200 feet behind it. At 100 feet back you are in the one behind it.",
@@ -1025,11 +1045,12 @@
             "x": 130,
             "y": 150,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ]
       },
-      "prompt": "You are in the lane on the left of a large truck, beside the middle of its trailer, going the same speed as the truck. What do you do?",
+      "prompt": "You are the red car, beside the middle of the truck's trailer, going the same speed as the truck. What do you do?",
       "options": [
         "You stay beside the truck, so its driver knows you are there.",
         "You pass the truck when it is safe, so you do not stay beside it."
@@ -1085,7 +1106,8 @@
             "x": 130,
             "y": 150,
             "heading": "n",
-            "you": true
+            "you": true,
+            "color": "red"
           }
         ],
         "say": "You pass the truck when it is safe, so you do not stay beside it. Both sides of a truck are blind spots, and beside its trailer its driver cannot see your car.",

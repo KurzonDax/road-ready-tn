@@ -1344,11 +1344,14 @@ function lanePart(p, o) {
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
 // `emergency: true` puts a red and blue light bar on the roof, flashing: an emergency vehicle (the prompt names the siren).
+const CAR_COLORS = { red: '#d1453f', blue: '#3f7fd9', green: '#3f9d62', white: '#e6e3dd' };
 function carPart(p, o) {
   const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
   if (p.outline) return wrapTarget(p, `<g class="k-car k-outline" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="none" stroke="var(--guide)" stroke-width="2" stroke-dasharray="5 4"/></g>`, o);
   const bar = p.emergency ? `<rect x="-7" y="-2" width="6" height="4" rx="1" fill="#d9534f" class="k-flash"/><rect x="1" y="-2" width="6" height="4" rx="1" fill="#4f8ef7" class="k-flash"/>` : '';
-  const body = `<g class="k-car${p.you ? ' k-you' : ''}${p.emergency ? ' k-emergency' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="var(--car-${p.tone === 'b' ? 'b' : 'a'})"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/>${bar}</g>`;
+  // `color` paints the car so the prompt can name it ("You are the red car. You want to pass the blue car.").
+  const fill = CAR_COLORS[p.color] || `var(--car-${p.tone === 'b' ? 'b' : 'a'})`;
+  const body = `<g class="k-car${p.you ? ' k-you' : ''}${p.emergency ? ' k-emergency' : ''}${p.color ? ' k-' + p.color : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="${fill}"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/>${bar}</g>`;
   const you = p.you ? svgText(p.x, p.y + (p.heading === 's' || p.heading === 'n' ? 32 : 30), 'You') : '';
   return wrapTarget(p, body + you, o);
 }

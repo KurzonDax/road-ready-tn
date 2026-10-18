@@ -2754,8 +2754,13 @@ def check_pass_lesson(browser, inst):
     check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
           "every option is a complete sentence or a plain Yes or No")
     taps = [s for s in steps if s["kind"] == "tap"]
-    check(len(taps) == 2 and all(s["prompt"].endswith("Which lane do you pass in? Tap the lane.") for s in taps) and {s["fact"] for s in taps} == {"a-176", "d-106"},
-          "the two tap questions ask which lane to pass in, in the one form, for the broken white line and the motorcycle")
+    check(len(taps) == 2 and all(s["prompt"].startswith("You are the red car. You want to pass the ") and s["prompt"].endswith("Which lane do you use to pass? Tap the lane.") for s in taps)
+          and {s["fact"] for s in taps} == {"a-176", "d-106"},
+          "the two tap questions say you are the red car and ask which lane you use to pass, in the one form, for the broken white line and the motorcycle")
+    def painted(s):
+        cars = [p for p in s["parts"] if p["t"] == "car"]
+        return all((p.get("color") == "red") == bool(p.get("you")) and p.get("color") in ("red", "blue") for p in cars)
+    check(all(painted(s) and s["prompt"].startswith("You are the red car") for s in steps), "every question paints your car red and the other car blue, and the prompt says so")
     def boxes_only(s):
         boxes = {p["id"] for p in s["parts"] if p["t"] == "lane"}
         return {t["id"] for t in s["targets"]} == boxes and not any("label" in p for p in s["parts"] if p["t"] == "lane") and sum(1 for t in s["targets"] if t["id"] == s["answer"]) == 1
@@ -2776,11 +2781,12 @@ def check_pass_lesson(browser, inst):
     def line_said(s):
         c = next((p.get("center", "yellow") for p in s["parts"] if p["t"] == "road"), None)
         pr = s["prompt"].lower()
-        if s["fact"] in ("a-176", "a-166"): return "broken white" in pr and "solid yellow" in pr and c == "yellow-double"
+        if s["fact"] == "a-176": return "broken white" in s["say"].lower() and "solid yellow" in " ".join(s["wrong"].values()).lower() and c == "yellow-double"
+        if s["fact"] == "a-166": return "broken white" in pr and "solid yellow" in pr and c == "yellow-double"
         if s["fact"] == "a-170": return "two solid yellow" in pr and c == "yellow-double"
         if s["fact"] == "b-223": return "broken" in pr and "yellow" in pr and c == "yellow-pass-n"
         return True
-    check(all(line_said(s) for s in steps), "the line questions name each line's color and whether it is solid or broken, and draw it so")
+    check(all(line_said(s) for s in steps), "the line questions name each line's color and whether it is solid or broken, in the prompt or the explanation, and draw it so")
     wrong_way = next(s for s in steps if s["fact"] == "a-166")
     you = next(p for p in wrong_way["parts"] if p["t"] == "car" and p.get("you"))
     road = next(p for p in wrong_way["parts"] if p["t"] == "road")
@@ -2814,6 +2820,7 @@ def check_pass_lesson(browser, inst):
     first = steps[0]
     check(first["kind"] == "tap" and first["fact"] == "a-176" and len(pg.query_selector_all(".scene .k-lane")) == 2 and pg.query_selector(".scene .k-you") is not None,
           "the first question is the broken white line tap, with two lane boxes and your car on the approach")
+    check(pg.evaluate("document.querySelectorAll('.scene .k-car.k-red').length") == 1 and pg.evaluate("document.querySelectorAll('.scene .k-car.k-blue').length") == 1, "the red car and the blue car are drawn")
     check(pg.evaluate("document.querySelectorAll('.scene line.k-white[stroke-dasharray]').length") >= 2
           and pg.evaluate("document.querySelectorAll('.scene line.k-yellow:not([stroke-dasharray])').length") == 2,
           "the road with two lanes each way draws its broken white lines and two solid yellow lines")
