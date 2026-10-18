@@ -122,7 +122,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a red eight-sided sign, a blue rectangle, and a red and white three-sided sign pointing down. Which sign means you slow down and let the traffic on the other road go first, and you do not have to stop when no car is coming? Tap the sign.",
+      "prompt": "Three signs stand beside the road: a red eight-sided sign, a blue rectangle, and a red and white three-sided sign pointing down. Which sign means you slow down and let the traffic on the other road go first? Tap the sign.",
       "targets": [
         {
           "id": "stop-sign",
