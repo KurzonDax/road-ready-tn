@@ -83,7 +83,7 @@
           }
         ]
       },
-      "prompt": "You are coming up to a stop sign. A white stop line is painted across your lane, just before the crosswalk. Two places are drawn: behind the stop line, and past the stop line. Where do you stop? Tap the place.",
+      "prompt": "You are coming up to a stop sign. A white stop line is painted across your lane. Where do you stop? Tap the place.",
       "targets": [
         {
           "id": "behind",
@@ -164,7 +164,7 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop behind the stop line. At a stop sign with a white stop line, the law says you stop your car behind the line, not on it. The place past the line is out in the intersection, in the way of the cars on the cross street."
+        "say": "You stop behind the stop line. Past it, your car is out in the intersection, in the way of the cross traffic."
       },
       "rule": "At a stop sign with a white stop line, you stop your vehicle behind the line."
     },
@@ -243,7 +243,7 @@
           }
         ]
       },
-      "prompt": "You are coming up to a stop sign. There is no stop line, but a crosswalk is painted across the road. Two places are drawn: before the crosswalk, and past the crosswalk. Where do you stop? Tap the place.",
+      "prompt": "You are coming up to a stop sign. There is no stop line, but a crosswalk is painted across the road. Where do you stop? Tap the place.",
       "targets": [
         {
           "id": "before",
@@ -318,7 +318,7 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop before the crosswalk. When there is no stop line, the law says you stop before your car reaches the crosswalk, so your car is not where people walk across. The place past the crosswalk is out in the intersection, in the way of the cars on the cross street."
+        "say": "You stop before the crosswalk, so your car is not where people walk across. Past it, your car is out in the intersection."
       },
       "rule": "At a stop sign with no stop line, you stop before the crosswalk, and with neither, before you enter the intersection, where you can see the cross traffic."
     },
@@ -368,14 +368,14 @@
           }
         ]
       },
-      "prompt": "You are coming up to a railroad crossing with a gate. No train is in sight. The red lights on the crossing signal have just begun flashing, and the gate is still up. May you go across now?",
+      "prompt": "You are coming up to a railroad crossing. No train is in sight. The red lights have just begun flashing, and the gate is still up. May you go across now?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stop before the crossing, without waiting for the gate to come down. The flashing red lights mean a train is coming, even before you can see it, and trying to get across ahead of a train is very dangerous."
+        "say": "No, you stop before the crossing, before the gate comes down. Flashing red lights mean a train is coming, even before you can see it."
       },
       "rule": "At a crossing with lights and a gate, you stop when the lights begin flashing, before the gate comes down."
     },
@@ -401,12 +401,6 @@
             "h": 22
           },
           {
-            "t": "stopline",
-            "x": 121,
-            "y": 112,
-            "w": 28
-          },
-          {
             "t": "crossbuck",
             "x": 167,
             "y": 64,
@@ -425,7 +419,7 @@
           }
         ]
       },
-      "prompt": "You are coming up to a railroad crossing. A train is coming, the red lights on the crossing signal are flashing, and the gate is down. A white stop line is painted across your lane before the tracks. Tennessee law sets how far from the tracks you must stop when a train is coming. What is that distance?",
+      "prompt": "A train is coming to the railroad crossing ahead, and the gate is down. How far from the tracks does Tennessee law say you must stop?",
       "options": [
         "Between 15 and 50 feet from the tracks.",
         "Between 5 and 10 feet from the tracks.",
@@ -433,7 +427,7 @@
       ],
       "answer": "Between 15 and 50 feet from the tracks.",
       "then": {
-        "say": "You stop between 15 and 50 feet from the tracks, and never on the tracks. The stop line at a crossing is painted inside that distance, so when you stop behind it you are where the law says."
+        "say": "You stop between 15 and 50 feet from the tracks, and never on the tracks."
       },
       "rule": "When a train is coming, you stop between 15 and 50 feet from the railroad tracks, and never on the tracks."
     },
@@ -520,7 +514,7 @@
           }
         ]
       },
-      "prompt": "A train is coming to the crossing ahead. The red lights on the crossing signal are flashing, and the gate is down. A white stop line is painted across your lane, 30 feet from the tracks. Three places are drawn: on the tracks, behind the stop line, and 80 feet from the tracks. Where do you stop? Tap the place.",
+      "prompt": "A train is coming to the railroad crossing ahead. A white stop line is painted across your lane, 30 feet from the tracks. Where do you stop? Tap the place.",
       "targets": [
         {
           "id": "on",
@@ -615,7 +609,7 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop behind the stop line. The line is 30 feet from the tracks, inside the 15 to 50 feet the law sets, and a stop line at a crossing is where you stop. On the tracks, the train would hit your car, and 80 feet is farther back than the law allows."
+        "say": "You stop behind the stop line, 30 feet from the tracks, inside the 15 to 50 feet the law sets. On the tracks the train hits you, and 80 feet is farther back than the law allows."
       },
       "rule": "At a railroad crossing with a stop line, you stop behind the stop line, which is painted between 15 and 50 feet from the tracks."
     },
@@ -665,14 +659,14 @@
           }
         ]
       },
-      "prompt": "You are stopped at the railroad crossing. The train has passed and is out of sight. The red lights on the crossing signal are still flashing, and the gate is still down. May you go across now?",
+      "prompt": "You are stopped at the railroad crossing. The train has passed. The red lights are still flashing, and the gate is still down. May you go across now?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stay stopped. Flashing red lights and a lowered gate warn of a train, and you never drive across while either one is warning, even after a train has passed."
+        "say": "No, you stay stopped. Flashing lights and a lowered gate mean a train is coming, even after one has passed."
       },
       "rule": "At a crossing with lights and a gate, you stay stopped until the gates are raised and the lights stop flashing."
     },
@@ -722,14 +716,14 @@
           }
         ]
       },
-      "prompt": "You are stopped at the railroad crossing. The train has passed. The gate is now all the way up, and the red lights on the crossing signal have stopped flashing. No other train is in sight. May you go across now?",
+      "prompt": "You are stopped at the railroad crossing. The train has passed. The gate is up, and the red lights have stopped flashing. May you go across now?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "Yes",
       "then": {
-        "say": "Yes, you may go across now. The gate is all the way up and the lights have stopped flashing, so nothing at the crossing warns of a train. You wait for both to happen, never only one."
+        "say": "Yes, you go across. You wait for both the gate to go up and the lights to stop, never only one."
       },
       "rule": "At a crossing with lights and a gate, you may go across once the gates are raised and the lights have stopped flashing."
     },
@@ -764,15 +758,15 @@
           }
         ]
       },
-      "prompt": "You are driving behind a school bus in your lane. The yellow lights on the front and back of the bus are flashing, and its stop arm is not out. What do you do?",
+      "prompt": "You are driving behind a school bus. Its yellow lights are flashing. What do you do?",
       "options": [
         "You slow down and get ready to stop.",
-        "You speed up and pass the bus before it stops.",
-        "You keep the same speed, because the bus is still moving."
+        "You pass the bus before it stops.",
+        "You keep the same speed."
       ],
       "answer": "You slow down and get ready to stop.",
       "then": {
-        "say": "You slow down and get ready to stop. Flashing yellow lights mean the bus is about to stop to let children on or off, so you will soon have to stop behind it."
+        "say": "You slow down and get ready to stop. Flashing yellow lights mean the bus is about to stop for children."
       },
       "rule": "When the yellow lights on a school bus are flashing, the bus is about to stop to load or unload children, so you slow down and get ready to stop."
     },
@@ -814,15 +808,15 @@
           }
         ]
       },
-      "prompt": "The school bus ahead of you in your lane has stopped. Its red lights are flashing, its stop arm is out, and children are getting off. You have stopped behind it. When may you start driving again?",
+      "prompt": "The school bus ahead has stopped. Its red lights are flashing and its stop arm is out. You have stopped behind it. When may you drive on?",
       "options": [
-        "When the red lights are off, the stop arm is pulled back, and the bus starts moving.",
+        "When the red lights are off, the stop arm is pulled back, and the bus moves.",
         "As soon as the children have reached the side of the road.",
-        "After you have waited 30 seconds and no more children are in sight."
+        "After you have waited 30 seconds."
       ],
-      "answer": "When the red lights are off, the stop arm is pulled back, and the bus starts moving.",
+      "answer": "When the red lights are off, the stop arm is pulled back, and the bus moves.",
       "then": {
-        "say": "You wait until the red lights are off, the stop arm is pulled back, and the bus starts moving. Until then, children may still be getting on or off or crossing the road near the bus, even when you cannot see any."
+        "say": "You drive on when the red lights are off, the stop arm is pulled back, and the bus moves. Until then, children may still be crossing near the bus."
       },
       "rule": "When a school bus has its red lights flashing and its stop arm out, you stop and stay stopped until the red lights are turned off, the stop arm is pulled back, and the bus starts moving."
     },
@@ -880,15 +874,15 @@
           }
         ]
       },
-      "prompt": "A school bus has stopped at an intersection to let children off. Its red lights are flashing and its stop arm is out. You are driving toward the front of the bus. A car is coming on the cross road from your left. The intersection has no sign and no traffic light. Who must stop?",
+      "prompt": "A school bus has stopped at an intersection with its red lights flashing and its stop arm out. You are coming toward it. A car is coming on the cross road. Who must stop?",
       "options": [
         "You and the car on the cross road must both stop.",
-        "Only you must stop, because you are facing the bus.",
-        "Only the car on the cross road must stop, because the bus is not in your lane."
+        "Only you must stop.",
+        "Only the car on the cross road must stop."
       ],
       "answer": "You and the car on the cross road must both stop.",
       "then": {
-        "say": "You and the car on the cross road must both stop. When a school bus is stopped at an intersection to let children on or off, drivers from every direction stop until the bus moves again."
+        "say": "Both of you stop. When a school bus is stopped at an intersection, drivers from every direction stop until it moves again."
       },
       "rule": "When a school bus is stopped at an intersection to load or unload children, drivers from all directions stop until the bus moves again."
     },
@@ -952,15 +946,15 @@
           }
         ]
       },
-      "prompt": "You are driving on a highway divided by a median strip that cars cannot drive on. On the other side of the median, a school bus going the other way has stopped. Its red lights are flashing, its stop arm is out, and children are getting off. What does Tennessee law tell you to do?",
+      "prompt": "You are on a highway divided by a median that cars cannot drive on. On the other side of the median, a school bus has stopped with its red lights flashing and its stop arm out. What does Tennessee law tell you to do?",
       "options": [
         "You do not have to stop, but you drive on with care.",
-        "You stop and stay stopped until the red lights are off, the stop arm is pulled back, and the bus starts moving.",
-        "You speed up to get past the bus quickly."
+        "You stop until the bus moves again.",
+        "You speed up to get past the bus."
       ],
       "answer": "You do not have to stop, but you drive on with care.",
       "then": {
-        "say": "You do not have to stop, but you drive on with care. The median that cars cannot drive on separates your side of the highway from the bus, so only the drivers on the bus's side must stop. You still watch for children near the road."
+        "say": "You do not have to stop, but you drive on with care. The median separates your side from the bus, so only the drivers on the bus's side stop."
       },
       "rule": "On a highway divided by a median or a barrier that cars cannot drive on, drivers on the other side from a stopped school bus do not have to stop, but drive on with caution."
     },
@@ -1025,15 +1019,15 @@
           }
         ]
       },
-      "prompt": "You are on a highway with two lanes each way and a turn lane in the middle. Cars can drive on the turn lane. Across the turn lane, a school bus going the other way has stopped. Its red lights are flashing, its stop arm is out, and children are getting off. What does Tennessee law tell you to do?",
+      "prompt": "You are on a highway with two lanes each way and a turn lane in the middle, which cars can drive on. Across the turn lane, a school bus has stopped with its red lights flashing and its stop arm out. What does Tennessee law tell you to do?",
       "options": [
-        "You stop and stay stopped until the red lights are off, the stop arm is pulled back, and the bus starts moving.",
+        "You stop until the bus moves again.",
         "You do not have to stop, but you drive on with care.",
-        "You speed up to get past the bus quickly."
+        "You speed up to get past the bus."
       ],
-      "answer": "You stop and stay stopped until the red lights are off, the stop arm is pulled back, and the bus starts moving.",
+      "answer": "You stop until the bus moves again.",
       "then": {
-        "say": "You stop and stay stopped until the red lights are off, the stop arm is pulled back, and the bus starts moving. Cars can drive on a turn lane, so it is not a median, and on this road drivers going both directions must stop."
+        "say": "You stop until the bus moves again. A turn lane cars can drive on is not a median, so drivers going both ways stop."
       },
       "rule": "A turn lane in the middle of a four-lane highway is not a barrier, so drivers going both directions stop for a stopped school bus."
     },
@@ -1067,15 +1061,15 @@
           }
         ]
       },
-      "prompt": "A school bus has stopped with its red lights flashing and its stop arm out. A child has just gotten off the bus. How far from the bus should the child stay?",
+      "prompt": "A child has just gotten off a stopped school bus. How far from the bus should the child stay?",
       "options": [
-        "The child should stay ten feet away from the bus.",
-        "The child should stay two feet away from the bus.",
-        "The child should stay five feet away from the bus."
+        "The child stays ten feet away.",
+        "The child stays two feet away.",
+        "The child stays five feet away."
       ],
-      "answer": "The child should stay ten feet away from the bus.",
+      "answer": "The child stays ten feet away.",
       "then": {
-        "say": "The child should stay ten feet away from the bus and never go behind it. Closer than ten feet, on any side of the bus, the child is in the Danger Zone, where children are in the most danger of being hit."
+        "say": "The child stays ten feet away and never goes behind the bus. Closer than that, on any side, is the Danger Zone, where children are most likely to be hit."
       },
       "rule": "Children stay ten feet away from a school bus and never go behind it, because the Danger Zone is on all sides of the bus."
     },
@@ -1178,7 +1172,7 @@
           }
         ]
       },
-      "prompt": "Your road has one lane each way. A police car with its siren on and its red and blue lights flashing is coming up behind you. Three places are drawn: in the middle of your lane, at the right edge of the road, and at the left edge of the road. Where do you stop? Tap the place.",
+      "prompt": "Your road has one lane each way. A police car with its siren on is coming up behind you. Where do you stop? Tap the place.",
       "targets": [
         {
           "id": "middle",
@@ -1281,7 +1275,7 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop at the right edge of the road, and stay stopped until the police car has passed or an officer tells you to move. In the middle of your lane, your car blocks the police car's way. At the left edge, your car is in the lane of the cars coming toward you."
+        "say": "You stop at the right edge of the road until the police car has passed. In your lane you block its way, and the left edge is the oncoming lane."
       },
       "rule": "When an emergency vehicle with a siren comes, you drive to the right edge or curb of the road and stop, and stay stopped until it has passed or a police officer directs you to move."
     },
@@ -1333,15 +1327,15 @@
           }
         ]
       },
-      "prompt": "You are in the middle of an intersection, driving straight across on a steady green light. A police car with its siren on and its red and blue lights flashing is coming up behind you. What do you do?",
+      "prompt": "You are in the middle of an intersection on a green light. A police car with its siren on is coming up behind you. What do you do?",
       "options": [
-        "You drive on through the intersection, then pull over to the right edge and stop.",
-        "You stop where you are, in the middle of the intersection.",
-        "You back up out of the intersection, then pull over."
+        "You drive on through, then pull over to the right and stop.",
+        "You stop where you are, in the intersection.",
+        "You back up out of the intersection."
       ],
-      "answer": "You drive on through the intersection, then pull over to the right edge and stop.",
+      "answer": "You drive on through, then pull over to the right and stop.",
       "then": {
-        "say": "You drive on through the intersection, then pull over to the right edge and stop. Stopped in the intersection, your car would block the police car's way through it. Backing up would put your car in the police car's path."
+        "say": "You drive on through, then pull over to the right and stop. Stopped in the intersection, you block the police car's way."
       },
       "rule": "If you are in an intersection when an emergency vehicle comes, you drive on through the intersection before you pull over, so you do not block its path."
     }

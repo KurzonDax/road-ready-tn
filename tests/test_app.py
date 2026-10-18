@@ -2528,9 +2528,9 @@ def check_stop_lesson(browser, inst):
     def places_named(s):
         outlines = {p["id"] for p in s["parts"] if p["t"] == "car" and p.get("outline")}
         labels = " ".join(p["text"] for p in s["parts"] if p["t"] == "label")
-        return {t["id"] for t in s["targets"]} == outlines and all(t["label"] in s["prompt"] and t["label"].split(" of ")[0] in labels for t in s["targets"])
+        return {t["id"] for t in s["targets"]} == outlines and all(t["label"].split(" of ")[0] in labels for t in s["targets"])
     check(all(places_named(s) for s in taps) and all(sum(1 for t in s["targets"] if t["id"] == s["answer"]) == 1 for s in taps),
-          "the targets of a tap question are the drawn stopping places, each named in the prompt and by a label, and exactly one is the answer")
+          "the targets of a tap question are the drawn stopping places, each named by a label on the drawing, and exactly one is the answer")
     check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
           "every option is a complete sentence or a plain Yes or No")
     buses = [s for s in steps if any(p["t"] == "bus" for p in s["parts"])]
@@ -2538,13 +2538,16 @@ def check_stop_lesson(browser, inst):
         bus = next(p for p in s["parts"] if p["t"] == "bus")
         if "yellow lights" in s["prompt"]: return bus.get("lights") == "yellow" and not bus.get("arm")
         if "red lights" in s["prompt"]: return bus.get("lights") == "red" and bus.get("arm") is True
-        return False
+        return "stopped" in s["prompt"]  # a stopped bus whose lights the decision does not turn on
     check(len(buses) >= 5 and all(bus_as_said(s) for s in buses), "every school bus is drawn with the lights and the stop arm the prompt names", len(buses))
     crossings = [s for s in steps if any(p["t"] == "crossbuck" for p in s["parts"])]
     def crossing_as_said(s):
         cb = next(p for p in s["parts"] if p["t"] == "crossbuck")
-        down, flashing = "gate is down" in s["prompt"] or "gate is still down" in s["prompt"], "flashing" in s["prompt"] and "stopped flashing" not in s["prompt"]
-        return (cb.get("gate") == "down") == down and (cb.get("lights") == "flashing") == flashing and any(p["t"] == "rails" for p in s["parts"])
+        # Where the prompt names the gate or the lights, the drawing agrees; a train coming means the gate is down and the lights flash.
+        gate_said = "gate is" in s["prompt"]
+        down = "gate is down" in s["prompt"] or "gate is still down" in s["prompt"] or ("A train is coming" in s["prompt"] and "gate is" not in s["prompt"])
+        flashing = ("flashing" in s["prompt"] and "stopped flashing" not in s["prompt"]) or "A train is coming" in s["prompt"]
+        return (not gate_said or (cb.get("gate") == "down") == down) and (cb.get("lights") == "flashing") == flashing and any(p["t"] == "rails" for p in s["parts"])
     check(len(crossings) >= 3 and all(crossing_as_said(s) for s in crossings), "every railroad crossing draws the tracks, and its gate and lights as the prompt says", len(crossings))
     check(any(any(p["t"] == "median" for p in s["parts"]) and "median" in s["prompt"] for s in steps if s["fact"] == "b-089"),
           "the divided-highway question draws the median the prompt names")
@@ -2555,8 +2558,8 @@ def check_stop_lesson(browser, inst):
     distance = [s for s in steps if s["fact"] == "b-077"]
     check(len(distance) == 2 and distance[0]["kind"] == "choose" and distance[0]["answer"] == "Between 15 and 50 feet from the tracks."
           and distance[1]["kind"] == "tap" and "30 feet from the tracks" in distance[1]["prompt"] and distance[1]["targets"][[t["id"] for t in distance[1]["targets"]].index(distance[1]["answer"])]["label"] == "behind the stop line"
-          and all(any(p["t"] == "stopline" for p in s["parts"]) for s in crossings),
-          "the distance from the tracks is a choice of the manual's ranges, then a tap behind the stop line the prompt places 30 feet from the tracks, and every crossing draws its stop line")
+          and all(any(p["t"] == "stopline" for p in s["parts"]) == ("stop line" in s["prompt"]) for s in crossings if s["fact"] == "b-077"),
+          "the distance from the tracks is a choice of the manual's ranges, then a tap behind the stop line the prompt places 30 feet from the tracks")
     # The first question: a wrong tap on a place crosses it, leads with Incorrect and the place picked, and the correct place gets your car.
     first = steps[0]
     check(first["kind"] == "tap" and first["fact"] == "b-064" and pg.query_selector(".scene .k-stopline") is not None, "the first question draws a stop line")
