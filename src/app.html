@@ -1143,6 +1143,13 @@ function roadMarks(r, roads) {
   else if (c === 'yellow-broken') center = line(mid, 'k-yellow', '14 10');
   else if (c === 'yellow-double') center = line(mid - 2.5, 'k-yellow') + line(mid + 2.5, 'k-yellow');
   else if (c === 'white-broken') center = line(mid, 'k-white', '14 10');
+  // A solid and a broken yellow line: `yellow-pass-n` / `-e` puts the broken line on the side of the driver
+  // heading north or east (the high side), `yellow-pass-s` / `-w` on the other side.
+  else if (c === 'yellow-pass-n' || c === 'yellow-pass-e') center = line(mid - 2.5, 'k-yellow') + line(mid + 2.5, 'k-yellow', '14 10');
+  else if (c === 'yellow-pass-s' || c === 'yellow-pass-w') center = line(mid - 2.5, 'k-yellow', '14 10') + line(mid + 2.5, 'k-yellow');
+  // `lanes: 2` splits each direction into two lanes with a broken white line (a four-lane road).
+  const quarter = (horizontal ? r.h : r.w) / 4;
+  if (r.lanes === 2) center += line(mid - quarter, 'k-white', '14 10') + line(mid + quarter, 'k-white', '14 10');
   return line(lo, 'k-edge') + line(hi, 'k-edge') + center;
 }
 const SIGN_PARTS = {
@@ -1167,13 +1174,18 @@ function roadsignPart(p, o) {
 }
 const LIGHT_COLORS = { red: '#d9534f', yellow: '#e0b23c', green: '#5aa870' };
 // A traffic signal as a driver meets it: a vertical head, red on top, hung on a span across the road over
-// the far side of the intersection. `x`, `y` is the head's center; the span runs the width of the road.
+// the far side of the intersection. `x`, `y` is the head's center; the span runs the width of the road
+// (`span` 0 draws no span, for a second head on the same span). A state is a color (`red`, `yellow`,
+// `green`), `off`, `flashing-red` or `flashing-yellow`; with `-left` the lit lamp is a left arrow
+// (`green-left`, `yellow-left`, `red-left`, `flashing-yellow-left`).
 function lightPart(p) {
-  const on = (p.state || 'off').replace('flashing-', '').replace('green-left', 'green'), flash = (p.state || '').startsWith('flashing');
+  const state = p.state || 'off', flash = state.startsWith('flashing-'), left = state.endsWith('-left');
+  const on = state.replace('flashing-', '').replace('-left', '');
   const lamp = (k, color) => `<circle cx="0" cy="${-8.5 + k * 8.5}" r="3.2" fill="${color === on ? LIGHT_COLORS[color] : '#3a3c40'}"${color === on && flash ? ' class="k-flash"' : ''}/>`;
-  const arrow = p.state === 'green-left' ? `<path d="M3 8.5 L-3 8.5 M-1 6.5 L-3 8.5 L-1 10.5" stroke="#111" stroke-width="1.2" fill="none"/>` : '';
-  const half = (p.span || 64) / 2;
-  return `<g transform="translate(${p.x} ${p.y})"><line x1="${-half}" y1="0" x2="${half}" y2="0" stroke="#6b6e73" stroke-width="1.5"/>` +
+  const row = { red: 0, yellow: 1, green: 2 }[on];
+  const arrow = left && row !== undefined ? `<path transform="translate(0 ${-8.5 + row * 8.5})" d="M3 0 L-3 0 M-1 -2 L-3 0 L-1 2" stroke="#111" stroke-width="1.2" fill="none"${flash ? ' class="k-flash"' : ''}/>` : '';
+  const half = (p.span === undefined ? 64 : p.span) / 2, mid = p.spanX === undefined ? 0 : p.spanX - p.x;
+  return `<g transform="translate(${p.x} ${p.y})">${half ? `<line x1="${mid - half}" y1="0" x2="${mid + half}" y2="0" stroke="#6b6e73" stroke-width="1.5"/>` : ''}` +
     `<rect x="-6" y="-14" width="12" height="28" rx="2" fill="#202225" stroke="#8a8d92" stroke-width="1"/>${lamp(0, 'red')}${lamp(1, 'yellow')}${lamp(2, 'green')}${arrow}</g>`;
 }
 function crosswalkPart(p) {
