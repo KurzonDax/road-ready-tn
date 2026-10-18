@@ -2457,6 +2457,13 @@ def check_speed_lesson(browser, inst):
           "the following-distance questions draw a roadside post the prompt names, with a car ahead", len(posts))
     check(not any(re.search(r"\b(feet|ft|car lengths?)\b", s["prompt"] + " " + s["answer"]) for s in steps if s["fact"]),
           "no answer measures a distance in feet or car lengths")
+    # The counting method is used before it is asked about: the first b-053 question states the count and asks what follows,
+    # and the question that asks him to choose the method comes after the one where he acted on a short count (b-054).
+    method = [k for k, s in enumerate(steps) if s["fact"] == "b-053"]
+    acted = next(k for k, s in enumerate(steps) if s["fact"] == "b-054")
+    check(len(method) == 2 and "one-thousand and two" in steps[method[0]]["prompt"] and "two seconds behind" in steps[method[0]]["answer"]
+          and method[0] < acted < method[1] and steps[method[1]]["answer"].startswith("You count the seconds"),
+          "the count is stated and used before the question that asks for the method", method)
     # The first question: a wrong choice leads with Incorrect alone, and the list marks the pick and the answer.
     first = steps[0]
     check(first["kind"] == "choose" and first["parts"] and first["fact"] == "b-031", "the first question is a choice about a drawn interstate")

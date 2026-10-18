@@ -156,7 +156,7 @@
             "t": "car",
             "id": "ahead",
             "x": 175,
-            "y": 122,
+            "y": 125,
             "heading": "n",
             "tone": "b"
           },
@@ -164,19 +164,19 @@
             "t": "car",
             "id": "you",
             "x": 175,
-            "y": 230,
+            "y": 250,
             "heading": "n",
             "you": true
           }
         ]
       },
-      "prompt": "You are following a car on a state highway and want to know how far behind it you are. The car ahead has just passed a sign post at the side of the road. What do you do next?",
+      "prompt": "You are following a car on a state highway. The car ahead passed a sign post at the side of the road. You said “one-thousand and one, one-thousand and two” to yourself, and then your car passed the same sign post. How far behind the car ahead are you?",
       "options": [
-        "You count the seconds until your car reaches the sign post.",
-        "You count the cars between you and the sign post.",
-        "You guess how many car lengths are between you and the car ahead."
+        "You are two seconds behind it.",
+        "You are two car lengths behind it.",
+        "You cannot tell from this."
       ],
-      "answer": "You count the seconds until your car reaches the sign post.",
+      "answer": "You are two seconds behind it.",
       "then": {
         "parts": [
           {
@@ -200,10 +200,17 @@
             "anchor": "start"
           },
           {
+            "t": "label",
+            "x": 122,
+            "y": 154,
+            "text": "Two seconds later",
+            "anchor": "end"
+          },
+          {
             "t": "car",
             "id": "ahead",
             "x": 175,
-            "y": 45,
+            "y": 40,
             "heading": "n",
             "tone": "b"
           },
@@ -216,7 +223,7 @@
             "you": true
           }
         ],
-        "say": "You count the seconds until your car reaches the sign post, saying “one-thousand and one, one-thousand and two” as you go. The sign post stays in one place, so the seconds it takes you to reach it measure how far behind the car ahead you are."
+        "say": "You are two seconds behind it. Both cars passed the same sign post, and two seconds went by between them, so the gap between you is two seconds. This is how drivers measure their following distance, by counting the seconds between the car ahead passing a fixed point and their own car reaching it."
       },
       "rule": "To check your following distance, you count the seconds from when the car ahead passes a fixed point, such as a sign post, until you reach the same point."
     },
@@ -354,6 +361,62 @@
     },
     {
       "id": "s4-10",
+      "fact": "b-053",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "post",
+            "x": 206,
+            "y": 150
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 154,
+            "text": "Sign post",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "ahead",
+            "x": 175,
+            "y": 180,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 280,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are following a different car on a state highway and want to check how far behind it you are. The car ahead is about to pass a sign post at the side of the road. What do you do?",
+      "options": [
+        "You count the seconds from when the car ahead passes the sign post until your car reaches it.",
+        "You count the cars between you and the sign post.",
+        "You guess how many car lengths are between you and the car ahead."
+      ],
+      "answer": "You count the seconds from when the car ahead passes the sign post until your car reaches it.",
+      "then": {
+        "say": "You count the seconds from when the car ahead passes the sign post until your car reaches it. The sign post stays in one place, so the seconds between the two cars passing it are your following distance. If you reach it before you finish “one-thousand and two”, you are too close."
+      },
+      "rule": "To check your following distance, you count the seconds from when the car ahead passes a fixed point, such as a sign post, until you reach the same point."
+    },
+    {
+      "id": "s4-11",
       "fact": "b-052",
       "kind": "choose",
       "prompt": "Rear-end crashes, where a car hits the back of the car ahead of it, are very common. Most of them are caused by drivers doing one thing. What is it?",
@@ -369,7 +432,7 @@
       "rule": "Most rear-end crashes are caused by drivers who follow too closely, which is called tailgating."
     },
     {
-      "id": "s4-11",
+      "id": "s4-12",
       "fact": "b-039",
       "kind": "choose",
       "prompt": "You are driving past a school. A sign shows the speed limit for the school zone, which is lower than the limit on the rest of the road. When is that school zone speed limit in effect?",
@@ -385,7 +448,7 @@
       "rule": "School zone speed limits are in effect when children are going to or from the school or during a school recess."
     },
     {
-      "id": "s4-12",
+      "id": "s4-13",
       "fact": "b-046",
       "kind": "choose",
       "prompt": "Your car has anti-lock brakes, called ABS. The car ahead stops suddenly, and you must stop fast. How do you press the brake pedal?",
@@ -401,7 +464,7 @@
       "rule": "With anti-lock brakes, you press the brake pedal with firm, steady pressure and never pump it."
     },
     {
-      "id": "s4-13",
+      "id": "s4-14",
       "kind": "principle",
       "prompt": "You drove slower than 55 mph in the rain at night. You stayed four seconds behind a car in hard rain, and four seconds behind the motorcycle. What did driving slower and staying farther back give you?",
       "options": [
