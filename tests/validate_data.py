@@ -153,7 +153,7 @@ def check_groups(groups, used):
 
 
 STEP_KINDS = {"tap", "choose", "principle"}
-TARGET_PARTS = {"car", "ped", "roadsign"}
+TARGET_PARTS = {"car", "ped", "roadsign", "lane"}
 
 
 def check_lessons(secs):
@@ -215,6 +215,13 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: needs 2 to 4 different options")
                 if step.get("answer") not in options:
                     errors.append(f"{name} {sid}: answer must be one of the options")
+            # `then.wrong`, when present, holds an explanation for every wrong pick and nothing else.
+            wrong = then.get("wrong")
+            if wrong is not None:
+                picks = [t.get("id") for t in step.get("targets", [])] if kind == "tap" else step.get("options", [])
+                wrong_picks = {k for k in picks if k != step.get("answer")}
+                if not isinstance(wrong, dict) or set(wrong) != wrong_picks or not all(isinstance(v, str) and v.strip() for v in wrong.values()):
+                    errors.append(f"{name} {sid}: then.wrong must give one non-empty explanation for each wrong pick, {sorted(wrong_picks)}")
             hi = then.get("highlight")
             if hi is not None and hi not in part_ids | after_ids:
                 errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car, pedestrian or road sign in the scene")
@@ -252,21 +259,22 @@ def check_lesson_wording(name, steps):
     for step in steps:
         sid = step.get("id") or "?"
         texts = [("prompt", step.get("prompt", "")), ("say", (step.get("then") or {}).get("say", ""))]
+        texts += [("wrong", v) for v in ((step.get("then") or {}).get("wrong") or {}).values() if isinstance(v, str)]
         texts += [("option", o) for o in step.get("options", [])]
         texts += [("target label", t.get("label", "")) for t in step.get("targets", [])]
         for field, text in texts:
             for pattern, why in BANNED:
                 if pattern.search(text):
                     errors.append(f"{name} {sid} {field}: {why}: {text!r}")
-        for field, text in texts[:2]:
+        for field, text in [t for t in texts if t[0] in ("prompt", "say", "wrong")]:
             for sentence in re.split(r"(?<=[.?])\s+", text):
                 if len(sentence.split()) > 30:
                     errors.append(f"{name} {sid} {field}: a sentence of more than 30 words: {sentence!r}")
             if field == "prompt" and len(text.split()) > 60:
                 errors.append(f"{name} {sid} prompt: more than 60 words")
-        say = (step.get("then") or {}).get("say", "")
-        if len(re.findall(r"[.?]", say)) > 3:
-            errors.append(f"{name} {sid} say: more than three sentences: {say!r}")
+        for field, say in [t for t in texts if t[0] in ("say", "wrong")]:
+            if len(re.findall(r"[.?]", say)) > 3:
+                errors.append(f"{name} {sid} {field}: more than three sentences: {say!r}")
         parts = (step.get("scene") or {}).get("parts", [])
         roads = [p for p in parts if p.get("t") in ("road", "circle-road")]
         if len(roads) >= 2 and step.get("kind") == "tap" and not CONTROL.search(step.get("prompt", "")):

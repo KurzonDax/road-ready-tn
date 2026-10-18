@@ -188,6 +188,7 @@ button.opt { cursor: pointer; }
 .k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--good); stroke-width: 3.5; }
 .k-ring { fill: var(--good); opacity: .28; }
 .k-no { fill: none; stroke: var(--bad); stroke-width: 2; }
+.k-lane { fill: transparent; stroke: var(--guide); stroke-width: 2; stroke-dasharray: 6 5; }
 .k-badge circle { stroke: var(--bg); stroke-width: 2; }
 .k-badge.k-yes circle { fill: var(--good); }
 .k-badge.k-yes path { stroke: var(--good-ink); }
@@ -1190,6 +1191,33 @@ function lightPart(p) {
 }
 // A fixed point at the roadside, seen from above: a post with a small plate on it, for counting following
 // distance (Section 4). The lesson says what it is in words (`label`), because the drawing never carries a fact alone.
+// A bicyclist seen from behind, as the driver behind sees him (Section 6): the one kit part that is not top-down,
+// because an arm bent up or down cannot be seen from above. `arm` puts one arm in a signal: `left-out`, `left-up`,
+// `left-down`, `right-out`, `right-down`; the other arm holds the handlebar. The prompt names the arm and its position.
+// Seen from behind, the rear wheel is a thin upright strip (the front wheel is hidden behind it), never a circle.
+function bicyclistPart(p) {
+  const dx = (p.x || 160) - 160, dy = (p.y || 160) - 160;
+  const arm = (side, pose) => {
+    const m = side === 'right' ? -1 : 1, sx = 160 - m * 30, bar = 160 - m * 50;  // the shoulder, and the hand's place on the handlebar
+    const stroke = `fill="none" stroke="var(--ink)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"`;
+    if (pose === 'bar') return `<polyline points="${sx},132 ${bar},182" ${stroke}/><circle cx="${bar}" cy="184" r="7" fill="var(--ink)"/>`;
+    const ex = 160 - m * 86;  // the elbow, or the hand when the arm is straight out
+    if (pose === 'out') return `<polyline points="${sx},132 ${160 - m * 110},132" ${stroke}/><ellipse cx="${160 - m * 118}" cy="132" rx="10" ry="6" fill="var(--ink)"/>`;
+    const hy = pose === 'up' ? 82 : 182, tip = pose === 'up' ? 74 : 190;
+    return `<polyline points="${sx},132 ${ex},132 ${ex},${hy}" ${stroke}/><circle cx="${ex}" cy="${tip}" r="7" fill="var(--ink)"/>`;
+  };
+  const [side, pose] = (p.arm || 'none').split('-');
+  const arms = side === 'left' ? arm('left', pose) + arm('right', 'bar') : side === 'right' ? arm('left', 'bar') + arm('right', pose) : arm('left', 'bar') + arm('right', 'bar');
+  return `<g class="k-bicyclist" transform="translate(${dx} ${dy})">
+    <rect x="0" y="286" width="320" height="34" fill="var(--road)"/><line x1="0" y1="286" x2="320" y2="286" class="k-edge"/>
+    <line x1="150" y1="196" x2="146" y2="238" stroke="var(--car-b)" stroke-width="9" stroke-linecap="round"/><line x1="170" y1="196" x2="174" y2="238" stroke="var(--car-b)" stroke-width="9" stroke-linecap="round"/>
+    <line x1="108" y1="184" x2="212" y2="184" stroke="var(--car-b)" stroke-width="5" stroke-linecap="round"/>
+    <rect x="152" y="214" width="16" height="74" rx="8" fill="var(--ink)"/><line x1="160" y1="222" x2="160" y2="280" stroke="var(--car-b)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="160" y1="216" x2="160" y2="200" stroke="var(--car-a)" stroke-width="5"/><ellipse cx="160" cy="197" rx="15" ry="5" fill="var(--ink)"/>
+    <path d="M134 198 L186 198 L194 128 Q160 118 126 128 Z" fill="var(--car-a)"/>
+    <rect x="154" y="108" width="12" height="16" fill="var(--car-a)"/><circle cx="160" cy="98" r="20" fill="var(--ink)"/>
+    ${arms}</g>`;
+}
 const postPart = p => `<g class="k-post" transform="translate(${p.x} ${p.y})"><rect x="-7" y="-16" width="14" height="8" rx="1" fill="#8a8d92" stroke="#c9c7c2" stroke-width="1"/><line x1="0" y1="-8" x2="0" y2="4" stroke="#8a8d92" stroke-width="2.5"/><circle cx="0" cy="4" r="3" fill="#c9c7c2"/></g>`;
 // A painted stop line: a white bar across the lane, before a stop sign or a railroad crossing (Section 5).
 const stoplinePart = p => `<rect class="k-stopline" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h || 5}" fill="var(--lane-white)"/>`;
@@ -1246,15 +1274,32 @@ function crosswalkPart(p) {
   return bars.join('');
 }
 // A tap target or a highlighted part gets a soft ring; a target is a button the keyboard and a screen reader can reach.
+// After acting: the one that goes gets a check badge, a wrong pick a cross badge, at the mark's top right.
+const BADGE_ICONS = {
+  'k-yes': '<path d="M-4.5 0.5l3 3 6-6" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  'k-not': '<path d="M-3.5 -3.5l7 7M3.5 -3.5l-7 7" fill="none" stroke-width="2.4" stroke-linecap="round"/>',
+};
+const markBadge = (x, y, cls) => `<g transform="translate(${x} ${y})"><g class="k-badge ${cls}"><circle r="13"/><g transform="scale(1.5)">${BADGE_ICONS[cls]}</g></g></g>`;
 function wrapTarget(p, inner, { targets, highlight, picked }) {
   const t = targets.find(x => x.id === p.id), hi = highlight === p.id, no = picked === p.id;
-  // After acting: the one that goes gets a filled ring and a check badge; a wrong pick a thin ring and a cross badge.
-  const badge = (cls, icon) => `<g transform="translate(${p.x + 22} ${p.y - 22})"><g class="k-badge ${cls}"><circle r="13"/><g transform="scale(1.5)">${icon}</g></g></g>`;
+  // The one that goes gets a filled ring, a wrong pick a thin ring.
   const ring = hi ? `<circle class="k-ring" cx="${p.x}" cy="${p.y}" r="26"/>` : no ? `<circle class="k-no" cx="${p.x}" cy="${p.y}" r="26"/>` : '';
-  const mark = hi ? badge('k-yes', '<path d="M-4.5 0.5l3 3 6-6" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')
-    : no ? badge('k-not', '<path d="M-3.5 -3.5l7 7M3.5 -3.5l-7 7" fill="none" stroke-width="2.4" stroke-linecap="round"/>') : '';
+  const mark = hi ? markBadge(p.x + 22, p.y - 22, 'k-yes') : no ? markBadge(p.x + 22, p.y - 22, 'k-not') : '';
   if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>` + mark;
   return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
+}
+// A lane box (Section 6): a dashed box filling a stretch of one lane, with nothing written on it, a tap target
+// for "Which lane do you turn into? Tap the lane." The prompt and the target labels name the lanes. Boxes sit side
+// by side in adjacent lanes, so the whole box is the hit area and the marks are drawn on the box, with no ring.
+function lanePart(p, o) {
+  const t = o.targets.find(x => x.id === p.id), hi = o.highlight === p.id, no = o.picked === p.id;
+  const x = p.x - p.w / 2, y = p.y - p.h / 2;
+  const rect = cls => `<rect class="${cls}" x="${x}" y="${y}" width="${p.w}" height="${p.h}" rx="6"/>`;
+  const inner = `<g class="${hi ? 'k-hi' : ''}">${rect('k-body k-lane')}</g>`;
+  const ring = hi ? rect('k-ring') : no ? rect('k-no') : '';
+  const mark = hi ? markBadge(x + p.w, y, 'k-yes') : no ? markBadge(x + p.w, y, 'k-not') : '';
+  if (!t) return ring + inner + mark;
+  return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}">${inner}</g>`;
 }
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
@@ -1291,6 +1336,8 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'light') return lightPart(p);
     if (p.t === 'crosswalk') return crosswalkPart(p);
     if (p.t === 'post') return postPart(p);
+    if (p.t === 'lane') return lanePart(p, o);
+    if (p.t === 'bicyclist') return bicyclistPart(p);
     if (p.t === 'stopline') return stoplinePart(p);
     if (p.t === 'median') return medianPart(p);
     if (p.t === 'rails') return railsPart(p);
@@ -1333,6 +1380,13 @@ function peekStep(id) {
   renderStep();
 }
 const stepLabel = (st, value) => st.kind === 'tap' ? st.targets.find(t => t.id === value).label : value;
+// The explanation shown after acting: after a wrong pick, the one written for that pick (`then.wrong`, keyed by the
+// target id or the option), which says why that pick is wrong and then what is correct; otherwise `then.say`.
+function saidAfter(st, act) {
+  if (!act || act.right || !st.then.wrong) return st.then.say;
+  const key = st.kind === 'tap' ? st.targets.find(t => t.label === act.chosen).id : act.chosen;
+  return st.then.wrong[key] || st.then.say;
+}
 function renderStep() {
   const L = lesson, steps = L.lesson.steps, st = steps[L.i], n = steps.length, act = L.acts[L.i], last = L.i === n - 1;
   const parts = act && st.then.parts ? st.then.parts : st.scene && st.scene.parts;
@@ -1358,7 +1412,7 @@ function renderStep() {
               : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
         ${scene}
         ${options}
-        ${act ? `<p class="say" id="stepText">${esc(st.then.say)}</p>` : ''}
+        ${act ? `<p class="say" id="stepText">${esc(saidAfter(st, act))}</p>` : ''}
       </div>
       ${button}
       ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop the lesson for now</button>'}
@@ -1378,7 +1432,7 @@ function lessonAct(value) {
   L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
   toTop();
   renderStep();
-  $('announce').textContent = `${$('stepHead').textContent} ${st.then.say}`;
+  $('announce').textContent = `${$('stepHead').textContent} ${saidAfter(st, L.acts[L.i])}`;
 }
 function nextStep() {
   $('announce').textContent = '';
