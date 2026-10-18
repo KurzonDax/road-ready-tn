@@ -2625,8 +2625,16 @@ def check_turn_lesson(browser, inst):
           "the lesson has 10 to 15 questions, teaches every Section 6 fact, and only a principle question has no fact", len(steps))
     check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
           "every option is a complete sentence or a plain Yes or No")
-    check(all(not s["parts"] for s in steps if s["fact"] in ("a-004", "a-003", "d-097")) and all(s["kind"] == "choose" for s in steps if s["fact"] in ("a-004", "a-003", "d-097")),
-          "the seat, hand and bicyclist questions are choices with no drawing")
+    check(all(not s["parts"] and s["kind"] == "choose" for s in steps if s["fact"] in ("a-004", "a-003")), "the seat and hand questions are choices with no drawing")
+    riders = [s for s in steps if s["fact"] == "d-097"]
+    POSES = {"straight out": "left-out", "bent up": "left-up", "bent down": "left-down"}
+    def rider_as_said(s):
+        bike = [p for p in s["parts"] if p["t"] == "bicyclist"]
+        pose = next((v for k, v in POSES.items() if k in s["prompt"]), None)
+        return s["kind"] == "choose" and len(s["parts"]) == 1 and len(bike) == 1 and bike[0]["arm"] == pose and "behind a bicyclist" in s["prompt"]
+    check(len(riders) == 3 and all(rider_as_said(s) for s in riders) and {s["parts"][0]["arm"] for s in riders} == set(POSES.values())
+          and [s["answer"].split()[-1] for s in sorted(riders, key=lambda s: s["parts"][0]["arm"])] == ["down.", "left.", "right."],
+          "the three hand signals are each a choice with the bicyclist drawn from behind, the arm as the prompt says, and the answer the manual gives")
     taps = [s for s in steps if s["kind"] == "tap"]
     FORMS = ("Who goes first? Tap the car.", "Which lane do you turn into? Tap the lane.", "Which lane do you turn from? Tap the lane.")
     check(len(taps) >= 5 and all(s["prompt"].endswith(FORMS) for s in taps), "every tap question ends in one of the three forms", len(taps))
@@ -2701,6 +2709,8 @@ def check_turn_lesson(browser, inst):
             pg.wait_for_selector("button.opt")
             if st in reds:
                 check(pg.evaluate("document.querySelectorAll('.scene circle[fill=\"#d9534f\"]').length") == 1, f"question {k + 1} draws the red light lit")
+            if st in riders:
+                check(pg.query_selector(".scene .k-bicyclist") is not None and len(pg.query_selector_all(".scene .k-bicyclist polyline")) == 2, f"question {k + 1} draws the bicyclist with both arms")
             pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
         pg.wait_for_selector("#stepNextBtn")
         check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")

@@ -864,7 +864,47 @@
       "id": "s6-13",
       "fact": "d-097",
       "kind": "choose",
-      "prompt": "A bicyclist ahead of you holds the left arm out to the side, bent up at the elbow, with the hand pointing up. What is the bicyclist about to do?",
+      "scene": {
+        "parts": [
+          {
+            "t": "bicyclist",
+            "x": 160,
+            "y": 160,
+            "arm": "left-out"
+          }
+        ]
+      },
+      "prompt": "You are driving behind a bicyclist. The bicyclist holds the left arm straight out to the side. What is the bicyclist about to do?",
+      "options": [
+        "The bicyclist is about to turn right.",
+        "The bicyclist is about to turn left.",
+        "The bicyclist is about to stop or slow down."
+      ],
+      "answer": "The bicyclist is about to turn left.",
+      "then": {
+        "say": "The bicyclist is about to turn left. The left arm held straight out points the way the bicyclist will go.",
+        "wrong": {
+          "The bicyclist is about to turn right.": "A right turn is the left arm bent up at the elbow, with the hand pointing up. The left arm held straight out means a left turn: it points the way the bicyclist will go.",
+          "The bicyclist is about to stop or slow down.": "Stopping or slowing is an arm bent down at the elbow, with the hand pointing down. The left arm held straight out means a left turn: it points the way the bicyclist will go."
+        }
+      },
+      "rule": "A bicyclist's left arm held straight out to the side signals a left turn, and the left arm bent up at the elbow a right turn."
+    },
+    {
+      "id": "s6-14",
+      "fact": "d-097",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "bicyclist",
+            "x": 160,
+            "y": 160,
+            "arm": "left-up"
+          }
+        ]
+      },
+      "prompt": "You are driving behind a bicyclist. The bicyclist holds the left arm out to the side, bent up at the elbow, with the hand pointing up. What is the bicyclist about to do?",
       "options": [
         "The bicyclist is about to turn right.",
         "The bicyclist is about to turn left.",
@@ -872,13 +912,43 @@
       ],
       "answer": "The bicyclist is about to turn right.",
       "then": {
-        "say": "The bicyclist is about to turn right. A rider signals with the left arm: straight out means a left turn, bent up means a right turn, and bent down means stopping or slowing.",
+        "say": "The bicyclist is about to turn right. A rider signals with the left arm, so the arm bent up at the elbow means a right turn, and the right arm held straight out means it too.",
         "wrong": {
           "The bicyclist is about to turn left.": "A left turn is the left arm held straight out to the side. The left arm bent up at the elbow means a right turn.",
           "The bicyclist is about to stop or slow down.": "Stopping or slowing is an arm bent down at the elbow, with the hand pointing down. The left arm bent up at the elbow means a right turn."
         }
       },
       "rule": "A bicyclist's left arm bent up at the elbow signals a right turn, and so does the right arm held straight out to the right."
+    },
+    {
+      "id": "s6-15",
+      "fact": "d-097",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "bicyclist",
+            "x": 160,
+            "y": 160,
+            "arm": "left-down"
+          }
+        ]
+      },
+      "prompt": "You are driving behind a bicyclist. The bicyclist holds the left arm out to the side, bent down at the elbow, with the hand pointing down. What is the bicyclist about to do?",
+      "options": [
+        "The bicyclist is about to turn right.",
+        "The bicyclist is about to turn left.",
+        "The bicyclist is about to stop or slow down."
+      ],
+      "answer": "The bicyclist is about to stop or slow down.",
+      "then": {
+        "say": "The bicyclist is about to stop or slow down. Either arm bent down at the elbow, with the hand pointing down, is the signal for stopping or slowing, so you leave room to stop behind the bicycle.",
+        "wrong": {
+          "The bicyclist is about to turn right.": "A right turn is the left arm bent up at the elbow, with the hand pointing up. An arm bent down at the elbow, with the hand pointing down, means the bicyclist is about to stop or slow down.",
+          "The bicyclist is about to turn left.": "A left turn is the left arm held straight out to the side. An arm bent down at the elbow, with the hand pointing down, means the bicyclist is about to stop or slow down."
+        }
+      },
+      "rule": "A bicyclist's arm bent down at the elbow, with the hand pointing down, signals stopping or slowing, while the left arm bent up signals a right turn."
     }
   ]
 }
