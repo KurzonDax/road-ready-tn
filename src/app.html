@@ -1188,6 +1188,9 @@ function lightPart(p) {
   return `<g transform="translate(${p.x} ${p.y})">${half ? `<line x1="${mid - half}" y1="0" x2="${mid + half}" y2="0" stroke="#6b6e73" stroke-width="1.5"/>` : ''}` +
     `<rect x="-6" y="-14" width="12" height="28" rx="2" fill="#202225" stroke="#8a8d92" stroke-width="1"/>${lamp(0, 'red')}${lamp(1, 'yellow')}${lamp(2, 'green')}${arrow}</g>`;
 }
+// A fixed point at the roadside, seen from above: a post with a small plate on it, for counting following
+// distance (Section 4). The lesson says what it is in words (`label`), because the drawing never carries a fact alone.
+const postPart = p => `<g class="k-post" transform="translate(${p.x} ${p.y})"><rect x="-7" y="-16" width="14" height="8" rx="1" fill="#8a8d92" stroke="#c9c7c2" stroke-width="1"/><line x1="0" y1="-8" x2="0" y2="4" stroke="#8a8d92" stroke-width="2.5"/><circle cx="0" cy="4" r="3" fill="#c9c7c2"/></g>`;
 function crosswalkPart(p) {
   const bars = [];
   if (p.w >= p.h) for (let x = p.x + 3; x + 4 <= p.x + p.w; x += 8) bars.push(`<rect x="${x}" y="${p.y + 1}" width="4" height="${p.h - 2}" fill="var(--lane-white)"/>`);
@@ -1234,6 +1237,7 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'sign') return (SIGN_PARTS[p.kind] || SIGN_PARTS.stop)(p.x, p.y);
     if (p.t === 'light') return lightPart(p);
     if (p.t === 'crosswalk') return crosswalkPart(p);
+    if (p.t === 'post') return postPart(p);
     if (p.t === 'path') return pathPart(p);
     if (p.t === 'label') return svgText(p.x, p.y, p.text, p.anchor || 'middle');
     return '';
