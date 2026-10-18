@@ -1191,6 +1191,54 @@ function lightPart(p) {
 // A fixed point at the roadside, seen from above: a post with a small plate on it, for counting following
 // distance (Section 4). The lesson says what it is in words (`label`), because the drawing never carries a fact alone.
 const postPart = p => `<g class="k-post" transform="translate(${p.x} ${p.y})"><rect x="-7" y="-16" width="14" height="8" rx="1" fill="#8a8d92" stroke="#c9c7c2" stroke-width="1"/><line x1="0" y1="-8" x2="0" y2="4" stroke="#8a8d92" stroke-width="2.5"/><circle cx="0" cy="4" r="3" fill="#c9c7c2"/></g>`;
+// A painted stop line: a white bar across the lane, before a stop sign or a railroad crossing (Section 5).
+const stoplinePart = p => `<rect class="k-stopline" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h || 5}" fill="var(--lane-white)"/>`;
+// A median strip between the two roadways of a divided highway: a raised strip with a curb on each side that
+// cars cannot drive on. The prompt says it is there, because the drawing never carries a fact alone.
+const medianPart = p => `<g class="k-median"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#3d4a3c"/>` +
+  `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="none" stroke="var(--road-edge)" stroke-width="1.5"/></g>`;
+// Railroad tracks across a road: ties under two rails, along the long side of the box.
+function railsPart(p) {
+  const horizontal = p.w >= p.h, ties = [];
+  if (horizontal) for (let x = p.x + 4; x + 4 <= p.x + p.w; x += 9) ties.push(`<rect x="${x}" y="${p.y}" width="4" height="${p.h}" fill="#5a4a3a"/>`);
+  else for (let y = p.y + 4; y + 4 <= p.y + p.h; y += 9) ties.push(`<rect x="${p.x}" y="${y}" width="${p.w}" height="4" fill="#5a4a3a"/>`);
+  const rail = (a, b, c, d) => `<line x1="${a}" y1="${b}" x2="${c}" y2="${d}" stroke="#b9b7b2" stroke-width="2"/>`;
+  const rails = horizontal ? rail(p.x, p.y + 4, p.x + p.w, p.y + 4) + rail(p.x, p.y + p.h - 4, p.x + p.w, p.y + p.h - 4)
+    : rail(p.x + 4, p.y, p.x + 4, p.y + p.h) + rail(p.x + p.w - 4, p.y, p.x + p.w - 4, p.y + p.h);
+  return `<g class="k-rails">${ties.join('')}${rails}</g>`;
+}
+// A railroad crossing signal at the roadside, seen from above: a crossbuck (a white X) on a post, two lamps
+// under it (`lights`: `off` or `flashing`, red when flashing), and a gate (`gate`: `none`, `up` or `down`).
+// A lowered gate is a red and white arm of length `gateLen` (default 56) reaching from the post toward `gateDir`
+// (`e` by default, `w`, `n` or `s`), across the lane; a raised gate stands on its post and shows as a short stub.
+function crossbuckPart(p) {
+  const flash = p.lights === 'flashing', len = p.gateLen === undefined ? 56 : p.gateLen;
+  const rot = { e: 0, s: 90, w: 180, n: 270 }[p.gateDir || 'e'];
+  const lamp = (x) => `<circle cx="${x}" cy="8" r="3.6" fill="${flash ? '#e0423c' : '#3a3c40'}" stroke="#8a8d92" stroke-width=".8"${flash ? ' class="k-flash"' : ''}/>`;
+  let gate = '';
+  if (p.gate === 'down') {
+    const stripes = [];
+    for (let x = 6; x < len; x += 12) stripes.push(`<rect x="${x}" y="-2" width="6" height="4" fill="#d9534f"/>`);
+    gate = `<g class="k-gate" transform="rotate(${rot})"><rect x="0" y="-2.5" width="${len}" height="5" fill="#f2f0eb" stroke="#231f20" stroke-width=".8"/>${stripes.join('')}</g>`;
+  } else if (p.gate === 'up') gate = `<g class="k-gate" transform="rotate(${rot})"><rect x="0" y="-2.5" width="9" height="5" fill="#f2f0eb" stroke="#231f20" stroke-width=".8"/><rect x="3" y="-2" width="4" height="4" fill="#d9534f"/></g>`;
+  const cross = `<g transform="rotate(45)"><rect x="-14" y="-3" width="28" height="6" fill="#f2f0eb" stroke="#231f20" stroke-width=".8"/><rect x="-3" y="-14" width="6" height="28" fill="#f2f0eb" stroke="#231f20" stroke-width=".8"/></g>`;
+  return `<g class="k-crossbuck" transform="translate(${p.x} ${p.y})">${gate}<circle r="4" fill="#8a8d92"/><g transform="translate(0 -12)">${cross}${lamp(-6)}${lamp(6)}</g></g>`;
+}
+// A school bus seen from above: a yellow body about 24 by 60 with a black stripe, a windshield at the front,
+// four warning lamps at its corners (`lights`: `off`, `yellow` or `red`, the lit ones flashing) and, with
+// `arm: true`, the red stop arm swung out on the driver's side. It is not a target.
+function busPart(p) {
+  const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
+  const on = p.lights === 'yellow' ? '#ff9a1f' : p.lights === 'red' ? '#e0423c' : null;
+  // Each lamp sits in a dark housing, so a lit amber lamp still shows against the yellow body.
+  const lamp = (x, y) => `<circle cx="${x}" cy="${y}" r="4.6" fill="#231f20"/><circle cx="${x}" cy="${y}" r="3.2" fill="${on || '#55585e'}"${on ? ' class="k-flash"' : ''}/>`;
+  const arm = p.arm ? `<g class="k-arm"><line x1="-12" y1="-16" x2="-24" y2="-16" stroke="#231f20" stroke-width="1.6"/><g transform="translate(-28 -16)"><polygon points="-2.4,-5.5 2.4,-5.5 5.5,-2.4 5.5,2.4 2.4,5.5 -2.4,5.5 -5.5,2.4 -5.5,-2.4" fill="#c8323a" stroke="#fff" stroke-width="1"/></g></g>` : '';
+  return `<g class="k-bus" transform="translate(${p.x} ${p.y}) rotate(${rot})">` +
+    `<rect class="k-body" x="-12" y="-30" width="24" height="60" rx="3" fill="#e8b422" stroke="#231f20" stroke-width="1"/>` +
+    `<line x1="-12" y1="-18" x2="12" y2="-18" stroke="#231f20" stroke-width="1.5"/><line x1="-12" y1="24" x2="12" y2="24" stroke="#231f20" stroke-width="1.5"/>` +
+    `<path d="M-9 -27 L9 -27 L7.5 -21 L-7.5 -21 Z" fill="var(--glass)"/><rect x="-5" y="-6" width="10" height="12" rx="1" fill="#f0c650" stroke="#231f20" stroke-width=".6"/>` +
+    `${lamp(-8, -27)}${lamp(8, -27)}${lamp(-8, 27)}${lamp(8, 27)}${arm}</g>`;
+}
 function crosswalkPart(p) {
   const bars = [];
   if (p.w >= p.h) for (let x = p.x + 3; x + 4 <= p.x + p.w; x += 8) bars.push(`<rect x="${x}" y="${p.y + 1}" width="4" height="${p.h - 2}" fill="var(--lane-white)"/>`);
@@ -1208,9 +1256,14 @@ function wrapTarget(p, inner, { targets, highlight, picked }) {
   if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>` + mark;
   return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
 }
+// `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
+// car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
+// `emergency: true` puts a red and blue light bar on the roof, flashing: an emergency vehicle (the prompt names the siren).
 function carPart(p, o) {
   const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
-  const body = `<g class="k-car${p.you ? ' k-you' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="var(--car-${p.tone === 'b' ? 'b' : 'a'})"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/></g>`;
+  if (p.outline) return wrapTarget(p, `<g class="k-car k-outline" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="none" stroke="var(--guide)" stroke-width="2" stroke-dasharray="5 4"/></g>`, o);
+  const bar = p.emergency ? `<rect x="-7" y="-2" width="6" height="4" rx="1" fill="#d9534f" class="k-flash"/><rect x="1" y="-2" width="6" height="4" rx="1" fill="#4f8ef7" class="k-flash"/>` : '';
+  const body = `<g class="k-car${p.you ? ' k-you' : ''}${p.emergency ? ' k-emergency' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="var(--car-${p.tone === 'b' ? 'b' : 'a'})"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/>${bar}</g>`;
   const you = p.you ? svgText(p.x, p.y + (p.heading === 's' || p.heading === 'n' ? 32 : 30), 'You') : '';
   return wrapTarget(p, body + you, o);
 }
@@ -1238,6 +1291,11 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'light') return lightPart(p);
     if (p.t === 'crosswalk') return crosswalkPart(p);
     if (p.t === 'post') return postPart(p);
+    if (p.t === 'stopline') return stoplinePart(p);
+    if (p.t === 'median') return medianPart(p);
+    if (p.t === 'rails') return railsPart(p);
+    if (p.t === 'crossbuck') return crossbuckPart(p);
+    if (p.t === 'bus') return busPart(p);
     if (p.t === 'path') return pathPart(p);
     if (p.t === 'label') return svgText(p.x, p.y, p.text, p.anchor || 'middle');
     return '';
