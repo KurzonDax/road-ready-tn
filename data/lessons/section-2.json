@@ -1,0 +1,714 @@
+{
+  "section": 2,
+  "title": "Signals, arrows, and road lines",
+  "steps": [
+    {
+      "id": "s2-01",
+      "fact": "a-147",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "yellow",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 260,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              240
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "You are coming up to a steady yellow light. You can still stop safely before the intersection. You want to drive straight across. What do you do?",
+      "options": [
+        "You slow down and stop before the intersection.",
+        "You speed up to get through before the light turns red.",
+        "You keep going at the same speed."
+      ],
+      "answer": "You slow down and stop before the intersection.",
+      "then": {
+        "say": "You slow down and stop before the intersection. A steady yellow light means the light is about to turn red. If you were too close to stop safely, you would go on through the intersection, but you never speed up to get through before it turns red."
+      },
+      "rule": "A steady yellow light means the light is about to turn red, so you slow down and stop, unless you are too close to stop safely."
+    },
+    {
+      "id": "s2-02",
+      "fact": "a-156",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "flashing-red",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 212,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              188
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "You have reached a flashing red light and want to drive straight across. No other car is in sight. What do you do?",
+      "options": [
+        "You come to a complete stop, look both ways, and go when it is safe.",
+        "You slow down and go through without stopping.",
+        "You stop and wait until the light turns green."
+      ],
+      "answer": "You come to a complete stop, look both ways, and go when it is safe.",
+      "then": {
+        "say": "You come to a complete stop, look both ways, and go when it is safe. A flashing red light means the same as a stop sign. You stop every time, even when no other car is in sight, and you do not wait for a green light."
+      },
+      "rule": "A flashing red light means you come to a complete stop, the same as at a stop sign, then look both ways and go when it is safe."
+    },
+    {
+      "id": "s2-03",
+      "fact": "a-157",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "flashing-yellow",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 260,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              240
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "You are coming up to a flashing yellow light and want to drive straight across. No other car is in sight. What do you do?",
+      "options": [
+        "You slow down and drive through with care.",
+        "You come to a complete stop, the same as at a stop sign.",
+        "You speed up to get through the intersection."
+      ],
+      "answer": "You slow down and drive through with care.",
+      "then": {
+        "say": "You slow down and drive through with care. A flashing yellow light tells you to slow down and take care, but not to stop. A flashing red light is the one that means the same as a stop sign."
+      },
+      "rule": "A flashing yellow light means you slow down and drive through the intersection with care."
+    },
+    {
+      "id": "s2-04",
+      "fact": "a-147",
+      "kind": "choose",
+      "prompt": "You stopped for the steady yellow light. You slowed down and drove through the flashing yellow light. What is the difference between a steady yellow light and a flashing yellow light?",
+      "options": [
+        "A steady yellow light is about to turn red, and a flashing yellow light is not.",
+        "A flashing yellow light is about to turn red, and a steady yellow light is not.",
+        "They mean the same thing, and the flashing only makes the light easier to see."
+      ],
+      "answer": "A steady yellow light is about to turn red, and a flashing yellow light is not.",
+      "then": {
+        "say": "A steady yellow light is about to turn red, and a flashing yellow light is not. That is why you stop for a steady yellow light when you safely can, and slow down and drive through a flashing yellow light with care."
+      },
+      "rule": "A steady yellow light is about to turn red, so you stop when you safely can, while a flashing yellow light is not about to change and means slow down and drive through with care."
+    },
+    {
+      "id": "s2-05",
+      "fact": "a-152",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow-double",
+            "lanes": 2
+          },
+          {
+            "t": "light",
+            "x": 175,
+            "y": 121,
+            "state": "green-left",
+            "span": 120,
+            "spanX": 160
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 121,
+            "state": "red",
+            "span": 0
+          },
+          {
+            "t": "car",
+            "id": "oncoming",
+            "x": 115,
+            "y": 85,
+            "heading": "s",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              195
+            ],
+            "via": [
+              172,
+              150
+            ],
+            "to": [
+              40,
+              148
+            ]
+          }
+        ]
+      },
+      "prompt": "The arrow over your lane is a steady green left arrow, and you want to turn left. The light over the lane beside you, for cars going straight, is a red light. On the other side of the intersection, a car facing you is stopped. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "you",
+          "label": "your car"
+        },
+        {
+          "id": "oncoming",
+          "label": "the car facing you"
+        }
+      ],
+      "answer": "you",
+      "then": {
+        "highlight": "you",
+        "say": "Your car goes first. The green arrow lets you turn left now, and the car facing you waits until you have turned. You still wait for any car or person already in the intersection."
+      },
+      "rule": "A green arrow means you may turn only in the arrow's direction and the other traffic waits for you, after any vehicles and people already in the intersection have cleared it."
+    },
+    {
+      "id": "s2-06",
+      "fact": "a-153",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow-double",
+            "lanes": 2
+          },
+          {
+            "t": "light",
+            "x": 175,
+            "y": 121,
+            "state": "yellow-left",
+            "span": 120,
+            "spanX": 160
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 121,
+            "state": "red",
+            "span": 0
+          },
+          {
+            "t": "car",
+            "id": "oncoming",
+            "x": 115,
+            "y": 85,
+            "heading": "s",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 255,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              235
+            ],
+            "via": [
+              172,
+              150
+            ],
+            "to": [
+              40,
+              148
+            ]
+          }
+        ]
+      },
+      "prompt": "You want to turn left. The green arrow over your lane has just changed to a steady yellow arrow. The light over the lane beside you is a red light. You can still stop safely before the intersection. On the other side of the intersection, a car facing you is stopped. What do you do?",
+      "options": [
+        "You slow down and stop before the intersection.",
+        "You go on and turn now.",
+        "You speed up to turn before the arrow turns red."
+      ],
+      "answer": "You slow down and stop before the intersection.",
+      "then": {
+        "say": "You slow down and stop before the intersection. A yellow arrow means your turn is ending and the cars coming toward you will soon get to go, so you get ready to let them go first. You never speed up to turn before the arrow turns red."
+      },
+      "rule": "A yellow arrow means your protected turn is ending, so you get ready to let the oncoming traffic go first."
+    },
+    {
+      "id": "s2-07",
+      "fact": "a-155",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow-double",
+            "lanes": 2
+          },
+          {
+            "t": "light",
+            "x": 175,
+            "y": 121,
+            "state": "flashing-yellow-left",
+            "span": 120,
+            "spanX": 160
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 121,
+            "state": "green",
+            "span": 0
+          },
+          {
+            "t": "car",
+            "id": "oncoming",
+            "x": 115,
+            "y": 60,
+            "heading": "s",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              195
+            ],
+            "via": [
+              172,
+              150
+            ],
+            "to": [
+              40,
+              148
+            ]
+          }
+        ]
+      },
+      "prompt": "The arrow over your lane is a flashing yellow left arrow, and you want to turn left. The light over the lane beside you, for cars going straight, is a green light. A car coming toward you is going straight across, and it is close. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "oncoming",
+          "label": "the car coming toward you"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "oncoming",
+      "then": {
+        "highlight": "oncoming",
+        "say": "The car coming toward you goes first. A flashing yellow arrow lets you turn left only after the cars coming toward you have passed and any person crossing the road has crossed. You wait for a safe gap, then turn."
+      },
+      "rule": "A flashing yellow arrow means you may turn left after you yield to all oncoming traffic and to bicyclists and pedestrians in the crosswalk, when there is a safe gap."
+    },
+    {
+      "id": "s2-08",
+      "fact": "a-154",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow-double",
+            "lanes": 2
+          },
+          {
+            "t": "light",
+            "x": 175,
+            "y": 121,
+            "state": "red-left",
+            "span": 120,
+            "spanX": 160
+          },
+          {
+            "t": "light",
+            "x": 205,
+            "y": 121,
+            "state": "green",
+            "span": 0
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              195
+            ],
+            "via": [
+              172,
+              150
+            ],
+            "to": [
+              40,
+              148
+            ]
+          }
+        ]
+      },
+      "prompt": "You want to turn left. The arrow over your left-turn lane is a steady red arrow. The light over the lane beside you, for cars going straight, is a green light. No car and no person is in the intersection or coming toward it. May you turn left now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "No, you stop and wait until the arrow over your lane lets you turn. A red arrow means you may not turn, even when the other lanes have a green light and nothing is coming."
+      },
+      "rule": "When the arrow is red or your lane has the red light, every turn is prohibited, even when other lanes have a green light and the path looks clear."
+    },
+    {
+      "id": "s2-09",
+      "fact": "a-168",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 230,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are driving on a road with two lanes. The line down the middle of the road is solid yellow. What does the yellow line tell you?",
+      "options": [
+        "The cars on the other side of the line are coming toward you.",
+        "The cars on the other side of the line are going the same way as you."
+      ],
+      "answer": "The cars on the other side of the line are coming toward you.",
+      "then": {
+        "say": "The cars on the other side of the line are coming toward you. A yellow line down the middle of a road separates traffic going in opposite directions."
+      },
+      "rule": "Lines that separate traffic moving in opposite directions are yellow."
+    },
+    {
+      "id": "s2-10",
+      "fact": "a-175",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "white-broken"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 230,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are driving on a road with two lanes. The line between your lane and the lane next to you is white and broken. What does the white line tell you?",
+      "options": [
+        "The cars in the lane next to you are going the same way as you.",
+        "The cars in the lane next to you are coming toward you.",
+        "You may never cross the line."
+      ],
+      "answer": "The cars in the lane next to you are going the same way as you.",
+      "then": {
+        "say": "The cars in the lane next to you are going the same way as you. White lines separate lanes of traffic going the same way. You may cross a broken white line to change lanes when it is safe."
+      },
+      "rule": "White lane markings separate lanes of traffic going in the same direction."
+    },
+    {
+      "id": "s2-11",
+      "fact": "a-172",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow-pass-n"
+          },
+          {
+            "t": "car",
+            "id": "ahead",
+            "x": 175,
+            "y": 150,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 240,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "The center of this road has a solid yellow line and a broken yellow line. The broken line is on your side. A slow car is ahead of you in your lane, and no car is coming toward you. May you pass it?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "say": "Yes, you may pass when it is safe. The broken yellow line on your side means you are in the passing zone. You must be back on your side of the road before the passing zone ends."
+      },
+      "rule": "Where the center has a solid and a broken yellow line, you may pass when the broken line is on your side and it is safe."
+    },
+    {
+      "id": "s2-12",
+      "fact": "a-172",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow-pass-s"
+          },
+          {
+            "t": "car",
+            "id": "ahead",
+            "x": 175,
+            "y": 150,
+            "heading": "n",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 240,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "The center of this road has a solid yellow line and a broken yellow line. The solid line is on your side. A slow car is ahead of you in your lane, and no car is coming toward you. May you pass it?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "No, you stay behind the slow car. The solid yellow line on your side means you may not pass here, even when no car is coming toward you."
+      },
+      "rule": "Where the center has a solid and a broken yellow line, you may not pass when the solid line is on your side."
+    },
+    {
+      "id": "s2-13",
+      "kind": "principle",
+      "prompt": "Every question in this lesson came down to one thing. What was it?",
+      "options": [
+        "What the light or the line showed told you what to do.",
+        "A sign beside the road told you what to do.",
+        "How fast the other cars were going told you what to do."
+      ],
+      "answer": "What the light or the line showed told you what to do.",
+      "then": {
+        "say": "What the light or the line showed told you what to do. Red stops you, yellow tells you to take care or that a change is coming, and green lets you go when it is safe. A yellow line has cars coming toward you beyond it, a white line has cars going your way, and you pass only when the line on your side is broken."
+      }
+    }
+  ]
+}
