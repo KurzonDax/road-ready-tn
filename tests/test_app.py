@@ -2339,6 +2339,89 @@ def check_sign_lesson(browser, inst):
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 1 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts,
           "the finished lesson is one record of type lesson with every Section 1 fact answered")
     ctx.close()
+    check_signal_lesson(browser, inst)
+
+
+def check_signal_lesson(browser, inst):
+    """The Section 2 lesson (signals, arrows and road lines) is offered to a Learner whose new facts come from
+    Section 2; its light questions are choices about a drawn scene whose prompt names the light's color; the kit
+    draws arrow lights, a four-lane road and a solid-plus-broken center line; a wrong choice leads with Incorrect
+    alone and the list marks the pick; a wrong tap names the car; every question is acted on to the end."""
+    print("\n[signal lesson]")
+    lid = inst.add_learner("Sawyer", "signal password")
+    store_for(inst, lid, "move", {"to": 2})  # new facts come from Section 2, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Sawyer", "signal password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 2:"), "a Learner moved to Section 2 is offered its lesson before the Set", h1(pg))
+    pg.click("#lessonBtn")
+    pg.wait_for_selector("button.opt")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
+                        "targets: s.targets || null, options: s.options || null, parts: s.scene ? s.scene.parts : []}))")
+    facts = set(pg.evaluate("QS.filter(q => q.day === 2).map(q => q.id)"))
+    check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts, "the lesson has 10 to 15 questions and teaches every Section 2 fact", len(steps))
+    taps = [s for s in steps if s["kind"] == "tap"]
+    check(taps and all(s["prompt"].endswith("Who goes first? Tap the car.") and all(any(p["t"] == "car" and p.get("id") == t["id"] for p in s["parts"]) for t in s["targets"])
+                       for s in taps), "every tap question asks who goes first, in the one form, and its targets are cars in the scene")
+    lights = [s for s in steps if any(p["t"] == "light" for p in s["parts"])]
+    mine = lambda s: next(p for p in s["parts"] if p["t"] == "light")  # the head over the Learner's lane is listed first
+    check(lights and all(mine(s)["state"].replace("flashing-", "").replace("-left", "") in s["prompt"].lower()
+                         and ("flashing" in s["prompt"].lower()) == mine(s)["state"].startswith("flashing") for s in lights),
+          "every prompt with a light says its color, and says flashing exactly when the Learner's light flashes")
+    lines = [s for s in steps if s["parts"] and len([p for p in s["parts"] if p["t"] == "road"]) == 1]
+    check(lines and all(("white" in s["prompt"].lower()) == (s["parts"][0].get("center", "yellow").startswith("white"))
+                        and ("yellow" in s["prompt"].lower()) == (s["parts"][0].get("center", "yellow").startswith("yellow")) for s in lines),
+          "every prompt about one stretch of road names the color of its center line")
+    arrows = [s for s in steps if any(p["t"] == "light" and p["state"].endswith("-left") for p in s["parts"])]
+    check(len(arrows) >= 4 and all("arrow" in s["prompt"] for s in arrows), "the arrow questions say arrow in the prompt")
+    # The first question: a wrong choice leads with Incorrect alone, and the list marks the pick and the answer.
+    first = steps[0]
+    check(first["kind"] == "choose" and first["parts"], "the first question is a choice about a drawn scene")
+    wrong = next(o for o in first["options"] if o != first["answer"])
+    pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check(shown.startswith(f"Lesson for Section 2: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
+          and wrong in pg.inner_text("li.opt.wrong") and "You picked this" in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right")
+          and "Driver manual" not in shown and "What do you do" not in shown,
+          "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation names the answer once", shown[:160])
+    check(pg.evaluate("document.querySelectorAll('.scene circle[fill=\"#e0b23c\"]').length") == 1, "the steady yellow light is drawn with its yellow lamp lit")
+    pg.click("#stepNextBtn")
+    for k in range(1, len(steps)):
+        st = steps[k]
+        if st["kind"] == "tap":
+            pg.wait_for_selector(f".k-target[data-t='{st['answer']}']")
+            if k == next(i for i, s in enumerate(steps) if s["kind"] == "tap"):
+                # The first tap question: a wrong tap names the car picked and crosses it, and the one that goes gets the check.
+                other = next(t for t in st["targets"] if t["id"] != st["answer"])
+                check(pg.evaluate("document.querySelectorAll('.scene line.k-white').length") >= 4 and pg.evaluate("document.querySelectorAll('.scene rect[fill=\"#202225\"]').length") == 2,
+                      "the four-lane road draws its lane lines and two signal heads hang over it")
+                pg.click(f".k-target[data-t='{other['id']}']")
+                pg.wait_for_selector("#stepNextBtn")
+                check(pg.inner_text("#stepHead") == f"Incorrect. You picked {other['label']}." and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None,
+                      "a wrong tap leads with Incorrect and the car's name, crosses it, and rings the car that goes", pg.inner_text("#stepHead"))
+                pg.click("#stepNextBtn")
+                continue
+            pg.click(f".k-target[data-t='{st['answer']}']")
+        else:
+            pg.wait_for_selector("button.opt")
+            if any(p.get("center", "").startswith("yellow-pass") for p in st["parts"]):
+                dashed = pg.evaluate("document.querySelectorAll('.scene line.k-yellow[stroke-dasharray]').length")
+                solid = pg.evaluate("document.querySelectorAll('.scene line.k-yellow:not([stroke-dasharray])').length")
+                check(dashed >= 1 and solid >= 1, "a passing-zone road draws one solid and one broken yellow line", (solid, dashed))
+            pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
+        pg.wait_for_selector("#stepNextBtn")
+        check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 2.", "the Section 2 lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 2 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts,
+          "the finished lesson is one record of type lesson with every Section 2 fact answered")
+    ctx.close()
 
 
 def main():
