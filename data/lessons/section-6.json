@@ -14,7 +14,11 @@
       ],
       "answer": "You sit about 10 to 12 inches back.",
       "then": {
-        "say": "You sit about 10 to 12 inches back. Closer, an opening air bag hits your chin or face instead of your chest, and farther back you cannot reach the pedals and the wheel easily."
+        "say": "You sit about 10 to 12 inches back. Closer, an opening air bag hits your chin or face instead of your chest, and farther back you cannot reach the pedals and the wheel easily.",
+        "wrong": {
+          "You sit about 3 to 5 inches back.": "That close, an air bag that opens hits your chin or face. You sit about 10 to 12 inches back, so it hits your chest.",
+          "You sit about 18 to 24 inches back.": "That far back, you cannot reach the pedals and the wheel easily. You sit about 10 to 12 inches back."
+        }
       },
       "rule": "You sit with your body about 10 to 12 inches back from the steering wheel, so an air bag that opens hits your chest, not your chin or face."
     },
@@ -30,7 +34,11 @@
       ],
       "answer": "Your left hand goes at 9 o'clock and your right hand at 3 o'clock.",
       "then": {
-        "say": "Your left hand goes at 9 o'clock and your right hand at 3 o'clock. Higher on the wheel, at 10 and 2 o'clock or at 12 o'clock, your hands and arms are in the air bag's way if it opens."
+        "say": "Your left hand goes at 9 o'clock and your right hand at 3 o'clock. Higher on the wheel, at 10 and 2 o'clock or at 12 o'clock, your hands and arms are in the air bag's way if it opens.",
+        "wrong": {
+          "Your left hand goes at 10 o'clock and your right hand at 2 o'clock.": "At 10 and 2 o'clock your hands and arms are in the air bag's way if it opens. Your left hand goes at 9 o'clock and your right hand at 3 o'clock.",
+          "Both hands go together at 12 o'clock.": "At 12 o'clock your hands and arms are in the air bag's way if it opens. Your left hand goes at 9 o'clock and your right hand at 3 o'clock."
+        }
       },
       "rule": "You hold the steering wheel with your left hand at 9 o'clock and your right hand at 3 o'clock, which helps you avoid injury if the air bag opens."
     },
@@ -46,7 +54,11 @@
       ],
       "answer": "The law says at least 50 feet before the turn.",
       "then": {
-        "say": "The law says your turn signal must be on at least 50 feet before the turn. Ten feet gives the drivers around you too little time to see what you plan to do, and 500 feet is ten times what the law asks."
+        "say": "The law says your turn signal must be on at least 50 feet before the turn. Ten feet gives the drivers around you too little time to see what you plan to do, and 500 feet is ten times what the law asks.",
+        "wrong": {
+          "The law says at least 10 feet before the turn.": "Ten feet gives the drivers around you too little time to see what you plan to do. The law says at least 50 feet before the turn.",
+          "The law says at least 500 feet before the turn.": "The law asks for 50 feet, not 500. Your turn signal must be on at least 50 feet before the turn."
+        }
       },
       "rule": "You turn on your turn signal at least 50 feet before a turn or a lane change."
     },
@@ -126,7 +138,10 @@
       "answer": "oncoming",
       "then": {
         "highlight": "oncoming",
-        "say": "The car coming toward you goes first. Your signal tells other drivers what you plan to do, but it never gives you the right-of-way, so you wait and let the car pass."
+        "say": "The car coming toward you goes first. Your signal tells other drivers what you plan to do, but it never gives you the right-of-way, so you wait and let the car pass.",
+        "wrong": {
+          "you": "Your signal told the other driver what you plan to do, and nothing more. A signal never gives you the right-of-way, so the car coming toward you goes first and you wait and let it pass."
+        }
       },
       "rule": "Your turn signal tells other drivers what you plan to do, but it does not give you the right-of-way."
     },
@@ -191,7 +206,10 @@
       ],
       "answer": "Yes",
       "then": {
-        "say": "Yes, you may turn right. In Tennessee a steady red light allows a right turn after a complete stop, unless a sign forbids it."
+        "say": "Yes, you may turn right. In Tennessee a steady red light allows a right turn after a complete stop, unless a sign forbids it.",
+        "wrong": {
+          "No": "Nothing stops this turn: you have stopped, no sign forbids it, no one is walking across and no car is coming. A steady red light allows a right turn after a complete stop, unless a sign forbids it."
+        }
       },
       "rule": "Unless a sign forbids it, you may turn right on a red light after a complete stop, when no pedestrians or cross traffic are present."
     },
@@ -264,7 +282,10 @@
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stay stopped until the car has passed. A right turn on red is allowed only when no car is coming on the cross street and no one is walking across."
+        "say": "No, you stay stopped until the car has passed. A right turn on red is allowed only when no car is coming on the cross street and no one is walking across.",
+        "wrong": {
+          "Yes": "A car is coming on the cross street, and a right turn on red is allowed only when no car is coming and no one is walking across. You stay stopped until the car has passed."
+        }
       },
       "rule": "You may turn right on a red light only after a complete stop and only when no cross traffic or pedestrians are present."
     },
@@ -297,12 +318,7 @@
             "x": 190,
             "y": 150,
             "w": 110,
-            "h": 50,
-            "label": [
-              "the lane just to",
-              "the right of",
-              "the center line"
-            ]
+            "h": 50
           },
           {
             "t": "lane",
@@ -310,11 +326,7 @@
             "x": 190,
             "y": 210,
             "w": 110,
-            "h": 50,
-            "label": [
-              "the lane closest",
-              "to the right curb"
-            ]
+            "h": 50
           },
           {
             "t": "car",
@@ -379,12 +391,7 @@
             "x": 190,
             "y": 150,
             "w": 110,
-            "h": 50,
-            "label": [
-              "the lane just to",
-              "the right of",
-              "the center line"
-            ]
+            "h": 50
           },
           {
             "t": "car",
@@ -395,7 +402,10 @@
             "you": true
           }
         ],
-        "say": "You turn into the lane closest to the right curb, the one nearest you as you come around the corner. Swinging wide into the other lane puts you in the way of a driver who may be using it."
+        "say": "You turn into the lane closest to the right curb, the one nearest you as you come around the corner. Swinging wide into the other lane puts you in the way of a driver who may be using it.",
+        "wrong": {
+          "center": "That is the far lane, and swinging wide into it puts you in the way of a driver who may be using it. You turn into the lane closest to the right curb, the one nearest you as you come around the corner."
+        }
       },
       "rule": "When you turn right, you turn into the travel lane closest to the right curb."
     },
@@ -428,11 +438,7 @@
             "x": 130,
             "y": 44,
             "w": 110,
-            "h": 50,
-            "label": [
-              "the lane closest",
-              "to the right curb"
-            ]
+            "h": 50
           },
           {
             "t": "lane",
@@ -440,12 +446,7 @@
             "x": 130,
             "y": 104,
             "w": 110,
-            "h": 50,
-            "label": [
-              "the lane just to",
-              "the right of",
-              "the center line"
-            ]
+            "h": 50
           },
           {
             "t": "car",
@@ -510,11 +511,7 @@
             "x": 130,
             "y": 44,
             "w": 110,
-            "h": 50,
-            "label": [
-              "the lane closest",
-              "to the right curb"
-            ]
+            "h": 50
           },
           {
             "t": "car",
@@ -525,7 +522,10 @@
             "you": true
           }
         ],
-        "say": "You turn into the lane just to the right of the center line, the first lane past it. The lane at the right curb is for drivers coming toward you who turn right, so you never turn wide into it."
+        "say": "You turn into the lane just to the right of the center line, the first lane past it. The lane at the right curb is for drivers coming toward you who turn right, so you never turn wide into it.",
+        "wrong": {
+          "curb": "The lane at the right curb is for drivers coming toward you who turn right, so you never turn wide into it. You turn into the lane just to the right of the center line, the first lane past it."
+        }
       },
       "rule": "When you turn left from a two-way street onto a two-way street, you turn into the lane just to the right of the center line."
     },
@@ -557,13 +557,7 @@
             "x": 125,
             "y": 195,
             "w": 64,
-            "h": 90,
-            "label": [
-              "the lane",
-              "nearest",
-              "the left",
-              "curb"
-            ]
+            "h": 90
           },
           {
             "t": "lane",
@@ -571,13 +565,7 @@
             "x": 195,
             "y": 195,
             "w": 64,
-            "h": 90,
-            "label": [
-              "the lane",
-              "nearest",
-              "the right",
-              "curb"
-            ]
+            "h": 90
           },
           {
             "t": "car",
@@ -641,13 +629,7 @@
             "x": 195,
             "y": 195,
             "w": 64,
-            "h": 90,
-            "label": [
-              "the lane",
-              "nearest",
-              "the right",
-              "curb"
-            ]
+            "h": 90
           },
           {
             "t": "car",
@@ -673,7 +655,10 @@
             ]
           }
         ],
-        "say": "You turn from the lane nearest the left curb, so you move into it before the turn. From the lane nearest the right curb, your turn would cut across the other lane, where a car may be driving beside you."
+        "say": "You turn from the lane nearest the left curb, so you move into it before the turn. From the lane nearest the right curb, your turn would cut across the other lane, where a car may be driving beside you.",
+        "wrong": {
+          "right-lane": "From the lane nearest the right curb, your turn cuts across the other lane, where a car may be driving beside you. You move into the lane nearest the left curb before the turn."
+        }
       },
       "rule": "Before you turn left from a one-way street, you move into the lane nearest the left curb."
     },
@@ -688,7 +673,11 @@
       ],
       "answer": "You used the lane going your way that was nearest the side you turned toward.",
       "then": {
-        "say": "Each time it was the lane nearest the side you turned toward, so the turn was as tight as it could be. The cars in a lane never decide it, and a wider turn crosses a lane that another driver may be using."
+        "say": "Each time it was the lane nearest the side you turned toward, so the turn was as tight as it could be. The cars in a lane never decide it, and a wider turn crosses a lane that another driver may be using.",
+        "wrong": {
+          "You used the lane with the fewest cars in it.": "The cars in a lane never decide it. Each time it was the lane nearest the side you turned toward, so the turn was as tight as it could be.",
+          "You used the lane nearest the middle of the street.": "On the right turn, and on the left turn from the one-way street, the lane you used was at a curb, not in the middle. Each time it was the lane nearest the side you turned toward."
+        }
       }
     },
     {
@@ -774,7 +763,10 @@
       "answer": "in-circle",
       "then": {
         "highlight": "in-circle",
-        "say": "The car in the roundabout goes first. You wait at the yield sign and enter only when there is a gap in the cars already going around."
+        "say": "The car in the roundabout goes first. You wait at the yield sign and enter only when there is a gap in the cars already going around.",
+        "wrong": {
+          "you": "You are coming up to the roundabout, and the car in it was there first. You wait at the yield sign and enter only when there is a gap in the cars already going around."
+        }
       },
       "rule": "When you reach a roundabout, you yield to the vehicles already in it, and you enter when there is a gap."
     },
@@ -861,7 +853,10 @@
       "answer": "you",
       "then": {
         "highlight": "you",
-        "say": "Your car goes first. You are already in the roundabout, so the car coming up to it waits at the yield sign for a gap."
+        "say": "Your car goes first. You are already in the roundabout, so the car coming up to it waits at the yield sign for a gap.",
+        "wrong": {
+          "entering": "That car is coming up to the roundabout, and you are already in it. It waits at the yield sign for a gap, and your car goes first."
+        }
       },
       "rule": "A vehicle coming up to a roundabout yields to the vehicles already in it, so a car already in the roundabout goes first."
     },
@@ -877,7 +872,11 @@
       ],
       "answer": "The bicyclist is about to turn right.",
       "then": {
-        "say": "The bicyclist is about to turn right. A rider signals with the left arm: straight out means a left turn, bent up means a right turn, and bent down means stopping or slowing."
+        "say": "The bicyclist is about to turn right. A rider signals with the left arm: straight out means a left turn, bent up means a right turn, and bent down means stopping or slowing.",
+        "wrong": {
+          "The bicyclist is about to turn left.": "A left turn is the left arm held straight out to the side. The left arm bent up at the elbow means a right turn.",
+          "The bicyclist is about to stop or slow down.": "Stopping or slowing is an arm bent down at the elbow, with the hand pointing down. The left arm bent up at the elbow means a right turn."
+        }
       },
       "rule": "A bicyclist's left arm bent up at the elbow signals a right turn, and so does the right arm held straight out to the right."
     }

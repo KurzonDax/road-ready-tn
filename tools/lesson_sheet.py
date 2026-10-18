@@ -32,7 +32,7 @@ ul { padding-left: 22px; } li.answer { font-weight: 700; } li.answer::after { co
 .say { font-size: 19px; margin: 8px 0; }
 .not { color: #e8705f; } .ok { color: #62c27f; }
 .meta { color: #ada79f; font-size: 15px; }
-ul.wrongs { margin-top: 0; } ul.wrongs li { font-size: 16px; }
+ul.wrongs { margin-top: 0; } ul.wrongs li { margin-bottom: 10px; }
 """
 
 
@@ -86,7 +86,8 @@ def main():
     n = len(lesson["steps"])
     parts = [f"<h1>Lesson for Section {section}: {html.escape(lesson['title'])}</h1>",
              f"<p class='meta'>{n} questions. Each one is shown before acting, after the correct action, and after a wrong "
-             "action. Every wrong pick is listed with the exact first line it gets; the explanation under it is the same for all of them.</p>"]
+             "action. Under the correct path, every wrong pick is listed with the exact words the Learner reads after it: "
+             "its first line, then its explanation.</p>"]
     for k, st in enumerate(lesson["steps"]):
         r, wr = right[k], wrong[k]
         parts.append(f"<h2>{k + 1} of {n}<span class='meta'> · {html.escape(st['id'])}"
@@ -108,10 +109,15 @@ def main():
         if row:
             parts.append(f"<div class='row'>{row}</div>")
         parts.append(f"<p class='say'><span class='ok'>{html.escape(r['lead'])}</span> {html.escape(r['say'])}</p>")
-        wrongs = [label for label, ok in items if not ok]
-        lines = "".join(f"<li><span class='not'>{'Incorrect. You picked ' + html.escape(label) + '.' if st['kind'] == 'tap' else 'Incorrect.'}</span>"
-                        f"{'' if st['kind'] == 'tap' else ' (the list marks ' + html.escape(label) + ' as picked)'}</li>" for label in wrongs)
-        parts.append(f"<p class='meta'>Each wrong pick gets its own first line, then the same explanation:</p><ul class='wrongs'>{lines}</ul>")
+        # Every wrong pick, with the exact words the Learner reads after it: the first line, then the explanation
+        # written for that pick (`then.wrong`), or the shared one when the step has none.
+        keys = [t["id"] for t in st["targets"]] if st["kind"] == "tap" else st["options"]
+        wrongs = [(label, key) for (label, ok), key in zip(items, keys) if not ok]
+        per_pick = st["then"].get("wrong") or {}
+        lines = "".join(f"<li><p class='say'><span class='not'>{'Incorrect. You picked ' + html.escape(label) + '.' if st['kind'] == 'tap' else 'Incorrect.'}</span>"
+                        f"{'' if st['kind'] == 'tap' else ' <span class=meta>(the list marks ' + html.escape(label) + ' as picked)</span>'} "
+                        f"{html.escape(per_pick.get(key) or st['then']['say'])}</p></li>" for label, key in wrongs)
+        parts.append(f"<p class='meta'>After a wrong pick:</p><ul class='wrongs'>{lines}</ul>")
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(f"<!doctype html><meta charset='utf-8'><title>Lesson for Section {section}</title><style>{STYLE}</style><main>{''.join(parts)}</main>\n")
     print(f"Wrote {out}")

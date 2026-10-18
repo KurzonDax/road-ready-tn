@@ -2616,9 +2616,11 @@ def check_turn_lesson(browser, inst):
     check(h1(pg).startswith("Section 6:"), "a Learner moved to Section 6 is offered its lesson before the Set", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt")
-    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
                         "options: s.options || null, targets: s.targets || null, parts: s.scene ? s.scene.parts : [], after: s.then.parts || null}))")
     facts = set(pg.evaluate("QS.filter(q => q.day === 6).map(q => q.id)"))
+    check(all(s["wrong"] and set(s["wrong"]) == {k for k in ([t["id"] for t in s["targets"]] if s["kind"] == "tap" else s["options"]) if k != s["answer"]} for s in steps),
+          "every question has its own explanation for every wrong pick")
     check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts and all((s["kind"] == "principle") == (s["fact"] is None) for s in steps),
           "the lesson has 10 to 15 questions, teaches every Section 6 fact, and only a principle question has no fact", len(steps))
     check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
@@ -2632,8 +2634,8 @@ def check_turn_lesson(browser, inst):
           "every tap target is a car or a lane box in its scene, and exactly one is the answer")
     lanes = [s for s in taps if "Tap the lane." in s["prompt"]]
     def lanes_named(s):
-        boxes = {p["id"]: " ".join(p["label"]) for p in s["parts"] if p["t"] == "lane"}
-        return {t["id"] for t in s["targets"]} == set(boxes) and all(" ".join(t["label"].split()[-2:]) in boxes[t["id"]] for t in s["targets"])
+        boxes = {p["id"] for p in s["parts"] if p["t"] == "lane"}
+        return {t["id"] for t in s["targets"]} == boxes and not any("label" in p for p in s["parts"] if p["t"] == "lane")
     def you_in_lane(s):
         where = next(p for p in s["parts"] if p.get("id") == s["answer"])
         return s["after"] and any(p["t"] == "car" and p.get("you") and not p.get("outline") and (p["x"], p["y"]) == (where["x"], where["y"]) for p in s["after"])
@@ -2643,7 +2645,7 @@ def check_turn_lesson(browser, inst):
         return 0 < gap <= 10 and all(p["w"] >= 50 and p["h"] >= 50 for p in (a, b))
     check(all(side_by_side(s) for s in lanes), "the two lane boxes of a lane question sit side by side, each at least 50 by 50")
     check({s["fact"] for s in lanes} == {"b-169", "b-159", "b-163"} and all(lanes_named(s) and you_in_lane(s) for s in lanes),
-          "the three lane questions tap lane boxes, each named on the box, and afterwards your car stands in the correct lane")
+          "the three lane questions tap lane boxes with nothing written on them, and afterwards your car stands in the correct lane")
     check(all(("one-way" in s["prompt"]) == (s["fact"] == "b-163") and ("two-way" in s["prompt"]) == (s["fact"] != "b-163") for s in lanes)
           and all(("turn right" in s["prompt"]) == (s["fact"] == "b-169") and ("turn left" in s["prompt"]) == (s["fact"] != "b-169") for s in lanes),
           "every lane prompt says whether the streets are one-way or two-way and which way the turn goes")
@@ -2665,8 +2667,9 @@ def check_turn_lesson(browser, inst):
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
     check(shown.startswith(f"Lesson for Section 6: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
-          and wrong in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right") and "Driver manual" not in shown,
-          "a wrong choice leads with Incorrect alone, and the list marks the pick and the answer", shown[:160])
+          and wrong in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right") and "Driver manual" not in shown
+          and pg.inner_text("#stepText") == first["wrong"][wrong] and first["say"] not in shown,
+          "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation is the one written for that pick", shown[:160])
     pg.click("#stepNextBtn")
     first_tap = next(k for k, s in enumerate(steps) if s["kind"] == "tap")
     first_lane = next(k for k, s in enumerate(steps) if s in lanes)
@@ -2679,8 +2682,9 @@ def check_turn_lesson(browser, inst):
                 other = next(t for t in st["targets"] if t["id"] != st["answer"])
                 pg.click(f".k-target[data-t='{other['id']}']")
                 pg.wait_for_selector("#stepNextBtn")
-                check(pg.inner_text("#stepHead") == f"Incorrect. You picked {other['label']}." and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None,
-                      "a wrong tap leads with Incorrect and the car's name, crosses it, and rings the car that goes", pg.inner_text("#stepHead"))
+                check(pg.inner_text("#stepHead") == f"Incorrect. You picked {other['label']}." and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None
+                      and pg.inner_text("#stepText") == st["wrong"][other["id"]],
+                      "a wrong tap leads with Incorrect and the car's name, crosses it, rings the car that goes, and explains that pick", pg.inner_text("#stepHead"))
                 pg.click("#stepNextBtn")
                 continue
             if k == first_lane:
@@ -2699,7 +2703,7 @@ def check_turn_lesson(browser, inst):
                 check(pg.evaluate("document.querySelectorAll('.scene circle[fill=\"#d9534f\"]').length") == 1, f"question {k + 1} draws the red light lit")
             pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
         pg.wait_for_selector("#stepNextBtn")
-        check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
+        check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
         pg.click("#stepNextBtn")
     pg.wait_for_selector("#moreBtn")
     check(h2(pg) == "You finished the lesson for Section 6.", "the Section 6 lesson ends on its own screen", h2(pg))

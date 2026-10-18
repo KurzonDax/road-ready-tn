@@ -1261,15 +1261,14 @@ function wrapTarget(p, inner, { targets, highlight, picked }) {
   if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>` + mark;
   return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
 }
-// A lane box (Section 6): a dashed box filling a stretch of one lane, its name on it in short lines, a tap target
-// for "Which lane do you turn into? Tap the lane." Boxes sit side by side in adjacent lanes, so the whole box is
-// the hit area and the marks are drawn on the box itself, with no ring around it.
+// A lane box (Section 6): a dashed box filling a stretch of one lane, with nothing written on it, a tap target
+// for "Which lane do you turn into? Tap the lane." The prompt and the target labels name the lanes. Boxes sit side
+// by side in adjacent lanes, so the whole box is the hit area and the marks are drawn on the box, with no ring.
 function lanePart(p, o) {
   const t = o.targets.find(x => x.id === p.id), hi = o.highlight === p.id, no = o.picked === p.id;
-  const x = p.x - p.w / 2, y = p.y - p.h / 2, lines = p.label || [];
+  const x = p.x - p.w / 2, y = p.y - p.h / 2;
   const rect = cls => `<rect class="${cls}" x="${x}" y="${y}" width="${p.w}" height="${p.h}" rx="6"/>`;
-  const text = lines.map((s, i) => svgText(p.x, p.y + (i - (lines.length - 1) / 2) * 13 + 4, s)).join('');
-  const inner = `<g class="${hi ? 'k-hi' : ''}">${rect('k-body k-lane')}${text}</g>`;
+  const inner = `<g class="${hi ? 'k-hi' : ''}">${rect('k-body k-lane')}</g>`;
   const ring = hi ? rect('k-ring') : no ? rect('k-no') : '';
   const mark = hi ? markBadge(x + p.w, y, 'k-yes') : no ? markBadge(x + p.w, y, 'k-not') : '';
   if (!t) return ring + inner + mark;
@@ -1353,6 +1352,13 @@ function peekStep(id) {
   renderStep();
 }
 const stepLabel = (st, value) => st.kind === 'tap' ? st.targets.find(t => t.id === value).label : value;
+// The explanation shown after acting: after a wrong pick, the one written for that pick (`then.wrong`, keyed by the
+// target id or the option), which says why that pick is wrong and then what is correct; otherwise `then.say`.
+function saidAfter(st, act) {
+  if (!act || act.right || !st.then.wrong) return st.then.say;
+  const key = st.kind === 'tap' ? st.targets.find(t => t.label === act.chosen).id : act.chosen;
+  return st.then.wrong[key] || st.then.say;
+}
 function renderStep() {
   const L = lesson, steps = L.lesson.steps, st = steps[L.i], n = steps.length, act = L.acts[L.i], last = L.i === n - 1;
   const parts = act && st.then.parts ? st.then.parts : st.scene && st.scene.parts;
@@ -1378,7 +1384,7 @@ function renderStep() {
               : `<h1 class="q" id="stepText" tabindex="-1">${esc(st.prompt)}</h1>`}
         ${scene}
         ${options}
-        ${act ? `<p class="say" id="stepText">${esc(st.then.say)}</p>` : ''}
+        ${act ? `<p class="say" id="stepText">${esc(saidAfter(st, act))}</p>` : ''}
       </div>
       ${button}
       ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop the lesson for now</button>'}
@@ -1398,7 +1404,7 @@ function lessonAct(value) {
   L.acts[L.i] = { chosen: stepLabel(st, value), right: value === st.answer, at: new Date().toISOString() };
   toTop();
   renderStep();
-  $('announce').textContent = `${$('stepHead').textContent} ${st.then.say}`;
+  $('announce').textContent = `${$('stepHead').textContent} ${saidAfter(st, L.acts[L.i])}`;
 }
 function nextStep() {
   $('announce').textContent = '';
