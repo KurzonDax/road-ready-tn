@@ -52,7 +52,7 @@
           }
         ]
       },
-      "prompt": "Your light is a steady yellow light. You can still stop safely before the intersection. You want to drive straight across. What do you do?",
+      "prompt": "You are coming up to a steady yellow light. You can still stop safely before the intersection. You want to drive straight across. What do you do?",
       "options": [
         "You slow down and stop before the intersection.",
         "You speed up to get through before the light turns red.",
@@ -114,7 +114,7 @@
           }
         ]
       },
-      "prompt": "Your light is a flashing red light. You have reached the intersection and want to drive straight across. No other car is in sight. What do you do?",
+      "prompt": "You have reached a flashing red light and want to drive straight across. No other car is in sight. What do you do?",
       "options": [
         "You come to a complete stop, look both ways, and go when it is safe.",
         "You slow down and go through without stopping.",
@@ -176,7 +176,7 @@
           }
         ]
       },
-      "prompt": "Your light is a flashing yellow light. You are coming up to the intersection and want to drive straight across. No other car is in sight. What do you do?",
+      "prompt": "You are coming up to a flashing yellow light and want to drive straight across. No other car is in sight. What do you do?",
       "options": [
         "You slow down and drive through with care.",
         "You come to a complete stop, the same as at a stop sign.",

@@ -33,11 +33,11 @@ Precise means exact, never exhaustive. A sentence that lists eight situations is
 - **They are questions.** "This lesson has 12 questions." The button is "Go on". The count is "1 of 12".
 - **Name what you refer to.** A situation is named by what happened in it, never pointed at as "both cases", "these", or "the one above".
 - **Short sentences, few of them.** A sentence is at most 30 words; a prompt at most 60. The question itself asks one thing ("Which sign means you slow down and let the traffic on the other road go first?"), and the conditions go in the explanation. An explanation is at most three sentences: what happens, then why. It names the correct one once; the lead never repeats it.
-- **A light is named by its color and whether it flashes.** "a steady yellow light", "a flashing red light", "a steady green left arrow". Never "round": there are no square lights, so the word says nothing.
+- **A light is named by its color and whether it flashes.** "a steady yellow light", "a flashing red light", "a steady green left arrow". Never "round": there are no square lights, so the word says nothing. Never "your light": the Learner does not own a light, he comes up to one. "You are coming up to a steady yellow light." "The light ahead of you has just turned green." "The arrow over your lane" names the lane he is in, and is fine.
 - **Tennessee roads, plainly.** "the main road", "a stop sign with an ALL WAY sign under it", "a traffic light that is not working". No idioms, no hedges, no exclamation marks, no semicolons, no praise.
 - **The manual stays in the data.** Its sentences and page numbers verify every fact and never appear on a Learner screen.
 
-The lint refuses: yield (except "yield sign"), right for correct, round for a light, step, screen, case, unnamed references, semicolons, exclamation marks, verdict and praise words, sentences and prompts over the caps, and a tap question that draws an intersection without saying what controls it.
+The lint refuses: yield (except "yield sign"), right for correct, round for a light, your light, step, screen, case, unnamed references, semicolons, exclamation marks, verdict and praise words, sentences and prompts over the caps, and a tap question that draws an intersection without saying what controls it.
 
 ## Drawings
 

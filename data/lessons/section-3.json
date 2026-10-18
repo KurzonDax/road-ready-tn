@@ -240,7 +240,7 @@
           }
         ]
       },
-      "prompt": "Your light has just turned green, and you want to drive straight across. A car from your left entered the intersection before your light turned green, and it is still in the intersection. Who goes first? Tap the car.",
+      "prompt": "The light ahead of you has just turned green, and you want to drive straight across. A car from your left entered the intersection before the light turned green, and it is still in the intersection. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "cross-car",
@@ -254,9 +254,9 @@
       "answer": "cross-car",
       "then": {
         "highlight": "cross-car",
-        "say": "The car in the intersection goes first. It was there before your light turned green, so you wait until it is out of the intersection before you go."
+        "say": "The car in the intersection goes first. It was there before the light turned green, so you wait until it is out of the intersection before you go."
       },
-      "rule": "When your light turns green, you still yield to pedestrians and vehicles that are still in the intersection."
+      "rule": "When the light turns green, you still yield to pedestrians and vehicles that are still in the intersection."
     },
     {
       "id": "s3-05",
@@ -320,7 +320,7 @@
           }
         ]
       },
-      "prompt": "Your light is a steady green light, not a green arrow, and you want to turn left. A car on the other side of the intersection is coming toward you. It is going straight across, and it is close. Who goes first? Tap the car.",
+      "prompt": "You are coming up to a steady green light, not a green arrow, and you want to turn left. A car on the other side of the intersection is coming toward you. It is going straight across, and it is close. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "oncoming",
@@ -764,7 +764,7 @@
           }
         ]
       },
-      "prompt": "Your light is green, and you want to drive straight across. Two cars are stopped in your lane just past the intersection, and there is no room for your car behind them. May you drive into the intersection now?",
+      "prompt": "You are coming up to a green light and want to drive straight across. Two cars are stopped in your lane just past the intersection, and there is no room for your car behind them. May you drive into the intersection now?",
       "options": [
         "Yes",
         "No"
