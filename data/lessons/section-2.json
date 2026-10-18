@@ -190,20 +190,6 @@
     },
     {
       "id": "s2-04",
-      "kind": "principle",
-      "prompt": "When the light flashed red, you stopped and went when it was safe. When it flashed yellow, you slowed down and went through with care. What was true of both flashing lights?",
-      "options": [
-        "It stayed as it was, so you did not wait for it to change.",
-        "It was about to change, so you waited to see the next color.",
-        "It let you go through without stopping or slowing down."
-      ],
-      "answer": "It stayed as it was, so you did not wait for it to change.",
-      "then": {
-        "say": "A flashing light never changes, so you never wait for it to. Red tells you to stop first and yellow tells you to slow down first, and then both let you go on when it is safe."
-      }
-    },
-    {
-      "id": "s2-05",
       "fact": "a-147",
       "kind": "choose",
       "scene": {
@@ -265,7 +251,7 @@
       "rule": "A steady yellow light means the light is about to turn red, so you slow down and stop, unless you are too close to stop safely."
     },
     {
-      "id": "s2-06",
+      "id": "s2-05",
       "fact": "a-152",
       "kind": "tap",
       "scene": {
@@ -354,7 +340,7 @@
       "rule": "A green arrow means you may turn only in the arrow's direction and the other traffic waits for you, after any vehicles and people already in the intersection have cleared it."
     },
     {
-      "id": "s2-07",
+      "id": "s2-06",
       "fact": "a-153",
       "kind": "choose",
       "scene": {
@@ -437,7 +423,7 @@
       "rule": "A yellow arrow means your protected turn is ending, so you get ready to let the oncoming traffic go first."
     },
     {
-      "id": "s2-08",
+      "id": "s2-07",
       "fact": "a-155",
       "kind": "tap",
       "scene": {
@@ -526,7 +512,7 @@
       "rule": "A flashing yellow arrow means you may turn left after you yield to all oncoming traffic and to bicyclists and pedestrians in the crosswalk, when there is a safe gap."
     },
     {
-      "id": "s2-09",
+      "id": "s2-08",
       "fact": "a-154",
       "kind": "choose",
       "scene": {
@@ -600,7 +586,7 @@
       "rule": "When the arrow is red or your lane has the red light, every turn is prohibited, even when other lanes have a green light and the path looks clear."
     },
     {
-      "id": "s2-10",
+      "id": "s2-09",
       "fact": "a-168",
       "kind": "choose",
       "scene": {
@@ -635,7 +621,7 @@
       "rule": "Lines that separate traffic moving in opposite directions are yellow."
     },
     {
-      "id": "s2-11",
+      "id": "s2-10",
       "fact": "a-175",
       "kind": "choose",
       "scene": {
@@ -671,7 +657,7 @@
       "rule": "White lane markings separate lanes of traffic going in the same direction."
     },
     {
-      "id": "s2-12",
+      "id": "s2-11",
       "fact": "a-172",
       "kind": "choose",
       "scene": {
@@ -714,7 +700,7 @@
       "rule": "Where the center has a solid and a broken yellow line, you may pass when the broken line is on your side and it is safe."
     },
     {
-      "id": "s2-13",
+      "id": "s2-12",
       "fact": "a-172",
       "kind": "choose",
       "scene": {
@@ -757,7 +743,7 @@
       "rule": "Where the center has a solid and a broken yellow line, you may not pass when the solid line is on your side."
     },
     {
-      "id": "s2-14",
+      "id": "s2-13",
       "kind": "principle",
       "prompt": "Every question in this lesson came down to one thing. What was it?",
       "options": [
