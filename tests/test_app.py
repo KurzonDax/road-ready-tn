@@ -2422,6 +2422,81 @@ def check_signal_lesson(browser, inst):
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 2 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts,
           "the finished lesson is one record of type lesson with every Section 2 fact answered")
     ctx.close()
+    check_speed_lesson(browser, inst)
+
+
+def check_speed_lesson(browser, inst):
+    """The Section 4 lesson (speed and following distance) is offered to a Learner whose new facts come from
+    Section 4; every question is a choice (the Section has nothing to tap), with complete sentences as options;
+    the speed questions draw the road the prompt names; the following-distance questions draw a car ahead and
+    a roadside post the prompt names; a wrong choice leads with Incorrect alone; every question is acted on to the end."""
+    print("\n[speed lesson]")
+    lid = inst.add_learner("Quinn", "speed password")
+    store_for(inst, lid, "move", {"to": 4})  # new facts come from Section 4, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Quinn", "speed password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 4:"), "a Learner moved to Section 4 is offered its lesson before the Set", h1(pg))
+    pg.click("#lessonBtn")
+    pg.wait_for_selector("button.opt")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
+                        "options: s.options || null, parts: s.scene ? s.scene.parts : []}))")
+    facts = set(pg.evaluate("QS.filter(q => q.day === 4).map(q => q.id)"))
+    check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts, "the lesson has 10 to 15 questions and teaches every Section 4 fact", len(steps))
+    check(all(s["kind"] in ("choose", "principle") for s in steps) and all((s["kind"] == "principle") == (s["fact"] is None) for s in steps),
+          "every question is a choice, and only the principle questions have no fact")
+    check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps), "every option is a complete sentence or a plain Yes or No")
+    numbers = [s for s in steps if s["fact"] in ("b-031", "b-030")]
+    check(len(numbers) == 2 and all(any(p["t"] == "road" for p in s["parts"]) and "No speed limit sign is posted" in s["prompt"] for s in numbers)
+          and all(re.search(r"\b(70|55) mph\b", s["answer"]) for s in numbers),
+          "the two speed limit questions draw the road, say that no sign is posted, and answer with the manual's number")
+    posts = [s for s in steps if any(p["t"] == "post" for p in s["parts"])]
+    check(len(posts) >= 2 and all("sign post" in s["prompt"] and any(p["t"] == "car" and not p.get("you") for p in s["parts"]) for s in posts),
+          "the following-distance questions draw a roadside post the prompt names, with a car ahead", len(posts))
+    check(not any(re.search(r"\b(feet|ft|car lengths?)\b", s["prompt"] + " " + s["answer"]) for s in steps if s["fact"]),
+          "no answer measures a distance in feet or car lengths")
+    # The counting method is used before it is asked about: the first b-053 question states the count and asks what follows,
+    # and the question that asks him to choose the method comes after the one where he acted on a short count (b-054).
+    method = [k for k, s in enumerate(steps) if s["fact"] == "b-053"]
+    acted = next(k for k, s in enumerate(steps) if s["fact"] == "b-054")
+    check(len(method) == 2 and "one-thousand and two" in steps[method[0]]["prompt"] and "two seconds behind" in steps[method[0]]["answer"]
+          and method[0] < acted < method[1] and steps[method[1]]["answer"].startswith("You count the seconds"),
+          "the count is stated and used before the question that asks for the method", method)
+    # The first question: a wrong choice leads with Incorrect alone, and the list marks the pick and the answer.
+    first = steps[0]
+    check(first["kind"] == "choose" and first["parts"] and first["fact"] == "b-031", "the first question is a choice about a drawn interstate")
+    check(pg.evaluate("document.querySelectorAll('.scene line.k-white').length") >= 2, "the interstate draws two lanes each way")
+    wrong = next(o for o in first["options"] if o != first["answer"])
+    pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check(shown.startswith(f"Lesson for Section 4: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
+          and wrong in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right")
+          and "Driver manual" not in shown and "What is the fastest" not in shown,
+          "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and nothing is repeated", shown[:160])
+    pg.click("#stepNextBtn")
+    for k in range(1, len(steps)):
+        st = steps[k]
+        pg.wait_for_selector("button.opt")
+        if any(p["t"] == "post" for p in st["parts"]):
+            check(pg.query_selector(".scene .k-post") is not None, f"question {k + 1} draws the roadside post")
+        pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
+        pg.wait_for_selector("#stepNextBtn")
+        check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
+        if st["fact"] == "b-053":
+            check(pg.query_selector(".scene .k-post") is not None and pg.query_selector(".scene .k-you") is not None,
+                  "after counting, the drawing still shows the post and your car")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 4.", "the Section 4 lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 4 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
+          and all(a["format"] == "choice" for a in lesson[0]["data"]["answers"]),
+          "the finished lesson is one record of type lesson with every Section 4 fact answered by a choice")
+    ctx.close()
 
 
 def main():
