@@ -368,14 +368,14 @@
           }
         ]
       },
-      "prompt": "You are coming up to a railroad crossing with a gate. A white stop line is painted across your lane before the tracks. No train is in sight. The red lights on the crossing signal have just begun flashing, and the gate is still up. May you go across now?",
+      "prompt": "You are coming up to a railroad crossing with a gate. No train is in sight. The red lights on the crossing signal have just begun flashing, and the gate is still up. May you go across now?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stop behind the stop line, without waiting for the gate to come down. The flashing red lights mean a train is coming, even before you can see it, and trying to get across ahead of a train is very dangerous."
+        "say": "No, you stop before the crossing, without waiting for the gate to come down. The flashing red lights mean a train is coming, even before you can see it, and trying to get across ahead of a train is very dangerous."
       },
       "rule": "At a crossing with lights and a gate, you stop when the lights begin flashing, before the gate comes down."
     },
@@ -665,7 +665,7 @@
           }
         ]
       },
-      "prompt": "You are stopped behind the stop line at the railroad crossing. The train has passed and is out of sight. The red lights on the crossing signal are still flashing, and the gate is still down. May you go across now?",
+      "prompt": "You are stopped at the railroad crossing. The train has passed and is out of sight. The red lights on the crossing signal are still flashing, and the gate is still down. May you go across now?",
       "options": [
         "Yes",
         "No"
@@ -722,7 +722,7 @@
           }
         ]
       },
-      "prompt": "You are stopped behind the stop line at the railroad crossing. The train has passed. The gate is now all the way up, and the red lights on the crossing signal have stopped flashing. No other train is in sight. May you go across now?",
+      "prompt": "You are stopped at the railroad crossing. The train has passed. The gate is now all the way up, and the red lights on the crossing signal have stopped flashing. No other train is in sight. May you go across now?",
       "options": [
         "Yes",
         "No"
