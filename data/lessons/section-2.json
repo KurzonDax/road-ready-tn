@@ -192,63 +192,17 @@
       "id": "s2-04",
       "fact": "a-147",
       "kind": "choose",
-      "scene": {
-        "parts": [
-          {
-            "t": "road",
-            "x": 0,
-            "y": 130,
-            "w": 320,
-            "h": 60,
-            "center": "yellow"
-          },
-          {
-            "t": "road",
-            "x": 130,
-            "y": 0,
-            "w": 60,
-            "h": 320,
-            "center": "yellow"
-          },
-          {
-            "t": "light",
-            "x": 160,
-            "y": 121,
-            "state": "yellow",
-            "span": 64
-          },
-          {
-            "t": "car",
-            "id": "you",
-            "x": 175,
-            "y": 260,
-            "heading": "n",
-            "you": true
-          },
-          {
-            "t": "path",
-            "from": [
-              175,
-              240
-            ],
-            "to": [
-              175,
-              92
-            ]
-          }
-        ]
-      },
-      "prompt": "You are coming up to a yellow light. It is steady, not flashing. No other car is in sight, and you can still stop safely before the intersection. What do you do?",
+      "prompt": "You stopped for the steady yellow light. You slowed down and drove through the flashing yellow light. What is the difference between a steady yellow light and a flashing yellow light?",
       "options": [
-        "You slow down and stop before the intersection.",
-        "You slow down and drive through with care.",
-        "You keep going at the same speed."
+        "A steady yellow light is about to turn red, and a flashing yellow light is not.",
+        "A flashing yellow light is about to turn red, and a steady yellow light is not.",
+        "They mean the same thing, and the flashing only makes the light easier to see."
       ],
-      "answer": "You slow down and stop before the intersection.",
+      "answer": "A steady yellow light is about to turn red, and a flashing yellow light is not.",
       "then": {
-        "say": "You slow down and stop before the intersection. A steady yellow light is about to turn red, so you stop when you safely can, even when no other car is in sight. A flashing yellow light is not about to turn red, and that is the one you slow down for and drive on through."
+        "say": "A steady yellow light is about to turn red, and a flashing yellow light is not. That is why you stop for a steady yellow light when you safely can, and slow down and drive through a flashing yellow light with care."
       },
-      "rule": "A steady yellow light means the light is about to turn red, so you slow down and stop, unless you are too close to stop safely."
+      "rule": "A steady yellow light is about to turn red, so you stop when you safely can, while a flashing yellow light is not about to change and means slow down and drive through with care."
     },
     {
       "id": "s2-05",
