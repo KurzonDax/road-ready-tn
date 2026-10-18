@@ -199,11 +199,73 @@
       ],
       "answer": "A flashing red light means stop, the same as a stop sign, and a flashing yellow light means slow down and take care.",
       "then": {
-        "say": "A flashing red light means stop, the same as a stop sign, and a flashing yellow light means slow down and take care. A flashing yellow light is not about to turn red, so you slow down but do not stop. A steady yellow light is about to turn red, so you stop when you safely can."
+        "say": "A flashing red light means stop, the same as a stop sign, and a flashing yellow light means slow down and take care. A flashing light is not the same as a steady light of that color."
       }
     },
     {
       "id": "s2-05",
+      "fact": "a-147",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "yellow",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 260,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              175,
+              240
+            ],
+            "to": [
+              175,
+              92
+            ]
+          }
+        ]
+      },
+      "prompt": "You are coming up to a yellow light. It is steady, not flashing. No other car is in sight, and you can still stop safely before the intersection. What do you do?",
+      "options": [
+        "You slow down and stop before the intersection.",
+        "You slow down and drive through with care.",
+        "You keep going at the same speed."
+      ],
+      "answer": "You slow down and stop before the intersection.",
+      "then": {
+        "say": "You slow down and stop before the intersection. A steady yellow light is about to turn red, so you stop when you safely can, even when no other car is in sight. A flashing yellow light is not about to turn red, and that is the one you slow down for and drive on through."
+      },
+      "rule": "A steady yellow light means the light is about to turn red, so you slow down and stop, unless you are too close to stop safely."
+    },
+    {
+      "id": "s2-06",
       "fact": "a-152",
       "kind": "tap",
       "scene": {
@@ -292,7 +354,7 @@
       "rule": "A green arrow means you may turn only in the arrow's direction and the other traffic waits for you, after any vehicles and people already in the intersection have cleared it."
     },
     {
-      "id": "s2-06",
+      "id": "s2-07",
       "fact": "a-153",
       "kind": "choose",
       "scene": {
@@ -375,7 +437,7 @@
       "rule": "A yellow arrow means your protected turn is ending, so you get ready to let the oncoming traffic go first."
     },
     {
-      "id": "s2-07",
+      "id": "s2-08",
       "fact": "a-155",
       "kind": "tap",
       "scene": {
@@ -464,7 +526,7 @@
       "rule": "A flashing yellow arrow means you may turn left after you yield to all oncoming traffic and to bicyclists and pedestrians in the crosswalk, when there is a safe gap."
     },
     {
-      "id": "s2-08",
+      "id": "s2-09",
       "fact": "a-154",
       "kind": "choose",
       "scene": {
@@ -538,7 +600,7 @@
       "rule": "When the arrow is red or your lane has the red light, every turn is prohibited, even when other lanes have a green light and the path looks clear."
     },
     {
-      "id": "s2-09",
+      "id": "s2-10",
       "fact": "a-168",
       "kind": "choose",
       "scene": {
@@ -573,7 +635,7 @@
       "rule": "Lines that separate traffic moving in opposite directions are yellow."
     },
     {
-      "id": "s2-10",
+      "id": "s2-11",
       "fact": "a-175",
       "kind": "choose",
       "scene": {
@@ -609,7 +671,7 @@
       "rule": "White lane markings separate lanes of traffic going in the same direction."
     },
     {
-      "id": "s2-11",
+      "id": "s2-12",
       "fact": "a-172",
       "kind": "choose",
       "scene": {
@@ -652,7 +714,7 @@
       "rule": "Where the center has a solid and a broken yellow line, you may pass when the broken line is on your side and it is safe."
     },
     {
-      "id": "s2-12",
+      "id": "s2-13",
       "fact": "a-172",
       "kind": "choose",
       "scene": {
@@ -695,7 +757,7 @@
       "rule": "Where the center has a solid and a broken yellow line, you may not pass when the solid line is on your side."
     },
     {
-      "id": "s2-13",
+      "id": "s2-14",
       "kind": "principle",
       "prompt": "Every question in this lesson came down to one thing. What was it?",
       "options": [

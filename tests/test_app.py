@@ -2368,8 +2368,8 @@ def check_signal_lesson(browser, inst):
     lights = [s for s in steps if any(p["t"] == "light" for p in s["parts"])]
     mine = lambda s: next(p for p in s["parts"] if p["t"] == "light")  # the head over the Learner's lane is listed first
     check(lights and all(mine(s)["state"].replace("flashing-", "").replace("-left", "") in s["prompt"].lower()
-                         and ("flashing" in s["prompt"].lower()) == mine(s)["state"].startswith("flashing") for s in lights),
-          "every prompt with a light says its color, and says flashing exactly when the Learner's light flashes")
+                         and bool(re.search(r"(?<!not )flashing", s["prompt"].lower())) == mine(s)["state"].startswith("flashing") for s in lights),
+          "every prompt with a light says its color, and says flashing (not \"not flashing\") exactly when the Learner's light flashes")
     lines = [s for s in steps if s["parts"] and len([p for p in s["parts"] if p["t"] == "road"]) == 1]
     check(lines and all(("white" in s["prompt"].lower()) == (s["parts"][0].get("center", "yellow").startswith("white"))
                         and ("yellow" in s["prompt"].lower()) == (s["parts"][0].get("center", "yellow").startswith("yellow")) for s in lines),
