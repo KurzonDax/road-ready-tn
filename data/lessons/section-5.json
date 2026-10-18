@@ -1,0 +1,1361 @@
+{
+  "section": 5,
+  "title": "Stops you must make (school buses, trains, emergency vehicles, stop lines)",
+  "steps": [
+    {
+      "id": "s5-01",
+      "fact": "b-064",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "stop",
+            "x": 222,
+            "y": 210
+          },
+          {
+            "t": "crosswalk",
+            "x": 130,
+            "y": 190,
+            "w": 60,
+            "h": 16
+          },
+          {
+            "t": "stopline",
+            "x": 161,
+            "y": 209,
+            "w": 28
+          },
+          {
+            "t": "car",
+            "id": "behind",
+            "x": 175,
+            "y": 234,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "past",
+            "x": 175,
+            "y": 165,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 242,
+            "text": "behind the stop line",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 180,
+            "text": "past the stop line",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 282,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are coming up to a stop sign. A white stop line is painted across your lane. Where do you stop? Tap the place.",
+      "targets": [
+        {
+          "id": "behind",
+          "label": "behind the stop line"
+        },
+        {
+          "id": "past",
+          "label": "past the stop line"
+        }
+      ],
+      "answer": "behind",
+      "then": {
+        "highlight": "behind",
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "stop",
+            "x": 222,
+            "y": 210
+          },
+          {
+            "t": "crosswalk",
+            "x": 130,
+            "y": 190,
+            "w": 60,
+            "h": 16
+          },
+          {
+            "t": "stopline",
+            "x": 161,
+            "y": 209,
+            "w": 28
+          },
+          {
+            "t": "car",
+            "id": "behind",
+            "x": 175,
+            "y": 234,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "car",
+            "id": "past",
+            "x": 175,
+            "y": 165,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 242,
+            "text": "behind the stop line",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 180,
+            "text": "past the stop line",
+            "anchor": "start"
+          }
+        ],
+        "say": "You stop behind the stop line. Past it, your car is out in the intersection, in the way of the cross traffic."
+      },
+      "rule": "At a stop sign with a white stop line, you stop your vehicle behind the line."
+    },
+    {
+      "id": "s5-02",
+      "fact": "b-064",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "stop",
+            "x": 222,
+            "y": 210
+          },
+          {
+            "t": "crosswalk",
+            "x": 130,
+            "y": 190,
+            "w": 60,
+            "h": 16
+          },
+          {
+            "t": "car",
+            "id": "before",
+            "x": 175,
+            "y": 226,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "past",
+            "x": 175,
+            "y": 165,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 240,
+            "text": "before the crosswalk",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 180,
+            "text": "past the crosswalk",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 282,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are coming up to a stop sign. There is no stop line, but a crosswalk is painted across the road. Where do you stop? Tap the place.",
+      "targets": [
+        {
+          "id": "before",
+          "label": "before the crosswalk"
+        },
+        {
+          "id": "past",
+          "label": "past the crosswalk"
+        }
+      ],
+      "answer": "before",
+      "then": {
+        "highlight": "before",
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "stop",
+            "x": 222,
+            "y": 210
+          },
+          {
+            "t": "crosswalk",
+            "x": 130,
+            "y": 190,
+            "w": 60,
+            "h": 16
+          },
+          {
+            "t": "car",
+            "id": "before",
+            "x": 175,
+            "y": 226,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "car",
+            "id": "past",
+            "x": 175,
+            "y": 165,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 240,
+            "text": "before the crosswalk",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 198,
+            "y": 180,
+            "text": "past the crosswalk",
+            "anchor": "start"
+          }
+        ],
+        "say": "You stop before the crosswalk, so your car is not where people walk across. Past it, your car is out in the intersection."
+      },
+      "rule": "At a stop sign with no stop line, you stop before the crosswalk, and with neither, before you enter the intersection, where you can see the cross traffic."
+    },
+    {
+      "id": "s5-03",
+      "fact": "a-107",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "up",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 135,
+            "y": 220,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are coming up to a railroad crossing. No train is in sight. The red lights have just begun flashing, and the gate is still up. May you go across now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "No, you stop before the crossing, before the gate comes down. Flashing red lights mean a train is coming, even before you can see it."
+      },
+      "rule": "At a crossing with lights and a gate, you stop when the lights begin flashing, before the gate comes down."
+    },
+    {
+      "id": "s5-04",
+      "fact": "b-077",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "down",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 135,
+            "y": 220,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "A train is coming to the railroad crossing ahead, and the gate is down. How far from the tracks does Tennessee law say you must stop?",
+      "options": [
+        "Between 15 and 50 feet from the tracks.",
+        "Between 5 and 10 feet from the tracks.",
+        "At least 100 feet from the tracks."
+      ],
+      "answer": "Between 15 and 50 feet from the tracks.",
+      "then": {
+        "say": "You stop between 15 and 50 feet from the tracks, and never on the tracks."
+      },
+      "rule": "When a train is coming, you stop between 15 and 50 feet from the railroad tracks, and never on the tracks."
+    },
+    {
+      "id": "s5-05",
+      "fact": "b-077",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "down",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "on",
+            "x": 135,
+            "y": 31,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "line",
+            "x": 135,
+            "y": 136,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "at80",
+            "x": 135,
+            "y": 252,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 158,
+            "y": 35,
+            "text": "on the tracks",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 158,
+            "y": 140,
+            "text": "behind the stop line",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 158,
+            "y": 256,
+            "text": "80 feet from the tracks",
+            "anchor": "start"
+          }
+        ]
+      },
+      "prompt": "A train is coming to the railroad crossing ahead. A white stop line is painted across your lane, 30 feet from the tracks. Where do you stop? Tap the place.",
+      "targets": [
+        {
+          "id": "on",
+          "label": "on the tracks"
+        },
+        {
+          "id": "line",
+          "label": "behind the stop line"
+        },
+        {
+          "id": "at80",
+          "label": "80 feet from the tracks"
+        }
+      ],
+      "answer": "line",
+      "then": {
+        "highlight": "line",
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "down",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "on",
+            "x": 135,
+            "y": 31,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "line",
+            "x": 135,
+            "y": 136,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "car",
+            "id": "at80",
+            "x": 135,
+            "y": 252,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 158,
+            "y": 35,
+            "text": "on the tracks",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 158,
+            "y": 140,
+            "text": "behind the stop line",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 158,
+            "y": 256,
+            "text": "80 feet from the tracks",
+            "anchor": "start"
+          }
+        ],
+        "say": "You stop behind the stop line, 30 feet from the tracks, inside the 15 to 50 feet the law sets. On the tracks the train hits you, and 80 feet is farther back than the law allows."
+      },
+      "rule": "At a railroad crossing with a stop line, you stop behind the stop line, which is painted between 15 and 50 feet from the tracks."
+    },
+    {
+      "id": "s5-06",
+      "fact": "a-107",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "down",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 135,
+            "y": 136,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are stopped at the railroad crossing. The train has passed. The red lights are still flashing, and the gate is still down. May you go across now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "No, you stay stopped. Flashing lights and a lowered gate mean a train is coming, even after one has passed."
+      },
+      "rule": "At a crossing with lights and a gate, you stay stopped until the gates are raised and the lights stop flashing."
+    },
+    {
+      "id": "s5-07",
+      "fact": "a-107",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "off",
+            "gate": "up",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 135,
+            "y": 136,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are stopped at the railroad crossing. The train has passed. The gate is up, and the red lights have stopped flashing. May you go across now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "say": "Yes, you go across. You wait for both the gate to go up and the lights to stop, never only one."
+      },
+      "rule": "At a crossing with lights and a gate, you may go across once the gates are raised and the lights have stopped flashing."
+    },
+    {
+      "id": "s5-08",
+      "fact": "b-084",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "bus",
+            "x": 175,
+            "y": 120,
+            "heading": "n",
+            "lights": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 250,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are driving behind a school bus. Its yellow lights are flashing. What do you do?",
+      "options": [
+        "You slow down and get ready to stop.",
+        "You pass the bus before it stops.",
+        "You keep the same speed."
+      ],
+      "answer": "You slow down and get ready to stop.",
+      "then": {
+        "say": "You slow down and get ready to stop. Flashing yellow lights mean the bus is about to stop for children."
+      },
+      "rule": "When the yellow lights on a school bus are flashing, the bus is about to stop to load or unload children, so you slow down and get ready to stop."
+    },
+    {
+      "id": "s5-09",
+      "fact": "b-085",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "bus",
+            "x": 175,
+            "y": 120,
+            "heading": "n",
+            "lights": "red",
+            "arm": true
+          },
+          {
+            "t": "ped",
+            "id": "child",
+            "x": 203,
+            "y": 96
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 250,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "The school bus ahead has stopped. Its red lights are flashing and its stop arm is out. You have stopped behind it. When may you drive on?",
+      "options": [
+        "When the red lights are off, the stop arm is pulled back, and the bus moves.",
+        "As soon as the children have reached the side of the road.",
+        "After you have waited 30 seconds."
+      ],
+      "answer": "When the red lights are off, the stop arm is pulled back, and the bus moves.",
+      "then": {
+        "say": "You drive on when the red lights are off, the stop arm is pulled back, and the bus moves. Until then, children may still be crossing near the bus."
+      },
+      "rule": "When a school bus has its red lights flashing and its stop arm out, you stop and stay stopped until the red lights are turned off, the stop arm is pulled back, and the bus starts moving."
+    },
+    {
+      "id": "s5-10",
+      "fact": "b-086",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "bus",
+            "x": 145,
+            "y": 70,
+            "heading": "s",
+            "lights": "red",
+            "arm": true
+          },
+          {
+            "t": "ped",
+            "id": "child",
+            "x": 119,
+            "y": 96
+          },
+          {
+            "t": "car",
+            "id": "cross",
+            "x": 80,
+            "y": 175,
+            "heading": "e",
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 250,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "A school bus has stopped at an intersection with its red lights flashing and its stop arm out. You are coming toward it. A car is coming on the cross road. Who must stop?",
+      "options": [
+        "You and the car on the cross road must both stop.",
+        "Only you must stop.",
+        "Only the car on the cross road must stop."
+      ],
+      "answer": "You and the car on the cross road must both stop.",
+      "then": {
+        "say": "Both of you stop. When a school bus is stopped at an intersection, drivers from every direction stop until it moves again."
+      },
+      "rule": "When a school bus is stopped at an intersection to load or unload children, drivers from all directions stop until the bus moves again."
+    },
+    {
+      "id": "s5-11",
+      "fact": "b-089",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 90,
+            "w": 320,
+            "h": 60,
+            "center": "white-broken"
+          },
+          {
+            "t": "road",
+            "x": 0,
+            "y": 174,
+            "w": 320,
+            "h": 60,
+            "center": "white-broken"
+          },
+          {
+            "t": "median",
+            "x": 0,
+            "y": 150,
+            "w": 320,
+            "h": 24
+          },
+          {
+            "t": "label",
+            "x": 160,
+            "y": 166,
+            "text": "Median",
+            "anchor": "middle"
+          },
+          {
+            "t": "bus",
+            "x": 220,
+            "y": 105,
+            "heading": "w",
+            "lights": "red",
+            "arm": true
+          },
+          {
+            "t": "ped",
+            "id": "child",
+            "x": 212,
+            "y": 78
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 100,
+            "y": 219,
+            "heading": "e",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are on a highway divided by a median that cars cannot drive on. On the other side of the median, a school bus has stopped with its red lights flashing and its stop arm out. What does Tennessee law tell you to do?",
+      "options": [
+        "You do not have to stop, but you drive on with care.",
+        "You stop until the bus moves again.",
+        "You speed up to get past the bus."
+      ],
+      "answer": "You do not have to stop, but you drive on with care.",
+      "then": {
+        "say": "You do not have to stop, but you drive on with care. The median separates your side from the bus, so only the drivers on the bus's side stop."
+      },
+      "rule": "On a highway divided by a median or a barrier that cars cannot drive on, drivers on the other side from a stopped school bus do not have to stop, but drive on with caution."
+    },
+    {
+      "id": "s5-12",
+      "fact": "b-089",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 90,
+            "w": 320,
+            "h": 60,
+            "center": "white-broken"
+          },
+          {
+            "t": "road",
+            "x": 0,
+            "y": 174,
+            "w": 320,
+            "h": 60,
+            "center": "white-broken"
+          },
+          {
+            "t": "road",
+            "x": 0,
+            "y": 150,
+            "w": 320,
+            "h": 24,
+            "center": "none"
+          },
+          {
+            "t": "label",
+            "x": 160,
+            "y": 166,
+            "text": "Turn lane",
+            "anchor": "middle"
+          },
+          {
+            "t": "bus",
+            "x": 220,
+            "y": 105,
+            "heading": "w",
+            "lights": "red",
+            "arm": true
+          },
+          {
+            "t": "ped",
+            "id": "child",
+            "x": 212,
+            "y": 78
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 100,
+            "y": 219,
+            "heading": "e",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are on a highway with two lanes each way and a turn lane in the middle, which cars can drive on. Across the turn lane, a school bus has stopped with its red lights flashing and its stop arm out. What does Tennessee law tell you to do?",
+      "options": [
+        "You stop until the bus moves again.",
+        "You do not have to stop, but you drive on with care.",
+        "You speed up to get past the bus."
+      ],
+      "answer": "You stop until the bus moves again.",
+      "then": {
+        "say": "You stop until the bus moves again. A turn lane cars can drive on is not a median, so drivers going both ways stop."
+      },
+      "rule": "A turn lane in the middle of a four-lane highway is not a barrier, so drivers going both directions stop for a stopped school bus."
+    },
+    {
+      "id": "s5-13",
+      "fact": "b-124",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 110,
+            "y": 0,
+            "w": 100,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "em",
+            "x": 185,
+            "y": 300,
+            "heading": "n",
+            "emergency": true,
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "middle",
+            "x": 185,
+            "y": 172,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "right",
+            "x": 199,
+            "y": 90,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "left",
+            "x": 121,
+            "y": 90,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 96,
+            "text": "at the right edge",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 109,
+            "text": "of the road",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 104,
+            "y": 96,
+            "text": "at the left edge",
+            "anchor": "end"
+          },
+          {
+            "t": "label",
+            "x": 104,
+            "y": 109,
+            "text": "of the road",
+            "anchor": "end"
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 176,
+            "text": "in the middle",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 189,
+            "text": "of your lane",
+            "anchor": "start"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 185,
+            "y": 240,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "Your road has one lane each way. A police car with its siren on is coming up behind you. Where do you stop? Tap the place.",
+      "targets": [
+        {
+          "id": "middle",
+          "label": "in the middle of your lane"
+        },
+        {
+          "id": "right",
+          "label": "at the right edge of the road"
+        },
+        {
+          "id": "left",
+          "label": "at the left edge of the road"
+        }
+      ],
+      "answer": "right",
+      "then": {
+        "highlight": "right",
+        "parts": [
+          {
+            "t": "road",
+            "x": 110,
+            "y": 0,
+            "w": 100,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "em",
+            "x": 185,
+            "y": 300,
+            "heading": "n",
+            "emergency": true,
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "middle",
+            "x": 185,
+            "y": 172,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "car",
+            "id": "right",
+            "x": 199,
+            "y": 90,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "car",
+            "id": "left",
+            "x": 121,
+            "y": 90,
+            "heading": "n",
+            "outline": true
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 96,
+            "text": "at the right edge",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 109,
+            "text": "of the road",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 104,
+            "y": 96,
+            "text": "at the left edge",
+            "anchor": "end"
+          },
+          {
+            "t": "label",
+            "x": 104,
+            "y": 109,
+            "text": "of the road",
+            "anchor": "end"
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 176,
+            "text": "in the middle",
+            "anchor": "start"
+          },
+          {
+            "t": "label",
+            "x": 216,
+            "y": 189,
+            "text": "of your lane",
+            "anchor": "start"
+          }
+        ],
+        "say": "You stop at the right edge of the road until the police car has passed. In your lane you block its way, and the left edge is the oncoming lane."
+      },
+      "rule": "When an emergency vehicle with a siren comes, you drive to the right edge or curb of the road and stop, and stay stopped until it has passed or a police officer directs you to move."
+    },
+    {
+      "id": "s5-14",
+      "fact": "b-126",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 160,
+            "heading": "n",
+            "you": true
+          },
+          {
+            "t": "car",
+            "id": "em",
+            "x": 175,
+            "y": 262,
+            "heading": "n",
+            "emergency": true,
+            "tone": "b"
+          }
+        ]
+      },
+      "prompt": "You are in the middle of an intersection on a green light. A police car with its siren on is coming up behind you. What do you do?",
+      "options": [
+        "You drive on through, then pull over to the right and stop.",
+        "You stop where you are, in the intersection.",
+        "You back up out of the intersection."
+      ],
+      "answer": "You drive on through, then pull over to the right and stop.",
+      "then": {
+        "say": "You drive on through, then pull over to the right and stop. Stopped in the intersection, you block the police car's way."
+      },
+      "rule": "If you are in an intersection when an emergency vehicle comes, you drive on through the intersection before you pull over, so you do not block its path."
+    },
+    {
+      "id": "s5-15",
+      "fact": "b-127",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 130,
+            "w": 320,
+            "h": 60,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 130,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "light",
+            "x": 160,
+            "y": 121,
+            "state": "green",
+            "span": 64
+          },
+          {
+            "t": "car",
+            "id": "em",
+            "x": 55,
+            "y": 175,
+            "heading": "e",
+            "emergency": true,
+            "tone": "b"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 175,
+            "y": 215,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are stopped at a red light. An emergency vehicle with its siren on is coming on the cross road. The light turns green before it has passed. What do you do?",
+      "options": [
+        "You stay stopped until it has passed.",
+        "You go, because the light is green.",
+        "You pull into the intersection and stop there."
+      ],
+      "answer": "You stay stopped until it has passed.",
+      "then": {
+        "say": "You stay stopped until the emergency vehicle has passed or has turned onto another street. A green light does not let you go in front of it."
+      },
+      "rule": "When the light turns green before an emergency vehicle has passed, you stay stopped until it has passed or turned onto another street."
+    }
+  ]
+}

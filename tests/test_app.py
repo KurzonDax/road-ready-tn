@@ -801,7 +801,7 @@ def check_engine(browser, inst):
         copy = { records: [], pending: [] };  // setRecord names the latest Reset in the device copy; a Helper's page has none
         const rec = setRecord(run).data.answers.find(a => a.q === 'd-165');
         copy = null;
-        s.q = 'd-138';
+        s.q = 'b-064';
         return [ok, rec && [rec.right, rec.role], unpackRun(packRun(run))]; }""", [daily(85, [("b-077", True, 1)])])
     check(got == [True, [True, "counted"], None],
           "a record names the wording asked, and a saved Set whose question is not a wording of its fact is dropped", got)
@@ -2496,6 +2496,104 @@ def check_speed_lesson(browser, inst):
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 4 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
           and all(a["format"] == "choice" for a in lesson[0]["data"]["answers"]),
           "the finished lesson is one record of type lesson with every Section 4 fact answered by a choice")
+    ctx.close()
+    check_stop_lesson(browser, inst)
+
+
+def check_stop_lesson(browser, inst):
+    """The Section 5 lesson (stops you must make) is offered to a Learner whose new facts come from Section 5;
+    its tap questions all ask "Where do you stop? Tap the place." with stopping positions (car outlines) as the
+    targets, each named by a label the prompt also uses; the school bus, the railroad crossing, the median and
+    the emergency vehicle are drawn as the prompt says; a wrong tap crosses the place picked; every question is
+    acted on to the end and the finished lesson is a record with one answer per fact."""
+    print("\n[stop lesson]")
+    lid = inst.add_learner("Emerson", "stop password")
+    store_for(inst, lid, "move", {"to": 5})  # new facts come from Section 5, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Emerson", "stop password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 5:"), "a Learner moved to Section 5 is offered its lesson before the Set", h1(pg))
+    pg.click("#lessonBtn")
+    pg.wait_for_selector(".k-target")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
+                        "options: s.options || null, targets: s.targets || null, parts: s.scene ? s.scene.parts : []}))")
+    facts = set(pg.evaluate("QS.filter(q => q.day === 5).map(q => q.id)"))
+    check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts and all(s["fact"] for s in steps),
+          "the lesson has 10 to 15 questions, every one with a fact, and teaches every Section 5 fact", len(steps))
+    taps = [s for s in steps if s["kind"] == "tap"]
+    check(len(taps) >= 3 and all(s["prompt"].endswith("Where do you stop? Tap the place.") for s in taps),
+          "every tap question asks where you stop, in the same words", len(taps))
+    def places_named(s):
+        outlines = {p["id"] for p in s["parts"] if p["t"] == "car" and p.get("outline")}
+        labels = " ".join(p["text"] for p in s["parts"] if p["t"] == "label")
+        return {t["id"] for t in s["targets"]} == outlines and all(t["label"].split(" of ")[0] in labels for t in s["targets"])
+    check(all(places_named(s) for s in taps) and all(sum(1 for t in s["targets"] if t["id"] == s["answer"]) == 1 for s in taps),
+          "the targets of a tap question are the drawn stopping places, each named by a label on the drawing, and exactly one is the answer")
+    check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
+          "every option is a complete sentence or a plain Yes or No")
+    buses = [s for s in steps if any(p["t"] == "bus" for p in s["parts"])]
+    def bus_as_said(s):
+        bus = next(p for p in s["parts"] if p["t"] == "bus")
+        if "yellow lights" in s["prompt"]: return bus.get("lights") == "yellow" and not bus.get("arm")
+        if "red lights" in s["prompt"]: return bus.get("lights") == "red" and bus.get("arm") is True
+        return "stopped" in s["prompt"]  # a stopped bus whose lights the decision does not turn on
+    check(len(buses) >= 5 and all(bus_as_said(s) for s in buses), "every school bus is drawn with the lights and the stop arm the prompt names", len(buses))
+    crossings = [s for s in steps if any(p["t"] == "crossbuck" for p in s["parts"])]
+    def crossing_as_said(s):
+        cb = next(p for p in s["parts"] if p["t"] == "crossbuck")
+        # Where the prompt names the gate or the lights, the drawing agrees; a train coming means the gate is down and the lights flash.
+        gate_said = "gate is" in s["prompt"]
+        down = "gate is down" in s["prompt"] or "gate is still down" in s["prompt"] or ("A train is coming" in s["prompt"] and "gate is" not in s["prompt"])
+        flashing = ("flashing" in s["prompt"] and "stopped flashing" not in s["prompt"]) or "A train is coming" in s["prompt"]
+        return (not gate_said or (cb.get("gate") == "down") == down) and (cb.get("lights") == "flashing") == flashing and any(p["t"] == "rails" for p in s["parts"])
+    check(len(crossings) >= 3 and all(crossing_as_said(s) for s in crossings), "every railroad crossing draws the tracks, and its gate and lights as the prompt says", len(crossings))
+    check(any(any(p["t"] == "median" for p in s["parts"]) and "median" in s["prompt"] for s in steps if s["fact"] == "b-089"),
+          "the divided-highway question draws the median the prompt names")
+    sirens = [s for s in steps if "siren" in s["prompt"]]
+    check(len(sirens) == 3 and all(any(p["t"] == "car" and p.get("emergency") for p in s["parts"]) for s in sirens),
+          "every emergency-vehicle question draws a vehicle with its lights, and name the siren")
+    # The distance from the tracks is asked as the test asks it, then used: a tap where the prompt says the stop line is 30 feet from the tracks.
+    distance = [s for s in steps if s["fact"] == "b-077"]
+    check(len(distance) == 2 and distance[0]["kind"] == "choose" and distance[0]["answer"] == "Between 15 and 50 feet from the tracks."
+          and distance[1]["kind"] == "tap" and "30 feet from the tracks" in distance[1]["prompt"] and distance[1]["targets"][[t["id"] for t in distance[1]["targets"]].index(distance[1]["answer"])]["label"] == "behind the stop line"
+          and all(any(p["t"] == "stopline" for p in s["parts"]) == ("stop line" in s["prompt"]) for s in crossings if s["fact"] == "b-077"),
+          "the distance from the tracks is a choice of the manual's ranges, then a tap behind the stop line the prompt places 30 feet from the tracks")
+    # The first question: a wrong tap on a place crosses it, leads with Incorrect and the place picked, and the correct place gets your car.
+    first = steps[0]
+    check(first["kind"] == "tap" and first["fact"] == "b-064" and pg.query_selector(".scene .k-stopline") is not None, "the first question draws a stop line")
+    check(pg.query_selector_all(".scene .k-outline") and pg.query_selector(".scene .k-you") is not None, "the stopping places are outlines, and your car is drawn farther back")
+    wrong = next(t for t in first["targets"] if t["id"] != first["answer"])
+    pg.click(f".k-target[data-t='{wrong['id']}']")
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check(shown.startswith(f"Lesson for Section 5: 1 of {len(steps)} Incorrect. You picked {wrong['label']}.") and pg.query_selector(".k-no") is not None
+          and pg.query_selector(".k-ring") is not None and pg.query_selector(".scene .k-you") is not None and "Tap the place" not in shown and "Driver manual" not in shown,
+          "a wrong tap leads with Incorrect and the place picked, crosses it, and shows your car at the correct place", shown[:140])
+    pg.click("#stepNextBtn")
+    for k in range(1, len(steps)):
+        st = steps[k]
+        if st["kind"] == "tap":
+            pg.wait_for_selector(f".k-target[data-t='{st['answer']}']")
+            pg.click(f".k-target[data-t='{st['answer']}']")
+        else:
+            pg.wait_for_selector("button.opt")
+            if any(p["t"] == "bus" for p in st["parts"]):
+                check(pg.query_selector(".scene .k-bus") is not None, f"question {k + 1} draws the school bus")
+            if any(p["t"] == "crossbuck" for p in st["parts"]):
+                check(pg.query_selector(".scene .k-crossbuck") is not None and pg.query_selector(".scene .k-rails") is not None, f"question {k + 1} draws the crossing")
+            pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
+        pg.wait_for_selector("#stepNextBtn")
+        check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 5.", "the Section 5 lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 5 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
+          and all(a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 1,
+          "the finished lesson is one record of type lesson with every Section 5 fact answered, the wrong tap among them")
     ctx.close()
 
 
