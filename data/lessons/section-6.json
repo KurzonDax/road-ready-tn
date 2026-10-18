@@ -295,7 +295,7 @@
             "t": "car",
             "id": "curb",
             "x": 197,
-            "y": 72,
+            "y": 108,
             "heading": "n",
             "outline": true
           },
@@ -303,42 +303,42 @@
             "t": "car",
             "id": "center",
             "x": 172,
-            "y": 26,
+            "y": 38,
             "heading": "n",
             "outline": true
           },
           {
             "t": "label",
             "x": 216,
-            "y": 70,
+            "y": 106,
             "text": "the lane closest",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 83,
+            "y": 119,
             "text": "to the right curb",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 18,
+            "y": 30,
             "text": "the lane just to",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 31,
+            "y": 43,
             "text": "the right of",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 44,
+            "y": 56,
             "text": "the center line",
             "anchor": "start"
           },
@@ -357,12 +357,12 @@
               145
             ],
             "via": [
-              195,
+              200,
               145
             ],
             "to": [
-              185,
-              100
+              188,
+              126
             ]
           }
         ]
@@ -403,7 +403,7 @@
             "t": "car",
             "id": "curb",
             "x": 197,
-            "y": 72,
+            "y": 108,
             "heading": "n",
             "you": true
           },
@@ -411,42 +411,42 @@
             "t": "car",
             "id": "center",
             "x": 172,
-            "y": 26,
+            "y": 38,
             "heading": "n",
             "outline": true
           },
           {
             "t": "label",
             "x": 216,
-            "y": 70,
+            "y": 106,
             "text": "the lane closest",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 83,
+            "y": 119,
             "text": "to the right curb",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 18,
+            "y": 30,
             "text": "the lane just to",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 31,
+            "y": 43,
             "text": "the right of",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 44,
+            "y": 56,
             "text": "the center line",
             "anchor": "start"
           }
@@ -482,7 +482,7 @@
             "t": "car",
             "id": "curb",
             "x": 197,
-            "y": 72,
+            "y": 108,
             "heading": "n",
             "outline": true
           },
@@ -490,42 +490,42 @@
             "t": "car",
             "id": "center",
             "x": 172,
-            "y": 26,
+            "y": 38,
             "heading": "n",
             "outline": true
           },
           {
             "t": "label",
             "x": 216,
-            "y": 70,
+            "y": 106,
             "text": "the lane closest",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 83,
+            "y": 119,
             "text": "to the right curb",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 18,
+            "y": 30,
             "text": "the lane just to",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 31,
+            "y": 43,
             "text": "the right of",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 44,
+            "y": 56,
             "text": "the center line",
             "anchor": "start"
           },
@@ -544,12 +544,12 @@
               175
             ],
             "via": [
-              170,
-              172
+              178,
+              175
             ],
             "to": [
               185,
-              100
+              126
             ]
           }
         ]
@@ -590,7 +590,7 @@
             "t": "car",
             "id": "curb",
             "x": 197,
-            "y": 72,
+            "y": 108,
             "heading": "n",
             "outline": true
           },
@@ -598,42 +598,42 @@
             "t": "car",
             "id": "center",
             "x": 172,
-            "y": 26,
+            "y": 38,
             "heading": "n",
             "you": true
           },
           {
             "t": "label",
             "x": 216,
-            "y": 70,
+            "y": 106,
             "text": "the lane closest",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 83,
+            "y": 119,
             "text": "to the right curb",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 18,
+            "y": 30,
             "text": "the lane just to",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 31,
+            "y": 43,
             "text": "the right of",
             "anchor": "start"
           },
           {
             "t": "label",
             "x": 216,
-            "y": 44,
+            "y": 56,
             "text": "the center line",
             "anchor": "start"
           }
@@ -668,7 +668,7 @@
             "t": "car",
             "id": "left-lane",
             "x": 145,
-            "y": 200,
+            "y": 222,
             "heading": "n",
             "outline": true
           },
@@ -683,14 +683,14 @@
           {
             "t": "label",
             "x": 124,
-            "y": 198,
+            "y": 222,
             "text": "the lane nearest",
             "anchor": "end"
           },
           {
             "t": "label",
             "x": 124,
-            "y": 211,
+            "y": 235,
             "text": "the left curb",
             "anchor": "end"
           },
@@ -768,7 +768,7 @@
             "t": "car",
             "id": "left-lane",
             "x": 145,
-            "y": 200,
+            "y": 222,
             "heading": "n",
             "you": true
           },
@@ -783,14 +783,14 @@
           {
             "t": "label",
             "x": 124,
-            "y": 198,
+            "y": 222,
             "text": "the lane nearest",
             "anchor": "end"
           },
           {
             "t": "label",
             "x": 124,
-            "y": 211,
+            "y": 235,
             "text": "the left curb",
             "anchor": "end"
           },
