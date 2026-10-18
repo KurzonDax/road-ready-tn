@@ -346,7 +346,7 @@
           {
             "t": "stopline",
             "x": 121,
-            "y": 80,
+            "y": 112,
             "w": 28
           },
           {
@@ -362,25 +362,83 @@
             "t": "car",
             "id": "you",
             "x": 135,
-            "y": 200,
+            "y": 220,
             "heading": "n",
             "you": true
           }
         ]
       },
-      "prompt": "You are coming up to a railroad crossing with a gate. No train is in sight. The red lights on the crossing signal have just begun flashing, and the gate is still up. May you go across now?",
+      "prompt": "You are coming up to a railroad crossing with a gate. A white stop line is painted across your lane before the tracks. No train is in sight. The red lights on the crossing signal have just begun flashing, and the gate is still up. May you go across now?",
       "options": [
         "Yes",
         "No"
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stop before the crossing, without waiting for the gate to come down. The flashing red lights mean a train is coming, even before you can see it, and trying to get across ahead of a train is very dangerous."
+        "say": "No, you stop behind the stop line, without waiting for the gate to come down. The flashing red lights mean a train is coming, even before you can see it, and trying to get across ahead of a train is very dangerous."
       },
       "rule": "At a crossing with lights and a gate, you stop when the lights begin flashing, before the gate comes down."
     },
     {
       "id": "s5-04",
+      "fact": "b-077",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "down",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 135,
+            "y": 220,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are coming up to a railroad crossing. A train is coming, the red lights on the crossing signal are flashing, and the gate is down. A white stop line is painted across your lane before the tracks. Tennessee law sets how far from the tracks you must stop when a train is coming. What is that distance?",
+      "options": [
+        "Between 15 and 50 feet from the tracks.",
+        "Between 5 and 10 feet from the tracks.",
+        "At least 100 feet from the tracks."
+      ],
+      "answer": "Between 15 and 50 feet from the tracks.",
+      "then": {
+        "say": "You stop between 15 and 50 feet from the tracks, and never on the tracks. The stop line at a crossing is painted inside that distance, so when you stop behind it you are where the law says."
+      },
+      "rule": "When a train is coming, you stop between 15 and 50 feet from the railroad tracks, and never on the tracks."
+    },
+    {
+      "id": "s5-05",
       "fact": "b-077",
       "kind": "tap",
       "scene": {
@@ -403,7 +461,7 @@
           {
             "t": "stopline",
             "x": 121,
-            "y": 80,
+            "y": 112,
             "w": 28
           },
           {
@@ -425,9 +483,9 @@
           },
           {
             "t": "car",
-            "id": "at30",
+            "id": "line",
             "x": 135,
-            "y": 132,
+            "y": 136,
             "heading": "n",
             "outline": true
           },
@@ -449,8 +507,8 @@
           {
             "t": "label",
             "x": 158,
-            "y": 136,
-            "text": "30 feet from the tracks",
+            "y": 140,
+            "text": "behind the stop line",
             "anchor": "start"
           },
           {
@@ -462,24 +520,24 @@
           }
         ]
       },
-      "prompt": "You are coming up to a railroad crossing. A train is coming, the red lights on the crossing signal are flashing, and the gate is down. Three places are drawn: on the tracks, 30 feet from the tracks, and 80 feet from the tracks. Where do you stop? Tap the place.",
+      "prompt": "A train is coming to the crossing ahead. The red lights on the crossing signal are flashing, and the gate is down. A white stop line is painted across your lane, 30 feet from the tracks. Three places are drawn: on the tracks, behind the stop line, and 80 feet from the tracks. Where do you stop? Tap the place.",
       "targets": [
         {
           "id": "on",
           "label": "on the tracks"
         },
         {
-          "id": "at30",
-          "label": "30 feet from the tracks"
+          "id": "line",
+          "label": "behind the stop line"
         },
         {
           "id": "at80",
           "label": "80 feet from the tracks"
         }
       ],
-      "answer": "at30",
+      "answer": "line",
       "then": {
-        "highlight": "at30",
+        "highlight": "line",
         "parts": [
           {
             "t": "road",
@@ -499,7 +557,7 @@
           {
             "t": "stopline",
             "x": 121,
-            "y": 80,
+            "y": 112,
             "w": 28
           },
           {
@@ -521,9 +579,9 @@
           },
           {
             "t": "car",
-            "id": "at30",
+            "id": "line",
             "x": 135,
-            "y": 132,
+            "y": 136,
             "heading": "n",
             "you": true
           },
@@ -545,8 +603,8 @@
           {
             "t": "label",
             "x": 158,
-            "y": 136,
-            "text": "30 feet from the tracks",
+            "y": 140,
+            "text": "behind the stop line",
             "anchor": "start"
           },
           {
@@ -557,66 +615,9 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop 30 feet from the tracks. When a train is coming, you stop between 15 and 50 feet from the tracks. On the tracks, the train would hit your car, and 80 feet is farther back than 50 feet."
+        "say": "You stop behind the stop line. The line is 30 feet from the tracks, inside the 15 to 50 feet the law sets, and a stop line at a crossing is where you stop. On the tracks, the train would hit your car, and 80 feet is farther back than the law allows."
       },
-      "rule": "When a train is coming, you stop between 15 and 50 feet from the railroad tracks, and never on the tracks."
-    },
-    {
-      "id": "s5-05",
-      "fact": "a-107",
-      "kind": "choose",
-      "scene": {
-        "parts": [
-          {
-            "t": "road",
-            "x": 90,
-            "y": 0,
-            "w": 60,
-            "h": 320,
-            "center": "yellow"
-          },
-          {
-            "t": "rails",
-            "x": 0,
-            "y": 20,
-            "w": 320,
-            "h": 22
-          },
-          {
-            "t": "stopline",
-            "x": 121,
-            "y": 80,
-            "w": 28
-          },
-          {
-            "t": "crossbuck",
-            "x": 167,
-            "y": 64,
-            "lights": "flashing",
-            "gate": "down",
-            "gateDir": "w",
-            "gateLen": 44
-          },
-          {
-            "t": "car",
-            "id": "you",
-            "x": 135,
-            "y": 132,
-            "heading": "n",
-            "you": true
-          }
-        ]
-      },
-      "prompt": "You are stopped 30 feet from the railroad tracks. The train has passed and is out of sight. The red lights on the crossing signal are still flashing, and the gate is still down. May you go across now?",
-      "options": [
-        "Yes",
-        "No"
-      ],
-      "answer": "No",
-      "then": {
-        "say": "No, you stay stopped. Flashing red lights and a lowered gate warn of a train, and you never drive across while either one is warning, even after a train has passed."
-      },
-      "rule": "At a crossing with lights and a gate, you stay stopped until the gates are raised and the lights stop flashing."
+      "rule": "At a railroad crossing with a stop line, you stop behind the stop line, which is painted between 15 and 50 feet from the tracks."
     },
     {
       "id": "s5-06",
@@ -642,7 +643,64 @@
           {
             "t": "stopline",
             "x": 121,
-            "y": 80,
+            "y": 112,
+            "w": 28
+          },
+          {
+            "t": "crossbuck",
+            "x": 167,
+            "y": 64,
+            "lights": "flashing",
+            "gate": "down",
+            "gateDir": "w",
+            "gateLen": 44
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 135,
+            "y": 136,
+            "heading": "n",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are stopped behind the stop line at the railroad crossing. The train has passed and is out of sight. The red lights on the crossing signal are still flashing, and the gate is still down. May you go across now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "No, you stay stopped. Flashing red lights and a lowered gate warn of a train, and you never drive across while either one is warning, even after a train has passed."
+      },
+      "rule": "At a crossing with lights and a gate, you stay stopped until the gates are raised and the lights stop flashing."
+    },
+    {
+      "id": "s5-07",
+      "fact": "a-107",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 60,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 20,
+            "w": 320,
+            "h": 22
+          },
+          {
+            "t": "stopline",
+            "x": 121,
+            "y": 112,
             "w": 28
           },
           {
@@ -658,13 +716,13 @@
             "t": "car",
             "id": "you",
             "x": 135,
-            "y": 132,
+            "y": 136,
             "heading": "n",
             "you": true
           }
         ]
       },
-      "prompt": "You are stopped 30 feet from the railroad tracks. The train has passed. The gate is now all the way up, and the red lights on the crossing signal have stopped flashing. No other train is in sight. May you go across now?",
+      "prompt": "You are stopped behind the stop line at the railroad crossing. The train has passed. The gate is now all the way up, and the red lights on the crossing signal have stopped flashing. No other train is in sight. May you go across now?",
       "options": [
         "Yes",
         "No"
@@ -676,7 +734,7 @@
       "rule": "At a crossing with lights and a gate, you may go across once the gates are raised and the lights have stopped flashing."
     },
     {
-      "id": "s5-07",
+      "id": "s5-08",
       "fact": "b-084",
       "kind": "choose",
       "scene": {
@@ -719,7 +777,7 @@
       "rule": "When the yellow lights on a school bus are flashing, the bus is about to stop to load or unload children, so you slow down and get ready to stop."
     },
     {
-      "id": "s5-08",
+      "id": "s5-09",
       "fact": "b-085",
       "kind": "choose",
       "scene": {
@@ -769,7 +827,7 @@
       "rule": "When a school bus has its red lights flashing and its stop arm out, you stop and stay stopped until the red lights are turned off, the stop arm is pulled back, and the bus starts moving."
     },
     {
-      "id": "s5-09",
+      "id": "s5-10",
       "fact": "b-086",
       "kind": "choose",
       "scene": {
@@ -835,7 +893,7 @@
       "rule": "When a school bus is stopped at an intersection to load or unload children, drivers from all directions stop until the bus moves again."
     },
     {
-      "id": "s5-10",
+      "id": "s5-11",
       "fact": "b-089",
       "kind": "choose",
       "scene": {
@@ -907,7 +965,7 @@
       "rule": "On a highway divided by a median or a barrier that cars cannot drive on, drivers on the other side from a stopped school bus do not have to stop, but drive on with caution."
     },
     {
-      "id": "s5-11",
+      "id": "s5-12",
       "fact": "b-089",
       "kind": "choose",
       "scene": {
@@ -980,7 +1038,7 @@
       "rule": "A turn lane in the middle of a four-lane highway is not a barrier, so drivers going both directions stop for a stopped school bus."
     },
     {
-      "id": "s5-12",
+      "id": "s5-13",
       "fact": "d-138",
       "kind": "choose",
       "scene": {
@@ -1022,7 +1080,7 @@
       "rule": "Children stay ten feet away from a school bus and never go behind it, because the Danger Zone is on all sides of the bus."
     },
     {
-      "id": "s5-13",
+      "id": "s5-14",
       "fact": "b-124",
       "kind": "tap",
       "scene": {
@@ -1228,7 +1286,7 @@
       "rule": "When an emergency vehicle with a siren comes, you drive to the right edge or curb of the road and stop, and stay stopped until it has passed or a police officer directs you to move."
     },
     {
-      "id": "s5-14",
+      "id": "s5-15",
       "fact": "b-126",
       "kind": "choose",
       "scene": {

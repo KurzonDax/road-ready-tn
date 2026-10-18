@@ -2551,9 +2551,12 @@ def check_stop_lesson(browser, inst):
     sirens = [s for s in steps if "siren" in s["prompt"]]
     check(len(sirens) == 2 and all(any(p["t"] == "car" and p.get("emergency") for p in s["parts"]) for s in sirens),
           "both emergency-vehicle questions draw a vehicle with its lights, and name the siren")
-    distance = next(s for s in steps if s["fact"] == "b-077")
-    check(distance["kind"] == "tap" and "feet" in distance["prompt"] and all("feet" in t["label"] or "tracks" in t["label"] for t in distance["targets"]),
-          "the distance from the tracks is a tap among places named in feet")
+    # The distance from the tracks is asked as the test asks it, then used: a tap where the prompt says the stop line is 30 feet from the tracks.
+    distance = [s for s in steps if s["fact"] == "b-077"]
+    check(len(distance) == 2 and distance[0]["kind"] == "choose" and distance[0]["answer"] == "Between 15 and 50 feet from the tracks."
+          and distance[1]["kind"] == "tap" and "30 feet from the tracks" in distance[1]["prompt"] and distance[1]["targets"][[t["id"] for t in distance[1]["targets"]].index(distance[1]["answer"])]["label"] == "behind the stop line"
+          and all(any(p["t"] == "stopline" for p in s["parts"]) and "stop line" in s["prompt"] for s in crossings),
+          "the distance from the tracks is a choice of the manual's ranges, then a tap behind the stop line the prompt places 30 feet from the tracks, and every crossing draws the stop line the prompt names")
     # The first question: a wrong tap on a place crosses it, leads with Incorrect and the place picked, and the correct place gets your car.
     first = steps[0]
     check(first["kind"] == "tap" and first["fact"] == "b-064" and pg.query_selector(".scene .k-stopline") is not None, "the first question draws a stop line")
