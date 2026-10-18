@@ -1,5 +1,7 @@
 # Lessons
 
+This is the format and the kit. The rules for what a question says and draws, and the steps a lesson goes through, are in `docs/agents/lessons.md`; read that first.
+
 A lesson teaches one Section's facts before any question is asked on them. The Learner acts on every screen before the rule is stated: he taps the car that goes, or commits to a choice, then sees what happens, then the rule in one sentence. The principle of the topic is stated only after two or three cases, and he is asked to name it first. The questions on the Section's facts come after, in the Set.
 
 Lessons are data: one file per Section at `data/lessons/section-<N>.json`, rendered by one player in `src/app.html` from a small kit of top-down drawing parts. Writing a lesson is content work; the drawings stay consistent because the kit draws them.
