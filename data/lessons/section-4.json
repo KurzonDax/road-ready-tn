@@ -49,7 +49,11 @@
       ],
       "answer": "The fastest is 70 mph.",
       "then": {
-        "say": "The fastest is 70 mph. That is the most Tennessee law allows on an interstate, and you drive that fast only when the conditions are ideal. Some stretches of interstate have a lower posted limit."
+        "say": "The fastest is 70 mph. That is the most Tennessee law allows on an interstate, and you drive that fast only when the conditions are ideal. Some stretches of interstate have a lower posted limit.",
+        "wrong": {
+          "The fastest is 65 mph.": "A stretch of interstate can have a lower posted limit, but no sign posts one here. The fastest Tennessee law lets you drive here is 70 mph, and you drive that fast only when the conditions are ideal.",
+          "The fastest is 75 mph.": "75 mph is faster than Tennessee law allows on any interstate. The fastest is 70 mph, and you drive that fast only when the conditions are ideal."
+        }
       },
       "rule": "The maximum speed set by Tennessee law for interstate highways is 70 mph, to be driven only in ideal conditions, and some stretches have a lower posted limit."
     },
@@ -92,7 +96,11 @@
       ],
       "answer": "The fastest is 55 mph.",
       "then": {
-        "say": "The fastest is 55 mph. Unless another speed is posted, the speed limit on primary and secondary state and federal highways is 55 mph. The 70 mph limit is set for interstates, and this road is not one."
+        "say": "The fastest is 55 mph. Unless another speed is posted, the speed limit on primary and secondary state and federal highways is 55 mph. The 70 mph limit is set for interstates, and this road is not one.",
+        "wrong": {
+          "The fastest is 45 mph.": "45 mph would be the limit here only if a sign posted it, and no sign does. Unless another speed is posted, the speed limit on a state highway is 55 mph.",
+          "The fastest is 70 mph.": "70 mph is the limit set for interstates, and this road is not one. Unless another speed is posted, the speed limit on a state highway is 55 mph."
+        }
       },
       "rule": "Unless another speed is posted, the speed limit on primary and secondary state and federal highways is 55 mph."
     },
@@ -108,7 +116,11 @@
       ],
       "answer": "You drive slower than 55 mph, at a speed that is safe in the rain and the dark.",
       "then": {
-        "say": "You drive slower than 55 mph, at a speed that is safe in the rain and the dark. The Basic Speed Rule says you drive at a speed that is safe for the conditions. The posted limit is only the most the law allows, not a speed that is always safe."
+        "say": "You drive slower than 55 mph, at a speed that is safe in the rain and the dark. The Basic Speed Rule says you drive at a speed that is safe for the conditions. The posted limit is only the most the law allows, not a speed that is always safe.",
+        "wrong": {
+          "You drive at 55 mph, because that is the posted limit.": "The posted limit is only the most the law allows, not a speed that is always safe. In the rain and the dark you cannot see far ahead, so you drive slower than 55 mph, at a speed that is safe for the conditions.",
+          "You drive faster than 55 mph, to get out of the rain sooner.": "Faster than 55 mph is over the posted limit, and the rain and the dark already make 55 mph too fast to be safe. You drive slower than 55 mph, at a speed that is safe in the rain and the dark."
+        }
       },
       "rule": "The Basic Speed Rule teaches that you drive at a speed that is safe for the conditions, even when that is slower than the posted limit."
     },
@@ -123,7 +135,11 @@
       ],
       "answer": "The speed limit set the most, and the conditions could only lower the speed you may drive, never raise it.",
       "then": {
-        "say": "The speed limit is the most you may drive on any road, even on a dry, clear day. A law or a sign cannot know when it is raining or dark, so you judge the conditions yourself and drive slower."
+        "say": "The speed limit is the most you may drive on any road, even on a dry, clear day. A law or a sign cannot know when it is raining or dark, so you judge the conditions yourself and drive slower.",
+        "wrong": {
+          "The speed of the cars around you set it.": "The cars around you did not set it. With no sign, the law set the most, 70 mph on the interstate and 55 mph on the state highway. In the rain at night, the conditions lowered the speed you should drive below 55 mph.",
+          "How fast your car can go set it.": "How fast your car can go did not set it. With no sign, the law set the most, 70 mph on the interstate and 55 mph on the state highway. In the rain at night, the conditions lowered the speed you should drive below 55 mph."
+        }
       }
     },
     {
@@ -223,7 +239,11 @@
             "you": true
           }
         ],
-        "say": "You are two seconds behind it. Both cars passed the same sign post, and two seconds went by between them, so the gap between you is two seconds. This is how drivers measure their following distance, by counting the seconds between the car ahead passing a fixed point and their own car reaching it."
+        "say": "You are two seconds behind it. Both cars passed the same sign post, and two seconds went by between them, so the gap between you is two seconds. This is how drivers measure their following distance, by counting the seconds between the car ahead passing a fixed point and their own car reaching it.",
+        "wrong": {
+          "You are two car lengths behind it.": "You counted the seconds between the car ahead passing the sign post and your car passing it, and a count of seconds tells you time, not car lengths. You are two seconds behind it.",
+          "You cannot tell from this.": "Both cars passed the same sign post, and you counted the seconds between them, so the count tells you the gap. You are two seconds behind it."
+        }
       },
       "rule": "To check your following distance, you count the seconds from when the car ahead passes a fixed point, such as a sign post, until you reach the same point."
     },
@@ -279,7 +299,11 @@
       ],
       "answer": "You slow down until you are at least two seconds behind.",
       "then": {
-        "say": "You slow down until you are at least two seconds behind. You reached the sign post in less than two seconds, so you were following too closely. After you slow down, you count again at another sign post or pole, until you finish “one-thousand and two” before you reach it."
+        "say": "You slow down until you are at least two seconds behind. You reached the sign post in less than two seconds, so you were following too closely. After you slow down, you count again at another sign post or pole, until you finish “one-thousand and two” before you reach it.",
+        "wrong": {
+          "You keep the same distance, because one second is enough.": "One second is too close: on a dry day you follow no closer than two seconds behind the car ahead. You slow down until you are at least two seconds behind, then count again at another sign post.",
+          "You speed up to stay close to the car ahead.": "Speeding up brings you closer, and you already reached the sign post in less than two seconds. You slow down until you are at least two seconds behind."
+        }
       },
       "rule": "Under normal conditions you follow no closer than two seconds, and when you reach the fixed point sooner, you slow down and check again until you are two seconds behind."
     },
@@ -295,7 +319,11 @@
       ],
       "answer": "Two seconds is enough at any speed on this road.",
       "then": {
-        "say": "Two seconds is enough at any speed on this road. The two-second rule holds at every speed on state and federal highways with moderate speed limits, like this one."
+        "say": "Two seconds is enough at any speed on this road. The two-second rule holds at every speed on state and federal highways with moderate speed limits, like this one.",
+        "wrong": {
+          "Two seconds is enough only up to 30 mph.": "Two seconds is enough above 30 mph as well, and on this road you may drive up to 55 mph. On a state highway with a moderate speed limit, like this one, two seconds is enough at any speed.",
+          "Two seconds is enough only up to 45 mph.": "Two seconds is enough above 45 mph as well, and on this road you may drive up to 55 mph. On a state highway with a moderate speed limit, like this one, two seconds is enough at any speed."
+        }
       },
       "rule": "The two-second rule holds at any speed on state and U.S. highways with moderate speed limits."
     },
@@ -339,7 +367,11 @@
       ],
       "answer": "You stay at least four seconds behind it.",
       "then": {
-        "say": "You stay at least four seconds behind it. Two seconds is not enough in bad weather, at night, or at higher speeds on the interstate. The extra distance lets you see more of the road ahead."
+        "say": "You stay at least four seconds behind it. Two seconds is not enough in bad weather, at night, or at higher speeds on the interstate. The extra distance lets you see more of the road ahead.",
+        "wrong": {
+          "You stay two seconds behind it, the same as on a dry day.": "Two seconds is for normal conditions, and hard rain is bad weather. You stay at least four seconds behind the car ahead, which gives you more time to react.",
+          "You stay one second behind it.": "One second is too close even on a dry day, when two seconds is the closest you follow. In hard rain you stay at least four seconds behind the car ahead."
+        }
       },
       "rule": "In bad weather, at night, at higher interstate speeds, and behind a motorcycle, you follow at least four seconds behind the vehicle ahead."
     },
@@ -355,7 +387,11 @@
       ],
       "answer": "You stay at least four seconds behind it.",
       "then": {
-        "say": "You stay at least four seconds behind it. Behind a motorcycle, two seconds is not enough, even on a dry road in daylight. The extra space gives you room to brake if the motorcycle stops suddenly."
+        "say": "You stay at least four seconds behind it. Behind a motorcycle, two seconds is not enough, even on a dry road in daylight. The extra space gives you room to brake if the motorcycle stops suddenly.",
+        "wrong": {
+          "You stay two seconds behind it, the same as behind a car.": "Two seconds is for following a car in normal conditions, and behind a motorcycle you need more, even on a dry road in daylight. You stay at least four seconds behind it, which gives you room to brake if the motorcycle stops suddenly.",
+          "You stay one second behind it.": "One second is too close even behind a car on a dry day, when two seconds is the closest you follow. Behind a motorcycle you stay at least four seconds back, which gives you room to brake if it stops suddenly."
+        }
       },
       "rule": "In bad weather, at night, at higher interstate speeds, and behind a motorcycle, you follow at least four seconds behind the vehicle ahead."
     },
@@ -411,7 +447,11 @@
       ],
       "answer": "You count the seconds from when the car ahead passes the sign post until your car reaches it.",
       "then": {
-        "say": "You count the seconds from when the car ahead passes the sign post until your car reaches it. The sign post stays in one place, so the seconds between the two cars passing it are your following distance. If you reach it before you finish “one-thousand and two”, you are too close."
+        "say": "You count the seconds from when the car ahead passes the sign post until your car reaches it. The sign post stays in one place, so the seconds between the two cars passing it are your following distance. If you reach it before you finish “one-thousand and two”, you are too close.",
+        "wrong": {
+          "You count the cars between you and the sign post.": "Counting cars does not tell you how far behind the car ahead you are. You count the seconds from when the car ahead passes the sign post until your car reaches it.",
+          "You guess how many car lengths are between you and the car ahead.": "A guess does not measure anything. You count the seconds from when the car ahead passes the sign post until your car reaches it, because the sign post stays in one place."
+        }
       },
       "rule": "To check your following distance, you count the seconds from when the car ahead passes a fixed point, such as a sign post, until you reach the same point."
     },
@@ -427,7 +467,11 @@
       ],
       "answer": "The drivers follow too closely, which is called tailgating.",
       "then": {
-        "say": "Most rear-end crashes are caused by drivers who follow too closely, which is called tailgating. A driver who follows too closely cannot see the road past the car ahead, and has too little time to stop when it stops."
+        "say": "Most rear-end crashes are caused by drivers who follow too closely, which is called tailgating. A driver who follows too closely cannot see the road past the car ahead, and has too little time to stop when it stops.",
+        "wrong": {
+          "The drivers use their turn signals.": "A turn signal tells the drivers around you what you plan to do, so using it does not cause a crash. Most rear-end crashes are caused by drivers who follow too closely, which is called tailgating.",
+          "The drivers drive with their headlights on.": "Headlights make your car easier for other drivers to see, so driving with them on does not cause a crash. Most rear-end crashes are caused by drivers who follow too closely, which is called tailgating."
+        }
       },
       "rule": "Most rear-end crashes are caused by drivers who follow too closely, which is called tailgating."
     },
@@ -443,7 +487,11 @@
       ],
       "answer": "It is in effect when children are going to or from the school, or during a school recess.",
       "then": {
-        "say": "It is in effect when children are going to or from the school, or during a school recess. Those are the times children are near the road, so the lower limit applies then, not at set hours of the clock and not all the time."
+        "say": "It is in effect when children are going to or from the school, or during a school recess. Those are the times children are near the road, so the lower limit applies then, not at set hours of the clock and not all the time.",
+        "wrong": {
+          "It is in effect only from 7 a.m. to 9 a.m. on weekdays, all year.": "Two hours in the morning leave out the time children go home from the school and the school recess. The school zone limit is in effect when children are going to or from the school, or during a school recess.",
+          "It is in effect all day and all night, every day of the year.": "The lower limit is not in effect all the time. It is in effect when children are going to or from the school, or during a school recess, because that is when children are near the road."
+        }
       },
       "rule": "School zone speed limits are in effect when children are going to or from the school or during a school recess."
     },
@@ -459,7 +507,11 @@
       ],
       "answer": "You press it down firmly and hold it, without pumping.",
       "then": {
-        "say": "You press it down firmly and hold it, without pumping. Pumping the pedal or letting it up switches the anti-lock system off, so you keep steady pressure until the car stops. You may feel the pedal push back, which means the ABS is working."
+        "say": "You press it down firmly and hold it, without pumping. Pumping the pedal or letting it up switches the anti-lock system off, so you keep steady pressure until the car stops. You may feel the pedal push back, which means the ABS is working.",
+        "wrong": {
+          "You pump it quickly several times.": "Pumping the pedal switches the anti-lock system off. You press the pedal down firmly and hold it, with steady pressure, until the car stops.",
+          "You press it, let it up, then press it again.": "Letting the pedal up switches the anti-lock system off, the same as pumping it. You press the pedal down firmly and hold it, with steady pressure, until the car stops."
+        }
       },
       "rule": "With anti-lock brakes, you press the brake pedal with firm, steady pressure and never pump it."
     },
@@ -474,7 +526,11 @@
       ],
       "answer": "They gave you more time to see a danger and react to it.",
       "then": {
-        "say": "The slower you drive and the farther back you stay, the more seconds you have before you reach a danger ahead, even though the trip takes longer. In those seconds you see the danger and brake or steer around it."
+        "say": "The slower you drive and the farther back you stay, the more seconds you have before you reach a danger ahead, even though the trip takes longer. In those seconds you see the danger and brake or steer around it.",
+        "wrong": {
+          "They gave you a shorter trip.": "Driving slower and staying farther back make the trip longer, not shorter. They gave you more seconds to see a danger ahead and brake or steer around it.",
+          "They gave you a better view of the cars behind you.": "Driving slower and staying farther back are about the road ahead of you, not the cars behind you. They gave you more seconds to see a danger ahead and brake or steer around it."
+        }
       }
     }
   ]

@@ -60,7 +60,11 @@
       ],
       "answer": "You slow down and stop before the intersection.",
       "then": {
-        "say": "You slow down and stop before the intersection. A steady yellow light means the light is about to turn red. If you were too close to stop safely, you would go on through the intersection, but you never speed up to get through before it turns red."
+        "say": "You slow down and stop before the intersection. A steady yellow light means the light is about to turn red. If you were too close to stop safely, you would go on through the intersection, but you never speed up to get through before it turns red.",
+        "wrong": {
+          "You speed up to get through before the light turns red.": "A steady yellow light means the light is about to turn red, and you never speed up to get through before it does. You can still stop safely, so you slow down and stop before the intersection.",
+          "You keep going at the same speed.": "You go on through a steady yellow light only when you are too close to stop safely, and here you can still stop. You slow down and stop before the intersection."
+        }
       },
       "rule": "A steady yellow light means the light is about to turn red, so you slow down and stop, unless you are too close to stop safely."
     },
@@ -122,7 +126,11 @@
       ],
       "answer": "You come to a complete stop, look both ways, and go when it is safe.",
       "then": {
-        "say": "You come to a complete stop, look both ways, and go when it is safe. A flashing red light means the same as a stop sign. You stop every time, even when no other car is in sight, and you do not wait for a green light."
+        "say": "You come to a complete stop, look both ways, and go when it is safe. A flashing red light means the same as a stop sign. You stop every time, even when no other car is in sight, and you do not wait for a green light.",
+        "wrong": {
+          "You slow down and go through without stopping.": "A flashing red light means the same as a stop sign, so you stop every time, even when no other car is in sight. You come to a complete stop, look both ways, and go when it is safe.",
+          "You stop and wait until the light turns green.": "A flashing red light means the same as a stop sign, so after a complete stop you do not wait for a green light. You look both ways and go when it is safe."
+        }
       },
       "rule": "A flashing red light means you come to a complete stop, the same as at a stop sign, then look both ways and go when it is safe."
     },
@@ -184,7 +192,11 @@
       ],
       "answer": "You slow down and drive through with care.",
       "then": {
-        "say": "You slow down and drive through with care. A flashing yellow light tells you to slow down and take care, but not to stop. A flashing red light is the one that means the same as a stop sign."
+        "say": "You slow down and drive through with care. A flashing yellow light tells you to slow down and take care, but not to stop. A flashing red light is the one that means the same as a stop sign.",
+        "wrong": {
+          "You come to a complete stop, the same as at a stop sign.": "That is what a flashing red light means. A flashing yellow light tells you to slow down and take care, but not to stop, so you slow down and drive through with care.",
+          "You speed up to get through the intersection.": "A flashing yellow light tells you to slow down and take care, and speeding up does the opposite. You slow down and drive through with care."
+        }
       },
       "rule": "A flashing yellow light means you slow down and drive through the intersection with care."
     },
@@ -200,7 +212,11 @@
       ],
       "answer": "A steady yellow light is about to turn red, and a flashing yellow light is not.",
       "then": {
-        "say": "A steady yellow light is about to turn red, and a flashing yellow light is not. That is why you stop for a steady yellow light when you safely can, and slow down and drive through a flashing yellow light with care."
+        "say": "A steady yellow light is about to turn red, and a flashing yellow light is not. That is why you stop for a steady yellow light when you safely can, and slow down and drive through a flashing yellow light with care.",
+        "wrong": {
+          "A flashing yellow light is about to turn red, and a steady yellow light is not.": "You stopped for the steady yellow light because it is about to turn red. A flashing yellow light is not about to turn red, so you slowed down and drove through it with care.",
+          "They mean the same thing, and the flashing only makes the light easier to see.": "You stopped for the steady yellow light and drove through the flashing yellow light, so they do not mean the same thing. A steady yellow light is about to turn red, and a flashing yellow light is not."
+        }
       },
       "rule": "A steady yellow light is about to turn red, so you stop when you safely can, while a flashing yellow light is not about to change and means slow down and drive through with care."
     },
@@ -289,7 +305,10 @@
       "answer": "you",
       "then": {
         "highlight": "you",
-        "say": "Your car goes first. The green arrow lets you turn left now, and the car facing you waits until you have turned. You still wait for any car or person already in the intersection."
+        "say": "Your car goes first. The green arrow lets you turn left now, and the car facing you waits until you have turned. You still wait for any car or person already in the intersection.",
+        "wrong": {
+          "oncoming": "The car facing you is stopped, and the green arrow over your lane lets you turn left now. Your car goes first, after any car or person already in the intersection, and the car facing you waits until you have turned."
+        }
       },
       "rule": "A green arrow means you may turn only in the arrow's direction and the other traffic waits for you, after any vehicles and people already in the intersection have cleared it."
     },
@@ -372,7 +391,11 @@
       ],
       "answer": "You slow down and stop before the intersection.",
       "then": {
-        "say": "You slow down and stop before the intersection. A yellow arrow means your turn is ending and the cars coming toward you will soon get to go, so you get ready to let them go first. You never speed up to turn before the arrow turns red."
+        "say": "You slow down and stop before the intersection. A yellow arrow means your turn is ending and the cars coming toward you will soon get to go, so you get ready to let them go first. You never speed up to turn before the arrow turns red.",
+        "wrong": {
+          "You go on and turn now.": "A steady yellow arrow means your turn is ending, and the cars coming toward you will soon get to go. You can still stop safely, so you slow down and stop before the intersection.",
+          "You speed up to turn before the arrow turns red.": "A steady yellow arrow means your turn is ending, and you never speed up to turn before the arrow turns red. You can still stop safely, so you slow down and stop before the intersection."
+        }
       },
       "rule": "A yellow arrow means your protected turn is ending, so you get ready to let the oncoming traffic go first."
     },
@@ -461,7 +484,10 @@
       "answer": "oncoming",
       "then": {
         "highlight": "oncoming",
-        "say": "The car coming toward you goes first. A flashing yellow arrow lets you turn left only after the cars coming toward you have passed and any person crossing the road has crossed. You wait for a safe gap, then turn."
+        "say": "The car coming toward you goes first. A flashing yellow arrow lets you turn left only after the cars coming toward you have passed and any person crossing the road has crossed. You wait for a safe gap, then turn.",
+        "wrong": {
+          "you": "A flashing yellow arrow lets you turn left only after the cars coming toward you have passed, so the car coming toward you goes first. You wait for a safe gap, then turn."
+        }
       },
       "rule": "A flashing yellow arrow means you may turn left after you yield to all oncoming traffic and to bicyclists and pedestrians in the crosswalk, when there is a safe gap."
     },
@@ -535,7 +561,10 @@
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stop and wait until the arrow over your lane lets you turn. A red arrow means you may not turn, even when the other lanes have a green light and nothing is coming."
+        "say": "No, you stop and wait until the arrow over your lane lets you turn. A red arrow means you may not turn, even when the other lanes have a green light and nothing is coming.",
+        "wrong": {
+          "Yes": "The green light is for the lane beside you, going straight. The arrow over your lane is a steady red arrow, and you may not turn on it, even when nothing is coming. You stop and wait until the arrow over your lane lets you turn."
+        }
       },
       "rule": "When the arrow is red or your lane has the red light, every turn is prohibited, even when other lanes have a green light and the path looks clear."
     },
@@ -570,7 +599,10 @@
       ],
       "answer": "The cars on the other side of the line are coming toward you.",
       "then": {
-        "say": "The cars on the other side of the line are coming toward you. A yellow line down the middle of a road separates traffic going in opposite directions."
+        "say": "The cars on the other side of the line are coming toward you. A yellow line down the middle of a road separates traffic going in opposite directions.",
+        "wrong": {
+          "The cars on the other side of the line are going the same way as you.": "Lines between lanes going the same way are white, not yellow. A yellow line separates traffic going in opposite directions, so the cars on the other side of it are coming toward you."
+        }
       },
       "rule": "Lines that separate traffic moving in opposite directions are yellow."
     },
@@ -606,7 +638,11 @@
       ],
       "answer": "The cars in the lane next to you are going the same way as you.",
       "then": {
-        "say": "The cars in the lane next to you are going the same way as you. White lines separate lanes of traffic going the same way. You may cross a broken white line to change lanes when it is safe."
+        "say": "The cars in the lane next to you are going the same way as you. White lines separate lanes of traffic going the same way. You may cross a broken white line to change lanes when it is safe.",
+        "wrong": {
+          "The cars in the lane next to you are coming toward you.": "Lines between traffic going in opposite directions are yellow, not white. A white line separates lanes going the same way, so the cars in the lane next to you are going the same way as you.",
+          "You may never cross the line.": "You may cross a broken white line to change lanes when it is safe. It separates lanes going the same way, so the cars in the lane next to you are going the same way as you."
+        }
       },
       "rule": "White lane markings separate lanes of traffic going in the same direction."
     },
@@ -649,7 +685,10 @@
       ],
       "answer": "Yes",
       "then": {
-        "say": "Yes, you may pass when it is safe. The broken yellow line on your side means you are in the passing zone. You must be back on your side of the road before the passing zone ends."
+        "say": "Yes, you may pass when it is safe. The broken yellow line on your side means you are in the passing zone. You must be back on your side of the road before the passing zone ends.",
+        "wrong": {
+          "No": "The broken yellow line is on your side, so you are in the passing zone, and no car is coming toward you. You may pass when it is safe, and you must be back on your side of the road before the passing zone ends."
+        }
       },
       "rule": "Where the center has a solid and a broken yellow line, you may pass when the broken line is on your side and it is safe."
     },
@@ -692,7 +731,10 @@
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stay behind the slow car. The solid yellow line on your side means you may not pass here, even when no car is coming toward you."
+        "say": "No, you stay behind the slow car. The solid yellow line on your side means you may not pass here, even when no car is coming toward you.",
+        "wrong": {
+          "Yes": "The solid yellow line is on your side, and that means you may not pass here, even when no car is coming toward you. You stay behind the slow car."
+        }
       },
       "rule": "Where the center has a solid and a broken yellow line, you may not pass when the solid line is on your side."
     },
@@ -707,7 +749,11 @@
       ],
       "answer": "What the light or the line showed told you what to do.",
       "then": {
-        "say": "What the light or the line showed told you what to do. Red stops you, yellow tells you to take care or that a change is coming, and green lets you go when it is safe. A yellow line has cars coming toward you beyond it, a white line has cars going your way, and you pass only when the line on your side is broken."
+        "say": "What the light or the line showed told you what to do. Red stops you, yellow tells you to take care or that a change is coming, and green lets you go when it is safe. A yellow line has cars coming toward you beyond it, a white line has cars going your way, and you pass only when the line on your side is broken.",
+        "wrong": {
+          "A sign beside the road told you what to do.": "There was no sign in this lesson. The steady and flashing lights, the arrows over your lane, and the yellow and white lines told you what to do.",
+          "How fast the other cars were going told you what to do.": "Behind the slow car, the broken yellow line on your side let you pass, and the solid line on your side kept you behind it. The car was slow each time, so the line decided, not the car's speed. What the light or the line showed told you what to do."
+        }
       }
     }
   ]

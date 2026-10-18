@@ -85,7 +85,10 @@
       "answer": "road-car",
       "then": {
         "highlight": "road-car",
-        "say": "The car on the main road goes first. You are driving onto the main road from a driveway, so you wait and let the car pass."
+        "say": "The car on the main road goes first. You are driving onto the main road from a driveway, so you wait and let the car pass.",
+        "wrong": {
+          "you": "A car coming out of a driveway waits for every car already on the main road, even with no sign at the end of the driveway. The car on the main road goes first, so you wait and let it pass."
+        }
       },
       "rule": "When you enter a main road from a driveway, an alley, a parking lot or the roadside, you yield to all vehicles already on the main road."
     },
@@ -164,7 +167,10 @@
       ],
       "answer": "right-car",
       "then": {
-        "say": "The car on the main road goes first. Your road ends at the main road, so you wait for the traffic from both directions on it, even when no sign tells you to."
+        "say": "The car on the main road goes first. Your road ends at the main road, so you wait for the traffic from both directions on it, even when no sign tells you to.",
+        "wrong": {
+          "you": "Your road ends at the main road, so you wait for the traffic from both directions on it, even when no sign tells you to. The car coming from your right goes first, so you wait and let it pass."
+        }
       },
       "rule": "At a T intersection, the vehicles on the road that ends yield to the traffic from both directions on the main road."
     },
@@ -179,7 +185,11 @@
       ],
       "answer": "You did, because you were entering a road that other cars were already on.",
       "then": {
-        "say": "Each time, you were driving onto a main road, so you waited and let the traffic already on it go first. The law does not give anyone the right-of-way. It only says who must wait."
+        "say": "Each time, you were driving onto a main road, so you waited and let the traffic already on it go first. The law does not give anyone the right-of-way. It only says who must wait.",
+        "wrong": {
+          "The cars on the main road did, because they slowed down to let you in.": "When you drove out of the driveway and when your road ended at the main road, the cars on the main road kept going and you waited. You were entering a road that other cars were already on, so you let them go first.",
+          "No one did, because the faster car went first.": "Out of the driveway and at the end of your road, you waited, and how fast each car was did not decide it. You waited because you were entering a road that other cars were already on."
+        }
       }
     },
     {
@@ -254,7 +264,10 @@
       "answer": "cross-car",
       "then": {
         "highlight": "cross-car",
-        "say": "The car in the intersection goes first. It was there before the light turned green, so you wait until it is out of the intersection before you go."
+        "say": "The car in the intersection goes first. It was there before the light turned green, so you wait until it is out of the intersection before you go.",
+        "wrong": {
+          "you": "A green light lets you go only when the intersection is clear, and the car from your left is still in it. The car in the intersection goes first, so you wait until it is out of the intersection before you go."
+        }
       },
       "rule": "When the light turns green, you still yield to pedestrians and vehicles that are still in the intersection."
     },
@@ -334,7 +347,10 @@
       "answer": "oncoming",
       "then": {
         "highlight": "oncoming",
-        "say": "The car coming toward you goes first. The green light lets you go, but your left turn crosses its path, so you wait and let it pass."
+        "say": "The car coming toward you goes first. The green light lets you go, but your left turn crosses its path, so you wait and let it pass.",
+        "wrong": {
+          "you": "A steady green light, not an arrow, lets you go, but your left turn crosses the path of the car coming toward you. That car goes first, so you wait and let it pass."
+        }
       },
       "rule": "When you turn left on a green light that is not an arrow, you yield to oncoming vehicles."
     },
@@ -427,7 +443,10 @@
       "answer": "left-car",
       "then": {
         "highlight": "left-car",
-        "say": "The car on your left goes first. It stopped at the intersection before you did, so you stay stopped until it has gone across."
+        "say": "The car on your left goes first. It stopped at the intersection before you did, so you stay stopped until it has gone across.",
+        "wrong": {
+          "you": "At an all-way stop, the car that stopped first goes first, and the car on your left stopped before you got there. You stay stopped until it has gone across."
+        }
       },
       "rule": "At an all-way stop, every vehicle stops, and the vehicle that reached the intersection first goes first."
     },
@@ -520,7 +539,10 @@
       "answer": "right-car",
       "then": {
         "highlight": "right-car",
-        "say": "The car on your right goes first. You both stopped at the same time, and when that happens the car on the right goes first. You go after it."
+        "say": "The car on your right goes first. You both stopped at the same time, and when that happens the car on the right goes first. You go after it.",
+        "wrong": {
+          "you": "You and the car on your right stopped at the same time, and when that happens at an all-way stop, the car on the right goes first. You stay stopped until the car on your right has gone across."
+        }
       },
       "rule": "When two vehicles reach an all-way stop at the same time, the vehicle on the right goes first."
     },
@@ -596,7 +618,10 @@
       "answer": "left-car",
       "then": {
         "highlight": "left-car",
-        "say": "The car on your left goes first. A traffic light that is not working makes the intersection an all-way stop. Every car stops, and the car that stopped first goes first."
+        "say": "The car on your left goes first. A traffic light that is not working makes the intersection an all-way stop. Every car stops, and the car that stopped first goes first.",
+        "wrong": {
+          "you": "A traffic light that is not working makes the intersection an all-way stop, so the car that stopped first goes first. The car on your left stopped before you got there, so you stay stopped until it has gone across."
+        }
       },
       "rule": "When a traffic signal is not working, you treat the intersection as an all-way stop."
     },
@@ -651,7 +676,10 @@
       "answer": "ped",
       "then": {
         "highlight": "ped",
-        "say": "The person goes first. When a person is in a crosswalk or about to walk into it, you stop before the crosswalk and wait until the person has crossed."
+        "say": "The person goes first. When a person is in a crosswalk or about to walk into it, you stop before the crosswalk and wait until the person has crossed.",
+        "wrong": {
+          "you": "A person about to walk into a crosswalk goes first, just as a person already in it does. You stop before the crosswalk and wait until the person has crossed."
+        }
       },
       "rule": "You yield to pedestrians who are in a crosswalk or the street, or about to enter it, whether or not the crosswalk is marked."
     },
@@ -694,7 +722,10 @@
       "answer": "Yes",
       "then": {
         "highlight": "cane-ped",
-        "say": "Yes, you stop and wait until the person has crossed. You always stop for a person who carries a white cane, even where there is no crosswalk."
+        "say": "Yes, you stop and wait until the person has crossed. You always stop for a person who carries a white cane, even where there is no crosswalk.",
+        "wrong": {
+          "No": "You always stop for a person carrying a white cane, even where there is no crosswalk. You stop and wait until the person has crossed."
+        }
       },
       "rule": "You always yield to a blind pedestrian who carries a white cane, including a white cane with a red tip, or who uses a guide dog."
     },
@@ -771,7 +802,10 @@
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stop before you enter the intersection and wait until there is room for your car past it. You enter only when you can get all the way across without stopping. A car stopped in the intersection blocks other traffic, even when its light is green."
+        "say": "No, you stop before you enter the intersection and wait until there is room for your car past it. You enter only when you can get all the way across without stopping. A car stopped in the intersection blocks other traffic, even when its light is green.",
+        "wrong": {
+          "Yes": "With no room past the intersection, your car would stop inside it and block other traffic, even on a green light. You stop before the intersection and wait until there is room for your car past it."
+        }
       },
       "rule": "You may enter an intersection only when you can get all the way through it without stopping."
     },
@@ -786,7 +820,11 @@
       ],
       "answer": "Who must wait?",
       "then": {
-        "say": "Every right-of-way rule tells you who must wait. When that is you, you let the other driver or the person on foot go first."
+        "say": "Every right-of-way rule tells you who must wait. When that is you, you let the other driver or the person on foot go first.",
+        "wrong": {
+          "Who is driving the faster car?": "When the car on your left stopped first at the all-way stop, it went first, and how fast it was did not matter. Every right-of-way rule tells you who must wait.",
+          "Which road is the bigger road?": "When the person was about to walk across the crosswalk, there was only one road, and you still waited. Every right-of-way rule tells you who must wait."
+        }
       }
     }
   ]
