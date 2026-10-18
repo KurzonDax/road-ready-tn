@@ -248,7 +248,7 @@ BANNED = [
     (re.compile(r"\bround\b(?= (steady |flashing )?(red|yellow|green)? ?(light|arrow))", re.I), "calls a light round; there are no square lights, so name it by its color and whether it flashes"),
     (re.compile(r"\byour (traffic )?light\b", re.I), "says your light; the Learner does not own a light, he comes up to one (the light ahead of you, a steady yellow light)"),
     (re.compile(r"[;!]"), "has a semicolon or an exclamation mark"),
-    (re.compile(r"\b(wrong|incorrect|oops|nice|great|good job|well done)\b", re.I), "has a verdict or praise word"),
+    (re.compile(r"\b(wrong(?! way)|incorrect|oops|nice|great|good job|well done)\b", re.I), "has a verdict or praise word (the wrong way, a direction, is allowed)"),
 ]
 # A drawing with an intersection must say what controls it, or that nothing does.
 CONTROL = re.compile(r"stop sign|yield sign|traffic light|the light|green light|red light|yellow light|signal|no sign|all-way stop|crosswalk|driveway|parking lot|roundabout", re.I)
