@@ -238,6 +238,7 @@ BANNED = [
      "points at earlier screens without naming them; say which situations"),
     (re.compile(r"\bcases?\b", re.I), "says case; say situation, and name it"),
     (re.compile(r"\bscreens?\b", re.I), "says screen; to the Learner these are questions"),
+    (re.compile(r"\bround\b(?= (steady |flashing )?(red|yellow|green)? ?(light|arrow))", re.I), "calls a light round; there are no square lights, so name it by its color and whether it flashes"),
     (re.compile(r"[;!]"), "has a semicolon or an exclamation mark"),
     (re.compile(r"\b(wrong|incorrect|oops|nice|great|good job|well done)\b", re.I), "has a verdict or praise word"),
 ]

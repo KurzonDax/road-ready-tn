@@ -52,7 +52,7 @@
           }
         ]
       },
-      "prompt": "Your light is a steady round yellow light. You can still stop safely before the intersection. You want to drive straight across. What do you do?",
+      "prompt": "Your light is a steady yellow light. You can still stop safely before the intersection. You want to drive straight across. What do you do?",
       "options": [
         "You slow down and stop before the intersection.",
         "You speed up to get through before the light turns red.",
@@ -114,7 +114,7 @@
           }
         ]
       },
-      "prompt": "Your light is a flashing round red light. You have reached the intersection and want to drive straight across. No other car is in sight. What do you do?",
+      "prompt": "Your light is a flashing red light. You have reached the intersection and want to drive straight across. No other car is in sight. What do you do?",
       "options": [
         "You come to a complete stop, look both ways, and go when it is safe.",
         "You slow down and go through without stopping.",
@@ -176,7 +176,7 @@
           }
         ]
       },
-      "prompt": "Your light is a flashing round yellow light. You are coming up to the intersection and want to drive straight across. No other car is in sight. What do you do?",
+      "prompt": "Your light is a flashing yellow light. You are coming up to the intersection and want to drive straight across. No other car is in sight. What do you do?",
       "options": [
         "You slow down and drive through with care.",
         "You come to a complete stop, the same as at a stop sign.",
@@ -273,7 +273,7 @@
           }
         ]
       },
-      "prompt": "The arrow over your lane is a steady green left arrow, and you want to turn left. The light over the lane beside you, for cars going straight, is a round red light. On the other side of the intersection, a car facing you is stopped. Who goes first? Tap the car.",
+      "prompt": "The arrow over your lane is a steady green left arrow, and you want to turn left. The light over the lane beside you, for cars going straight, is a red light. On the other side of the intersection, a car facing you is stopped. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "you",
@@ -362,7 +362,7 @@
           }
         ]
       },
-      "prompt": "You want to turn left. The green arrow over your lane has just changed to a steady yellow arrow. The light over the lane beside you is a round red light. You can still stop safely before the intersection. On the other side of the intersection, a car facing you is stopped. What do you do?",
+      "prompt": "You want to turn left. The green arrow over your lane has just changed to a steady yellow arrow. The light over the lane beside you is a red light. You can still stop safely before the intersection. On the other side of the intersection, a car facing you is stopped. What do you do?",
       "options": [
         "You slow down and stop before the intersection.",
         "You go on and turn now.",
@@ -445,7 +445,7 @@
           }
         ]
       },
-      "prompt": "The arrow over your lane is a flashing yellow left arrow, and you want to turn left. The light over the lane beside you, for cars going straight, is a round green light. A car coming toward you is going straight across, and it is close. Who goes first? Tap the car.",
+      "prompt": "The arrow over your lane is a flashing yellow left arrow, and you want to turn left. The light over the lane beside you, for cars going straight, is a green light. A car coming toward you is going straight across, and it is close. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "oncoming",
@@ -526,7 +526,7 @@
           }
         ]
       },
-      "prompt": "You want to turn left. The arrow over your left-turn lane is a steady red arrow. The light over the lane beside you, for cars going straight, is a round green light. No car and no person is in the intersection or coming toward it. May you turn left now?",
+      "prompt": "You want to turn left. The arrow over your left-turn lane is a steady red arrow. The light over the lane beside you, for cars going straight, is a green light. No car and no person is in the intersection or coming toward it. May you turn left now?",
       "options": [
         "Yes",
         "No"

@@ -320,7 +320,7 @@
           }
         ]
       },
-      "prompt": "Your light is a round green light, not a green arrow, and you want to turn left. A car on the other side of the intersection is coming toward you. It is going straight across, and it is close. Who goes first? Tap the car.",
+      "prompt": "Your light is a steady green light, not a green arrow, and you want to turn left. A car on the other side of the intersection is coming toward you. It is going straight across, and it is close. Who goes first? Tap the car.",
       "targets": [
         {
           "id": "oncoming",
