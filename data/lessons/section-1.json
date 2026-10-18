@@ -122,7 +122,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a red eight-sided sign, a blue rectangle, and a red three-sided sign pointing down. Which sign means you slow down and let the traffic on the other road go first, and you do not have to stop when no car is coming? Tap the sign.",
+      "prompt": "Three signs stand beside the road: a red eight-sided sign, a blue rectangle, and a red and white three-sided sign pointing down. Which sign means you slow down and let the traffic on the other road go first, and you do not have to stop when no car is coming? Tap the sign.",
       "targets": [
         {
           "id": "stop-sign",
@@ -134,13 +134,13 @@
         },
         {
           "id": "yield-sign",
-          "label": "the red three-sided sign pointing down"
+          "label": "the red and white three-sided sign pointing down"
         }
       ],
       "answer": "yield-sign",
       "then": {
         "highlight": "yield-sign",
-        "say": "The red three-sided sign pointing down, the yield sign, means you slow down and let the traffic on the other road go first. When no car is coming you do not have to stop, and when traffic is heavy you always stop. The red eight-sided sign means you must always stop, and the blue rectangle points to services for drivers."
+        "say": "The red and white three-sided sign pointing down, the yield sign, means you slow down and let the traffic on the other road go first. When no car is coming you do not have to stop, and when traffic is heavy you always stop. The red eight-sided sign means you must always stop, and the blue rectangle points to services for drivers."
       },
       "rule": "A yield sign means you slow down and let the traffic on the other road go first, you need not come to a complete stop when no cars are coming, and you always stop when traffic is heavy."
     },
@@ -218,7 +218,7 @@
     {
       "id": "s1-04",
       "kind": "principle",
-      "prompt": "The red eight-sided sign means you stop. The red three-sided sign pointing down means you let the traffic on the other road go first. The yellow circle means a railroad crossing is ahead. What tells you what each sign means, even from too far away to read it?",
+      "prompt": "The red eight-sided sign means you stop. The red and white three-sided sign pointing down means you let the traffic on the other road go first. The yellow circle means a railroad crossing is ahead. What tells you what each sign means, even from too far away to read it?",
       "options": [
         "Its shape and its color tell you.",
         "The words written on it tell you.",
@@ -433,7 +433,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a green rectangle, a blue rectangle, and a red three-sided sign pointing down. Which sign means directions to towns and highways? Tap the sign.",
+      "prompt": "Three signs stand beside the road: a green rectangle, a blue rectangle, and a red and white three-sided sign pointing down. Which sign means directions to towns and highways? Tap the sign.",
       "targets": [
         {
           "id": "guide-rect",
@@ -445,13 +445,13 @@
         },
         {
           "id": "yield-sign",
-          "label": "the red three-sided sign pointing down"
+          "label": "the red and white three-sided sign pointing down"
         }
       ],
       "answer": "guide-rect",
       "then": {
         "highlight": "guide-rect",
-        "say": "The green rectangle gives directions to towns and highways, such as which exit to take and how far it is to a town. Green is the color for signs that guide you, and for the mileposts along the highway. The blue rectangle points to services for drivers, and the red three-sided sign means you slow down and let the traffic on the other road go first."
+        "say": "The green rectangle gives directions to towns and highways, such as which exit to take and how far it is to a town. Green is the color for signs that guide you, and for the mileposts along the highway. The blue rectangle points to services for drivers, and the red and white three-sided sign means you slow down and let the traffic on the other road go first."
       },
       "rule": "Green is used for guide signs, which give directions, and for mileposts."
     },
@@ -665,7 +665,7 @@
           }
         ]
       },
-      "prompt": "Four signs stand beside the road: a fluorescent yellow-green diamond, an orange diamond, a red three-sided sign pointing down, and a blue rectangle. Which sign means a rest area or other services for drivers are ahead? Tap the sign.",
+      "prompt": "Four signs stand beside the road: a fluorescent yellow-green diamond, an orange diamond, a red and white three-sided sign pointing down, and a blue rectangle. Which sign means a rest area or other services for drivers are ahead? Tap the sign.",
       "targets": [
         {
           "id": "school-diamond",
@@ -677,7 +677,7 @@
         },
         {
           "id": "yield-sign",
-          "label": "the red three-sided sign pointing down"
+          "label": "the red and white three-sided sign pointing down"
         },
         {
           "id": "services-rect",
@@ -687,7 +687,7 @@
       "answer": "services-rect",
       "then": {
         "highlight": "services-rect",
-        "say": "The blue rectangle means a rest area, police help or another service for drivers is ahead, because blue is the color for services for drivers. The orange diamond means road work, and the fluorescent yellow-green diamond means a school zone or a crosswalk. The red three-sided sign means you slow down and let the traffic on the other road go first."
+        "say": "The blue rectangle means a rest area, police help or another service for drivers is ahead, because blue is the color for services for drivers. The orange diamond means road work, and the fluorescent yellow-green diamond means a school zone or a crosswalk. The red and white three-sided sign means you slow down and let the traffic on the other road go first."
       },
       "rule": "Blue is used for motorist services, including police services and rest areas."
     },
