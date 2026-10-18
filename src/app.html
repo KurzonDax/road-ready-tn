@@ -1194,6 +1194,7 @@ function lightPart(p) {
 // A bicyclist seen from behind, as the driver behind sees him (Section 6): the one kit part that is not top-down,
 // because an arm bent up or down cannot be seen from above. `arm` puts one arm in a signal: `left-out`, `left-up`,
 // `left-down`, `right-out`, `right-down`; the other arm holds the handlebar. The prompt names the arm and its position.
+// Seen from behind, the rear wheel is a thin upright strip (the front wheel is hidden behind it), never a circle.
 function bicyclistPart(p) {
   const dx = (p.x || 160) - 160, dy = (p.y || 160) - 160;
   const arm = (side, pose) => {
@@ -1211,8 +1212,8 @@ function bicyclistPart(p) {
     <rect x="0" y="286" width="320" height="34" fill="var(--road)"/><line x1="0" y1="286" x2="320" y2="286" class="k-edge"/>
     <line x1="150" y1="196" x2="146" y2="238" stroke="var(--car-b)" stroke-width="9" stroke-linecap="round"/><line x1="170" y1="196" x2="174" y2="238" stroke="var(--car-b)" stroke-width="9" stroke-linecap="round"/>
     <line x1="108" y1="184" x2="212" y2="184" stroke="var(--car-b)" stroke-width="5" stroke-linecap="round"/>
-    <circle cx="160" cy="252" r="34" fill="none" stroke="var(--ink)" stroke-width="6"/><circle cx="160" cy="252" r="27" fill="none" stroke="var(--car-b)" stroke-width="1.5"/><circle cx="160" cy="252" r="4" fill="var(--ink)"/>
-    <line x1="160" y1="218" x2="160" y2="200" stroke="var(--car-a)" stroke-width="5"/><ellipse cx="160" cy="197" rx="15" ry="5" fill="var(--ink)"/>
+    <rect x="152" y="214" width="16" height="74" rx="8" fill="var(--ink)"/><line x1="160" y1="222" x2="160" y2="280" stroke="var(--car-b)" stroke-width="3" stroke-linecap="round"/>
+    <line x1="160" y1="216" x2="160" y2="200" stroke="var(--car-a)" stroke-width="5"/><ellipse cx="160" cy="197" rx="15" ry="5" fill="var(--ink)"/>
     <path d="M134 198 L186 198 L194 128 Q160 118 126 128 Z" fill="var(--car-a)"/>
     <rect x="154" y="108" width="12" height="16" fill="var(--car-a)"/><circle cx="160" cy="98" r="20" fill="var(--ink)"/>
     ${arms}</g>`;
