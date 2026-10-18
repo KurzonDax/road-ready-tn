@@ -289,10 +289,21 @@
             "heading": "n",
             "you": true,
             "color": "red"
+          },
+          {
+            "t": "path",
+            "from": [
+              130,
+              198
+            ],
+            "to": [
+              130,
+              118
+            ]
           }
         ]
       },
-      "prompt": "You are the red car. Two solid yellow lines are on your right, and a broken white line is on your left. What do the lines tell you?",
+      "prompt": "You are the red car, driving the way the arrow points. Two solid yellow lines are on your right, and a broken white line is on your left. What do the lines tell you?",
       "options": [
         "You are going the wrong way.",
         "You are in a passing zone.",
@@ -326,6 +337,17 @@
             "heading": "n",
             "you": true,
             "color": "red"
+          },
+          {
+            "t": "path",
+            "from": [
+              130,
+              198
+            ],
+            "to": [
+              130,
+              118
+            ]
           }
         ],
         "say": "You are going the wrong way. Yellow lines belong on a driver's left, so yellow on your right means this lane is for cars coming toward you. You move out of it as soon as it is safe.",
