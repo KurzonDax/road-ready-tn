@@ -2628,18 +2628,22 @@ def check_turn_lesson(browser, inst):
     taps = [s for s in steps if s["kind"] == "tap"]
     FORMS = ("Who goes first? Tap the car.", "Which lane do you turn into? Tap the lane.", "Which lane do you turn from? Tap the lane.")
     check(len(taps) >= 5 and all(s["prompt"].endswith(FORMS) for s in taps), "every tap question ends in one of the three forms", len(taps))
-    check(all(all(any(p["t"] == "car" and p.get("id") == t["id"] for p in s["parts"]) for t in s["targets"]) and sum(1 for t in s["targets"] if t["id"] == s["answer"]) == 1 for s in taps),
-          "every tap target is a car in its scene, and exactly one is the answer")
+    check(all(all(any(p["t"] in ("car", "lane") and p.get("id") == t["id"] for p in s["parts"]) for t in s["targets"]) and sum(1 for t in s["targets"] if t["id"] == s["answer"]) == 1 for s in taps),
+          "every tap target is a car or a lane box in its scene, and exactly one is the answer")
     lanes = [s for s in taps if "Tap the lane." in s["prompt"]]
     def lanes_named(s):
-        outlines = {p["id"] for p in s["parts"] if p["t"] == "car" and p.get("outline")}
-        labels = " ".join(p["text"] for p in s["parts"] if p["t"] == "label")
-        return {t["id"] for t in s["targets"]} == outlines and all(" ".join(t["label"].split()[-2:]) in labels for t in s["targets"])
+        boxes = {p["id"]: " ".join(p["label"]) for p in s["parts"] if p["t"] == "lane"}
+        return {t["id"] for t in s["targets"]} == set(boxes) and all(" ".join(t["label"].split()[-2:]) in boxes[t["id"]] for t in s["targets"])
     def you_in_lane(s):
         where = next(p for p in s["parts"] if p.get("id") == s["answer"])
         return s["after"] and any(p["t"] == "car" and p.get("you") and not p.get("outline") and (p["x"], p["y"]) == (where["x"], where["y"]) for p in s["after"])
+    def side_by_side(s):
+        a, b = [p for p in s["parts"] if p["t"] == "lane"]
+        gap = max(abs(a["x"] - b["x"]) - (a["w"] + b["w"]) / 2, abs(a["y"] - b["y"]) - (a["h"] + b["h"]) / 2)
+        return 0 < gap <= 10 and all(p["w"] >= 50 and p["h"] >= 50 for p in (a, b))
+    check(all(side_by_side(s) for s in lanes), "the two lane boxes of a lane question sit side by side, each at least 50 by 50")
     check({s["fact"] for s in lanes} == {"b-169", "b-159", "b-163"} and all(lanes_named(s) and you_in_lane(s) for s in lanes),
-          "the three lane questions tap car outlines in the lanes, each named by a label on the drawing, and afterwards your car stands in the correct lane")
+          "the three lane questions tap lane boxes, each named on the box, and afterwards your car stands in the correct lane")
     check(all(("one-way" in s["prompt"]) == (s["fact"] == "b-163") and ("two-way" in s["prompt"]) == (s["fact"] != "b-163") for s in lanes)
           and all(("turn right" in s["prompt"]) == (s["fact"] == "b-169") and ("turn left" in s["prompt"]) == (s["fact"] != "b-169") for s in lanes),
           "every lane prompt says whether the streets are one-way or two-way and which way the turn goes")
@@ -2680,15 +2684,15 @@ def check_turn_lesson(browser, inst):
                 pg.click("#stepNextBtn")
                 continue
             if k == first_lane:
-                check(len(pg.query_selector_all(".scene .k-outline")) == 2 and pg.query_selector(".scene .k-you") is not None,
-                      "the lane question draws two lane outlines and your car on the approach")
+                check(len(pg.query_selector_all(".scene .k-lane")) == 2 and pg.query_selector(".scene .k-you") is not None,
+                      "the lane question draws two lane boxes and your car on the approach")
             if st in rings:
                 check(pg.query_selector(".scene circle[stroke-width]") is not None, f"question {k + 1} draws the roundabout's ring road")
             pg.click(f".k-target[data-t='{st['answer']}']")
             pg.wait_for_selector("#stepNextBtn")
             if k == first_lane:
-                check(len(pg.query_selector_all(".scene .k-outline")) == 1 and pg.query_selector(".scene .k-you") is not None and pg.query_selector(".k-ring") is not None,
-                      "after the tap, your car stands in the correct lane with the check, and the other lane keeps its outline")
+                check(len(pg.query_selector_all(".scene .k-lane")) == 1 and pg.query_selector(".scene .k-you") is not None and pg.query_selector(".k-ring") is not None,
+                      "after the tap, your car stands in the correct lane with the check, and the other lane keeps its box")
         else:
             pg.wait_for_selector("button.opt")
             if st in reds:

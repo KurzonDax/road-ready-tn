@@ -188,6 +188,7 @@ button.opt { cursor: pointer; }
 .k-hi .k-body, .k-target .k-hi .k-body { stroke: var(--good); stroke-width: 3.5; }
 .k-ring { fill: var(--good); opacity: .28; }
 .k-no { fill: none; stroke: var(--bad); stroke-width: 2; }
+.k-lane { fill: transparent; stroke: var(--guide); stroke-width: 2; stroke-dasharray: 6 5; }
 .k-badge circle { stroke: var(--bg); stroke-width: 2; }
 .k-badge.k-yes circle { fill: var(--good); }
 .k-badge.k-yes path { stroke: var(--good-ink); }
@@ -1246,15 +1247,33 @@ function crosswalkPart(p) {
   return bars.join('');
 }
 // A tap target or a highlighted part gets a soft ring; a target is a button the keyboard and a screen reader can reach.
+// After acting: the one that goes gets a check badge, a wrong pick a cross badge, at the mark's top right.
+const BADGE_ICONS = {
+  'k-yes': '<path d="M-4.5 0.5l3 3 6-6" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>',
+  'k-not': '<path d="M-3.5 -3.5l7 7M3.5 -3.5l-7 7" fill="none" stroke-width="2.4" stroke-linecap="round"/>',
+};
+const markBadge = (x, y, cls) => `<g transform="translate(${x} ${y})"><g class="k-badge ${cls}"><circle r="13"/><g transform="scale(1.5)">${BADGE_ICONS[cls]}</g></g></g>`;
 function wrapTarget(p, inner, { targets, highlight, picked }) {
   const t = targets.find(x => x.id === p.id), hi = highlight === p.id, no = picked === p.id;
-  // After acting: the one that goes gets a filled ring and a check badge; a wrong pick a thin ring and a cross badge.
-  const badge = (cls, icon) => `<g transform="translate(${p.x + 22} ${p.y - 22})"><g class="k-badge ${cls}"><circle r="13"/><g transform="scale(1.5)">${icon}</g></g></g>`;
+  // The one that goes gets a filled ring, a wrong pick a thin ring.
   const ring = hi ? `<circle class="k-ring" cx="${p.x}" cy="${p.y}" r="26"/>` : no ? `<circle class="k-no" cx="${p.x}" cy="${p.y}" r="26"/>` : '';
-  const mark = hi ? badge('k-yes', '<path d="M-4.5 0.5l3 3 6-6" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>')
-    : no ? badge('k-not', '<path d="M-3.5 -3.5l7 7M3.5 -3.5l-7 7" fill="none" stroke-width="2.4" stroke-linecap="round"/>') : '';
+  const mark = hi ? markBadge(p.x + 22, p.y - 22, 'k-yes') : no ? markBadge(p.x + 22, p.y - 22, 'k-not') : '';
   if (!t) return ring + `<g class="${hi ? 'k-hi' : ''}">${inner}</g>` + mark;
   return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
+}
+// A lane box (Section 6): a dashed box filling a stretch of one lane, its name on it in short lines, a tap target
+// for "Which lane do you turn into? Tap the lane." Boxes sit side by side in adjacent lanes, so the whole box is
+// the hit area and the marks are drawn on the box itself, with no ring around it.
+function lanePart(p, o) {
+  const t = o.targets.find(x => x.id === p.id), hi = o.highlight === p.id, no = o.picked === p.id;
+  const x = p.x - p.w / 2, y = p.y - p.h / 2, lines = p.label || [];
+  const rect = cls => `<rect class="${cls}" x="${x}" y="${y}" width="${p.w}" height="${p.h}" rx="6"/>`;
+  const text = lines.map((s, i) => svgText(p.x, p.y + (i - (lines.length - 1) / 2) * 13 + 4, s)).join('');
+  const inner = `<g class="${hi ? 'k-hi' : ''}">${rect('k-body k-lane')}${text}</g>`;
+  const ring = hi ? rect('k-ring') : no ? rect('k-no') : '';
+  const mark = hi ? markBadge(x + p.w, y, 'k-yes') : no ? markBadge(x + p.w, y, 'k-not') : '';
+  if (!t) return ring + inner + mark;
+  return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}">${inner}</g>`;
 }
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
@@ -1291,6 +1310,7 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'light') return lightPart(p);
     if (p.t === 'crosswalk') return crosswalkPart(p);
     if (p.t === 'post') return postPart(p);
+    if (p.t === 'lane') return lanePart(p, o);
     if (p.t === 'stopline') return stoplinePart(p);
     if (p.t === 'median') return medianPart(p);
     if (p.t === 'rails') return railsPart(p);

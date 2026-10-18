@@ -153,7 +153,7 @@ def check_groups(groups, used):
 
 
 STEP_KINDS = {"tap", "choose", "principle"}
-TARGET_PARTS = {"car", "ped", "roadsign"}
+TARGET_PARTS = {"car", "ped", "roadsign", "lane"}
 
 
 def check_lessons(secs):

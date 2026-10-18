@@ -276,93 +276,67 @@
         "parts": [
           {
             "t": "road",
-            "x": 110,
+            "x": 0,
             "y": 0,
-            "w": 100,
-            "h": 320,
+            "w": 320,
+            "h": 240,
             "center": "yellow",
             "lanes": 2
           },
           {
             "t": "road",
             "x": 0,
-            "y": 130,
-            "w": 320,
-            "h": 60,
+            "y": 0,
+            "w": 120,
+            "h": 320,
             "center": "yellow"
           },
           {
-            "t": "car",
-            "id": "curb",
-            "x": 197,
-            "y": 108,
-            "heading": "n",
-            "outline": true
-          },
-          {
-            "t": "car",
+            "t": "lane",
             "id": "center",
-            "x": 172,
-            "y": 38,
-            "heading": "n",
-            "outline": true
+            "x": 190,
+            "y": 150,
+            "w": 110,
+            "h": 50,
+            "label": [
+              "the lane just to",
+              "the right of",
+              "the center line"
+            ]
           },
           {
-            "t": "label",
-            "x": 216,
-            "y": 106,
-            "text": "the lane closest",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 119,
-            "text": "to the right curb",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 30,
-            "text": "the lane just to",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 43,
-            "text": "the right of",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 56,
-            "text": "the center line",
-            "anchor": "start"
+            "t": "lane",
+            "id": "curb",
+            "x": 190,
+            "y": 210,
+            "w": 110,
+            "h": 50,
+            "label": [
+              "the lane closest",
+              "to the right curb"
+            ]
           },
           {
             "t": "car",
             "id": "you",
-            "x": 265,
-            "y": 145,
-            "heading": "w",
+            "x": 90,
+            "y": 275,
+            "heading": "n",
             "you": true
           },
           {
             "t": "path",
             "from": [
-              245,
-              145
+              90,
+              255
             ],
             "via": [
-              200,
-              145
+              91,
+              185
             ],
             "to": [
-              188,
-              126
+              130,
+              181
             ]
           }
         ]
@@ -384,71 +358,41 @@
         "parts": [
           {
             "t": "road",
-            "x": 110,
+            "x": 0,
             "y": 0,
-            "w": 100,
-            "h": 320,
+            "w": 320,
+            "h": 240,
             "center": "yellow",
             "lanes": 2
           },
           {
             "t": "road",
             "x": 0,
-            "y": 130,
-            "w": 320,
-            "h": 60,
+            "y": 0,
+            "w": 120,
+            "h": 320,
             "center": "yellow"
+          },
+          {
+            "t": "lane",
+            "id": "center",
+            "x": 190,
+            "y": 150,
+            "w": 110,
+            "h": 50,
+            "label": [
+              "the lane just to",
+              "the right of",
+              "the center line"
+            ]
           },
           {
             "t": "car",
             "id": "curb",
-            "x": 197,
-            "y": 108,
-            "heading": "n",
+            "x": 190,
+            "y": 210,
+            "heading": "e",
             "you": true
-          },
-          {
-            "t": "car",
-            "id": "center",
-            "x": 172,
-            "y": 38,
-            "heading": "n",
-            "outline": true
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 106,
-            "text": "the lane closest",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 119,
-            "text": "to the right curb",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 30,
-            "text": "the lane just to",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 43,
-            "text": "the right of",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 56,
-            "text": "the center line",
-            "anchor": "start"
           }
         ],
         "say": "You turn into the lane closest to the right curb, the one nearest you as you come around the corner. Swinging wide into the other lane puts you in the way of a driver who may be using it."
@@ -463,93 +407,67 @@
         "parts": [
           {
             "t": "road",
-            "x": 110,
-            "y": 0,
-            "w": 100,
-            "h": 320,
+            "x": 0,
+            "y": 14,
+            "w": 320,
+            "h": 240,
             "center": "yellow",
             "lanes": 2
           },
           {
             "t": "road",
-            "x": 0,
-            "y": 130,
-            "w": 320,
-            "h": 60,
+            "x": 200,
+            "y": 0,
+            "w": 120,
+            "h": 320,
             "center": "yellow"
           },
           {
-            "t": "car",
+            "t": "lane",
             "id": "curb",
-            "x": 197,
-            "y": 108,
-            "heading": "n",
-            "outline": true
+            "x": 130,
+            "y": 44,
+            "w": 110,
+            "h": 50,
+            "label": [
+              "the lane closest",
+              "to the right curb"
+            ]
           },
           {
-            "t": "car",
+            "t": "lane",
             "id": "center",
-            "x": 172,
-            "y": 38,
-            "heading": "n",
-            "outline": true
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 106,
-            "text": "the lane closest",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 119,
-            "text": "to the right curb",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 30,
-            "text": "the lane just to",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 43,
-            "text": "the right of",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 56,
-            "text": "the center line",
-            "anchor": "start"
+            "x": 130,
+            "y": 104,
+            "w": 110,
+            "h": 50,
+            "label": [
+              "the lane just to",
+              "the right of",
+              "the center line"
+            ]
           },
           {
             "t": "car",
             "id": "you",
-            "x": 55,
-            "y": 175,
-            "heading": "e",
+            "x": 290,
+            "y": 272,
+            "heading": "n",
             "you": true
           },
           {
             "t": "path",
             "from": [
-              75,
-              175
+              290,
+              252
             ],
             "via": [
-              178,
-              175
+              289,
+              76
             ],
             "to": [
-              185,
-              126
+              190,
+              74
             ]
           }
         ]
@@ -571,71 +489,40 @@
         "parts": [
           {
             "t": "road",
-            "x": 110,
-            "y": 0,
-            "w": 100,
-            "h": 320,
+            "x": 0,
+            "y": 14,
+            "w": 320,
+            "h": 240,
             "center": "yellow",
             "lanes": 2
           },
           {
             "t": "road",
-            "x": 0,
-            "y": 130,
-            "w": 320,
-            "h": 60,
+            "x": 200,
+            "y": 0,
+            "w": 120,
+            "h": 320,
             "center": "yellow"
           },
           {
-            "t": "car",
+            "t": "lane",
             "id": "curb",
-            "x": 197,
-            "y": 108,
-            "heading": "n",
-            "outline": true
+            "x": 130,
+            "y": 44,
+            "w": 110,
+            "h": 50,
+            "label": [
+              "the lane closest",
+              "to the right curb"
+            ]
           },
           {
             "t": "car",
             "id": "center",
-            "x": 172,
-            "y": 38,
-            "heading": "n",
+            "x": 130,
+            "y": 104,
+            "heading": "w",
             "you": true
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 106,
-            "text": "the lane closest",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 119,
-            "text": "to the right curb",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 30,
-            "text": "the lane just to",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 43,
-            "text": "the right of",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 216,
-            "y": 56,
-            "text": "the center line",
-            "anchor": "start"
           }
         ],
         "say": "You turn into the lane just to the right of the center line, the first lane past it. The lane at the right curb is for drivers coming toward you who turn right, so you never turn wide into it."
@@ -650,69 +537,53 @@
         "parts": [
           {
             "t": "road",
-            "x": 130,
+            "x": 0,
             "y": 0,
-            "w": 60,
+            "w": 320,
+            "h": 140,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 140,
             "h": 320,
             "center": "white-broken"
           },
           {
-            "t": "road",
-            "x": 0,
-            "y": 70,
-            "w": 320,
-            "h": 60,
-            "center": "yellow"
-          },
-          {
-            "t": "car",
+            "t": "lane",
             "id": "left-lane",
-            "x": 145,
-            "y": 222,
-            "heading": "n",
-            "outline": true
+            "x": 125,
+            "y": 195,
+            "w": 64,
+            "h": 90,
+            "label": [
+              "the lane",
+              "nearest",
+              "the left",
+              "curb"
+            ]
           },
           {
-            "t": "car",
+            "t": "lane",
             "id": "right-lane",
-            "x": 175,
-            "y": 150,
-            "heading": "n",
-            "outline": true
-          },
-          {
-            "t": "label",
-            "x": 124,
-            "y": 222,
-            "text": "the lane nearest",
-            "anchor": "end"
-          },
-          {
-            "t": "label",
-            "x": 124,
-            "y": 235,
-            "text": "the left curb",
-            "anchor": "end"
-          },
-          {
-            "t": "label",
-            "x": 196,
-            "y": 148,
-            "text": "the lane nearest",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 196,
-            "y": 161,
-            "text": "the right curb",
-            "anchor": "start"
+            "x": 195,
+            "y": 195,
+            "w": 64,
+            "h": 90,
+            "label": [
+              "the lane",
+              "nearest",
+              "the right",
+              "curb"
+            ]
           },
           {
             "t": "car",
             "id": "you",
-            "x": 175,
-            "y": 275,
+            "x": 195,
+            "y": 285,
             "heading": "n",
             "you": true
           },
@@ -720,15 +591,15 @@
             "t": "path",
             "from": [
               160,
-              128
+              145
             ],
             "via": [
               150,
-              90
+              40
             ],
             "to": [
-              60,
-              85
+              12,
+              35
             ]
           }
         ]
@@ -750,77 +621,55 @@
         "parts": [
           {
             "t": "road",
-            "x": 130,
+            "x": 0,
             "y": 0,
-            "w": 60,
+            "w": 320,
+            "h": 140,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 90,
+            "y": 0,
+            "w": 140,
             "h": 320,
             "center": "white-broken"
           },
           {
-            "t": "road",
-            "x": 0,
-            "y": 70,
-            "w": 320,
-            "h": 60,
-            "center": "yellow"
+            "t": "lane",
+            "id": "right-lane",
+            "x": 195,
+            "y": 195,
+            "w": 64,
+            "h": 90,
+            "label": [
+              "the lane",
+              "nearest",
+              "the right",
+              "curb"
+            ]
           },
           {
             "t": "car",
             "id": "left-lane",
-            "x": 145,
-            "y": 222,
+            "x": 125,
+            "y": 195,
             "heading": "n",
             "you": true
-          },
-          {
-            "t": "car",
-            "id": "right-lane",
-            "x": 175,
-            "y": 150,
-            "heading": "n",
-            "outline": true
-          },
-          {
-            "t": "label",
-            "x": 124,
-            "y": 222,
-            "text": "the lane nearest",
-            "anchor": "end"
-          },
-          {
-            "t": "label",
-            "x": 124,
-            "y": 235,
-            "text": "the left curb",
-            "anchor": "end"
-          },
-          {
-            "t": "label",
-            "x": 196,
-            "y": 148,
-            "text": "the lane nearest",
-            "anchor": "start"
-          },
-          {
-            "t": "label",
-            "x": 196,
-            "y": 161,
-            "text": "the right curb",
-            "anchor": "start"
           },
           {
             "t": "path",
             "from": [
               160,
-              128
+              145
             ],
             "via": [
               150,
-              90
+              40
             ],
             "to": [
-              60,
-              85
+              12,
+              35
             ]
           }
         ],
