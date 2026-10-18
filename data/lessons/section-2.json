@@ -191,15 +191,15 @@
     {
       "id": "s2-04",
       "kind": "principle",
-      "prompt": "When the light was a steady yellow, you stopped before the intersection. When it flashed red, you stopped and went when it was safe. When it flashed yellow, you slowed down and went through with care. What did each light's color tell you?",
+      "prompt": "When the light flashed red, you stopped and went when it was safe. When it flashed yellow, you slowed down and went through with care. What does a flashing light tell you?",
       "options": [
-        "Red tells you to stop, and yellow tells you to slow down and take care.",
-        "Red and yellow each tell you to stop and wait for a green light.",
-        "Yellow tells you to speed up, and red tells you to slow down."
+        "A flashing red light means stop, the same as a stop sign, and a flashing yellow light means slow down and take care.",
+        "A flashing light means the same as a steady light of that color.",
+        "A flashing light means you may go through without slowing down."
       ],
-      "answer": "Red tells you to stop, and yellow tells you to slow down and take care.",
+      "answer": "A flashing red light means stop, the same as a stop sign, and a flashing yellow light means slow down and take care.",
       "then": {
-        "say": "Red tells you to stop, and yellow tells you to slow down and take care. A steady yellow light also tells you the light is about to turn red, so you stop when you safely can."
+        "say": "A flashing red light means stop, the same as a stop sign, and a flashing yellow light means slow down and take care. A flashing yellow light is not about to turn red, so you slow down but do not stop. A steady yellow light is about to turn red, so you stop when you safely can."
       }
     },
     {
