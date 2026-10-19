@@ -1471,6 +1471,42 @@ function steerPart(p, o) {
   const inner = `<rect x="${x}" y="${y}" width="${p.w}" height="${p.h}" rx="6" fill="#26272b"/>${wheel}`;
   return boxTarget(p, o, 'k-lane k-steer', inner);
 }
+// A drink seen from the side (Section 11): a 12-ounce bottle of beer (`kind: "beer"`) or a 1-ounce shot of whiskey
+// (`kind: "shot"`), standing on a baseline at `y`, centered at `x`, drawn at their real relative sizes so the beer
+// looks like far more drink than the shot. The size is written under it ("12 ounces", "1 ounce") unless `label` is
+// false. With `alcohol: true` a small amber square of the same size for every drink, the alcohol in it, is drawn under
+// the size, labelled "Alcohol": the point of the drawing after the answer. Not a target. The prompt names the drinks.
+function drinkPart(p) {
+  const x = p.x, y = p.y, beer = p.kind !== 'shot', label = p.label !== false;
+  let body;
+  if (beer) {
+    // A bottle: a long body with shoulders, a neck and a cap, filled amber with a paper label band.
+    body = `<path d="M${x - 17} ${y} L${x - 17} ${y - 78} Q${x - 17} ${y - 90} ${x - 8} ${y - 96} L${x - 6} ${y - 112} L${x + 6} ${y - 112} L${x + 8} ${y - 96} Q${x + 17} ${y - 90} ${x + 17} ${y - 78} L${x + 17} ${y} Z" fill="#b8742a" stroke="#e0c08a" stroke-width="1.5"/>` +
+      `<rect x="${x - 7}" y="${y - 120}" width="14" height="9" rx="2" fill="#c9c7c2"/>` +
+      `<rect x="${x - 17}" y="${y - 62}" width="34" height="28" fill="#f2f0eb" opacity=".85"/>`;
+  } else {
+    // A shot glass: a small tapered glass, filled amber to near its rim.
+    body = `<path d="M${x - 9} ${y} L${x - 11} ${y - 26} L${x + 11} ${y - 26} L${x + 9} ${y} Z" fill="#d6a04d" stroke="#e0c08a" stroke-width="1.5"/>` +
+      `<path d="M${x - 10.5} ${y - 22} L${x + 10.5} ${y - 22}" stroke="#f2f0eb" stroke-width="1.5" opacity=".8"/>`;
+  }
+  const size = label ? svgText(x, y + 18, beer ? '12 ounces' : '1 ounce') : '';
+  const alcohol = p.alcohol ? `<rect x="${x - 7}" y="${y + 28}" width="14" height="14" rx="2" fill="#d6a04d" stroke="#e0c08a" stroke-width="1.5"/>` + svgText(x, y + 58, 'Alcohol') : '';
+  return `<g class="k-drink k-${beer ? 'beer' : 'shot'}"><line class="k-edge" x1="${x - 30}" y1="${y}" x2="${x + 30}" y2="${y}"/>${body}${size}${alcohol}</g>`;
+}
+// A timeline (Section 11): a horizontal line from `x` (default 28) over `w` (default 264) at `y`, with a tick at
+// every hour up to `hours` (default 4), labelled "Now", "1 hour", "2 hours" and so on under the ticks. `fill` shades
+// the band above the line from Now to that hour, the time the alcohol is still in the blood, drawn only after the
+// answer (`then.parts`), because it would give the answer away. Not a target. The prompt says how many drinks and when.
+function timelinePart(p) {
+  const x = p.x === undefined ? 28 : p.x, w = p.w || 264, y = p.y, hours = p.hours || 4, step = w / hours;  // 28 to 292, so the last label fits inside the drawing
+  const fill = p.fill ? `<rect class="k-fill" x="${x}" y="${y - 26}" width="${Math.min(p.fill, hours) * step}" height="26" fill="#d6a04d" opacity=".45"/>` : '';
+  let ticks = '';
+  for (let h = 0; h <= hours; h++) {
+    const tx = x + h * step;
+    ticks += `<line x1="${tx}" y1="${y - 6}" x2="${tx}" y2="${y + 6}" stroke="var(--ink)" stroke-width="1.5"/>` + svgText(tx, y + 20, h === 0 ? 'Now' : `${h} hour${h === 1 ? '' : 's'}`);
+  }
+  return `<g class="k-timeline">${fill}<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="var(--ink)" stroke-width="2"/>${ticks}</g>`;
+}
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
 // `emergency: true` puts a red and blue light bar on the roof, flashing: an emergency vehicle (the prompt names the siren).
@@ -1526,6 +1562,8 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'headlight') return headlightPart(p);
     if (p.t === 'water') return waterPart(p);
     if (p.t === 'steer') return steerPart(p, o);
+    if (p.t === 'drink') return drinkPart(p);
+    if (p.t === 'timeline') return timelinePart(p);
     if (p.t === 'rails') return railsPart(p);
     if (p.t === 'crossbuck') return crossbuckPart(p);
     if (p.t === 'bus') return busPart(p);

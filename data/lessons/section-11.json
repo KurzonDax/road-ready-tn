@@ -1,0 +1,368 @@
+{
+  "section": 11,
+  "title": "Alcohol and drugs",
+  "steps": [
+    {
+      "id": "s11-01",
+      "fact": "c-126",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 110,
+            "y": 190,
+            "label": true,
+            "alcohol": false
+          },
+          {
+            "t": "drink",
+            "kind": "shot",
+            "x": 210,
+            "y": 190,
+            "label": true,
+            "alcohol": false
+          }
+        ]
+      },
+      "prompt": "A bottle of beer holds 12 ounces, and a shot of whiskey holds 1 ounce. How does the alcohol in the beer compare with the alcohol in the shot?",
+      "options": [
+        "The beer has much more alcohol.",
+        "The shot of whiskey has much more alcohol.",
+        "They have about the same amount of alcohol."
+      ],
+      "answer": "They have about the same amount of alcohol.",
+      "then": {
+        "parts": [
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 110,
+            "y": 190,
+            "label": true,
+            "alcohol": true
+          },
+          {
+            "t": "drink",
+            "kind": "shot",
+            "x": 210,
+            "y": 190,
+            "label": true,
+            "alcohol": true
+          }
+        ],
+        "say": "They have about the same amount of alcohol, because each ounce of whiskey holds far more alcohol than an ounce of beer. Drinking beer instead of whiskey does not make you any safer.",
+        "wrong": {
+          "The beer has much more alcohol.": "The bottle of beer holds 12 times as much liquid, but each ounce of whiskey holds far more alcohol than an ounce of beer. The 12-ounce beer and the 1-ounce shot hold about the same amount of alcohol.",
+          "The shot of whiskey has much more alcohol.": "Each ounce of whiskey holds far more alcohol than an ounce of beer, but the bottle of beer holds 12 times as much liquid. The 12-ounce beer and the 1-ounce shot hold about the same amount of alcohol."
+        }
+      },
+      "rule": "A 12-ounce bottle of beer has about as much alcohol as a 1-ounce shot of whiskey, so drinking beer instead of whiskey does not make you any safer."
+    },
+    {
+      "id": "s11-02",
+      "fact": "c-090",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 80,
+            "y": 150,
+            "label": false
+          },
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 160,
+            "y": 150,
+            "label": false
+          },
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 240,
+            "y": 150,
+            "label": false
+          },
+          {
+            "t": "timeline",
+            "x": 28,
+            "y": 230,
+            "w": 264,
+            "hours": 4
+          }
+        ]
+      },
+      "prompt": "You drank three beers in the past hour. About how long does it take for the alcohol to leave your blood?",
+      "options": [
+        "It takes about thirty minutes.",
+        "It takes about one hour.",
+        "It takes about two hours.",
+        "It takes about three hours."
+      ],
+      "answer": "It takes about three hours.",
+      "then": {
+        "parts": [
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 80,
+            "y": 150,
+            "label": false
+          },
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 160,
+            "y": 150,
+            "label": false
+          },
+          {
+            "t": "drink",
+            "kind": "beer",
+            "x": 240,
+            "y": 150,
+            "label": false
+          },
+          {
+            "t": "timeline",
+            "x": 28,
+            "y": 230,
+            "w": 264,
+            "hours": 4,
+            "fill": 3
+          },
+          {
+            "t": "label",
+            "x": 125,
+            "y": 200,
+            "text": "Alcohol still in your blood",
+            "anchor": "middle"
+          }
+        ],
+        "say": "It takes about three hours. Each 12-ounce beer is one drink, and the liver removes about one drink per hour.",
+        "wrong": {
+          "It takes about thirty minutes.": "Thirty minutes is not enough time for the liver to remove even one drink. The liver removes about one drink per hour, so three beers take about three hours to leave your blood.",
+          "It takes about one hour.": "In one hour the liver removes only about one drink, and you drank three. The liver removes about one drink per hour, so three beers take about three hours to leave your blood.",
+          "It takes about two hours.": "In two hours the liver removes only about two drinks, and you drank three. Three beers take about three hours to leave your blood, one hour for each drink."
+        }
+      },
+      "rule": "The liver removes about one drink per hour, so three drinks take about three hours to leave your blood."
+    },
+    {
+      "id": "s11-03",
+      "fact": "c-096",
+      "kind": "choose",
+      "prompt": "You drank three beers in the past hour. What sobers you?",
+      "options": [
+        "Drinking coffee sobers you.",
+        "Taking a cold shower sobers you.",
+        "Exercising sobers you.",
+        "Only time sobers you."
+      ],
+      "answer": "Only time sobers you.",
+      "then": {
+        "say": "Only time sobers you. Coffee, exercise and a cold shower do not speed up how fast the liver removes alcohol, so the three beers still take about three hours to leave your blood.",
+        "wrong": {
+          "Drinking coffee sobers you.": "Coffee does not make the liver remove alcohol any faster, so the three beers stay in your blood just as long. Only time sobers you, at about one hour for each drink.",
+          "Taking a cold shower sobers you.": "A cold shower cools your body, but the liver removes alcohol no faster afterward. Only time sobers you, at about one hour for each drink.",
+          "Exercising sobers you.": "Exercising works your muscles, but the liver removes alcohol no faster while you do it. Only time sobers you, at about one hour for each drink."
+        }
+      },
+      "rule": "Only time sobers a person who has been drinking, because nothing speeds up how fast the liver removes alcohol."
+    },
+    {
+      "id": "s11-04",
+      "fact": "c-091",
+      "kind": "choose",
+      "prompt": "BAC stands for Blood Alcohol Concentration, the percentage of alcohol in your blood. As your BAC goes up, what do you become?",
+      "options": [
+        "You become more intoxicated.",
+        "You become more alert.",
+        "You become more coordinated.",
+        "You become more sober."
+      ],
+      "answer": "You become more intoxicated.",
+      "then": {
+        "say": "You become more intoxicated. The higher your BAC, the more impaired you are, and your BAC rises whenever you drink alcohol faster than the liver removes it.",
+        "wrong": {
+          "You become more alert.": "Alcohol slows all nerve impulses and body functions, so a higher BAC makes you less alert, not more. As your BAC goes up, you become more intoxicated.",
+          "You become more coordinated.": "Alcohol makes it harder to keep your eyes, hands and feet working together, so a higher BAC makes you less coordinated. As your BAC goes up, you become more intoxicated.",
+          "You become more sober.": "You become sober only as the liver removes the alcohol and your BAC goes down. As your BAC goes up, you become more intoxicated."
+        }
+      },
+      "rule": "As your Blood Alcohol Concentration (BAC), the percentage of alcohol in your blood, goes up, you become more intoxicated."
+    },
+    {
+      "id": "s11-05",
+      "fact": "c-093",
+      "kind": "choose",
+      "prompt": "Which driving skills do alcohol and drugs affect?",
+      "options": [
+        "They affect alertness, concentration, reaction time and coordination.",
+        "They affect only reaction time.",
+        "They affect only alertness and concentration.",
+        "They affect no driving skills if you feel fine."
+      ],
+      "answer": "They affect alertness, concentration, reaction time and coordination.",
+      "then": {
+        "say": "They affect alertness, concentration, reaction time and coordination. Alcohol also affects judgment and vision, the two abilities most important to driving.",
+        "wrong": {
+          "They affect only reaction time.": "Reaction time slows, but alcohol and drugs also reduce your alertness, concentration and coordination. They affect all four, and alcohol affects judgment and vision as well.",
+          "They affect only alertness and concentration.": "Alertness and concentration fade, and reaction time and coordination get worse as well. Alcohol and drugs affect all four.",
+          "They affect no driving skills if you feel fine.": "Feeling fine does not mean your skills are unaffected, because judgment is the first thing alcohol affects. Two or three drinks in three hours or less impair the driving of most people."
+        }
+      },
+      "rule": "Alcohol and drugs affect alertness, concentration, reaction time and coordination, and alcohol also affects judgment and vision."
+    },
+    {
+      "id": "s11-06",
+      "fact": "c-097",
+      "kind": "choose",
+      "prompt": "You are 21 or older. In Tennessee, what is the lowest BAC that is always illegal for you to drive with?",
+      "options": [
+        "It is 0.08 percent.",
+        "It is 0.10 percent.",
+        "It is 0.15 percent.",
+        "It is 0.20 percent."
+      ],
+      "answer": "It is 0.08 percent.",
+      "then": {
+        "say": "It is 0.08 percent. Below 0.08 percent you can still be convicted of driving under the influence, called DUI, if alcohol or drugs have impaired your driving.",
+        "wrong": {
+          "It is 0.10 percent.": "A BAC of 0.10 percent is already above the lowest BAC that is always illegal. For a driver 21 or older that is 0.08 percent.",
+          "It is 0.15 percent.": "A BAC of 0.15 percent is almost twice the lowest BAC that is always illegal. For a driver 21 or older that is 0.08 percent.",
+          "It is 0.20 percent.": "A BAC of 0.20 percent is more than twice the lowest BAC that is always illegal. For a driver 21 or older that is 0.08 percent."
+        }
+      },
+      "rule": "For a driver 21 or older in Tennessee a BAC of 0.08 percent is always illegal, and below it you can still be convicted of DUI if you are impaired."
+    },
+    {
+      "id": "s11-07",
+      "fact": "c-121",
+      "kind": "choose",
+      "prompt": "You are 18. What is the lowest BAC at which you can be convicted of underage driving while impaired?",
+      "options": [
+        "It is 0.02 percent.",
+        "It is 0.05 percent.",
+        "It is 0.08 percent.",
+        "It is 0.10 percent."
+      ],
+      "answer": "It is 0.02 percent.",
+      "then": {
+        "say": "It is 0.02 percent for every driver from 16 to 20, far below the 0.08 percent for drivers 21 and older. Driving under the influence of alcohol or any other intoxicant is also underage driving while impaired.",
+        "wrong": {
+          "It is 0.05 percent.": "A driver 16 to 20 can be convicted at a BAC lower than 0.05 percent. The number is 0.02 percent.",
+          "It is 0.08 percent.": "A BAC of 0.08 percent is the number for drivers 21 and older. For a driver 16 to 20 the number is far lower, 0.02 percent.",
+          "It is 0.10 percent.": "A BAC of 0.10 percent is above the 0.08 percent that is always illegal even for drivers 21 and older. For a driver 16 to 20 the number is 0.02 percent."
+        }
+      },
+      "rule": "A driver 16 to 20 years old can be convicted of underage driving while impaired at a BAC of 0.02 percent, or when under the influence of alcohol or any other intoxicant."
+    },
+    {
+      "id": "s11-08",
+      "fact": "c-089",
+      "kind": "choose",
+      "prompt": "You took a drug your doctor prescribed, and it impaired your driving. You are arrested for DUI. What penalty do you face?",
+      "options": [
+        "You face the same penalty as for alcohol.",
+        "You face a lesser penalty than for alcohol.",
+        "You face no penalty, because it was not alcohol.",
+        "You face a penalty only if the drug is illegal."
+      ],
+      "answer": "You face the same penalty as for alcohol.",
+      "then": {
+        "say": "You face the same penalty as for alcohol. By law a prescription is no defense, and the penalty is the same for an over-the-counter drug.",
+        "wrong": {
+          "You face a lesser penalty than for alcohol.": "The law sets no lesser penalty for drugs. The penalties for DUI are the same for alcohol and for drugs, even a drug your doctor prescribed.",
+          "You face no penalty, because it was not alcohol.": "Driving under the influence covers drugs as well as alcohol, including prescription drugs. You face the same penalty as for alcohol.",
+          "You face a penalty only if the drug is illegal.": "A legal drug that impairs your driving counts the same as an illegal one, and a prescription is no defense. You face the same penalty as for alcohol."
+        }
+      },
+      "rule": "The penalties for DUI are the same for alcohol and for drugs, even prescription or over-the-counter drugs."
+    },
+    {
+      "id": "s11-09",
+      "fact": "c-092",
+      "kind": "choose",
+      "prompt": "A police officer stops you and has reasonable grounds to believe you are driving under the influence. The officer asks you to take a test for the alcohol or drug content of your blood. Have you already agreed to be tested?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "say": "You have already agreed. By driving in Tennessee you have given your consent to be tested when an officer with reasonable grounds asks, and the law that says so is called Implied Consent. Refusing the test can get your license revoked or suspended.",
+        "wrong": {
+          "No": "You agreed when you drove in Tennessee, before the officer asked. The law is called Implied Consent: by driving, you give your consent to be tested when an officer with reasonable grounds asks."
+        }
+      },
+      "rule": "Under Tennessee's Implied Consent law, by driving you agree to be tested for alcohol or drugs when an officer with reasonable grounds to believe you are under the influence asks."
+    },
+    {
+      "id": "s11-10",
+      "fact": "c-092",
+      "kind": "choose",
+      "prompt": "What does Tennessee's Implied Consent law mean?",
+      "options": [
+        "By driving, you agree to be tested for alcohol or drugs if an officer asks.",
+        "Traffic laws apply even without signs, markings or signals at an intersection.",
+        "The owner of a vehicle will carry proper insurance.",
+        "You agree to let police search your car at any time."
+      ],
+      "answer": "By driving, you agree to be tested for alcohol or drugs if an officer asks.",
+      "then": {
+        "say": "By driving, you agree to be tested for alcohol or drugs if an officer asks. The officer must have reasonable grounds to believe you are driving under the influence.",
+        "wrong": {
+          "Traffic laws apply even without signs, markings or signals at an intersection.": "Implied Consent says nothing about intersections without signs, markings or signals. It means that by driving, you agree to be tested for alcohol or drugs if an officer asks.",
+          "The owner of a vehicle will carry proper insurance.": "Carrying insurance is a separate requirement, not what Implied Consent means. It means that by driving, you agree to be tested for alcohol or drugs if an officer asks.",
+          "You agree to let police search your car at any time.": "Implied Consent covers a test for alcohol or drugs in your blood, not a search of your car. By driving, you agree to be tested if an officer with reasonable grounds asks."
+        }
+      },
+      "rule": "Under Tennessee's Implied Consent law, by driving you agree to be tested for alcohol or drugs when an officer with reasonable grounds to believe you are under the influence asks."
+    },
+    {
+      "id": "s11-11",
+      "fact": "c-134",
+      "kind": "choose",
+      "prompt": "You change the birth date printed on your driver license. Can that get your license revoked or suspended?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "say": "It can. Changing what is printed on your license is fraudulently altering a driver license, one of the things that can get a license revoked or suspended.",
+        "wrong": {
+          "No": "Changing the birth date on your license is fraudulently altering it, which the law treats as unlawful use of a driver license. That can get your license revoked or suspended."
+        }
+      },
+      "rule": "Fraudulently altering a driver license can get it revoked or suspended."
+    },
+    {
+      "id": "s11-12",
+      "fact": "c-134",
+      "kind": "choose",
+      "prompt": "Which of the following can get a driver license revoked or suspended?",
+      "options": [
+        "Fraudulently altering a driver license.",
+        "Renewing your license a week early.",
+        "Driving a borrowed car with permission.",
+        "Moving to another county in Tennessee."
+      ],
+      "answer": "Fraudulently altering a driver license.",
+      "then": {
+        "say": "Fraudulently altering a driver license can get it revoked or suspended. So can letting another person use your license.",
+        "wrong": {
+          "Renewing your license a week early.": "Renewing early gives you a new license and is not a reason to revoke or suspend one. Fraudulently altering a driver license is.",
+          "Driving a borrowed car with permission.": "Driving a car you borrowed with the owner's permission is legal, and it is not a reason to revoke or suspend your license. Fraudulently altering a driver license is.",
+          "Moving to another county in Tennessee.": "Moving to another county in Tennessee is not a reason to revoke or suspend a license. Fraudulently altering a driver license is a reason."
+        }
+      },
+      "rule": "Fraudulently altering a driver license can get it revoked or suspended."
+    }
+  ]
+}
