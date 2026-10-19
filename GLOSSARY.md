@@ -43,7 +43,7 @@ How well a Fact is known, worked out from its counted questions: new, seen, lear
 _Avoid_: Level, score, mastery
 
 **Due**:
-A Fact whose Standing says it should be asked again now: after a wrong answer at once, else after a wait that grows with each spaced success.
+A Fact whose Standing says it should be asked again now: after a wrong answer at once, else 12 hours after its first spaced success and 48 hours after its second. A solid Fact is finished and never Due on its own.
 _Avoid_: Overdue, scheduled
 
 **Counted question**:

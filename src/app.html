@@ -301,8 +301,7 @@ const GAP = 4;                    // screens for other facts between a fact's ru
 const RE_ASK_GAP = 3;             // question screens for other facts between a wrong counted answer and its re-ask
 const RE_ASK_CAP = 4;             // re-asks in one practice quiz, at most
 const SPACING_MS = 12 * HOUR;     // two right answers count as separate successes only this far apart
-const LADDER_MS = [12 * HOUR, 48 * HOUR]; // after the first and second spaced success, how long until due again
-const MAINTENANCE_MS = 7 * 24 * HOUR;     // a solid fact is due again after this long
+const LADDER_MS = [12 * HOUR, 48 * HOUR]; // after the first and second spaced success, how long until due again; after the third, never
 const LEECH_WRONG = 6;            // wrong counted answers after which the Helper's view flags the fact
 const TEST_LEN = 30, READY_SCORE = 27, READY_STREAK = 3, PASS_SCORE = 24;
 // The device copy of the signed-in Learner, saved under `rrtn-learner-<account id>`:
@@ -351,10 +350,11 @@ function standing(f) {
 }
 const isLearned = f => f.spacedRights > 0; // learned or solid
 const isSolid = f => f.spacedRights >= 3;
-// When a fact that is not new is due again: at once after a wrong newest answer, else up the ladder.
+// When a fact that is not new is due again: at once after a wrong newest answer, else up the ladder. A solid
+// fact (three spaced successes) is finished and never due on its own (ADR 0002, amended 2026-10-19).
 function dueAt(f) {
   if (!f.lastRight) return -Infinity;
-  return f.lastAt + (isSolid(f) ? MAINTENANCE_MS : LADDER_MS[f.spacedRights - 1]);
+  return isSolid(f) ? Infinity : f.lastAt + LADDER_MS[f.spacedRights - 1];
 }
 const isDue = (f, now) => f.asked > 0 && dueAt(f) <= now;
 // The ids of the facts due at `now`, in the order a Set takes them: wrong last (oldest first), then learned,
