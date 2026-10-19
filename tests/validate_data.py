@@ -153,7 +153,7 @@ def check_groups(groups, used):
 
 
 STEP_KINDS = {"tap", "choose", "principle"}
-TARGET_PARTS = {"car", "ped", "roadsign", "lane", "space", "wheels", "steer"}
+TARGET_PARTS = {"car", "ped", "roadsign", "lane", "space", "wheels", "steer", "seat"}
 
 
 def check_lessons(secs):
@@ -206,7 +206,7 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: a tap step needs 2 or more targets, each with a label")
                 for tid in tids:
                     if tid not in part_ids:
-                        errors.append(f"{name} {sid}: target {tid!r} is not a car, pedestrian, road sign, lane box, parking space or wheel picture in the scene")
+                        errors.append(f"{name} {sid}: target {tid!r} is not a car, pedestrian, road sign, lane box, parking space, wheel picture or seat in the scene")
                 if step.get("answer") not in tids:
                     errors.append(f"{name} {sid}: answer must be one of the targets")
             else:
@@ -224,7 +224,7 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: then.wrong must give one non-empty explanation for each wrong pick, {sorted(wrong_picks)}")
             hi = then.get("highlight")
             if hi is not None and hi not in part_ids | after_ids:
-                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car, pedestrian, road sign, lane box, parking space or wheel picture in the scene")
+                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car, pedestrian, road sign, lane box, parking space, wheel picture or seat in the scene")
         missing = facts - covered
         if missing and steps:
             errors.append(f"{name}: no step teaches {sorted(missing)}")

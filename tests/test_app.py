@@ -3453,6 +3453,144 @@ def check_alcohol_lesson(browser, inst):
           and all(a["format"] == "choice" for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 1,
           "the finished lesson is one record of type lesson with every Section 11 fact answered, the wrong choice among them")
     ctx.close()
+    check_belt_lesson(browser, inst)
+
+
+def check_belt_lesson(browser, inst):
+    """The Section 12 lesson (phones, seat belts, crashes and sharing the road) is offered to a Learner whose new
+    facts come from Section 12; every question has a fact and its own explanation per wrong pick; the two seat
+    questions tap one of two seats in the car cabin drawn from above, the front passenger seat and the back seat,
+    with nothing written in them and the driver's seat drawn with the steering wheel and not a target; the belt is
+    drawn on the seats only after the answer; the body, the belt, the head restraint and the phone are never drawn;
+    the two crash questions are choices about a drawn scene where only your car is red; every number is the
+    manual's; a wrong tap names the seat and a wrong choice leads with Incorrect alone; every question is acted on
+    to the end and the finished lesson is a record with one answer per fact."""
+    print("\n[belt lesson]")
+    lid = inst.add_learner("Ellis", "belt password")
+    store_for(inst, lid, "move", {"to": 12})  # new facts come from Section 12, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Ellis", "belt password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 12:"), "a Learner moved to Section 12 is offered its lesson before the Set", h1(pg))
+    pg.click("#lessonBtn")
+    pg.wait_for_selector("button.opt, .k-target")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
+                        "options: s.options || null, targets: s.targets || null, parts: s.scene ? s.scene.parts : [], after: s.then.parts || null, highlight: s.then.highlight || null}))")
+    facts = set(pg.evaluate("QS.filter(q => q.day === 12).map(q => q.id)"))
+    check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts and all(s["fact"] for s in steps),
+          "the lesson has 10 to 15 questions, every one with a fact, and teaches every Section 12 fact", len(steps))
+    check(all(s["wrong"] and set(s["wrong"]) == {k for k in ([t["id"] for t in s["targets"]] if s["kind"] == "tap" else s["options"]) if k != s["answer"]} for s in steps),
+          "every question has its own explanation for every wrong pick")
+    check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
+          "every option is a complete sentence, the test's own phrase, or a plain Yes or No")
+    check(all(all((p.get("color") == "red") == bool(p.get("you")) for p in s["parts"] if p["t"] == "car") for s in steps)
+          and all(s["prompt"].startswith("You are the red car") for s in steps if any(p["t"] == "car" for p in s["parts"])),
+          "every question with a car drawn says you are the red car, and only your car is red")
+    check(not any(p["t"] in ("ped", "bicyclist") for s in steps for p in s["parts"] + (s["after"] or [])), "no person's body is drawn")
+    by_fact = lambda f: [s for s in steps if s["fact"] == f]
+    # The two seat questions: the cabin from above, three seats, the two passenger seats the targets, nothing written in them.
+    taps = [s for s in steps if s["kind"] == "tap"]
+    def cabin_ok(s):
+        seats = [p for p in s["parts"] if p["t"] == "seat"]
+        driver = [p for p in seats if p.get("wheel")]
+        boxes = {p["id"]: p for p in seats if p.get("id")}
+        return (s["parts"][0]["t"] == "cabin" and len(seats) == 3 and len(driver) == 1 and "id" not in driver[0] and set(boxes) == {"front-right", "back"}
+                and set(boxes) == {t["id"] for t in s["targets"]} and all(p["w"] >= 68 and p["h"] >= 74 and "label" not in p and not p.get("belt") for p in seats)
+                and boxes["front-right"]["y"] == driver[0]["y"] and boxes["back"]["y"] > boxes["front-right"]["y"]
+                and {t["label"] for t in s["targets"]} == {"the front passenger seat", "the back seat"} and s["prompt"].startswith("You are driving.") and s["prompt"].endswith("Tap the seat."))
+    check(len(taps) == 2 and all(cabin_ok(s) for s in taps) and {s["fact"] for s in taps} == {"a-044", "a-074"},
+          "the two tap questions draw the cabin with the driver's seat, the front passenger seat and the back seat, the two passenger seats the targets, and ask which seat")
+    belt, who = by_fact("a-044")
+    check(belt["kind"] == "tap" and belt["answer"] == "front-right" and "25" in belt["prompt"] and "front passenger seat" in belt["prompt"] and "back seat" in belt["prompt"]
+          and belt["after"] and {p.get("id", "driver") for p in belt["after"] if p["t"] == "seat" and p.get("belt")} == {"driver", "front-right"}
+          and "18 or older" in belt["wrong"]["back"] and "front-seat passenger" in belt["wrong"]["back"],
+          "the belt question taps the front passenger seat for a passenger who is 25, the belt is drawn on the front seats afterwards, and the back seat's explanation says why not")
+    check(who["kind"] == "choose" and "driver and all front-seat passengers" in who["answer"] and "four times" in who["say"], "the test's own belt question is answered by the driver and all front-seat passengers")
+    child = by_fact("a-074")[0]
+    check(child["kind"] == "tap" and child["answer"] == "back" and "10 years old" in child["prompt"] and "air bags" in child["prompt"]
+          and "12" in child["wrong"]["front-right"] and "air bag" in child["wrong"]["front-right"],
+          "the child question taps the back seat for a child who is 10 in a car with air bags, and the front seat's explanation names the air bag")
+    height, purpose = by_fact("a-002")[0], by_fact("a-001")[0]
+    check(steps.index(height) < steps.index(purpose) and "back of your head" in height["answer"] and "whiplash" in purpose["answer"] and "from behind" in purpose["answer"]
+          and {o for o in height["options"] if o != height["answer"]} == {"You set it level with the base of your neck.", "You set it level with the top of your shoulders.", "You set it just above the top of your head."},
+          "the head restraint is set level with the back of the head first, then asked what it prevents when hit from behind, with the test's other heights")
+    phone = by_fact("a-036")
+    check(len(phone) == 2 and phone[0]["options"] == ["Yes", "No"] and phone[0]["answer"] == "No" and "shoulder" in phone[0]["prompt"] and "any part of" in phone[0]["say"]
+          and phone[1]["answer"].startswith("Holding a phone with any part of your body"),
+          "the Hands Free law is used on a phone held with the shoulder first, answered No, then asked as the test asks it")
+    rear, forward = by_fact("a-050")
+    check(rear["answer"] == "It must face the rear of the car." and "8 months" in rear["prompt"] and "17 pounds" in rear["prompt"] and "20 pounds" in rear["say"]
+          and forward["answer"] == "It must face the front of the car." and "2 years" in forward["prompt"] and "28 pounds" in forward["prompt"] and "1 through 3" in forward["say"],
+          "the car seat faces the rear for a child of 8 months and 17 pounds and the front for one of 2 years and 28 pounds, with the manual's 1 year and 20 pounds in the explanations")
+    pregnant = by_fact("a-059")[0]
+    check("below her belly" in pregnant["answer"] and "above her belly" in pregnant["answer"] and "abdomen" in pregnant["say"] and "pregnant" in pregnant["prompt"], "the pregnant woman's belt is lap belt below the belly, shoulder belt above it, and the explanation says the belly is the abdomen")
+    stop, pass_by = by_fact("c-155")[0], by_fact("c-133")[0]
+    cars = lambda s: [p for p in s["parts"] if p["t"] == "car"]
+    you = lambda s: next(p for p in cars(s) if p.get("you"))
+    check(stop["kind"] == "choose" and len(cars(stop)) == 2 and you(stop).get("tilt") and "hit the blue car" in stop["prompt"] and "without blocking traffic" in stop["answer"]
+          and all("stop" in w for w in stop["wrong"].values()),
+          "the crash question draws your car against the blue car and is answered by stopping at or near the scene without blocking traffic")
+    police = [p for p in cars(pass_by) if p.get("emergency")]
+    check(pass_by["kind"] == "choose" and len(cars(pass_by)) == 3 and len(police) == 1 and police[0]["color"] == "white" and "lights flashing" in pass_by["prompt"] and "not needed" in pass_by["prompt"]
+          and "drive on slowly" in pass_by["answer"] and pass_by["after"] and any(p["t"] == "path" for p in pass_by["after"]),
+          "the crash you pass draws the crashed car and the police car with its lights flashing, is answered by driving on slowly, and draws your way past afterwards")
+    report = by_fact("c-132")[0]
+    check(report["answer"] == "You have 20 days." and {o for o in report["options"] if o != report["answer"]} == {"You have 10 days.", "You have 48 hours.", "You have 30 days."}
+          and "crash report" in report["prompt"] and all("20 days" in w for w in report["wrong"].values()),
+          "the crash report is due in 20 days, with the test's other numbers, and every explanation says so")
+    check(not any(re.search(r"\b(right\.|yield|step|screen|case)\b", (s["prompt"] + " " + s["say"]).lower()) for s in steps), "no banned word reaches the Learner")
+    # On screen: a wrong choice leads with Incorrect alone and explains that pick.
+    first = steps[0]
+    check(first["kind"] == "choose" and not first["parts"], "the first question is a choice with nothing to draw")
+    wrong = next(o for o in first["options"] if o != first["answer"])
+    pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check(shown.startswith(f"Lesson for Section 12: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+          and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown,
+          "a wrong choice leads with Incorrect alone, the list marks the pick, and the explanation is the one written for that pick", shown[:160])
+    pg.click("#stepNextBtn")
+    for k in range(1, len(steps)):
+        st = steps[k]
+        if st["kind"] == "tap":
+            pg.wait_for_selector(".k-target[data-t='front-right']")
+            scene_text = pg.evaluate("document.querySelector('.scene').textContent").strip()
+            check(len(pg.query_selector_all(".scene .k-target")) == 2 and len(pg.query_selector_all(".scene .k-seat")) == 3 and pg.query_selector(".scene .k-cabin") is not None
+                  and scene_text == "" and pg.query_selector(".scene .k-belt") is None,
+                  "the cabin is drawn with three seats, two of them targets, nothing written in the drawing and no belt yet")
+            if st is belt:
+                # The first seat question: a wrong tap names the seat picked and crosses it, and the seat the law covers gets the check.
+                pg.click(".k-target[data-t='back']")
+                pg.wait_for_selector("#stepNextBtn")
+                check(pg.inner_text("#stepHead") == "Incorrect. You picked the back seat." and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None
+                      and pg.inner_text("#stepText") == st["wrong"]["back"] and len(pg.query_selector_all(".scene .k-belt")) == 2,
+                      "a wrong tap on the back seat leads with Incorrect and the seat's name, crosses it, rings the front passenger seat, and draws the belts on the front seats", pg.inner_text("#stepHead"))
+                pg.click("#stepNextBtn")
+                continue
+            pg.click(f".k-target[data-t='{st['answer']}']")
+        else:
+            pg.wait_for_selector("button.opt")
+            if st is stop:
+                check(len(pg.query_selector_all(".scene .k-car")) == 2 and pg.query_selector(".scene .k-red") is not None and pg.query_selector(".scene .k-blue") is not None,
+                      "the crash question draws the red car and the blue car")
+            if st is pass_by:
+                check(pg.query_selector(".scene .k-emergency") is not None and pg.query_selector(".scene .k-path") is None, "the crash you pass draws the police car, and no path yet")
+            pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
+        pg.wait_for_selector("#stepNextBtn")
+        check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
+        if st is pass_by:
+            check(pg.query_selector(".scene .k-path") is not None, "after the choice your way past the crash is drawn")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 12.", "the Section 12 lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 12 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
+          and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 2 and sum(1 for a in lesson[0]["data"]["answers"] if a["format"] == "tap") == 2,
+          "the finished lesson is one record of type lesson with every Section 12 fact answered, the wrong choice and the wrong tap among them, two of them taps")
+    ctx.close()
 
 
 def main():

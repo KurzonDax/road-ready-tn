@@ -189,6 +189,7 @@ button.opt { cursor: pointer; }
 .k-ring { fill: var(--good); opacity: .28; }
 .k-no { fill: none; stroke: var(--bad); stroke-width: 2; }
 .k-lane { fill: transparent; stroke: var(--guide); stroke-width: 2; stroke-dasharray: 6 5; }
+.k-seat { fill: transparent; }
 .k-badge circle { stroke: var(--bg); stroke-width: 2; }
 .k-badge.k-yes circle { fill: var(--good); }
 .k-badge.k-yes path { stroke: var(--good-ink); }
@@ -1507,6 +1508,38 @@ function timelinePart(p) {
   }
   return `<g class="k-timeline">${fill}<line x1="${x}" y1="${y}" x2="${x + w}" y2="${y}" stroke="var(--ink)" stroke-width="2"/>${ticks}</g>`;
 }
+// The Learner's car cabin seen from above (Section 12): the car heading north, filling the drawing, with the
+// windshield at the top, the rear window at the bottom, the dashboard across the front and the floor between. The
+// seats are `seat` parts listed after it, so they draw over the floor. Not a target, and it has no fields. The
+// prompt says "You are driving.", and the steering wheel on the driver's seat (`wheel: true`) shows the same.
+function cabinPart() {
+  const body = `<rect class="k-body" x="46" y="14" width="228" height="292" rx="30" fill="var(--car-a)"/>` +
+    `<rect x="36" y="80" width="12" height="22" rx="3" fill="var(--car-a)"/><rect x="272" y="80" width="12" height="22" rx="3" fill="var(--car-a)"/>` +  // the mirrors
+    `<path d="M70 54 L250 54 L236 26 L84 26 Z" fill="var(--glass)"/>` +  // the windshield
+    `<path d="M80 272 L240 272 L230 294 L90 294 Z" fill="var(--glass)" opacity=".7"/>` +  // the rear window
+    `<rect x="62" y="58" width="196" height="210" rx="10" fill="#26272b"/>` +  // the floor
+    `<rect x="62" y="58" width="196" height="12" rx="4" fill="#3a3b40"/>`;  // the dashboard
+  return `<g class="k-cabin k-you">${body}</g>`;
+}
+// A seat seen from above (Section 12): a box target drawn like a lane box, the cushion filling it with a headrest
+// band at its top, nothing written in it. `id` makes it a target ("the front passenger seat", "the back seat";
+// the back seat is one bench). `wheel: true` draws the steering wheel ahead of it: the driver's seat, which is
+// not a target. `belt: true` draws a lap belt across it and a shoulder belt from its outer side, after the answer
+// (`then.parts`), because the belt is the answer.
+function seatPart(p, o) {
+  const x = p.x - p.w / 2, y = p.y - p.h / 2;
+  const cushion = `<rect x="${x + 3}" y="${y + 3}" width="${p.w - 6}" height="${p.h - 6}" rx="8" fill="#4a4b50"/>` +
+    `<rect x="${x + 3}" y="${y + 3}" width="${p.w - 6}" height="16" rx="6" fill="#5c5d63"/>`;  // the headrest band
+  const wheel = p.wheel ? `<g transform="translate(${p.x} ${y - 10})"><circle r="11" fill="none" stroke="#c9c7c2" stroke-width="4"/><line x1="-11" y1="0" x2="11" y2="0" stroke="#c9c7c2" stroke-width="3"/><circle r="3" fill="#c9c7c2"/></g>` : '';
+  // The shoulder belt runs from the seat's outer side (the right side of a seat right of the car's middle, else the
+  // left) down across the chest to the buckle at the far hip; the lap belt lies low across the seat.
+  const outer = p.x >= 160 ? 1 : -1;
+  const belt = p.belt ? `<g class="k-belt" stroke="#e6e3dd" stroke-width="6" stroke-linecap="round" fill="none">` +
+    `<line x1="${p.x + outer * (p.w / 2 - 10)}" y1="${y + 16}" x2="${p.x - outer * (p.w / 2 - 12)}" y2="${y + p.h - 10}"/>` +
+    `<line x1="${x + 10}" y1="${y + p.h - 14}" x2="${x + p.w - 10}" y2="${y + p.h - 14}"/></g>` : '';
+  // Only a seat with an `id` (a target) gets the dashed box, so the driver's seat is plainly not one.
+  return boxTarget(p, o, p.id ? 'k-lane k-seat' : 'k-seat', cushion + belt + wheel);
+}
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
 // `emergency: true` puts a red and blue light bar on the roof, flashing: an emergency vehicle (the prompt names the siren).
@@ -1564,6 +1597,8 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'steer') return steerPart(p, o);
     if (p.t === 'drink') return drinkPart(p);
     if (p.t === 'timeline') return timelinePart(p);
+    if (p.t === 'cabin') return cabinPart(p);
+    if (p.t === 'seat') return seatPart(p, o);
     if (p.t === 'rails') return railsPart(p);
     if (p.t === 'crossbuck') return crossbuckPart(p);
     if (p.t === 'bus') return busPart(p);
