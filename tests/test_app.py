@@ -2880,12 +2880,12 @@ def check_pass_lesson(browser, inst):
 
 def check_park_lesson(browser, inst):
     """The Section 8 lesson (parking) is offered to a Learner whose new facts come from Section 8; every question
-    has a fact and its own explanation per wrong pick; the four distance questions are choices among the test's own
-    numbers, each drawing one street with the fire hydrant, the crosswalk, the stop sign or the railroad crossing, and after
-    the answer the manual's distance drawn as a measure with your car parked at it; the four hill questions
+    has a fact and its own explanation per wrong pick; the four distance questions draw one street with the fire
+    hydrant, the crosswalk, the stop sign or the railroad crossing and three parking spaces side by side along the
+    curb, each with a measure saying its distance, the prompt says the three distances, and the one at the manual's number is the answer; the four hill questions
     draw the hill from the side with two wheel pictures side by side under it, the curb or the edge as the prompt
     says, and answer toward or away as the manual does; the pull-out question is a tap on the blue car; the bridge
-    and the 18 inches questions are choices; a wrong tap names the wheels; every question is acted on
+    and the 18 inches questions are choices; a wrong tap names the space or the wheels; every question is acted on
     to the end and the finished lesson is a record with one answer per fact."""
     print("\n[park lesson]")
     lid = inst.add_learner("Parker", "park password")
@@ -2915,27 +2915,35 @@ def check_park_lesson(browser, inst):
     check(out["kind"] == "tap" and out["prompt"].endswith("Who goes first? Tap the car.") and "signal" in out["prompt"] and "looked" in out["prompt"]
           and any(p["t"] == "car" and p.get("color") == "blue" and p.get("id") == out["answer"] for p in out["parts"]) and any(p["t"] == "path" for p in out["parts"]),
           "the pull-out question asks who goes first, with your signal on, and the blue car coming up behind is the answer")
-    # The four distance questions: a choice among the test's own numbers, the thing the prompt names drawn on one street,
-    # and after the answer the exact distance drawn as a measure with your car parked at it.
+    # The four distance questions: one street, the thing the prompt names, three spaces side by side along the curb at measured
+    # distances, the measures in the scene, and the middle one the closest space the law allows.
     LIMITS = {"b-250": ("fire hydrant", "hydrant", 15), "b-252": ("crosswalk", "crosswalk", 20), "b-253": ("stop sign", "sign", 30), "b-251": ("railroad crossing", "rails", 50)}
     dist = [s for s in steps if s["fact"] in LIMITS]
-    test_numbers = pg.evaluate("Object.fromEntries(QS.filter(q => q.day === 8).map(q => [q.id, [q.a, ...q.o].map(o => parseInt(o)).filter(n => n > 0).sort((a, b) => a - b)]))")
+    test_numbers = pg.evaluate("Object.fromEntries(QS.filter(q => q.day === 8).map(q => [q.id, [q.a, ...q.o].map(o => parseInt(o)).filter(n => n > 0)]))")
     def street(s):
         name, part, limit = LIMITS[s["fact"]]
-        numbers = [int(re.search(r"(\d+) feet", o).group(1)) for o in s["options"]]
-        asked = test_numbers[s["fact"]]
-        return (s["kind"] == "choose" and s["prompt"] == f"You are the red car. You want to park near the {name}. How close to it may you park?"
-                and any(p["t"] == part for p in s["parts"]) and not any(p["t"] == "measure" or p["t"] == "lane" for p in s["parts"])
-                and s["options"] == [f"You may park no closer than {n} feet from the {name}." for n in numbers] and sorted(numbers) == asked
-                and s["answer"] == f"You may park no closer than {limit} feet from the {name}." and f"{limit} feet" in s["say"]
-                and all(f"{limit} feet" in w for w in s["wrong"].values())
-                and any(p["t"] == "measure" and p["text"] == f"{limit} feet" for p in s["after"])
-                and any(p["t"] == "car" and p.get("you") and p["heading"] == "e" and p["y"] > 165 for p in s["after"]))
+        spaces = [p for p in s["parts"] if p["t"] == "space"]
+        measures = [p for p in s["parts"] if p["t"] == "measure"]
+        feet = {}
+        for t in s["targets"]:
+            m = re.search(r"the space (\d+) feet from the " + name, t["label"])
+            if m: feet[t["id"]] = int(m.group(1))
+        by_x = sorted(spaces, key=lambda p: -p["x"])  # nearest the thing first
+        gaps = [by_x[k]["x"] - by_x[k + 1]["x"] - 36 for k in range(len(by_x) - 1)]
+        legal = sorted((d for d in feet.values() if d > limit))
+        said = f"You are the red car. The three spaces are {feet.get('near')}, {feet.get('middle')} and {feet.get('far')} feet from the {name}. You want to park as close to it as the law allows. Which space do you use? Tap the space."
+        return (s["kind"] == "tap" and s["prompt"] == said
+                and any(p["t"] == part for p in s["parts"]) and len(spaces) == 3 and {p["id"] for p in spaces} == set(feet) == {t["id"] for t in s["targets"]}
+                and all(p["y"] == spaces[0]["y"] and p["w"] >= 30 and p["h"] >= 20 and "label" not in p for p in spaces) and all(10 <= g <= 110 for g in gaps)
+                and [p["id"] for p in by_x] == ["near", "middle", "far"] and feet["near"] < limit == feet["middle"] < feet["far"] and s["answer"] == "middle"
+                and sorted(m["text"] for m in measures) == sorted(f"{d} feet" for d in feet.values()) and s["highlight"] == "middle"
+                and {feet["near"], feet["far"]} <= set(test_numbers[s["fact"]])
+                and f"{limit} feet" in s["say"] and all(f"{limit} feet" in w for w in s["wrong"].values()) and f"{feet['middle']} feet" in s["wrong"]["near"] and f"{feet['middle']} feet" in s["wrong"]["far"])
     check(len(dist) == 4 and all(street(s) for s in dist),
-          "each distance question draws its thing, asks the manual's number among the test's own options, and draws that exact distance only after the answer")
+          "each distance question draws its thing and three spaces side by side with their measures, the middle space is at the manual's number, the others at the test's wrong numbers, and every explanation gives the limit")
     stop = next(s for s in dist if s["fact"] == "b-253")
-    check("stop sign" in stop["prompt"] and len([p for p in stop["parts"] if p["t"] == "road"]) == 2 and any(p["t"] == "sign" and p["kind"] == "stop" for p in stop["parts"])
-          and "traffic signal" in stop["say"], "the stop sign question draws the cross street with the stop sign at its corner, names the sign, and says the signal counts too")
+    check("stop sign" in stop["prompt"] and len([p for p in stop["parts"] if p["t"] == "road"]) == 2 and any(p["t"] == "sign" and p["kind"] == "stop" for p in stop["parts"]),
+          "the stop sign question draws the cross street with the stop sign at its corner, and the prompt names the sign")
     rail = next(s for s in dist if s["fact"] == "b-251")
     check(any(p["t"] == "crossbuck" and p.get("lights") == "off" and p.get("gate") == "none" for p in rail["parts"]), "the railroad question draws the crossbuck beside the tracks, lights off and no gate down")
     # The hill questions: the hill from the side on top, two wheel pictures side by side under it, the curb as the prompt says.
@@ -2974,23 +2982,29 @@ def check_park_lesson(browser, inst):
           "a wrong tap leads with Incorrect and the car picked, crosses it, rings the blue car, and explains that pick", shown[:160])
     pg.click("#stepNextBtn")
     first_choice = next(k for k, s in enumerate(steps) if s["kind"] != "tap")
-    wrong_wheels_done = False
+    wrong_space_done = wrong_wheels_done = False
     for k in range(1, len(steps)):
         st = steps[k]
         if st["kind"] == "tap":
             pg.wait_for_selector(f".k-target[data-t='{st['answer']}']")
-            check(pg.query_selector(".scene .k-hill .k-side") is not None and len(pg.query_selector_all(".scene .k-wheels")) == 2 and len(pg.query_selector_all(".scene .k-wheels-car")) == 2
-                  and pg.evaluate("[...document.querySelectorAll('.scene .k-target')].every(t => t.querySelector('text') === null)")
-                  and (pg.evaluate("document.querySelector('.scene .k-hill').textContent.includes('Curb')") == ("curb on your right" in st["prompt"])),
-                  f"question {k + 1} draws the hill from the side, labelled Curb only when there is one, and two wheel pictures with nothing written in them")
-            if not wrong_wheels_done:
-                # A wrong tap on the wheels names what was picked, crosses it, checks the answer, and explains that pick.
+            if st in dist:
+                check(len(pg.query_selector_all(".scene .k-space")) == 3 and len(pg.query_selector_all(".scene .k-target")) == 3 and pg.query_selector(".scene .k-measure") is not None
+                      and pg.evaluate("[...document.querySelectorAll('.scene .k-target')].every(t => t.querySelector('text') === null)"),
+                      f"question {k + 1} draws three parking spaces as targets with nothing written in them, and the measures in the scene")
+            if st in hills:
+                check(pg.query_selector(".scene .k-hill .k-side") is not None and len(pg.query_selector_all(".scene .k-wheels")) == 2 and len(pg.query_selector_all(".scene .k-wheels-car")) == 2
+                      and pg.evaluate("[...document.querySelectorAll('.scene .k-target')].every(t => t.querySelector('text') === null)")
+                      and (pg.evaluate("document.querySelector('.scene .k-hill').textContent.includes('Curb')") == ("curb on your right" in st["prompt"])),
+                      f"question {k + 1} draws the hill from the side, labelled Curb only when there is one, and two wheel pictures with nothing written in them")
+            if st in dist and not wrong_space_done or st in hills and not wrong_wheels_done:
+                # A wrong tap on a space or on the wheels names what was picked, crosses it, checks the answer, and explains that pick.
                 pick = next(t for t in st["targets"] if t["id"] != st["answer"])
                 pg.click(f".k-target[data-t='{pick['id']}']")
                 pg.wait_for_selector("#stepNextBtn")
                 check(pg.inner_text("#stepHead") == f"Incorrect. You picked {pick['label']}." and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None
                       and pg.inner_text("#stepText") == st["wrong"][pick["id"]], f"question {k + 1}: a wrong tap names the pick, crosses it, checks the answer, and explains that pick")
-                wrong_wheels_done = True
+                if st in dist: wrong_space_done = True
+                else: wrong_wheels_done = True
                 pg.click("#stepNextBtn")
                 continue
             pg.click(f".k-target[data-t='{st['answer']}']")
@@ -2998,32 +3012,25 @@ def check_park_lesson(browser, inst):
             check(pg.inner_text("#stepHead") == "Correct." and pg.query_selector(".k-ring") is not None and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
         else:
             pg.wait_for_selector("button.opt")
-            if st in dist:
-                check(pg.query_selector(".scene .k-measure") is None and pg.query_selector(".scene .k-you") is not None, f"question {k + 1} draws no measure before the answer")
             if k == first_choice:
-                # A wrong choice leads with Incorrect alone, the list marks the pick, the explanation is the one written for it, and the distance is drawn.
                 wrong = next(o for o in st["options"] if o != st["answer"])
                 pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
                 pg.wait_for_selector("#stepNextBtn")
                 check(pg.inner_text("#stepHead") == "Incorrect." and wrong in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right")
-                      and pg.inner_text("#stepText") == st["wrong"][wrong] and st["say"] not in pg.inner_text("#stage") and pg.query_selector(".scene .k-measure") is not None,
-                      "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, the explanation is the one written for that pick, and the distance is drawn")
+                      and pg.inner_text("#stepText") == st["wrong"][wrong] and st["say"] not in pg.inner_text("#stage"),
+                      "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation is the one written for that pick")
                 pg.click("#stepNextBtn")
                 continue
             pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
             pg.wait_for_selector("#stepNextBtn")
             check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
-            if st in dist:
-                limit = LIMITS[st["fact"]][2]
-                check(pg.query_selector(".scene .k-measure") is not None and f"{limit} feet" in pg.evaluate("document.querySelector('.scene').textContent"),
-                      f"after the answer, question {k + 1} draws the {limit} feet between your parked car and the thing")
         pg.click("#stepNextBtn")
     pg.wait_for_selector("#moreBtn")
     check(h2(pg) == "You finished the lesson for Section 8.", "the Section 8 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 8 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
-          and all(a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 3,
+          and all(a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 4,
           "the finished lesson is one record of type lesson with every Section 8 fact answered, the wrong taps and the wrong choice among them")
     ctx.close()
 
