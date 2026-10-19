@@ -3356,6 +3356,103 @@ def check_night_lesson(browser, inst):
           and all(a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 2,
           "the finished lesson is one record of type lesson with every Section 10 fact answered, the wrong choice and the wrong tap among them")
     ctx.close()
+    check_alcohol_lesson(browser, inst)
+
+
+def check_alcohol_lesson(browser, inst):
+    """The Section 11 lesson (alcohol and drugs) is offered to a Learner whose new facts come from Section 11; it has
+    no tap question, because no fact has exactly one correct thing to tap: every question is a choice about a stated
+    situation, with its own explanation per wrong pick; the beer and the shot are drawn from the side at their sizes
+    with nothing that answers the question, and the same square of alcohol under each afterwards; the three beers stand
+    over a timeline with nothing shaded, and the band to 3 hours is shaded afterwards; the BAC questions state the age
+    and are answered by the manual's numbers; a wrong choice leads with Incorrect alone; every question is acted on to
+    the end and the finished lesson is a record with one answer per fact."""
+    print("\n[alcohol lesson]")
+    lid = inst.add_learner("Tatum", "alcohol password")
+    store_for(inst, lid, "move", {"to": 11})  # new facts come from Section 11, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Tatum", "alcohol password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 11:"), "a Learner moved to Section 11 is offered its lesson before the Set", h1(pg))
+    pg.click("#lessonBtn")
+    pg.wait_for_selector("button.opt, .k-target")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
+                        "options: s.options || null, targets: s.targets || null, parts: s.scene ? s.scene.parts : [], after: s.then.parts || null, highlight: s.then.highlight || null}))")
+    facts = set(pg.evaluate("QS.filter(q => q.day === 11).map(q => q.id)"))
+    check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts and all(s["fact"] for s in steps),
+          "the lesson has 10 to 15 questions, every one with a fact, and teaches every Section 11 fact", len(steps))
+    check(all(s["kind"] == "choose" for s in steps), "every question is a choice, because no fact has exactly one correct thing to tap")
+    check(all(s["wrong"] and set(s["wrong"]) == {o for o in s["options"] if o != s["answer"]} for s in steps), "every question has its own explanation for every wrong pick")
+    check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps), "every option is a complete sentence or a plain Yes or No")
+    check(not any(p["t"] in ("road", "car") for s in steps for p in s["parts"]), "nothing in the lesson is drawn on a road")
+    by_fact = lambda f: [s for s in steps if s["fact"] == f]
+    same = by_fact("c-126")[0]
+    drinks = [p for p in same["parts"] if p["t"] == "drink"]
+    check({p["kind"] for p in drinks} == {"beer", "shot"} and not any(p.get("alcohol") for p in drinks) and all(p.get("label", True) for p in drinks)
+          and same["after"] and all(p.get("alcohol") for p in same["after"] if p["t"] == "drink") and "12 ounces" in same["prompt"] and "1 ounce" in same["prompt"]
+          and "about the same" in same["answer"] and all("about the same" in w or "about as much" in w for w in same["wrong"].values()),
+          "the drink question draws the beer and the shot with their sizes and nothing that answers it, says the sizes, and draws the alcohol in each afterwards")
+    hours = by_fact("c-090")[0]
+    line = next(p for p in hours["parts"] if p["t"] == "timeline")
+    check(len([p for p in hours["parts"] if p["t"] == "drink" and p["kind"] == "beer"]) == 3 and not line.get("fill") and "three beers" in hours["prompt"] and "hour" in hours["prompt"]
+          and "three hours" in hours["answer"] and hours["after"] and next(p for p in hours["after"] if p["t"] == "timeline")["fill"] == 3
+          and all("three hours" in w for w in hours["wrong"].values()),
+          "the hours question draws three beers over a timeline with nothing shaded, is answered by about three hours, and shades the band to 3 hours afterwards")
+    sober = by_fact("c-096")[0]
+    check("time" in sober["answer"].lower() and {o.lower().split()[0] for o in sober["options"] if o != sober["answer"]} >= {"drinking", "taking", "exercising"}
+          and all("time" in w.lower() for w in sober["wrong"].values()), "the sobering question offers coffee, a cold shower and exercise, and is answered by time alone")
+    bac = by_fact("c-091")[0]
+    check("more intoxicated" in bac["answer"] and "BAC" in bac["prompt"], "the BAC question is answered by more intoxicated")
+    skills = by_fact("c-093")[0]
+    check(all(w in skills["answer"] for w in ("lertness", "oncentration", "eaction time", "oordination")), "the skills question is answered by all four skills")
+    adult = by_fact("c-097")[0]
+    young = by_fact("c-121")[0]
+    check("21 or older" in adult["prompt"] and "0.08 percent" in adult["answer"] and {o for o in adult["options"] if o != adult["answer"]} == {"It is 0.10 percent.", "It is 0.15 percent.", "It is 0.20 percent."}
+          and ("18" in young["prompt"] or "16 to 20" in young["prompt"]) and "0.02 percent" in young["answer"] and {o for o in young["options"] if o != young["answer"]} == {"It is 0.05 percent.", "It is 0.08 percent.", "It is 0.10 percent."},
+          "the two BAC questions state the age and are answered by 0.08 percent at 21 and older and 0.02 percent at 16 to 20, with the test's other numbers")
+    drugs = by_fact("c-089")[0]
+    check("same" in drugs["answer"] and "prescri" in drugs["prompt"], "the drug question is about a prescribed drug and answered by the same penalty as for alcohol")
+    consent = by_fact("c-092")
+    check(len(consent) == 2 and consent[0]["answer"] == "Yes" and "Implied Consent" in consent[0]["say"] and "Implied Consent" in consent[1]["prompt"] and "agree to be tested" in consent[1]["answer"],
+          "the Implied Consent law is used in a situation first, answered Yes, then named")
+    altered = by_fact("c-134")
+    check(len(altered) == 2 and altered[0]["answer"] == "Yes" and "altering" in altered[1]["answer"], "the altered license is asked as a situation first, answered Yes, then as the test asks it")
+    check(not any(re.search(r"\b(right\.|yield|step|screen|case)\b", (s["prompt"] + " " + s["say"]).lower()) for s in steps), "no banned word reaches the Learner")
+    # On screen: the first question is the drink choice; a wrong choice leads with Incorrect alone and explains that pick.
+    first = steps[0]
+    check(first is same and len(pg.query_selector_all(".scene .k-drink")) == 2 and pg.query_selector(".scene .k-beer") is not None and pg.query_selector(".scene .k-shot") is not None
+          and "Alcohol" not in pg.evaluate("document.querySelector('.scene').textContent") and "12 ounces" in pg.evaluate("document.querySelector('.scene').textContent") and "1 ounce" in pg.evaluate("document.querySelector('.scene').textContent"),
+          "the first question is the drink choice, with the beer and the shot drawn, their sizes written, and no alcohol square")
+    wrong = next(o for o in first["options"] if o != first["answer"])
+    pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check(shown.startswith(f"Lesson for Section 11: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+          and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown and pg.evaluate("document.querySelector('.scene').textContent").count("Alcohol") == 2,
+          "a wrong choice leads with Incorrect alone, the list marks the pick, the explanation is the one written for that pick, and the alcohol in each drink is drawn", shown[:160])
+    pg.click("#stepNextBtn")
+    for k in range(1, len(steps)):
+        st = steps[k]
+        pg.wait_for_selector("button.opt")
+        if st is hours:
+            check(len(pg.query_selector_all(".scene .k-beer")) == 3 and pg.query_selector(".scene .k-timeline") is not None and pg.query_selector(".scene .k-timeline .k-fill") is None,
+                  "the hours question draws three beers and the timeline with nothing shaded")
+        pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
+        pg.wait_for_selector("#stepNextBtn")
+        check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
+        if st is hours:
+            check(pg.query_selector(".scene .k-timeline .k-fill") is not None, "after the choice the band to 3 hours is shaded")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 11.", "the Section 11 lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 11 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
+          and all(a["format"] == "choice" for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 1,
+          "the finished lesson is one record of type lesson with every Section 11 fact answered, the wrong choice among them")
+    ctx.close()
 
 
 def main():

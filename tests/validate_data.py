@@ -273,7 +273,7 @@ def check_lesson_wording(name, steps):
             if field == "prompt" and len(text.split()) > 60:
                 errors.append(f"{name} {sid} prompt: more than 60 words")
         for field, say in [t for t in texts if t[0] in ("say", "wrong")]:
-            if len(re.findall(r"[.?]", say)) > 3:
+            if len(re.findall(r"[.?](?!\d)", say)) > 3:  # a period inside a number (0.08 percent) ends no sentence
                 errors.append(f"{name} {sid} {field}: more than three sentences: {say!r}")
         parts = (step.get("scene") or {}).get("parts", [])
         roads = [p for p in parts if p.get("t") in ("road", "circle-road")]
