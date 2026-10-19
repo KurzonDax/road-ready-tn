@@ -34,9 +34,9 @@ _Avoid_: Variant, version, paraphrase
 One of the 12 topic groups of 10 Facts, in the order new Facts arrive. Done when all 10 are learned.
 _Avoid_: Day, lesson, chapter
 
-**Set**:
-One run of screens from Start the set to Set done, built from due Facts and new Facts, or a Practice test.
-_Avoid_: Run, round, attempt
+**Practice quiz**:
+One run of up to 10 counted questions, built fresh each time from the Facts that are due: a group to compare, Facts whose due time has come, and, in a Section with no Lesson file, new Facts met cold. Offered only when something is due; never numbered or explained on a Learner screen. Its record type is still `daily`, and the Helper's History may number them.
+_Avoid_: Set, run, round, attempt, quiz on its own
 
 **Standing**:
 How well a Fact is known, worked out from its counted questions: new, seen, learned or solid. A Standing only rises.
@@ -47,41 +47,35 @@ A Fact whose Standing says it should be asked again now: after a wrong answer at
 _Avoid_: Overdue, scheduled
 
 **Counted question**:
-A question whose answer changes a Fact's Standing. A First look and a re-ask are not counted.
+A question whose answer changes a Fact's Standing: every Lesson question with a Fact, every Practice quiz question and every Practice test question. A First look and a re-ask are not counted.
 _Avoid_: Scored question
 
 **First look**:
-An unscored question shown before a Fact's Rule screen, the first time the Learner meets the Fact.
+An unscored question shown before a Fact's Rule screen, the first time the Learner meets a Fact from a Section that has no Lesson file. With a Lesson for every Section it is never shown.
 _Avoid_: Pre-test, guess
 
 **Rule screen**:
-The screen with a Fact's answer and its explanation in plain words. It comes once, when the Learner first meets the Fact.
+The screen with a Fact's answer and its explanation in plain words, after its First look. Only for a Section with no Lesson file.
 _Avoid_: Rule card, flashcard, hint
 
 **Lesson**:
-The screens that teach one Section's Facts before any question on them. On every screen the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what happens and the rule. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and its answers change no Standing.
+The questions that teach one Section's Facts, and where the Learner meets them. On every question the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what happens and the rule. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and each answer in it is the Fact's first counted answer (`docs/adr/0003-lesson-answers-count.md`), so the Fact comes back in a Practice quiz only when it is Due. The home screen offers the next Lesson whenever nothing is due.
 _Avoid_: Tutorial, reading, chapter
 
 **Compare**:
 One screen that shows a group of easily mixed-up Facts side by side, followed by questions on just that group.
 _Avoid_: Contrast, review
 
-**Review**:
-No longer a stage. A Fact answered wrong comes back in the next Set instead.
-
-**Redo**:
-No longer a stage. A Section is not done again; its Facts come back when they are due.
-
 **Practice test**:
 30 questions drawn from all 120, like the real test. Unlocked once every Fact is learned.
 _Avoid_: Mock exam, quiz
 
 **Progress**:
-Each Fact's Standing, the Section new Facts come from, and the Practice test scores.
+Each Fact's Standing, the Lessons finished, the Section new Facts come from, and the Practice test scores. Worked out on the page from the records, never stored.
 _Avoid_: State, save
 
 **History**:
-Every Set a Learner has finished, with each answer and when it was given. Resetting Progress keeps the History.
+Every Lesson, Practice quiz and Practice test a Learner has finished, with each answer and when it was given. Resetting Progress keeps the History.
 _Avoid_: Log, activity
 
 **Study session**:

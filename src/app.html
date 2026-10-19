@@ -74,8 +74,8 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .small { font-size: 15px; }
 .home { display: flex; flex-direction: column; gap: 14px; }
 
-/* Your progress: a plain status track. Every finished section looks the same; scores live in the "See your section scores" panel. */
-/* This Set at a glance: one tile per fact asked. */
+/* Your progress: one bar of the questions learned, marked off into the 12 Sections (route). */
+/* The practice quiz at a glance: one tile per fact asked. */
 .strip-wrap { display: flex; flex-direction: column; gap: 10px; }
 .strip { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .tile { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; }
@@ -295,12 +295,12 @@ let LESSONS = {}, LESSON_STEP = {}; // lessons by Section (data/lessons), and ea
 // The learning engine (docs/specs/learning-engine.md, docs/adr/0002-*). Every rule below reads these.
 const HOUR = 60 * 60 * 1000;
 const FIRST_LOOK = true;          // a new fact starts with an unscored question; false starts with its rule screen
-const COUNTED_TARGET = 10;        // counted questions in a Set, at most
-const NEW_PER_SET = 5;            // new facts in a Set, at most
-const MIN_SET = 5;                // a Set with fewer counted questions is filled with not-yet-due facts (GAP + 1)
+const COUNTED_TARGET = 10;        // counted questions in a practice quiz, at most
+const NEW_PER_SET = 5;            // new facts in a practice quiz, at most
+const MIN_SET = 5;                // a quiz with fewer counted questions is filled with not-yet-due facts (GAP + 1)
 const GAP = 4;                    // screens for other facts between a fact's rule screen and its counted question, at least
 const RE_ASK_GAP = 3;             // question screens for other facts between a wrong counted answer and its re-ask
-const RE_ASK_CAP = 4;             // re-asks in one Set, at most
+const RE_ASK_CAP = 4;             // re-asks in one practice quiz, at most
 const SPACING_MS = 12 * HOUR;     // two right answers count as separate successes only this far apart
 const LADDER_MS = [12 * HOUR, 48 * HOUR]; // after the first and second spaced success, how long until due again
 const MAINTENANCE_MS = 7 * 24 * HOUR;     // a solid fact is due again after this long
@@ -334,7 +334,7 @@ const copyRecords = () => copy.records.concat(copy.pending);
 // or waiting, plus `run`: the unfinished Set as saved.
 let S = null;
 function workOut() { S = Object.assign(progressFrom(copyRecords()), { run: copy.unfinished }); }
-let run = null; // the Set on screen
+let run = null; // the practice quiz or test on screen
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
@@ -416,9 +416,11 @@ function importedStart(state) {
   if (Array.isArray(state.tests)) p.tests = state.tests.filter(n => Number.isInteger(n) && n >= 0);
   return p;
 }
-// A counted answer changes a fact's standing. First looks and re-asks are stored but never counted;
-// answers from before the learning engine have no role and all count.
-const isCounted = a => a.role === undefined || a.role === 'counted';
+// A counted answer changes a fact's standing. A lesson's answers count: a lesson is where a fact is met,
+// and its answer is the fact's first counted answer (docs/adr/0003-*), so the fact comes back only when
+// the ladder says. First looks and re-asks are stored but never counted; answers from before the
+// learning engine have no role and all count.
+const isCounted = a => a.role === undefined || a.role === 'counted' || a.role === 'lesson';
 // The fact an answer belongs to: the fact its question is a wording of (the 120 questions are their own
 // facts), or null for a question no longer shipped.
 const factOf = q => BY_ID[q] ? BY_ID[q].fact || q : null;
@@ -436,11 +438,11 @@ function factFrom(answers) {
   }
   return f;
 }
-// A Learner's Progress from their records (docs/adr/0001-*, 0002-*), counting only those after the
+// A Learner's Progress from their records (docs/adr/0001-*, 0002-*, 0003-*), counting only those after the
 // latest Reset: {facts: {id: factFrom()}, answers: {id: [{at, right}]}, tests: [right counts],
-// cursor: the Section new facts come from, unlockMove: the latest Move is to 13, sets: daily Sets so far,
-// groupAt: {group id: when the newest daily Set with that group block finished}, byWording: {question id:
-// its counted answers}}.
+// cursor: the Section new facts come from, unlockMove: the latest Move is to 13, sets: practice quizzes so
+// far (the Helper's History numbers them), groupAt: {group id: when the newest quiz with that group block
+// finished}, byWording: {question id: its counted answers}, lessons: {Section: when its lesson last finished}}.
 function progressFrom(records) {
   const answers = Object.fromEntries(QS.map(q => [q.id, []]));
   const p = { facts: {}, answers, tests: [], cursor: 1, unlockMove: false, sets: 0, groupAt: {}, byWording: {}, lessons: {} };
@@ -481,28 +483,43 @@ function groupDue(p, g, now) {
   const last = p.groupAt[g.id];
   return last === undefined || g.facts.some(f => p.answers[f.id].some(a => !a.right && a.at > last));
 }
-// The facts the next Set asks about, by the spec's steps 1 to 4: {group: the first due group, or null;
-// block: its facts; due; fresh: new facts; fill: not-yet-due facts added to reach MIN_SET}. Each but
-// group is a list of fact ids. A Set with a group block takes no new facts.
+// What the next practice quiz asks, by the spec's steps 1 to 4, and the lesson that comes next: {group: the
+// first due group, or null; block: its facts; due; fresh: new facts asked cold; fill: not-yet-due facts added
+// to reach MIN_SET; lesson: the Section whose lesson is next, or null}. Each but group and lesson is a list of
+// fact ids. A quiz with a group block takes no new facts.
+// New facts are those with no answers at all. Walking the Sections in cursor order, the first one with new
+// facts whose lesson is not finished is the lesson to offer, and no new fact is taken from it or past it: its
+// facts are met in the lesson, whose answers count, so they come back only when the ladder says. New facts
+// before it, in a Section with no lesson file, are asked cold with a first look and a rule screen.
 function setPlan(p, now) {
   const group = GROUPS.find(g => groupDue(p, g, now)) || null, block = group ? group.facts.map(f => f.id) : [];
   const outside = id => !block.includes(id);
   const room = COUNTED_TARGET - block.length;
   const due = dueFacts(p, now).filter(outside).slice(0, room);
-  let fresh = [];
-  if (!block.length) {
-    const room2 = room - due.length;
-    fresh = cursorOrder(p).flatMap(day => QS.filter(q => q.day === day && !p.facts[q.id].asked).map(q => q.id))
-      .slice(0, Math.max(0, Math.min(NEW_PER_SET, room2)));
+  let fresh = [], lesson = null;
+  for (const day of cursorOrder(p)) {
+    const unmet = QS.filter(q => q.day === day && !p.facts[q.id].asked).map(q => q.id);
+    if (!unmet.length) continue;
+    if (LESSONS[day] && p.lessons[day] === undefined) { lesson = day; break; }
+    fresh.push(...unmet);
   }
+  fresh = block.length ? [] : fresh.slice(0, Math.max(0, Math.min(NEW_PER_SET, room - due.length)));
+  // Fill facts are not due yet and were last answered SPACING_MS or more ago, so answering them counts and nothing
+  // taught minutes ago is asked again. A quiz with first looks may also take facts answered more recently, so
+  // that the gap between a rule screen and its counted question always holds.
   let fill = [];
   const short = MIN_SET - (block.length + due.length + fresh.length);
   if (short > 0) {
-    fill = QS.filter(q => p.facts[q.id].asked && !isDue(p.facts[q.id], now) && outside(q.id))
-      .sort((a, b) => p.facts[a.id].lastAt - p.facts[b.id].lastAt).slice(0, short).map(q => q.id);
+    const spare = QS.filter(q => p.facts[q.id].asked && !isDue(p.facts[q.id], now) && outside(q.id))
+      .sort((a, b) => p.facts[a.id].lastAt - p.facts[b.id].lastAt).map(q => q.id);
+    fill = spare.filter(id => p.facts[id].lastAt <= now - SPACING_MS).slice(0, short);
+    if (fill.length < short && fresh.some(id => !taught(p, id))) fill.push(...spare.filter(id => !fill.includes(id)).slice(0, short - fill.length));
   }
-  return { group, block, due, fresh, fill };
+  return { group, block, due, fresh, fill, lesson };
 }
+// Whether there is a practice quiz to take: a group to compare, a fact due, or a new fact asked cold. Fill facts
+// alone never make one.
+const quizDue = plan => plan.block.length + plan.due.length + plan.fresh.length > 0;
 // A group block: the group's Compare screen, then one counted question per fact, shuffled. In a group
 // with a reverse stem and 4 or more facts, every second fact that may be reversed is asked the other
 // way round: the stem with the fact's answer, and the group's labels as the choices.
@@ -520,7 +537,7 @@ const choiceOf = q => ({ q, format: 'choice', options: shuffle([BY_ID[q].a, ...B
 // The wording a fact's next counted choice question uses: the one with the fewest counted answers,
 // the fact's own question first on a tie, then the others in id order (#36).
 const wordingFor = (p, id) => WORDINGS[id].reduce((best, q) => (p.byWording[q] || 0) < (p.byWording[best] || 0) ? q : best);
-// The next Set as a list of screens ({kind, id, format, options, chosen, at, group}), from setPlan
+// The next practice quiz as a list of screens ({kind, id, format, options, chosen, at, group}), from setPlan
 // by the spec's step 5: the group block, if any, then each new fact's first look and rule screen,
 // with due and fill questions spread between them, and its counted question at least GAP screens
 // for other facts later.
@@ -694,9 +711,10 @@ window.addEventListener('online', () => {
   if (unfinishedUnsent) sendUnfinished();
 });
 
-// A finished Set's name in the Helper's History, from its record's type, Section and Set number.
+// A finished quiz, test or lesson's name in the Helper's History, from its record's type, Section and number
+// (the Helper's History counts practice quizzes since the latest Reset; the Learner never sees the number).
 // 'day', 'redo' and 'review' are Sets from before the learning engine.
-const setName = (type, section, number) => type === 'daily' ? `Set ${number}` : type === 'test' ? 'Practice test' : type === 'lesson' ? `Lesson for Section ${section}`
+const setName = (type, section, number) => type === 'daily' ? `Practice quiz ${number}` : type === 'test' ? 'Practice test' : type === 'lesson' ? `Lesson for Section ${section}`
   : type === 'review' ? 'Review' : type === 'redo' ? `Section ${section} again` : `Section ${section}`;
 
 let painted = false, onHome = false; // onHome: the Learner's home screen is showing
@@ -730,81 +748,45 @@ function route(p = S, before = null) {
     </section>`;
 }
 
-function sectionsPanel() {
-  const rows = DAYS.map(d => {
-    const facts = sectionFacts(S, d.day), solid = facts.filter(isSolid).length;
-    return `<li><div><span class="sname">Section ${d.day}: ${esc(d.title)}</span><span class="sscore">You have learned ${facts.filter(isLearned).length} of its ${facts.length} questions.${solid ? ` ${solid} of them ${solid === 1 ? 'is' : 'are'} solid.` : ''}</span></div></li>`;
-  }).join('');
-  return `<details class="scores"><summary>See each section</summary><ul>${rows}</ul></details>`;
-}
-// How many facts are learned, and solid, said in full; "solid" is explained where it first appears.
-function factsLine(p = S) {
-  const l = learnedCount(p), s = solidCount(p);
-  return `You have learned ${l} of the ${QS.length} questions.` +
-    (s ? ` ${s === 1 ? '1 of them is' : `${s} of them are`} solid: you answered ${s === 1 ? 'it' : 'each one'} correctly 3 times, at least 12 hours apart.` : '');
-}
-// A Set made of fill facts only: nothing is due and nothing is new.
-const fillOnly = plan => !plan.block.length && !plan.due.length && !plan.fresh.length;
-// Joins parts as a list a person would say: "a", "a and b", "a, b and c".
-const listOf = parts => parts.length < 2 ? parts.join('') : `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}`;
-// The line under "Set N" on the home screen: what the next Set holds, in full sentences.
-function planLine(plan) {
-  const k = plan.fresh.length, f = plan.fill.length, d = plan.due.length;
-  if (!QS.some(q => S.facts[q.id].asked)) return `This set has ${plural(k, 'new question', 'new questions')}. You see them one at a time. There is no time limit.`;
-  if (fillOnly(plan)) return `Nothing is due. This set asks ${plural(f, 'question', 'questions')} you already know.`;
-  const has = listOf([d ? `${plural(d, 'question', 'questions')} to answer again` : '', f ? `${plural(f, 'question', 'questions')} you already know` : '',
-    k ? plural(k, 'new question', 'new questions') : ''].filter(Boolean));
-  const block = plan.block.length ? `This set starts by showing ${plan.block.length} answers side by side: ${plan.group.title}.` : '';
-  return [block, has ? `${block ? 'Then it has' : 'This set has'} ${has}.` : ''].filter(Boolean).join(' ');
-}
-
 // The fine print at the bottom of the Learner's home screen, with a quiet Sign out beside it.
 const disclaimer = `<footer class="fine"><p>This is a practice app. It is not made by the State of Tennessee. The questions come from the Tennessee Comprehensive Driver License Manual, July 1, 2022 edition.</p><button class="link" type="button" id="signOutBtn">Sign out</button></footer>`;
 
+// The home screen shows one thing to do, named plainly and never explained: the practice quiz or practice
+// test stopped partway through; else, once Ready, the practice tests; else the practice quiz when facts are
+// due; else the next lesson; else the practice tests when they are open; else "Nothing is due today." What
+// comes after it, if anything, is a quieter block under it. Then the bar of questions learned and the Lessons.
 function renderHome() {
   run = null; lesson = null;
   const saved = S.run && unpackRun(S.run);
   if (S.run && !saved) { copy.unfinished = S.run = null; saveCopy(); }
-  const plan = setPlan(S, Date.now()), open = unlocked(), isReady = ready();
-  // "Start a practice test" is the main button only when the next Set would go over known facts alone.
-  const testFirst = !saved && open && fillOnly(plan);
-  // A Set stopped partway through is one block on the home screen (#32). A daily Set's Continue takes
-  // the place of Start the set; a Practice test's comes first, and the other buttons ask before
-  // throwing its saved answers away.
-  // Once Practice tests are where the Learner is (nothing new is left, or they are Ready), they come
-  // first and take the page heading; the next Set follows as a quieter block.
-  // A Section's lesson comes before the Set that would first ask about its facts, as the main button.
-  const lessonDay = saved ? null : lessonNext(plan), teach = lessonDay && LESSONS[lessonDay];
-  const lessonBlock = teach ? `<section class="home"><h1 tabindex="-1">Section ${lessonDay}: ${esc(teach.title)}</h1>
-      <p class="sub">This lesson has ${teach.steps.length} questions. On each one you do something first. Then you see what happens, and the rule. The questions on these rules come after, in Set ${S.sets + 1}.</p>
-      <button class="btn primary" type="button" id="lessonBtn">Start the lesson</button></section>` : '';
-  const testsFirst = open && (testFirst || isReady) && !saved, testsH = testsFirst ? 'h1' : 'h2', setH = testsFirst || teach ? 'h2' : 'h1';
-  const set = saved && saved.kind === 'daily'
-    ? `<h1 tabindex="-1">Set ${saved.number}</h1>${stoppedLine(saved)}`
-    : `<${setH} tabindex="-1">Set ${S.sets + 1}</${setH}>${saved ? stoppedLine(saved) : ''}<p class="sub">${esc(planLine(plan))}</p>
-      <button class="btn${saved || testFirst || teach ? '' : ' primary'}" type="button" id="startBtn">Start Set ${S.sets + 1}</button>`;
+  const plan = setPlan(S, Date.now()), open = unlocked(), isReady = ready(), due = quizDue(plan);
+  const teach = !saved && plan.lesson ? LESSONS[plan.lesson] : null;
+  const main = saved ? (saved.kind === 'daily' ? 'quiz' : 'test') : isReady && open ? 'test' : due ? 'quiz' : teach ? 'lesson' : open ? 'test' : 'none';
+  const H = what => what === main ? 'h1' : 'h2', primary = what => what === main ? ' primary' : '';
+  const quiz = saved && saved.kind === 'daily' ? `<h1 tabindex="-1">Practice quiz</h1>${stoppedLine(saved)}`
+    : due ? `<${H('quiz')} tabindex="-1">Practice quiz</${H('quiz')}>
+      <button class="btn${primary('quiz')}" type="button" id="startBtn">Start the practice quiz</button>` : '';
+  const lessonBlock = teach ? `<${H('lesson')} tabindex="-1">Lesson: Section ${plan.lesson}</${H('lesson')}><p class="theme">${esc(teach.title)}</p>
+      <button class="btn${primary('lesson')}" type="button" id="lessonBtn">Start the lesson</button>` : '';
   const scores = S.tests.slice(-5);
-  const tests = !open ? '' : `<section class="home">
-      ${isReady ? `<div class="sign"><${testsH} tabindex="-1">Ready for the test</${testsH}><p>You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p></div>`
-        : `<${testsH} tabindex="-1">Practice tests</${testsH}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more correct out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p>`}
+  const tests = !open ? '' : `${isReady ? `<div class="sign"><${H('test')} tabindex="-1">Ready for the test</${H('test')}><p>You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p></div>`
+        : `<${H('test')} tabindex="-1">Practice tests</${H('test')}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more correct out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p>`}
       ${scores.length ? `<p class="sub">${scores.length === 1 ? 'Your last practice test' : `Your last ${scores.length} practice tests, oldest first`}: ${scores.join(', ')} correct out of ${TEST_LEN}.</p>` : ''}
-      ${saved && saved.kind === 'test' ? '' : `<button class="btn${testFirst ? ' primary' : ''}" type="button" id="testBtn">${isReady ? 'Take another practice test' : 'Start a practice test'}</button>`}
-    </section>`;
+      ${saved && saved.kind === 'test' ? stoppedLine(saved) : `<button class="btn${primary('test')}" type="button" id="testBtn">${isReady ? 'Take another practice test' : 'Start a practice test'}</button>`}`;
+  const blocks = { quiz, lesson: lessonBlock, test: tests, none: main === 'none' ? '<h1 tabindex="-1">Nothing is due today.</h1>' : '' };
+  const later = ['quiz', 'lesson', 'test'].filter(what => what !== main && blocks[what]).map(what => `<div class="later">${blocks[what]}</div>`).join('');
   paint(`
     <section class="home">
-      ${testsFirst ? tests : ''}
-      ${lessonBlock}
-      ${testsFirst || teach ? `<div class="later">${set}</div>` : set}
+      ${blocks[main]}
+      ${later}
       ${canSave ? '' : '<p class="warn">This browser is not keeping a copy of your answers on this device. If you close this page while offline, answers not yet saved will be lost.</p>'}
-      ${testsFirst ? '' : tests}
       ${route()}
       ${lessonsPanel()}
-      ${sectionsPanel()}
       ${disclaimer}
     </section>`, 'h1');
   onHome = true;
   if ($('startBtn')) $('startBtn').onclick = () => startOver(saved, 'daily');
-  if ($('lessonBtn')) $('lessonBtn').onclick = () => { startLesson(lessonDay); toTop(); };
+  if ($('lessonBtn')) $('lessonBtn').onclick = () => { startLesson(plan.lesson); toTop(); };
   wireLessons();
   if ($('testBtn')) $('testBtn').onclick = () => startOver(saved, 'test');
   if (saved) {
@@ -814,28 +796,28 @@ function renderHome() {
   $('signOutBtn').onclick = () => confirmSignOut(renderHome);
 }
 
-// What the Learner was doing in a Set stopped partway through, for a sentence ("You stopped partway through …").
-const doing = saved => saved.kind === 'daily' ? `Set ${saved.number}` : 'a practice test';
+// What the Learner was doing when they stopped partway through, for a sentence ("You stopped partway through …").
+const doing = saved => saved.kind === 'daily' ? 'a practice quiz' : 'a practice test';
+const theOne = kind => kind === 'daily' ? 'the practice quiz' : 'the practice test';
 // Every answered question screen, first looks included: what starting over clears.
 const answeredSoFar = saved => saved.screens.filter(s => isQuestion(s) && s.chosen !== null).length;
 // The questions the Learner is counted on: counted questions and re-asks, not first looks.
 const scoredScreens = r => r.screens.filter(s => s.kind === 'counted' || s.kind === 'reask');
 function stoppedLine(saved) {
   const scored = scoredScreens(saved), done = scored.filter(s => s.chosen !== null).length;
-  const again = saved.kind === 'daily' ? `Start Set ${saved.number} again from the beginning` : 'Start the practice test again from the beginning';
   return `<div class="stopped">
-      <p>You stopped partway through ${doing(saved)}. You answered ${done} of its ${scored.length} questions. Your answers are saved.</p>
-      <button class="btn primary" type="button" id="resumeBtn">Continue where I stopped</button>
-      <button class="link" type="button" id="overBtn">${again}. Your answers in it will be cleared.</button>
+      <p>You stopped partway through ${doing(saved)}. You answered ${done} of its ${scored.length} questions.</p>
+      <button class="btn primary" type="button" id="resumeBtn">Continue ${theOne(saved.kind)}</button>
+      <button class="link" type="button" id="overBtn">Start ${theOne(saved.kind)} again from the beginning. Your answers in it will be cleared.</button>
     </div>`;
 }
 function dropUnfinished() { copy.unfinished = S.run = null; saveCopy(); }
 
-// Starts a daily Set or a Practice test (`kind`). With answers saved in a Set stopped partway
+// Starts a practice quiz or a Practice test (`kind`). With answers saved in one stopped partway
 // through, it asks first and says that those answers will be cleared.
 function startOver(saved, kind) {
   if (!saved || !answeredSoFar(saved)) { if (saved) dropUnfinished(); return start(kind); }
-  const what = kind === 'test' ? 'a practice test' : `Set ${S.sets + 1}`;
+  const what = kind === 'test' ? 'a practice test' : 'the practice quiz';
   paint(`
     <section class="home">
       <h2 tabindex="-1">Start ${what}?</h2>
@@ -848,7 +830,7 @@ function startOver(saved, kind) {
   $('newSetYes').onclick = () => { dropUnfinished(); start(kind); };
 }
 
-// A daily Set is built from the records (buildSet); a Practice test is 30 of the 120, shuffled.
+// A practice quiz (record type `daily`) is built from the records (buildSet); a Practice test is 30 of the 120, shuffled.
 function start(kind) {
   const screens = kind === 'test'
     ? shuffle(QS).slice(0, TEST_LEN).map(q => ({ kind: 'counted', id: q.id, format: 'choice', options: shuffle([q.a, ...q.o]), chosen: null, at: null }))
@@ -864,13 +846,13 @@ function visual(q) { return q.sign ? SIGNS[q.sign] || '' : q.swatch ? SIGNS.swat
 const quitLink = '<button class="link" type="button" id="quitBtn">Stop for now and save my place</button>';
 function wireQuit() { $('quitBtn').onclick = () => { keepRun(); renderHome(); window.scrollTo(0, 0); }; }
 
-// The line above every screen of a Set: what kind of screen it is, and a bar of the counted
+// The line above every screen of a quiz or test: what kind of screen it is, and a bar of the counted
 // questions and re-asks answered so far, so it never looks full while questions are left.
 function progressLine() {
   const s = run.screens[run.i], counted = run.screens.filter(x => x.kind === 'counted'), scored = scoredScreens(run);
   const done = scored.filter(x => x.chosen !== null).length, n = counted.indexOf(s) + 1;
   const where = run.kind === 'test' ? `Practice test: question ${n} of ${counted.length}`
-    : `Set ${run.number}: ${s.kind === 'counted' ? `question ${n} of ${counted.length}` : s.kind === 'first_look' ? 'a new question'
+    : `Practice quiz: ${s.kind === 'counted' ? `question ${n} of ${counted.length}` : s.kind === 'first_look' ? 'a new question'
       : s.kind === 'reask' ? 'a question from earlier' : s.kind === 'contrast' ? 'answers side by side' : 'the answer'}`;
   return `<div class="progress"><span>${where}</span><div class="bar" aria-hidden="true"><span style="width:${done / scored.length * 100}%"></span></div></div>`;
 }
@@ -904,7 +886,7 @@ function renderCompare() {
 }
 
 // A new fact's answer and its explanation. It comes once, right after the fact's first look, and
-// leads with the result of that look; the fact's counted question comes later in the Set.
+// leads with the result of that look; the fact's counted question comes later in the quiz.
 function renderRule() {
   const s = run.screens[run.i], q = BY_ID[s.id], prev = run.screens[run.i - 1];
   const look = prev && prev.kind === 'first_look' && prev.id === s.id ? prev : null;
@@ -917,7 +899,7 @@ function renderRule() {
           : `<h1 class="outcome not" id="ruleHead" tabindex="-1">The answer is: ${esc(q.a)}.</h1><p class="picked">You picked: ${esc(look.chosen)}. This answer does not count.</p>`}
         ${visual(q) ? `<div class="visual">${visual(q)}</div>` : ''}
         <p class="rule">${esc(q.why)}</p>
-        <p class="back">This question comes back later in this set.</p>
+        <p class="back">This question comes back later in this practice quiz.</p>
       </div>
       <button class="btn primary" type="button" id="ruleGoBtn">Go on</button>
       ${quitLink}
@@ -936,7 +918,7 @@ function feedbackLines(s) {
   const reasked = run.kind === 'daily' && s.kind === 'counted' && run.screens.some((x, j) => j > run.i && x.kind === 'reask' && x.id === s.id);
   return { lead: `The answer is: ${answerOf(s)}.`, picked: `You picked: ${s.chosen}.`,
     other: other ? `${s.chosen} is the answer to a different question: ${other.q}` : '',
-    back: reasked ? 'This question comes back later in this set, and in your next set.' : 'This question comes back in your next set.' };
+    back: reasked ? 'This question comes back later in this practice quiz, and in your next practice quiz.' : 'This question comes back in your next practice quiz.' };
 }
 
 function renderQuestion() {
@@ -955,11 +937,11 @@ function renderQuestion() {
       ${lines.picked ? `<p class="picked">${esc(lines.picked)}</p>` : ''}
       ${lines.other ? `<p class="also">${esc(lines.other)}</p>` : ''}
     </div>` : '';
-  // After a wrong answer on a fact a lesson teaches, its lesson step can be looked at again, without leaving the Set.
+  // After a wrong answer on a fact a lesson teaches, its lesson step can be looked at again, without leaving the quiz.
   const peek = lines && !isRight(s) && run.kind === 'daily' && LESSON_STEP[s.id] ? '<button class="link peek" type="button" id="peekBtn">See how this works</button>' : '';
   const explain = lines ? `<div class="explain"><p class="why">${esc(q.why)}</p>${lines.back ? `<p class="back">${esc(lines.back)}</p>` : ''}${peek}</div>` : '';
   const above = s.kind === 'first_look' ? '<p class="sub">This is a new question. Pick the answer you think is correct. This answer does not count.</p>'
-    : s.kind === 'reask' ? '<p class="sub">You saw this question earlier in this set. Here it is again.</p>' : '';
+    : s.kind === 'reask' ? '<p class="sub">You saw this question earlier in this practice quiz. Here it is again.</p>' : '';
   paint(`
     <div class="home">
       ${progressLine()}
@@ -982,7 +964,7 @@ function renderQuestion() {
 
 // After a wrong counted answer at screen `p`, the same fact is asked once more right after the
 // RE_ASK_GAPth question screen for another fact (at the end, when fewer are left), at most
-// RE_ASK_CAP times a Set. A first look and its rule screen are never split. Returns whether it was.
+// RE_ASK_CAP times a quiz. A first look and its rule screen are never split. Returns whether it was.
 function insertReask(r, p) {
   if (r.reasks >= RE_ASK_CAP) return false;
   const s = r.screens[p];
@@ -1020,13 +1002,13 @@ function next() {
 
 function finish() {
   const r = run, before = S;
-  // The finished Set waits in `pending` until the server has it; Progress is worked out again with it.
+  // The finished quiz or test waits in `pending` until the server has it; Progress is worked out again with it.
   const rec = setRecord(r), mine = copy;
   copy.pending.push(rec);
   copy.unfinished = null;
   saveCopy();
   workOut();
-  // Once the server has the finished Set, the unfinished one is cleared there too.
+  // Once the server has the finished quiz or test, the unfinished one is cleared there too.
   unfinishedUnsent = true;
   sendPending().then(() => { if (copy === mine && !mine.pending.includes(rec)) sendUnfinished(); });
   run = null;
@@ -1039,17 +1021,17 @@ function finish() {
   toTop();
 }
 
-// The end of a daily Set: what changed, in full sentences, and what comes next. No score.
-// One tile per fact the Set asked, in the order asked: an accent tile with a check when its newest
-// answer is right, an outlined tile with a return arrow when it comes back in the next Set.
+// The end of a practice quiz: what changed, in full sentences, and what comes next. No score.
+// One tile per fact the quiz asked, in the order asked: an accent tile with a check when its newest
+// answer is right, an outlined tile with a return arrow when it comes back in the next quiz.
 const CHECK = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const AGAIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/><path d="M19.5 4v4.5H15" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function setStrip(ids) {
   const got = ids.filter(id => S.facts[id].lastRight !== false).length, back = ids.length - got;
   const tiles = ids.map((id, k) => S.facts[id].lastRight === false ? `<li class="tile back" style="--k:${k}">${AGAIN}</li>` : `<li class="tile got" style="--k:${k}">${CHECK}</li>`).join('');
   return `<div class="strip-wrap">
-      <ul class="strip" aria-label="${plural(got, 'question', 'questions')} answered correctly. ${plural(back, 'question comes', 'questions come')} back in your next set.">${tiles}</ul>
-      <p class="strip-key" aria-hidden="true"><span class="key-item"><span class="tile mini got">${CHECK}</span>Correct</span>${back ? `<span class="key-item"><span class="tile mini back">${AGAIN}</span>Comes back in your next set</span>` : ''}</p>
+      <ul class="strip" aria-label="${plural(got, 'question', 'questions')} answered correctly. ${plural(back, 'question comes', 'questions come')} back in your next practice quiz.">${tiles}</ul>
+      <p class="strip-key" aria-hidden="true"><span class="key-item"><span class="tile mini got">${CHECK}</span>Correct</span>${back ? `<span class="key-item"><span class="tile mini back">${AGAIN}</span>Comes back in your next practice quiz</span>` : ''}</p>
     </div>`;
 }
 function setDone(r, before, missed, missedList) {
@@ -1059,27 +1041,29 @@ function setDone(r, before, missed, missedList) {
   const back = ids.filter(id => S.facts[id].lastRight === false).length;
   const lines = [learned ? `You learned the answers to ${plural(learned, 'new question', 'new questions')}.` : '',
     solid ? `${plural(solid, 'question is', 'questions are')} now solid: you answered ${solid === 1 ? 'it' : 'each one'} correctly 3 times, at least 12 hours apart.` : ''].filter(Boolean);
-  const plan = setPlan(S, Date.now()), more = !fillOnly(plan), nextSet = `Start Set ${S.sets + 1}`;
-  const buttons = more
-    ? `<button class="btn primary" type="button" id="moreBtn">${nextSet}</button><button class="btn" type="button" id="homeBtn">I'm done for now</button>`
-    : `<button class="btn primary" type="button" id="homeBtn">I'm done for now</button>${unlocked() ? '<button class="btn" type="button" id="testBtn">Start a practice test</button>' : ''}
-      <p class="sub">Nothing is due. The next set asks ${plural(plan.fill.length, 'question', 'questions')} you already know.</p><button class="link" type="button" id="moreBtn">${nextSet}</button>`;
   paint(`
     <section class="home">
-      <h2 tabindex="-1">You finished Set ${r.number}.</h2>
+      <h2 tabindex="-1">You finished the practice quiz.</h2>
       ${setStrip(ids)}
       ${lines.length ? `<p class="theme">${lines.join(' ')}</p>` : ''}
       ${route(S, before)}
-      ${buttons}
+      ${nextButtons()}
       ${missedList}
     </section>`, 'h2');
   wireDone();
+}
+// The buttons after a practice quiz or a lesson: the next practice quiz first while one is due, else
+// I'm done for now, with a Practice test beside it when they are open. Nothing is explained.
+function nextButtons() {
+  return quizDue(setPlan(S, Date.now()))
+    ? `<button class="btn primary" type="button" id="moreBtn">Start the practice quiz</button><button class="btn" type="button" id="homeBtn">I'm done for now</button>`
+    : `<button class="btn primary" type="button" id="homeBtn">I'm done for now</button>${unlocked() ? '<button class="btn" type="button" id="testBtn">Start a practice test</button>' : ''}`;
 }
 
 // The end of a Practice test: the count and what it is short of, never a pass or fail verdict (#35).
 function testDone(r, missed, missedList) {
   const counted = r.screens.filter(s => s.kind === 'counted'), right = counted.filter(isRight).length, st = streak();
-  const back = missed.length ? ' The questions you missed come back in your next set.' : '';
+  const back = missed.length ? ' The questions you missed come back in your next practice quiz.' : '';
   let title, note, sign = false;
   if (st >= READY_STREAK) {
     sign = true;
@@ -1615,13 +1599,8 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
       ${surfaces}${marks}${rest}</svg>`;
 }
 
-// A fact's Section has a finished lesson: the Set asks it as a plain counted question, with no first look.
+// A fact's Section has a finished lesson: a quiz asks it as a plain counted question, with no first look.
 const taught = (p, id) => p.lessons[BY_ID[id].day] !== undefined;
-// The Section whose lesson should come before the next Set: the first new fact's Section that has a lesson not yet finished.
-function lessonNext(plan, p = S) {
-  const id = plan.fresh.find(id => LESSONS[BY_ID[id].day] && !taught(p, id));
-  return id ? BY_ID[id].day : null;
-}
 function lessonsPanel() {
   const list = Object.values(LESSONS);
   if (!list.length) return '';
@@ -1636,7 +1615,7 @@ function startLesson(section) {
   run = null;
   renderStep();
 }
-// One lesson step, shown for a wrong answer in a Set: its result state, then back to the question.
+// One lesson step, shown for a wrong answer in a quiz: its result state, then back to the question.
 function peekStep(id) {
   const at = LESSON_STEP[id];
   lesson = { lesson: LESSONS[at.section], i: at.k, acts: { [at.k]: { chosen: null, right: true, at: null } }, peek: true };
@@ -1701,8 +1680,9 @@ function nextStep() {
   $('announce').textContent = '';
   if (lesson.i < lesson.lesson.steps.length - 1) { lesson.i++; toTop(); renderStep(); } else finishLesson();
 }
-// A finished lesson is a record of type `lesson`: one answer per step with a fact, role `lesson`,
-// so the History has it and the Set knows the Section is taught. Lesson answers never change a standing.
+// A finished lesson is a record of type `lesson`: one answer per step with a fact, role `lesson`, so the
+// History can tell a lesson from a quiz. Its answers count (docs/adr/0003-*): the lesson is where the fact
+// is met, and the fact comes back in a practice quiz only when the ladder says.
 function lessonRecord(L) {
   const now = new Date().toISOString();
   const answers = L.lesson.steps.map((st, k) => st.fact && L.acts[k]
@@ -1717,14 +1697,11 @@ function finishLesson() {
   workOut();
   sendPending();
   lesson = null;
-  const plan = setPlan(S, Date.now());
   paint(`
     <section class="home">
       <h2 tabindex="-1">You finished the lesson for Section ${L.lesson.section}.</h2>
       <p class="theme">${esc(L.lesson.title)}</p>
-      <p class="sub">The questions on these rules come in your sets, starting with Set ${S.sets + 1}. The lesson stays open under Lessons on your home screen.</p>
-      <button class="btn primary" type="button" id="moreBtn">Start Set ${S.sets + 1}</button>
-      <button class="btn" type="button" id="homeBtn">I'm done for now</button>
+      ${nextButtons()}
     </section>`, 'h2');
   toTop();
   wireDone();
@@ -1967,13 +1944,15 @@ async function signOut() {
 function whereNow(p) {
   return `${learnedCount(p)} of ${QS.length} facts learned, ${solidCount(p)} solid.`;
 }
-// What the Learner's next Set holds, worded for the Helper, or Ready for the test.
+// What comes next for the Learner, worded for the Helper: the next practice quiz and the next lesson, or
+// Ready for the test.
 function nextSetLine(p, now) {
   if (ready(p)) return `Ready for the test: ${streak(p)} practice tests in a row at ${READY_SCORE} or more`;
-  const plan = setPlan(p, now);
+  const plan = setPlan(p, now), lesson = plan.lesson ? `the lesson for Section ${plan.lesson}` : '';
+  if (!quizDue(plan)) return lesson ? `Next: ${lesson}.` : 'Nothing is due.';
   const parts = [plan.block.length ? `Compare: ${plan.group.title}` : '', plan.due.length ? `${plan.due.length} come back` : '',
     plan.fill.length ? `${plan.fill.length} to keep fresh` : '', plan.fresh.length ? `${plan.fresh.length} new` : ''];
-  return `Next set: ${parts.filter(Boolean).join(', ')}.`;
+  return `Next practice quiz: ${parts.filter(Boolean).join(', ')}.${lesson ? ` Then ${lesson}.` : ''}`;
 }
 // The unfinished Set (as the page saves it, see packRun), or null when it can't be read. One saved
 // before the learning engine has `items` and a Section (`dayNum`) instead of screens.
@@ -1981,7 +1960,7 @@ function unfinishedLine(u) {
   if (!u || typeof u !== 'object') return null;
   if (Array.isArray(u.screens) && u.screens.length) {
     const qs = u.screens.filter(s => s && isQuestion(s)), done = qs.filter(s => s.chosen !== null && s.chosen !== undefined).length;
-    return `Unfinished: ${u.kind === 'test' ? 'Practice test' : `Set ${u.number}`}, ${done} of ${qs.length} answered`;
+    return `Unfinished: ${u.kind === 'test' ? 'Practice test' : `Practice quiz ${u.number}`}, ${done} of ${qs.length} answered`;
   }
   if (!Array.isArray(u.items) || !u.items.length) return null;
   const where = setName(u.kind, u.dayNum, null);
@@ -1990,7 +1969,7 @@ function unfinishedLine(u) {
 }
 
 const answerTime = a => { const t = Date.parse(a.at); return Number.isNaN(t) ? 0 : t; };
-// A Set's counted answers: how many were right, of how many. First looks and re-asks are left out.
+// A quiz, test or lesson's counted answers: how many were right, of how many. First looks and re-asks are left out.
 const setScore = d => { const counted = d.answers.filter(isCounted); return { right: counted.filter(a => a.right).length, of: counted.length }; };
 // The time of the newest answer in the whole History, or null when there is none.
 function lastStudied(records) {
@@ -2003,7 +1982,7 @@ const SESSION_GAP = 30 * 60 * 1000; // a Study session has no gap longer than 30
 // Study sessions over the whole History, newest first, with each Reset and Move as a line of its
 // own: {kind: 'session', start, end, sets: [{type, section, number, right, of}]}, {kind: 'reset', at}
 // or {kind: 'move', at, to}. A Set counts as finished in the Study session that holds its last answer.
-// A daily Set's number counts the daily Sets since the Reset before it; other Sets have none.
+// A practice quiz's number counts the quizzes since the Reset before it; tests and lessons have none.
 function studySessions(records) {
   const ordered = orderRecords(records), sets = ordered.filter(r => r.kind === 'set'), number = new Map();
   let n = 0;
@@ -2197,7 +2176,7 @@ function learnerPage({ records, unfinished }, learner) {
   const lines = studySessions(records);
   const history = lines.length ? `<ul class="sessions">${lines.map(e => e.kind === 'session'
     ? `<li><p class="when">${whenText(e.start)}</p><p>${lengthText(Date.parse(e.end) - Date.parse(e.start))}</p>` +
-      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s.type, s.section, s.number)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>No Sets finished.</p>') + '</li>'
+      (e.sets.length ? `<ul>${e.sets.map(s => `<li>${setName(s.type, s.section, s.number)}: ${s.right} of ${s.of}</li>`).join('')}</ul>` : '<p>Nothing finished.</p>') + '</li>'
     : `<li><p class="when">${whenText(e.at)}</p><p>${historyLine(e)}</p></li>`).join('')}</ul>`
     : '<p>No Study sessions yet.</p>';
 
@@ -2336,7 +2315,7 @@ function resetProgress(learner, back) {
   const name = learner.name;
   confirmAction({
     question: `Put ${name} back at the start of Section 1?`,
-    detail: 'Every fact goes back to new, and Practice tests start over. The History of finished Sets is kept.',
+    detail: 'Every fact goes back to new, and Practice tests start over. The History is kept.',
     yes: 'Yes, reset progress', no: back,
     act: async () => {
       try { await change(`/api/learners/${learner.id}/reset-progress`, {}); } catch (e) {
@@ -2362,7 +2341,7 @@ function moveLearner(learner, back, to) {
       const chosen = Number($('fTo').value), choice = moveChoice(chosen);
       confirmAction({
         question: `${choice} for ${name}?`,
-        detail: 'Every fact keeps its standing, and the History is kept. Any unfinished Set is dropped.',
+        detail: 'Every fact keeps its standing, and the History is kept. An unfinished practice quiz or test is dropped.',
         yes: `Yes, ${choice[0].toLowerCase()}${choice.slice(1)}`, no: () => moveLearner(learner, back, chosen),
         act: async () => {
           try { await change(`/api/learners/${learner.id}/move`, { to: chosen }); } catch (e) {
