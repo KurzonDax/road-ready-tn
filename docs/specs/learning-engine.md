@@ -389,7 +389,7 @@ Each phase is one PR to `main`, in this order; a phase builds on the merged one 
 - Build output fields: `compact()` (`build.py:48-65`).
 - `numbers()` and `plain()` helpers, and `check_facts` (`tests/validate_data.py:73-115`).
 - Counts: 120 app facts in 12 Sections; 803 bank questions; 149 tagged with `fact`; 96 app facts with one wording, 21 with two, 2 with three, 1 with five; 22 app facts whose answer is a number (19 as digits, 3 as words); 15 wrong choices across 12 facts equal another fact's answer (Python over `data/`, 2026-10-17).
-- The 15 groups name 56 distinct facts, all in the sections (checked 2026-10-17).
+- The 15 groups name 55 distinct facts, all in the sections (checked 2026-10-17; 56 until d-138, the school-bus distance, left the bank on 2026-10-18).
 
 ## Not verified
 
