@@ -1,0 +1,906 @@
+{
+  "section": 10,
+  "title": "Night, weather, and emergencies (skids, flooding, breakdowns)",
+  "steps": [
+    {
+      "id": "s10-01",
+      "fact": "c-042",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "night"
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 250,
+            "heading": "n"
+          },
+          {
+            "t": "label",
+            "x": 266,
+            "y": 62,
+            "text": "A person walking"
+          },
+          {
+            "t": "ped",
+            "id": "ped",
+            "x": 240,
+            "y": 40
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 250,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, driving at night with your low beams on. A person in dark clothes is walking at the roadside, past the end of your headlight beams. Can you see the person yet?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "You cannot see the person yet. At night you see only as far as your headlights light the road, and the person is past the end of the beams.",
+        "wrong": {
+          "Yes": "Your headlights do not light the road where the person is walking, past the end of the beams. At night you see only as far as your headlights light the road, so you cannot see the person yet."
+        }
+      },
+      "rule": "Driving at night is more dangerous than driving in the daytime, because your headlights limit how far you can see."
+    },
+    {
+      "id": "s10-02",
+      "fact": "c-042",
+      "kind": "choose",
+      "prompt": "How does driving at night compare with driving in the daytime?",
+      "options": [
+        "It is safer, because there is less traffic.",
+        "It is safer, so you can drive faster.",
+        "It is more dangerous, because your headlights limit how far you can see.",
+        "It is just as safe, as long as your lights are on."
+      ],
+      "answer": "It is more dangerous, because your headlights limit how far you can see.",
+      "then": {
+        "say": "It is more dangerous, because your headlights limit how far you can see. A dark animal, a dark car or a person in dark clothes is hard to see until your headlights light it, so you drive slower at night.",
+        "wrong": {
+          "It is safer, because there is less traffic.": "There is less traffic at night, but the chance of a serious crash is much greater than in the daytime. Your headlights limit how far you can see, so driving at night is more dangerous.",
+          "It is safer, so you can drive faster.": "At night you drive slower, so that you can stop within the distance your headlights let you see. Driving at night is more dangerous, because your headlights limit how far you can see.",
+          "It is just as safe, as long as your lights are on.": "Even with your lights on, the distance you can see clearly at night is greatly reduced. Driving at night is more dangerous, because your headlights limit how far you can see."
+        }
+      },
+      "rule": "Driving at night is more dangerous than driving in the daytime, because your headlights limit how far you can see."
+    },
+    {
+      "id": "s10-03",
+      "fact": "b-001",
+      "kind": "choose",
+      "prompt": "You are driving, and the sun set 30 minutes ago. Does the law require your headlights to be on now?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "say": "The law requires your headlights to be on from 30 minutes after sunset until 30 minutes before sunrise, so they must be on now.",
+        "wrong": {
+          "No": "The law's time for headlights begins 30 minutes after sunset, and the sun set 30 minutes ago. So the law requires your headlights to be on now."
+        }
+      },
+      "rule": "By law your headlights must be on from 30 minutes after sunset until 30 minutes before sunrise."
+    },
+    {
+      "id": "s10-04",
+      "fact": "b-001",
+      "kind": "choose",
+      "prompt": "By law, when must your headlights be on at night?",
+      "options": [
+        "They must be on from sunset until sunrise.",
+        "They must be on from 30 minutes after sunset until 30 minutes before sunrise.",
+        "They must be on from 1 hour after sunset until 1 hour before sunrise.",
+        "They must be on from 15 minutes after sunset until 15 minutes before sunrise."
+      ],
+      "answer": "They must be on from 30 minutes after sunset until 30 minutes before sunrise.",
+      "then": {
+        "say": "They must be on from 30 minutes after sunset until 30 minutes before sunrise.",
+        "wrong": {
+          "They must be on from sunset until sunrise.": "The law does not start the time at sunset or end it at sunrise. Your headlights must be on from 30 minutes after sunset until 30 minutes before sunrise.",
+          "They must be on from 1 hour after sunset until 1 hour before sunrise.": "The law's time is 30 minutes, not 1 hour, so waiting 1 hour after sunset leaves your headlights off when they must be on. They must be on from 30 minutes after sunset until 30 minutes before sunrise.",
+          "They must be on from 15 minutes after sunset until 15 minutes before sunrise.": "The law's time is 30 minutes, not 15 minutes. Your headlights must be on from 30 minutes after sunset until 30 minutes before sunrise."
+        }
+      },
+      "rule": "By law your headlights must be on from 30 minutes after sunset until 30 minutes before sunrise."
+    },
+    {
+      "id": "s10-05",
+      "fact": "c-050",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "night"
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 280,
+            "heading": "n",
+            "high": true
+          },
+          {
+            "t": "headlight",
+            "x": 130,
+            "y": 150,
+            "heading": "s"
+          },
+          {
+            "t": "headlight",
+            "x": 130,
+            "y": 56,
+            "heading": "s"
+          },
+          {
+            "t": "measure",
+            "from": [
+              80,
+              262
+            ],
+            "to": [
+              80,
+              168
+            ],
+            "text": "500 feet",
+            "side": "w"
+          },
+          {
+            "t": "measure",
+            "from": [
+              246,
+              262
+            ],
+            "to": [
+              246,
+              74
+            ],
+            "text": "1,000 feet",
+            "side": "e"
+          },
+          {
+            "t": "car",
+            "id": "near",
+            "x": 130,
+            "y": 150,
+            "heading": "s",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "far",
+            "x": 130,
+            "y": 56,
+            "heading": "s",
+            "color": "green"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 280,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, driving at night with your high beams on. The blue car coming toward you is 500 feet away, and the green car behind it is 1,000 feet away. Which car is close enough that you must dim your high beams for it? Tap the car.",
+      "targets": [
+        {
+          "id": "near",
+          "label": "the blue car"
+        },
+        {
+          "id": "far",
+          "label": "the green car"
+        }
+      ],
+      "answer": "near",
+      "then": {
+        "highlight": "near",
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "night"
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 280,
+            "heading": "n"
+          },
+          {
+            "t": "headlight",
+            "x": 130,
+            "y": 150,
+            "heading": "s"
+          },
+          {
+            "t": "headlight",
+            "x": 130,
+            "y": 56,
+            "heading": "s"
+          },
+          {
+            "t": "measure",
+            "from": [
+              80,
+              262
+            ],
+            "to": [
+              80,
+              168
+            ],
+            "text": "500 feet",
+            "side": "w"
+          },
+          {
+            "t": "measure",
+            "from": [
+              246,
+              262
+            ],
+            "to": [
+              246,
+              74
+            ],
+            "text": "1,000 feet",
+            "side": "e"
+          },
+          {
+            "t": "car",
+            "id": "near",
+            "x": 130,
+            "y": 150,
+            "heading": "s",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "far",
+            "x": 130,
+            "y": 56,
+            "heading": "s",
+            "color": "green"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 280,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You dim your high beams for the blue car. You must dim them when you meet a vehicle within 500 feet, about the length of one city block. Their glare can blind the other driver.",
+        "wrong": {
+          "far": "The green car is 1,000 feet away, and you must dim your high beams for a vehicle within 500 feet, so it is not close enough yet. The blue car is 500 feet away, so you dim them for it now."
+        }
+      },
+      "rule": "At night you must dim your high beams when you meet or overtake a vehicle within 500 feet."
+    },
+    {
+      "id": "s10-06",
+      "fact": "c-050",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "night"
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 280,
+            "heading": "n",
+            "high": true
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 110,
+            "heading": "n"
+          },
+          {
+            "t": "measure",
+            "from": [
+              250,
+              262
+            ],
+            "to": [
+              250,
+              128
+            ],
+            "text": "500 feet",
+            "side": "e"
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 190,
+            "y": 110,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 280,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, driving at night with your high beams on. You are following the blue car, 500 feet behind it. Do you dim your high beams?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "Yes",
+      "then": {
+        "say": "You dim your high beams when you follow a vehicle within 500 feet. The glare of your high beams in the blue car's mirrors can blind its driver.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "night"
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 280,
+            "heading": "n"
+          },
+          {
+            "t": "headlight",
+            "x": 190,
+            "y": 110,
+            "heading": "n"
+          },
+          {
+            "t": "measure",
+            "from": [
+              250,
+              262
+            ],
+            "to": [
+              250,
+              128
+            ],
+            "text": "500 feet",
+            "side": "e"
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 190,
+            "y": 110,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 280,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "wrong": {
+          "No": "The glare of your high beams in the blue car's mirrors can blind its driver. You dim your high beams when you follow a vehicle within 500 feet, and the blue car is 500 feet ahead."
+        }
+      },
+      "rule": "At night you must dim your high beams when you meet, follow or overtake a vehicle within 500 feet."
+    },
+    {
+      "id": "s10-07",
+      "fact": "c-043",
+      "kind": "choose",
+      "prompt": "You are driving in fog at night. Which lights do you use?",
+      "options": [
+        "You use your high beams.",
+        "You use your parking lights only.",
+        "You use your fog lights only.",
+        "You use your low beams."
+      ],
+      "answer": "You use your low beams.",
+      "then": {
+        "say": "You use your low beams. In fog, the light of high beams reflects off the fog back into your eyes. Low beams put the light on the road, so you see better and other drivers see you.",
+        "wrong": {
+          "You use your high beams.": "In fog, the light of your high beams reflects off the fog back into your eyes, so you see less. You use your low beams, which put the light on the road and help other drivers see you.",
+          "You use your parking lights only.": "Driving with only your parking lights on in fog is against the law, because their small size can make other drivers think your car is farther away than it is. You use your low beams, which put the light on the road and help other drivers see you.",
+          "You use your fog lights only.": "Driving with only your fog lights on is against the law. You use your low beams, which put the light on the road and help other drivers see you."
+        }
+      },
+      "rule": "In fog you use your low beams, because they let you see better and help other drivers see you."
+    },
+    {
+      "id": "s10-08",
+      "fact": "c-063",
+      "kind": "choose",
+      "prompt": "Your car starts to hydroplane on a wet road: its tires ride up on a layer of water and lose their grip on the road. What do you do?",
+      "options": [
+        "You slow down gradually by letting up on the gas.",
+        "You slam on the brakes.",
+        "You speed up a little to push through the water.",
+        "You turn the steering wheel sharply to one side."
+      ],
+      "answer": "You slow down gradually by letting up on the gas.",
+      "then": {
+        "say": "You let up on the gas and slow down gradually. While the tires ride on the water, they do not have the grip to steer or to brake. Hard braking or a sharp turn can make the car skid or spin.",
+        "wrong": {
+          "You slam on the brakes.": "The tires riding on the water have no grip to brake with, so slamming on the brakes can make the car skid. You slow down gradually by letting up on the gas.",
+          "You speed up a little to push through the water.": "Hydroplaning is more likely at higher speed, so speeding up makes it worse. You slow down gradually by letting up on the gas.",
+          "You turn the steering wheel sharply to one side.": "The tires riding on the water have no grip to steer with, and a sharp turn can make the car skid or spin. You slow down gradually by letting up on the gas."
+        }
+      },
+      "rule": "If your car starts to hydroplane, you slow down gradually by letting up on the gas."
+    },
+    {
+      "id": "s10-09",
+      "fact": "b-045",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 172,
+            "center": "yellow"
+          },
+          {
+            "t": "path",
+            "from": [
+              166,
+              112
+            ],
+            "to": [
+              128,
+              118
+            ]
+          },
+          {
+            "t": "steer",
+            "id": "left",
+            "x": 81,
+            "y": 250,
+            "w": 148,
+            "h": 132,
+            "turn": "left"
+          },
+          {
+            "t": "steer",
+            "id": "right",
+            "x": 239,
+            "y": 250,
+            "w": 148,
+            "h": 132,
+            "turn": "right"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 178,
+            "y": 96,
+            "heading": "n",
+            "color": "red",
+            "you": true,
+            "tilt": 26
+          }
+        ]
+      },
+      "prompt": "You are the red car, and your car does not have anti-lock brakes. The rear of your car is sliding to the left. Which way do you turn the steering wheel? Tap the steering wheel.",
+      "targets": [
+        {
+          "id": "left",
+          "label": "the steering wheel turned to the left"
+        },
+        {
+          "id": "right",
+          "label": "the steering wheel turned to the right"
+        }
+      ],
+      "answer": "left",
+      "then": {
+        "highlight": "left",
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 172,
+            "center": "yellow"
+          },
+          {
+            "t": "steer",
+            "id": "left",
+            "x": 81,
+            "y": 250,
+            "w": 148,
+            "h": 132,
+            "turn": "left"
+          },
+          {
+            "t": "steer",
+            "id": "right",
+            "x": 239,
+            "y": 250,
+            "w": 148,
+            "h": 132,
+            "turn": "right"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 184,
+            "y": 96,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You turn the steering wheel to the left, the way the rear of your car is sliding. That brings the front of the car back in line with the rear and straightens it. As soon as the car begins to straighten, you turn the steering wheel back so that the car does not swing the other way.",
+        "wrong": {
+          "right": "Turning the steering wheel to the right, away from the way the rear is sliding, does not bring the front of the car back in line with the rear. You turn the steering wheel to the left, the way the rear is sliding, and the car straightens."
+        }
+      },
+      "rule": "Without anti-lock brakes, when your car starts to skid you take your foot off the brake and turn the steering wheel in the direction of the skid."
+    },
+    {
+      "id": "s10-10",
+      "fact": "b-045",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "path",
+            "from": [
+              166,
+              176
+            ],
+            "to": [
+              128,
+              182
+            ]
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 178,
+            "y": 160,
+            "heading": "n",
+            "color": "red",
+            "you": true,
+            "tilt": 26
+          }
+        ]
+      },
+      "prompt": "You are the red car, and your car does not have anti-lock brakes. The rear of your car is sliding to the left, and your foot is on the brake. What do you do with the brake?",
+      "options": [
+        "You press the brake harder.",
+        "You pump the brake.",
+        "You take your foot off the brake.",
+        "You keep the brake pressed as it is."
+      ],
+      "answer": "You take your foot off the brake.",
+      "then": {
+        "say": "You take your foot off the brake and steer in the direction of the skid. Until the car slows, the brakes do not work and can make the car skid more. Wheels that roll let you steer the car back in line.",
+        "wrong": {
+          "You press the brake harder.": "Until the car slows, the brakes do not work, and pressing harder can make the car skid more. You take your foot off the brake and steer in the direction of the skid.",
+          "You pump the brake.": "Pumping the brake is still braking, and until the car slows, braking can make the car skid more. You take your foot off the brake and steer in the direction of the skid.",
+          "You keep the brake pressed as it is.": "Until the car slows, the brakes do not work, and keeping them pressed can make the car skid more. You take your foot off the brake and steer in the direction of the skid."
+        }
+      },
+      "rule": "Without anti-lock brakes, when your car starts to skid you take your foot off the brake and turn the steering wheel in the direction of the skid."
+    },
+    {
+      "id": "s10-11",
+      "fact": "c-044",
+      "kind": "choose",
+      "prompt": "You are driving on snow and ice. What does braking hard and keeping the pedal down often do?",
+      "options": [
+        "It stops the car faster on the ice.",
+        "It locks the front wheels, so you lose steering control.",
+        "It keeps the brakes warm, so they do not freeze.",
+        "It makes the tires grip the road better."
+      ],
+      "answer": "It locks the front wheels, so you lose steering control.",
+      "then": {
+        "say": "It locks the front wheels, and front wheels that do not roll cannot steer the car, so you lose steering control. You keep your speed low enough for snow and ice that you never need to brake hard.",
+        "wrong": {
+          "It stops the car faster on the ice.": "Braking hard on ice locks the front wheels, and locked wheels slide on the ice instead of gripping it. You lose steering control, so you keep a speed at which you never need to brake hard.",
+          "It keeps the brakes warm, so they do not freeze.": "Holding the brake down does not protect the brakes from the cold. It locks the front wheels, and front wheels that do not roll cannot steer, so you lose steering control.",
+          "It makes the tires grip the road better.": "Braking hard on ice does the opposite: it locks the front wheels, and locked wheels slide instead of gripping the road. You lose steering control."
+        }
+      },
+      "rule": "Braking hard and keeping the pedal down on snow and ice can lock the front wheels, so you lose steering control."
+    },
+    {
+      "id": "s10-12",
+      "fact": "c-075",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "water",
+            "x": 100,
+            "y": 60,
+            "w": 120,
+            "h": 90
+          },
+          {
+            "t": "label",
+            "x": 266,
+            "y": 108,
+            "text": "Flood water"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 260,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, and flood water covers the road ahead of you. What do you do?",
+      "options": [
+        "You drive through slowly in low gear.",
+        "You drive through quickly to keep your speed up.",
+        "You follow another car through the water.",
+        "You turn around and find another way."
+      ],
+      "answer": "You turn around and find another way.",
+      "then": {
+        "say": "You turn around and find another way. The water may be deeper than it looks, and the road under it may be washed out. Even a heavy car floats in moving water.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "water",
+            "x": 100,
+            "y": 60,
+            "w": 120,
+            "h": 90
+          },
+          {
+            "t": "label",
+            "x": 266,
+            "y": 108,
+            "text": "Flood water"
+          },
+          {
+            "t": "path",
+            "from": [
+              190,
+              236
+            ],
+            "via": [
+              160,
+              170
+            ],
+            "to": [
+              130,
+              232
+            ]
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 130,
+            "y": 262,
+            "heading": "s",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "wrong": {
+          "You drive through slowly in low gear.": "Driving slowly does not keep your car from floating, and the road under the water may be washed out. You turn around and find another way.",
+          "You drive through quickly to keep your speed up.": "Speed does not keep your car on the road, and the water may be deeper than it looks. You turn around and find another way.",
+          "You follow another car through the water.": "Another car getting through does not make the water safe for yours, and the road under it may be washed out. You turn around and find another way."
+        }
+      },
+      "rule": "When flood water covers the road, you turn around and find another way."
+    },
+    {
+      "id": "s10-13",
+      "fact": "d-167",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 145,
+            "w": 320,
+            "h": 30
+          },
+          {
+            "t": "crossbuck",
+            "x": 236,
+            "y": 212,
+            "lights": "off",
+            "gate": "up"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 160,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. Your car has stalled on the railroad tracks and will not start. You see no train, and the lights at the crossing are not flashing. What do you do first?",
+      "options": [
+        "Everyone gets out of the car at once and moves away from the tracks.",
+        "You keep trying to start the engine.",
+        "You stay in the car with your safety belt on.",
+        "You push the car off the tracks by yourself."
+      ],
+      "answer": "Everyone gets out of the car at once and moves away from the tracks.",
+      "then": {
+        "say": "Everyone gets out of the car at once and moves away from the tracks, even though you see no train. A train can come at any time, and it cannot stop in time for a car on the tracks. Then you call the emergency number posted on a sign at the crossing, or 911.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 0,
+            "y": 145,
+            "w": 320,
+            "h": 30
+          },
+          {
+            "t": "crossbuck",
+            "x": 236,
+            "y": 212,
+            "lights": "off",
+            "gate": "up"
+          },
+          {
+            "t": "ped",
+            "id": "ped",
+            "x": 278,
+            "y": 262
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 160,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "wrong": {
+          "You keep trying to start the engine.": "A train can come while you are still trying, and you would be inside the car when it hits. Everyone gets out of the car at once and moves away from the tracks.",
+          "You stay in the car with your safety belt on.": "Staying in the car keeps you on the tracks, where a train can come at any time and cannot stop in time. Everyone gets out of the car at once and moves away from the tracks, even if you see no train.",
+          "You push the car off the tracks by yourself.": "Pushing the car keeps you on the tracks, where a train can come at any time. Everyone gets out of the car at once and moves away from the tracks."
+        }
+      },
+      "rule": "If your car stalls on railroad tracks, everyone gets out at once and moves away from the tracks, even if you see no train."
+    },
+    {
+      "id": "s10-14",
+      "fact": "a-032",
+      "kind": "choose",
+      "prompt": "How can you tell if carbon monoxide from the engine is in your car?",
+      "options": [
+        "You can smell it, because it smells like rotten eggs or gasoline.",
+        "You can see it, because it looks like a thin gray smoke.",
+        "You cannot tell, because it has no taste, no smell and no color.",
+        "You can taste it, because it tastes bitter."
+      ],
+      "answer": "You cannot tell, because it has no taste, no smell and no color.",
+      "then": {
+        "say": "You cannot tell, because carbon monoxide has no taste, no smell and no color, and it can kill. It leaks in most often when the heater is running or the exhaust system is not working properly. You have the exhaust system checked regularly.",
+        "wrong": {
+          "You can smell it, because it smells like rotten eggs or gasoline.": "Carbon monoxide has no smell, so a smell of rotten eggs or gasoline does not tell you it is there. You cannot tell, because it has no taste, no smell and no color.",
+          "You can see it, because it looks like a thin gray smoke.": "Carbon monoxide has no color, so you cannot see it. You cannot tell it is there, because it has no taste, no smell and no color.",
+          "You can taste it, because it tastes bitter.": "Carbon monoxide has no taste. You cannot tell it is there, because it has no taste, no smell and no color."
+        }
+      },
+      "rule": "Carbon monoxide from a car engine can kill, and it has no taste, no smell and no color."
+    }
+  ]
+}
