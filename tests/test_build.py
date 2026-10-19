@@ -72,8 +72,9 @@ def test_build_writes_page_questions_and_csp(tmp):
     groups = json.loads((ROOT / "data" / "groups.json").read_text())["groups"]
     check(data.get("groups") == groups, "the groups are data/groups.json's, as they are")
     grouped = {q["id"]: q["group"] for q in data["qs"] if "group" in q}
-    check(len(grouped) == 56 and grouped.get("b-250") == "parking-distances" and grouped.get("a-084") == "sign-colors",
-          f"the 56 grouped questions name their group (got {len(grouped)})")
+    in_groups = sum(len(g["facts"]) for g in groups)
+    check(len(grouped) == in_groups and grouped.get("b-250") == "parking-distances" and grouped.get("a-084") == "sign-colors",
+          f"every grouped question names its group ({in_groups} in data/groups.json, got {len(grouped)})")
     check("__DATA__" not in page, "the page has no __DATA__ placeholder left")
     by_id = {q["id"]: q for q in data["qs"]}
     also = {q["id"]: q["also"] for q in data["qs"] if "also" in q}
