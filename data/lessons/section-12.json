@@ -1,0 +1,500 @@
+{
+  "section": 12,
+  "title": "Phones, seat belts, crashes, and sharing the road",
+  "steps": [
+    {
+      "id": "s12-01",
+      "fact": "a-002",
+      "kind": "choose",
+      "prompt": "You adjust the head restraint on your seat before you drive. How high do you set it?",
+      "options": [
+        "You set it level with the back of your head.",
+        "You set it level with the base of your neck.",
+        "You set it level with the top of your shoulders.",
+        "You set it just above the top of your head."
+      ],
+      "answer": "You set it level with the back of your head.",
+      "then": {
+        "say": "You set it level with the back of your head. At that height it is directly behind your head, where it can stop your head moving backward.",
+        "wrong": {
+          "You set it level with the base of your neck.": "At the base of your neck the head restraint sits below your head, so nothing is behind your head to stop it. You set it level with the back of your head.",
+          "You set it level with the top of your shoulders.": "At the top of your shoulders the head restraint sits below your neck, so nothing is behind your head to stop it. You set it level with the back of your head.",
+          "You set it just above the top of your head.": "Just above the top of your head the head restraint misses your head completely. You set it level with the back of your head."
+        }
+      },
+      "rule": "Adjust the head restraint on your seat so that it is level with the back of your head."
+    },
+    {
+      "id": "s12-02",
+      "fact": "a-001",
+      "kind": "choose",
+      "prompt": "What is a properly adjusted head restraint designed to do?",
+      "options": [
+        "It is designed to prevent whiplash if another car hits you from behind.",
+        "It is designed to keep your head straight when you check your mirrors.",
+        "It is designed to hold your head still during a sharp turn.",
+        "It is designed to protect your head if the air bag opens."
+      ],
+      "answer": "It is designed to prevent whiplash if another car hits you from behind.",
+      "then": {
+        "say": "It is designed to prevent whiplash if another car hits you from behind. Whiplash is a neck injury from the head being thrown backward and then forward, and the head restraint stops the head going backward.",
+        "wrong": {
+          "It is designed to keep your head straight when you check your mirrors.": "You check your mirrors by moving your eyes and turning your head, and the head restraint plays no part in that. It is designed to prevent whiplash if another car hits you from behind.",
+          "It is designed to hold your head still during a sharp turn.": "In a sharp turn your head moves to the side, not back against the head restraint. It is designed to prevent whiplash if another car hits you from behind.",
+          "It is designed to protect your head if the air bag opens.": "The air bag opens in front of you, and the head restraint is behind your head. It is designed to prevent whiplash if another car hits you from behind."
+        }
+      },
+      "rule": "A properly adjusted head restraint is designed to prevent whiplash if another car hits you from behind."
+    },
+    {
+      "id": "s12-03",
+      "fact": "a-036",
+      "kind": "choose",
+      "prompt": "You are driving and talking on your phone, which you hold against your ear with your shoulder. Is that legal under Tennessee's Hands Free law?",
+      "options": [
+        "Yes",
+        "No"
+      ],
+      "answer": "No",
+      "then": {
+        "say": "It is not legal. The Hands Free law forbids a driver to hold a phone with any part of the body, and a shoulder is part of the body. You may talk with the phone in hands-free mode.",
+        "wrong": {
+          "Yes": "Your hands are free, but your shoulder is holding the phone. The Hands Free law forbids a driver to hold a phone with any part of the body, so this is not legal."
+        }
+      },
+      "rule": "Under Tennessee's Hands Free law a driver may not hold a phone with any part of the body."
+    },
+    {
+      "id": "s12-04",
+      "fact": "a-036",
+      "kind": "choose",
+      "prompt": "Under Tennessee's Hands Free law, which of the following is illegal for a driver?",
+      "options": [
+        "Holding a phone with any part of your body.",
+        "Listening to the radio while driving.",
+        "Talking on the phone in hands-free mode.",
+        "Using the car's built-in rear camera."
+      ],
+      "answer": "Holding a phone with any part of your body.",
+      "then": {
+        "say": "Holding a phone with any part of your body is illegal. The law also forbids a driver to write, send or read a text, to watch a video, or to record or broadcast video on a phone.",
+        "wrong": {
+          "Listening to the radio while driving.": "The Hands Free law is about phones and other mobile devices, not the radio. Holding a phone with any part of your body is illegal.",
+          "Talking on the phone in hands-free mode.": "Hands-free mode is what the law allows, because you are not holding the phone. Holding a phone with any part of your body is illegal.",
+          "Using the car's built-in rear camera.": "The car's built-in rear camera is part of the car, not a phone or a mobile device. Holding a phone with any part of your body is illegal."
+        }
+      },
+      "rule": "Under Tennessee's Hands Free law a driver may not hold a phone with any part of the body, text, watch a video, or record or broadcast video."
+    },
+    {
+      "id": "s12-05",
+      "fact": "a-044",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "cabin"
+          },
+          {
+            "t": "seat",
+            "x": 108,
+            "y": 118,
+            "w": 68,
+            "h": 74,
+            "wheel": true
+          },
+          {
+            "t": "seat",
+            "id": "front-right",
+            "x": 212,
+            "y": 118,
+            "w": 68,
+            "h": 74,
+            "belt": false
+          },
+          {
+            "t": "seat",
+            "id": "back",
+            "x": 160,
+            "y": 228,
+            "w": 172,
+            "h": 74
+          }
+        ]
+      },
+      "prompt": "You are driving. A friend who is 25 sits in the front passenger seat, and another friend who is 25 sits in the back seat. Which passenger must wear a safety belt by law any time the car is moving? Tap the seat.",
+      "targets": [
+        {
+          "id": "front-right",
+          "label": "the front passenger seat"
+        },
+        {
+          "id": "back",
+          "label": "the back seat"
+        }
+      ],
+      "answer": "front-right",
+      "then": {
+        "parts": [
+          {
+            "t": "cabin"
+          },
+          {
+            "t": "seat",
+            "x": 108,
+            "y": 118,
+            "w": 68,
+            "h": 74,
+            "wheel": true,
+            "belt": true
+          },
+          {
+            "t": "seat",
+            "id": "front-right",
+            "x": 212,
+            "y": 118,
+            "w": 68,
+            "h": 74,
+            "belt": true
+          },
+          {
+            "t": "seat",
+            "id": "back",
+            "x": 160,
+            "y": 228,
+            "w": 172,
+            "h": 74
+          }
+        ],
+        "say": "The friend in the front passenger seat must wear a safety belt any time the car is moving, and so must you. The law requires one for the driver and every front-seat passenger, whatever their age.",
+        "wrong": {
+          "back": "Your friend in the back seat is 25, and the law does not require a back-seat passenger who is 18 or older to wear a safety belt. The law requires the driver and every front-seat passenger to wear one any time the car is moving."
+        }
+      },
+      "rule": "The driver and every front-seat passenger must wear a safety belt any time the vehicle is moving."
+    },
+    {
+      "id": "s12-06",
+      "fact": "a-044",
+      "kind": "choose",
+      "prompt": "Who must wear a safety belt any time the vehicle is moving?",
+      "options": [
+        "The driver and all front-seat passengers must wear one.",
+        "Only the driver must wear one.",
+        "Only the driver and passengers who are under 18 must wear one.",
+        "Only passengers in the back seat must wear one."
+      ],
+      "answer": "The driver and all front-seat passengers must wear one.",
+      "then": {
+        "say": "The driver and all front-seat passengers must wear one, whatever their age. A safety belt keeps you inside the car in a crash. A person thrown from a car is four times more likely to be killed than one who stays inside.",
+        "wrong": {
+          "Only the driver must wear one.": "The law covers every person in the front seat, not only the driver. The driver and all front-seat passengers must wear one any time the vehicle is moving.",
+          "Only the driver and passengers who are under 18 must wear one.": "A front-seat passenger who is 18 or older must wear one too. The driver and all front-seat passengers must wear one, whatever their age.",
+          "Only passengers in the back seat must wear one.": "The driver must wear one, and a back-seat passenger who is 18 or older is not required to. The driver and all front-seat passengers must wear one any time the vehicle is moving."
+        }
+      },
+      "rule": "The driver and every front-seat passenger must wear a safety belt any time the vehicle is moving."
+    },
+    {
+      "id": "s12-07",
+      "fact": "a-074",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "cabin"
+          },
+          {
+            "t": "seat",
+            "x": 108,
+            "y": 118,
+            "w": 68,
+            "h": 74,
+            "wheel": true
+          },
+          {
+            "t": "seat",
+            "id": "front-right",
+            "x": 212,
+            "y": 118,
+            "w": 68,
+            "h": 74,
+            "belt": false
+          },
+          {
+            "t": "seat",
+            "id": "back",
+            "x": 160,
+            "y": 228,
+            "w": 172,
+            "h": 74
+          }
+        ]
+      },
+      "prompt": "You are driving. A child who is 10 years old rides with you, and the car has air bags. Which seat is the safest place for the child? Tap the seat.",
+      "targets": [
+        {
+          "id": "front-right",
+          "label": "the front passenger seat"
+        },
+        {
+          "id": "back",
+          "label": "the back seat"
+        }
+      ],
+      "answer": "back",
+      "then": {
+        "say": "The back seat is the safest place for the child. Air bags pose a severe risk to children 12 and under, and in the back seat the child is away from the air bag in front of the passenger seat.",
+        "wrong": {
+          "front-right": "This child is 10, and the air bag in front of the passenger seat poses a severe risk to a child 12 or under. The back seat is the safest place for the child."
+        }
+      },
+      "rule": "Children 12 and under are safer in the back seat, because air bags pose a severe risk to them."
+    },
+    {
+      "id": "s12-08",
+      "fact": "a-050",
+      "kind": "choose",
+      "prompt": "A child who rides with you is 8 months old and weighs 17 pounds. Which way must the child's car seat face?",
+      "options": [
+        "It must face the rear of the car.",
+        "It must face the front of the car."
+      ],
+      "answer": "It must face the rear of the car.",
+      "then": {
+        "say": "It must face the rear of the car. The law requires this for every child under 1 year old and for any child under 20 pounds, and this child is both.",
+        "wrong": {
+          "It must face the front of the car.": "A car seat that faces the front is for a child 1 through 3 years old who weighs more than 20 pounds. This child is 8 months old and weighs 17 pounds, so the car seat must face the rear of the car."
+        }
+      },
+      "rule": "A child under 1 year old, or any child under 20 pounds, must ride in a car seat that faces the rear of the car."
+    },
+    {
+      "id": "s12-09",
+      "fact": "a-050",
+      "kind": "choose",
+      "prompt": "A child who rides with you is 2 years old and weighs 28 pounds. Which way must the child's car seat face?",
+      "options": [
+        "It must face the rear of the car.",
+        "It must face the front of the car."
+      ],
+      "answer": "It must face the front of the car.",
+      "then": {
+        "say": "It must face the front of the car. The law requires this for a child 1 through 3 years old who weighs more than 20 pounds, and this child is both.",
+        "wrong": {
+          "It must face the rear of the car.": "A car seat that faces the rear is for a child under 1 year old or under 20 pounds. This child is 2 years old and weighs 28 pounds, so the car seat must face the front of the car."
+        }
+      },
+      "rule": "A child 1 through 3 years old who weighs more than 20 pounds must ride in a car seat that faces the front of the car."
+    },
+    {
+      "id": "s12-10",
+      "fact": "a-059",
+      "kind": "choose",
+      "prompt": "How should a pregnant woman wear her safety belt?",
+      "options": [
+        "She wears the lap belt below her belly and the shoulder belt above her belly.",
+        "She wears the lap belt across the middle of her belly and the shoulder belt under her arm.",
+        "She wears only the lap belt, without the shoulder belt.",
+        "She wears only the shoulder belt, without the lap belt."
+      ],
+      "answer": "She wears the lap belt below her belly and the shoulder belt above her belly.",
+      "then": {
+        "say": "She wears the lap belt below her belly and the shoulder belt above her belly. The belly is also called the abdomen. The lap belt then holds her by her hips and the shoulder belt by her chest, and neither presses on the baby in a crash.",
+        "wrong": {
+          "She wears the lap belt across the middle of her belly and the shoulder belt under her arm.": "A lap belt across the belly presses on the baby in a crash, and a shoulder belt under the arm does not hold her chest. She wears the lap belt below her belly and the shoulder belt above her belly.",
+          "She wears only the lap belt, without the shoulder belt.": "Without the shoulder belt nothing holds her chest, and her upper body is thrown forward in a crash. She wears both, the lap belt below her belly and the shoulder belt above her belly.",
+          "She wears only the shoulder belt, without the lap belt.": "Without the lap belt nothing holds her hips, and she can slide forward under the shoulder belt in a crash. She wears both, the lap belt below her belly and the shoulder belt above her belly."
+        }
+      },
+      "rule": "A pregnant woman wears the lap belt below her belly and the shoulder belt above her belly."
+    },
+    {
+      "id": "s12-11",
+      "fact": "c-155",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 190,
+            "y": 128,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 188,
+            "y": 165,
+            "heading": "n",
+            "color": "red",
+            "you": true,
+            "tilt": 10
+          }
+        ]
+      },
+      "prompt": "You are the red car. You have just hit the blue car. What does the law require you to do first?",
+      "options": [
+        "You stop at once at the scene, or as close to it as you can without blocking traffic.",
+        "You drive to the nearest police station and report the crash in person.",
+        "You keep driving if no one looks hurt.",
+        "You stop only if the crash was your fault."
+      ],
+      "answer": "You stop at once at the scene, or as close to it as you can without blocking traffic.",
+      "then": {
+        "say": "You stop at once at the scene, or as close to it as you can without blocking traffic. You turn off the engine of your damaged car to prevent a fire, call 911 to report the crash, and never leave the scene.",
+        "wrong": {
+          "You drive to the nearest police station and report the crash in person.": "Driving away to a police station is leaving the scene, which the law forbids. You stop at once at the scene, or as close to it as you can without blocking traffic, and call 911.",
+          "You keep driving if no one looks hurt.": "Every driver in a crash must stop, whether or not anyone looks hurt, and never leave the scene. You stop at once at the scene, or as close to it as you can without blocking traffic.",
+          "You stop only if the crash was your fault.": "The law requires every driver in a crash to stop, whoever is to blame. You stop at once at the scene, or as close to it as you can without blocking traffic."
+        }
+      },
+      "rule": "A driver in a crash must stop at once at the scene, or as close to it as possible without blocking traffic, and never leave the scene."
+    },
+    {
+      "id": "s12-12",
+      "fact": "c-133",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 228,
+            "y": 70,
+            "heading": "n",
+            "color": "blue",
+            "tilt": 35
+          },
+          {
+            "t": "car",
+            "id": "police",
+            "x": 224,
+            "y": 126,
+            "heading": "n",
+            "color": "white",
+            "emergency": true
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 272,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. The blue car ahead has crashed. The police car behind it is stopped with its lights flashing, and your help is not needed. What do you do?",
+      "options": [
+        "You drive on slowly and do not get in the way.",
+        "You stop and look to satisfy your curiosity.",
+        "You slow down to calm your nerves.",
+        "You park nearby to watch the rescue."
+      ],
+      "answer": "You drive on slowly and do not get in the way.",
+      "then": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 100,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 228,
+            "y": 70,
+            "heading": "n",
+            "color": "blue",
+            "tilt": 35
+          },
+          {
+            "t": "car",
+            "id": "police",
+            "x": 224,
+            "y": 126,
+            "heading": "n",
+            "color": "white",
+            "emergency": true
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 190,
+            "y": 272,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          },
+          {
+            "t": "path",
+            "from": [
+              190,
+              250
+            ],
+            "via": [
+              180,
+              126
+            ],
+            "to": [
+              188,
+              22
+            ]
+          }
+        ],
+        "say": "You drive on slowly and do not get in the way. Drivers who watch a crash instead of the road cause more crashes. A car that stops there is in the way of the ambulances and fire crews coming to it.",
+        "wrong": {
+          "You stop and look to satisfy your curiosity.": "Stopping to look puts your car in the way of the ambulances and fire crews coming to the crash, and drivers who watch a crash cause more crashes. You drive on slowly and do not get in the way.",
+          "You slow down to calm your nerves.": "You slow down only as much as you need to get past safely. Slowing down for your own nerves holds up the traffic behind you, and slowed traffic beside a crash causes more crashes. You drive on slowly, past the scene, and do not get in the way.",
+          "You park nearby to watch the rescue.": "A parked car near a crash gets in the way of the ambulances and fire crews coming to it, and drivers who watch a crash cause more crashes. You drive on slowly and do not get in the way."
+        }
+      },
+      "rule": "When you come to a crash where your help is not needed, drive on slowly so that you do not get in the way of the police, ambulances and fire crews."
+    },
+    {
+      "id": "s12-13",
+      "fact": "c-132",
+      "kind": "choose",
+      "prompt": "You were in a crash in which someone was hurt. How long do you have to file a crash report with the Tennessee Department of Safety?",
+      "options": [
+        "You have 20 days.",
+        "You have 10 days.",
+        "You have 48 hours.",
+        "You have 30 days."
+      ],
+      "answer": "You have 20 days.",
+      "then": {
+        "say": "You have 20 days. The report is required no matter who is to blame, for any crash that hurts or kills someone or does more than $400 of damage to one person's property. Not filing it can get your license and registration suspended.",
+        "wrong": {
+          "You have 10 days.": "Ten days is less time than the law gives you. You have 20 days to file the report, no matter who is to blame.",
+          "You have 48 hours.": "Forty-eight hours is far less time than the law gives you. You have 20 days to file the report, no matter who is to blame.",
+          "You have 30 days.": "Thirty days is more time than the law gives you, so a report filed on day 30 is late. You have 20 days to file the report, no matter who is to blame."
+        }
+      },
+      "rule": "After a crash in which someone is hurt or killed, or in which damage to any one person's property is over $400, you must file a report with the Tennessee Department of Safety within 20 days, no matter who is to blame."
+    }
+  ]
+}
