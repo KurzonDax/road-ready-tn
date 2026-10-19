@@ -59,8 +59,8 @@ The screen with a Fact's answer and its explanation in plain words, after its Fi
 _Avoid_: Rule card, flashcard, hint
 
 **Lesson**:
-The questions that teach one Section's Facts, and where the Learner meets them. On every question the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what happens and the rule. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and each answer in it is the Fact's first counted answer (`docs/adr/0003-lesson-answers-count.md`), so the Fact comes back in a Practice quiz only when it is Due. The home screen offers the next Lesson whenever nothing is due.
-_Avoid_: Tutorial, reading, chapter
+The project's word, never the Learner's, for the questions that teach one Section's Facts, and where the Learner meets them. On the Learner's screens it is simply the Section: "Section 4", "Start Section 4", "You finished Section 4.". On every question the Learner acts first, by tapping the car or person that goes or by choosing, and only then sees what happens and the rule. The principle of the topic is named after two or three cases. Lessons are data (`data/lessons/`, `docs/specs/lessons.md`); a finished Lesson is a record of type `lesson`, and each answer in it is the Fact's first counted answer (`docs/adr/0003-lesson-answers-count.md`), so the Fact comes back in a Practice quiz only when it is Due. The home screen offers the next Lesson, as its Section, whenever nothing is due.
+_Avoid_ on Learner screens: Lesson. _Avoid_: Tutorial, reading, chapter
 
 **Compare**:
 One screen that shows a group of easily mixed-up Facts side by side, followed by questions on just that group.

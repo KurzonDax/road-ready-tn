@@ -6,7 +6,7 @@ I am developing this specifically for my son who is on the autism spectrum and s
 
 I am not an educator by trade or training.  In fact, I'm pretty terrible at trying to teach anything, so I'm trying to build a tool that will help my son learn what he needs to pass the test.
 
-This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner takes one lesson at a time, acting on a drawing or a choice before each rule is stated, and then short practice quizzes on the facts that are due again, with a plain explanation after each answer and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
+This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner takes one Section at a time, acting on a drawing or a choice before each rule is stated, and then short practice quizzes on the facts that are due again, with a plain explanation after each answer and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
 
 Since this app is in active development, the content of this README may not always be up to date.  
 
@@ -14,7 +14,7 @@ Since this app is in active development, the content of this README may not alwa
 
 | Step | What the learner does | Done when |
 | --- | --- | --- |
-| Lessons | One per Section: on each question the learner acts on a drawing or a choice first, then sees the rule. Each answer counts as the fact's first answer | Every Section's lesson is taken |
+| Sections | One at a time: on each question the learner acts on a drawing or a choice first, then sees the rule. Each answer counts as the fact's first answer | Every Section is done |
 | Practice quizzes | Up to 10 counted questions on the facts that are due again, in the test's own wording. Offered only when something is due, never right after a lesson | Every fact is learned |
 | Practice tests | 30 questions drawn from all 120, like the real test | 27 or more right, three times in a row |
 

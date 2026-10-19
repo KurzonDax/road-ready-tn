@@ -713,7 +713,8 @@ window.addEventListener('online', () => {
 // A finished quiz, test or lesson's name in the Helper's History, from its record's type, Section and number
 // (the Helper's History counts practice quizzes since the latest Reset; the Learner never sees the number).
 // 'day', 'redo' and 'review' are Sets from before the learning engine.
-const setName = (type, section, number) => type === 'daily' ? `Practice quiz ${number}` : type === 'test' ? 'Practice test' : type === 'lesson' ? `Lesson for Section ${section}`
+// A lesson is named as its Section, as on the Learner's screens; the old 'day' records are too.
+const setName = (type, section, number) => type === 'daily' ? `Practice quiz ${number}` : type === 'test' ? 'Practice test'
   : type === 'review' ? 'Review' : type === 'redo' ? `Section ${section} again` : `Section ${section}`;
 
 let painted = false, onHome = false; // onHome: the Learner's home screen is showing
@@ -762,8 +763,9 @@ function renderHome() {
   const quiz = saved && saved.kind === 'daily' ? `<h1 tabindex="-1">Practice quiz</h1>${stoppedLine(saved)}`
     : due ? `<${H('quiz')} tabindex="-1">Practice quiz</${H('quiz')}>
       <button class="btn${primary('quiz')}" type="button" id="startBtn">Start the practice quiz</button>` : '';
-  const lessonBlock = teach ? `<${H('lesson')} tabindex="-1">Lesson: Section ${plan.lesson}</${H('lesson')}><p class="theme">${esc(teach.title)}</p>
-      <button class="btn${primary('lesson')}" type="button" id="lessonBtn">Start the lesson</button>` : '';
+  // On the Learner's screens a lesson has no name of its own: it is the Section, taken for the first time.
+  const lessonBlock = teach ? `<${H('lesson')} tabindex="-1">Section ${plan.lesson}</${H('lesson')}><p class="theme">${esc(teach.title)}</p>
+      <button class="btn${primary('lesson')}" type="button" id="lessonBtn">Start Section ${plan.lesson}</button>` : '';
   const scores = S.tests.slice(-5);
   const tests = !open ? '' : `${isReady ? `<div class="sign"><${H('test')} tabindex="-1">Ready for the test</${H('test')}><p>You got ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p></div>`
         : `<${H('test')} tabindex="-1">Practice tests</${H('test')}><p class="sub">To pass the real test, you need ${PASS_SCORE} or more correct out of ${TEST_LEN}. You are Ready for the test when you get ${READY_SCORE} or more correct on ${READY_STREAK} practice tests in a row.</p>`}
@@ -1600,9 +1602,9 @@ const taught = (p, id) => p.lessons[BY_ID[id].day] !== undefined;
 function lessonsPanel() {
   const list = Object.values(LESSONS);
   if (!list.length) return '';
-  const rows = list.map(l => `<li><div><span class="sname">Section ${l.section}: ${esc(l.title)}</span><span class="sscore">${S.lessons[l.section] !== undefined ? 'You finished this lesson.' : 'You have not done this lesson yet.'} It has ${l.steps.length} questions.</span></div>` +
-    `<button type="button" class="btn slim lesson-open" data-section="${l.section}">Open the lesson</button></li>`).join('');
-  return `<details class="scores lessons"><summary>Lessons</summary><ul>${rows}</ul></details>`;
+  const rows = list.map(l => { const done = S.lessons[l.section] !== undefined; return `<li><div><span class="sname">Section ${l.section}: ${esc(l.title)}</span><span class="sscore">${done ? 'You have done it.' : 'You have not done it yet.'} It has ${l.steps.length} questions.</span></div>` +
+    `<button type="button" class="btn slim lesson-open" data-section="${l.section}">Start Section ${l.section}${done ? ' again' : ''}</button></li>`; }).join('');
+  return `<details class="scores lessons"><summary>Sections</summary><ul>${rows}</ul></details>`;
 }
 function wireLessons() { document.querySelectorAll('.lesson-open').forEach(b => b.onclick = () => { startLesson(Number(b.dataset.section)); toTop(); }); }
 
@@ -1639,9 +1641,9 @@ function renderStep() {
   // with what was picked and what the correct one is, said in full.
   const lead = !act ? '' : L.peek ? 'How this works' : act.right ? 'Correct.'
     : st.kind === 'tap' ? `Incorrect. You picked ${act.chosen}.` : 'Incorrect.'; // a choice list already marks what was picked; the explanation names the correct one once
-  const where = L.peek ? 'How this works' : `Lesson for Section ${L.lesson.section}: ${L.i + 1} of ${n}`;
+  const where = L.peek ? 'How this works' : `Section ${L.lesson.section}: ${L.i + 1} of ${n}`;
   const button = L.peek ? '<button class="btn primary" type="button" id="stepNextBtn">Back to the question</button>'
-    : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? 'Finish the lesson' : 'Go on'}</button>` : '';
+    : act ? `<button class="btn primary" type="button" id="stepNextBtn">${last ? `Finish Section ${L.lesson.section}` : 'Go on'}</button>` : '';
   paint(`
     <div class="home">
       <div class="progress"><span>${esc(where)}</span>${L.peek ? '' : `<div class="bar" aria-hidden="true"><span style="width:${Object.keys(L.acts).length / n * 100}%"></span></div>`}</div>
@@ -1653,7 +1655,7 @@ function renderStep() {
         ${act ? `<p class="say" id="stepText">${esc(saidAfter(st, act))}</p>` : ''}
       </div>
       ${button}
-      ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop the lesson for now</button>'}
+      ${L.peek ? '' : '<button class="link" type="button" id="quitBtn">Stop for now</button>'}
     </div>`, act ? '#stepHead' : '#stepText');
   document.querySelectorAll('.k-target').forEach(g => {
     g.onclick = () => lessonAct(g.dataset.t);
@@ -1695,7 +1697,7 @@ function finishLesson() {
   lesson = null;
   paint(`
     <section class="home">
-      <h2 tabindex="-1">You finished the lesson for Section ${L.lesson.section}.</h2>
+      <h2 tabindex="-1">You finished Section ${L.lesson.section}.</h2>
       <p class="theme">${esc(L.lesson.title)}</p>
       ${nextButtons()}
     </section>`, 'h2');
@@ -1944,7 +1946,7 @@ function whereNow(p) {
 // Ready for the test.
 function nextSetLine(p, now) {
   if (ready(p)) return `Ready for the test: ${streak(p)} practice tests in a row at ${READY_SCORE} or more`;
-  const plan = setPlan(p, now), lesson = plan.lesson ? `the lesson for Section ${plan.lesson}` : '';
+  const plan = setPlan(p, now), lesson = plan.lesson ? `Section ${plan.lesson}` : '';
   if (!quizDue(plan)) return lesson ? `Next: ${lesson}.` : 'Nothing is due.';
   const parts = [plan.block.length ? `Compare: ${plan.group.title}` : '', plan.due.length ? `${plan.due.length} come back` : '',
     plan.fill.length ? `${plan.fill.length} to keep fresh` : '', plan.fresh.length ? `${plan.fresh.length} new` : ''];
