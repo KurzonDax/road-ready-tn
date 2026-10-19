@@ -711,8 +711,11 @@ def check_engine(browser, inst):
           "after two spaced successes the fact is due 48 hours later")
     got = fact(three, a, 27)
     check(got == {"standing": "solid", "spaced": 3, "due": False}, "three right answers 13 hours apart make it solid", got)
-    check(fact(three, a, 26 + 167.9)["due"] is False and fact(three, a, 26 + 168)["due"] is True,
-          "a solid fact is due again 7 days later")
+    check(fact(three, a, 26 + 168)["due"] is False and fact(three, a, 26 + 24 * 365)["due"] is False,
+          "a solid fact is finished: it is not due 7 days later, or ever, on its own")
+    got = fact(three + [daily(4, [(a, False, 30)]), daily(5, [(a, True, 30.5)])], a, 31 + 24 * 365)
+    check(got == {"standing": "solid", "spaced": 3, "due": False},
+          "a solid fact answered wrong comes back once, and after a correct answer is finished again", got)
     got = fact(one + [daily(2, [(a, False, 14)])], a, 15)
     check(got == {"standing": "learned", "spaced": 1, "due": True}, "a wrong answer after a right one keeps it learned "
           "and makes it due now", got)
@@ -749,8 +752,8 @@ def check_engine(browser, inst):
     recs = [daily(1, [(s2[0], True, 0), (s2[1], True, 0), (s2[1], True, 13), (s2[1], True, 26), (s2[2], True, 1)]),
             daily(2, [(s2[3], True, 2), (s2[3], False, 5), (s2[4], False, 3)])]
     got = pg.evaluate("([r, now]) => dueFacts(progressFrom(r), Date.parse(now))", [recs, hours(400)])
-    check(got == [s2[4], s2[3], s2[0], s2[2], s2[1]],
-          "wrong last first (oldest first), then learned facts, then solid ones (earliest due first)", got)
+    check(got == [s2[4], s2[3], s2[0], s2[2]],
+          "wrong last first (oldest first), then learned facts (earliest due first); the solid fact is finished and not due", got)
 
     print("\n[old records]")
     reset = "record-000000000005"

@@ -7,6 +7,7 @@ This spec supersedes GitHub issues #33 (the rule card is reworked here), #34, #3
 **Revised 2026-10-19** (`docs/adr/0003-lesson-answers-count.md`), after the owner used the app with lessons for every Section. Where this spec and that ADR differ, the ADR and the page win:
 
 - A lesson's answers are counted answers. A fact is new only while it has no answer at all.
+- A solid fact is never due on its own: the weekly return (`MAINTENANCE_MS`) is gone. It comes back once after a wrong answer.
 - `setPlan` walks the Sections in cursor order and stops at the first one with new facts whose lesson is not finished: that Section's lesson is what the home screen offers (`lesson` in the plan), and no new fact is taken from it or past it. New facts are asked cold, with the first look and rule screen below, only in a Section with no lesson file.
 - Fill facts (step 4) are those last answered `SPACING_MS` or more ago, so nothing taught minutes ago is asked again. A Set with first looks may also fill with more recent facts, so "Why the gap always holds" still holds. A Set of fill facts alone is never offered: there is no "Nothing is due. This set goes over N facts you already know."
 - On every Learner screen a Set is a "Practice quiz", with no number and no line saying what it holds. The record type stays `daily`; the Helper's History may still number them. The home screen shows one thing to do (the quiz when something is due, else the next lesson, else the practice tests, else "Nothing is due today.") and has no "See each section" block. The wording in "Screens" and "Home screen" below is the first draft from 2026-10-17; `src/app.html` and `docs/DECISIONS.md` have the current wording.
@@ -53,7 +54,6 @@ All in one place near the top of the page's script, each with a one-line comment
 | `RE_ASK_CAP` | 4 | Re-asks in one Set, at most. |
 | `SPACING_MS` | 12 hours | Two right answers count as separate successes only this far apart. |
 | `LADDER_MS` | `[12 hours, 48 hours]` | After the first and second spaced success, how long before the fact is due again. |
-| `MAINTENANCE_MS` | 7 days | A solid fact is due again after this long. |
 | `LEECH_WRONG` | 6 | Wrong counted answers after which the Helper's view flags the fact. |
 | `TEST_LEN`, `READY_SCORE`, `READY_STREAK`, `PASS_SCORE` | 30, 27, 3, 24 | Unchanged. |
 | `SESSION_GAP` | 30 minutes | Unchanged. Used by the Helper's view only. |
@@ -214,7 +214,7 @@ A wrong answer never lowers a standing. Standings only rise.
 - `lastRight` false: due now. (A seen fact is always due, since it has no right answer.)
 - otherwise `spacedRights` 1: due at `lastAt + LADDER_MS[0]`.
 - `spacedRights` 2: due at `lastAt + LADDER_MS[1]`.
-- `spacedRights` 3 or more: due at `lastAt + MAINTENANCE_MS`.
+- `spacedRights` 3 or more: never (changed 2026-10-19: the weekly return was dropped; `MAINTENANCE_MS` is gone).
 
 Due facts are ordered: first those with `lastRight` false, oldest `lastAt` first; then learned facts, earliest due time first; then solid facts, earliest due time first. Ties in `sections.json` order.
 
@@ -377,7 +377,7 @@ Each phase is one PR to `main`, in this order; a phase builds on the merged one 
 ## Done when
 
 - A Learner who starts from nothing meets each fact as first look, rule, then a counted question with at least four screens for other facts in between, never sooner.
-- A fact answered right is asked again only after 12 hours, then 48, then is solid after three spaced successes and returns every 7 days.
+- A fact answered right is asked again only after 12 hours, then 48, and is solid and finished after three spaced successes (the weekly return was dropped 2026-10-19).
 - A fact answered wrong is asked once more in the same Set and again in the next.
 - The home screen and the Set done screen show standings and never a Section score.
 - Practice tests appear only when every fact is learned, and their wrong answers feed the next Set.
