@@ -178,7 +178,7 @@
       "id": "s11-04",
       "fact": "c-091",
       "kind": "choose",
-      "prompt": "BAC is the percentage of alcohol in your blood. As your BAC goes up, what do you become?",
+      "prompt": "BAC stands for Blood Alcohol Concentration, the percentage of alcohol in your blood. As your BAC goes up, what do you become?",
       "options": [
         "You become more intoxicated.",
         "You become more alert.",
@@ -194,7 +194,7 @@
           "You become more sober.": "You become sober only as the liver removes the alcohol and your BAC goes down. As your BAC goes up, you become more intoxicated."
         }
       },
-      "rule": "As the percentage of alcohol in your blood (BAC) goes up, you become more intoxicated."
+      "rule": "As your Blood Alcohol Concentration (BAC), the percentage of alcohol in your blood, goes up, you become more intoxicated."
     },
     {
       "id": "s11-05",
