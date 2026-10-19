@@ -1072,12 +1072,12 @@
           }
         ]
       },
-      "prompt": "You are the red car, beside the middle of the truck's trailer, going the same speed as the truck. What do you do?",
+      "prompt": "You are the red car, beside the middle of the truck's trailer. Can the truck driver see your car?",
       "options": [
-        "You stay beside the truck, so its driver knows you are there.",
-        "You pass the truck when it is safe, so you do not stay beside it."
+        "Yes",
+        "No"
       ],
-      "answer": "You pass the truck when it is safe, so you do not stay beside it.",
+      "answer": "No",
       "then": {
         "parts": [
           {
@@ -1132,12 +1132,12 @@
             "color": "red"
           }
         ],
-        "say": "You pass the truck when it is safe, so you do not stay beside it. Both sides of a truck are blind spots, and beside its trailer its driver cannot see your car.",
+        "say": "No, the truck driver cannot see your car. Both sides of a truck are blind spots, along with the space directly in front of it and up to 200 feet behind it. You do not stay beside a truck, so you pass it when it is safe.",
         "wrong": {
-          "You stay beside the truck, so its driver knows you are there.": "Beside its trailer you are in one of the truck's blind spots, so its driver cannot see your car. You pass the truck when it is safe, so you do not stay beside it."
+          "Yes": "Both sides of a truck are blind spots, and beside its trailer you are in one, so its driver cannot see your car. You do not stay beside a truck, so you pass it when it is safe."
         }
       },
-      "rule": "Both sides of a truck are blind spots, so you do not stay beside a truck."
+      "rule": "Both sides of a truck are blind spots, so its driver cannot see a car beside the trailer, and you do not stay there."
     }
   ]
 }
