@@ -69,7 +69,11 @@
       "answer": "stop-sign",
       "then": {
         "highlight": "stop-sign",
-        "say": "The red eight-sided sign means you must come to a complete stop. No other sign has eight sides, and this sign is always red. The green rectangle gives directions, and the yellow diamond warns of a hazard ahead."
+        "say": "The red eight-sided sign means you must come to a complete stop. No other sign has eight sides, and this sign is always red. The green rectangle gives directions, and the yellow diamond warns of a hazard ahead.",
+        "wrong": {
+          "guide-rect": "The green rectangle gives directions to towns and highways. The red eight-sided sign is the one that means you must come to a complete stop, and no other sign has eight sides.",
+          "warning-diamond": "The yellow diamond warns of a hazard ahead, such as a sharp curve. The red eight-sided sign is the one that means you must come to a complete stop, and no other sign has eight sides."
+        }
       },
       "rule": "The octagon is the only eight-sided sign, it is always red, and it means you must come to a complete stop."
     },
@@ -140,7 +144,11 @@
       "answer": "yield-sign",
       "then": {
         "highlight": "yield-sign",
-        "say": "The red and white three-sided sign pointing down, the yield sign, means you slow down and let the traffic on the other road go first. When no car is coming you do not have to stop, and when traffic is heavy you always stop. The red eight-sided sign means you must always stop, and the blue rectangle points to services for drivers."
+        "say": "The red and white three-sided sign pointing down, the yield sign, means you slow down and let the traffic on the other road go first. When no car is coming you do not have to stop, and when traffic is heavy you always stop. The red eight-sided sign means you must always stop, and the blue rectangle points to services for drivers.",
+        "wrong": {
+          "stop-sign": "The red eight-sided sign means you must always come to a complete stop. The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first. When no car is coming, you do not have to stop.",
+          "services-rect": "The blue rectangle points to services for drivers, such as a rest area. The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first."
+        }
       },
       "rule": "A yield sign means you slow down and let the traffic on the other road go first, you need not come to a complete stop when no cars are coming, and you always stop when traffic is heavy."
     },
@@ -211,7 +219,11 @@
       "answer": "railroad-circle",
       "then": {
         "highlight": "railroad-circle",
-        "say": "The yellow circle means a railroad crossing is ahead, so you slow down and get ready to stop for a train. A round sign always means a railroad crossing. The yellow diamond warns of other hazards ahead, and the green rectangle gives directions."
+        "say": "The yellow circle means a railroad crossing is ahead, so you slow down and get ready to stop for a train. A round sign always means a railroad crossing. The yellow diamond warns of other hazards ahead, and the green rectangle gives directions.",
+        "wrong": {
+          "warning-diamond": "The yellow diamond warns of a hazard or something unexpected ahead, such as a sharp curve. A round sign always means a railroad crossing, so the yellow circle means a railroad crossing is ahead.",
+          "guide-rect": "The green rectangle gives directions to towns and highways. A round sign always means a railroad crossing, so the yellow circle means a railroad crossing is ahead."
+        }
       },
       "rule": "A round sign always means you are coming to a railroad crossing, so you slow down and get ready to stop."
     },
@@ -226,7 +238,11 @@
       ],
       "answer": "Its shape and its color tell you.",
       "then": {
-        "say": "Every sign's shape and color tell you its purpose, so you know what it means before you can read it. Even when snow or dirt covers a stop sign, its eight sides and its red color tell you to stop."
+        "say": "Every sign's shape and color tell you its purpose, so you know what it means before you can read it. Even when snow or dirt covers a stop sign, its eight sides and its red color tell you to stop.",
+        "wrong": {
+          "The words written on it tell you.": "From too far away to read a sign, you cannot read its words, and snow or dirt can cover them. Its shape and its color tell you what it means before you can read it.",
+          "Where it stands beside the road tells you.": "The red eight-sided sign, the red and white three-sided sign pointing down and the yellow circle all stand beside the road, and each means something different. Its shape and its color tell you what it means, even before you can read it."
+        }
       }
     },
     {
@@ -309,7 +325,12 @@
       "answer": "warning-diamond",
       "then": {
         "highlight": "warning-diamond",
-        "say": "The yellow diamond means a hazard or something unexpected is ahead. A diamond sign calls for care and usually a slower speed. The red eight-sided sign means stop, the green rectangle gives directions, and the blue rectangle points to services for drivers."
+        "say": "The yellow diamond means a hazard or something unexpected is ahead. A diamond sign calls for care and usually a slower speed. The red eight-sided sign means stop, the green rectangle gives directions, and the blue rectangle points to services for drivers.",
+        "wrong": {
+          "stop-sign": "The red eight-sided sign means you must come to a complete stop. The yellow diamond means a hazard or something unexpected is ahead, and it calls for care and usually a slower speed.",
+          "guide-rect": "The green rectangle gives directions to towns and highways. The yellow diamond means a hazard or something unexpected is ahead, and it calls for care and usually a slower speed.",
+          "services-rect": "The blue rectangle points to services for drivers, such as a rest area. The yellow diamond means a hazard or something unexpected is ahead, and it calls for care and usually a slower speed."
+        }
       },
       "rule": "A diamond sign means a hazardous or unexpected condition is ahead, and it calls for caution and usually a slower speed."
     },
@@ -379,7 +400,11 @@
       "answer": "law-rect",
       "then": {
         "highlight": "law-rect",
-        "say": "The white rectangle means a law you must obey, such as a speed limit or which lane to use. A sign that tells you a speed limit or which lane to use is always a rectangle. The yellow diamond warns of a hazard ahead, and the yellow circle means a railroad crossing is ahead."
+        "say": "The white rectangle means a law you must obey, such as a speed limit or which lane to use. A sign that tells you a speed limit or which lane to use is always a rectangle. The yellow diamond warns of a hazard ahead, and the yellow circle means a railroad crossing is ahead.",
+        "wrong": {
+          "warning-diamond": "The yellow diamond warns of a hazard ahead, such as a sharp curve. A sign that tells you a law, such as a speed limit, is always a rectangle. The white rectangle is the one that means a law you must obey.",
+          "railroad-circle": "The yellow circle means a railroad crossing is ahead. A sign that tells you a law, such as a speed limit, is always a rectangle. The white rectangle is the one that means a law you must obey."
+        }
       },
       "rule": "A regulatory sign, which tells you about laws such as speed limits and lane use, is always a rectangle."
     },
@@ -451,7 +476,11 @@
       "answer": "guide-rect",
       "then": {
         "highlight": "guide-rect",
-        "say": "The green rectangle gives directions to towns and highways, such as which exit to take and how far it is to a town. Green is the color for signs that guide you, and for the mileposts along the highway. The blue rectangle points to services for drivers, and the red and white three-sided sign means you slow down and let the traffic on the other road go first."
+        "say": "The green rectangle gives directions to towns and highways, such as which exit to take and how far it is to a town. Green is the color for signs that guide you, and for the mileposts along the highway. The blue rectangle points to services for drivers, and the red and white three-sided sign means you slow down and let the traffic on the other road go first.",
+        "wrong": {
+          "services-rect": "The blue rectangle points to services for drivers, such as a rest area. The green rectangle gives directions to towns and highways, because green is the color for signs that guide you.",
+          "yield-sign": "The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first. The green rectangle gives directions to towns and highways, because green is the color for signs that guide you."
+        }
       },
       "rule": "Green is used for guide signs, which give directions, and for mileposts."
     },
@@ -533,7 +562,12 @@
       "answer": "roadwork-diamond",
       "then": {
         "highlight": "roadwork-diamond",
-        "say": "The orange diamond means road work is ahead, so you slow down and watch for workers and their machines. Orange is used for road work and for nothing else. The yellow diamond warns of other hazards, the white rectangle states a law, and the red eight-sided sign means stop."
+        "say": "The orange diamond means road work is ahead, so you slow down and watch for workers and their machines. Orange is used for road work and for nothing else. The yellow diamond warns of other hazards, the white rectangle states a law, and the red eight-sided sign means stop.",
+        "wrong": {
+          "law-rect": "The white rectangle states a law you must obey, such as a speed limit. The orange diamond means road work is ahead, because orange is used for road work and for nothing else.",
+          "warning-diamond": "The yellow diamond warns of other hazards ahead, such as a sharp curve, and road work has its own color. The orange diamond means road work is ahead, because orange is used for road work and for nothing else.",
+          "stop-sign": "The red eight-sided sign means you must come to a complete stop. The orange diamond means road work is ahead, because orange is used for road work and for nothing else."
+        }
       },
       "rule": "Orange is used only for construction and maintenance signs."
     },
@@ -604,7 +638,11 @@
       "answer": "school-diamond",
       "then": {
         "highlight": "school-diamond",
-        "say": "The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot. This bright color stands out in low light, fog and rain. The orange diamond means road work, and the green rectangle gives directions."
+        "say": "The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot. This bright color stands out in low light, fog and rain. The orange diamond means road work, and the green rectangle gives directions.",
+        "wrong": {
+          "guide-rect": "The green rectangle gives directions to towns and highways. The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot.",
+          "roadwork-diamond": "The orange diamond means road work is ahead, and orange is used for nothing else. The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot."
+        }
       },
       "rule": "Fluorescent yellow-green is the color for school zones and pedestrian areas such as crosswalks."
     },
@@ -687,7 +725,12 @@
       "answer": "services-rect",
       "then": {
         "highlight": "services-rect",
-        "say": "The blue rectangle means a rest area, police help or another service for drivers is ahead, because blue is the color for services for drivers. The orange diamond means road work, and the fluorescent yellow-green diamond means a school zone or a crosswalk. The red and white three-sided sign means you slow down and let the traffic on the other road go first."
+        "say": "The blue rectangle means a rest area, police help or another service for drivers is ahead, because blue is the color for services for drivers. The orange diamond means road work, and the fluorescent yellow-green diamond means a school zone or a crosswalk. The red and white three-sided sign means you slow down and let the traffic on the other road go first.",
+        "wrong": {
+          "school-diamond": "The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead. The blue rectangle means a rest area or another service for drivers is ahead, because blue is the color for services for drivers.",
+          "roadwork-diamond": "The orange diamond means road work is ahead. The blue rectangle means a rest area or another service for drivers is ahead, because blue is the color for services for drivers.",
+          "yield-sign": "The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first. The blue rectangle means a rest area or another service for drivers is ahead, because blue is the color for services for drivers."
+        }
       },
       "rule": "Blue is used for motorist services, including police services and rest areas."
     },
@@ -704,7 +747,12 @@
       ],
       "answer": "It warns you of something ahead, such as a sharp curve.",
       "then": {
-        "say": "A yellow sign warns you of something ahead, such as a sharp curve, so you slow down and drive with care. Yellow is also used for school signs, and fluorescent yellow-green is now used for school zones too. Road work is orange, directions are green, and services such as rest areas are blue."
+        "say": "A yellow sign warns you of something ahead, such as a sharp curve, so you slow down and drive with care. Yellow is also used for school signs, and fluorescent yellow-green is now used for school zones too. Road work is orange, directions are green, and services such as rest areas are blue.",
+        "wrong": {
+          "It warns you that road work is ahead.": "Road work signs are orange, and orange is used for nothing else. A yellow sign warns you of something ahead, such as a sharp curve.",
+          "It gives you directions, such as which exit to take.": "Directions are on green signs. A yellow sign warns you of something ahead, such as a sharp curve.",
+          "It tells you that a rest area is ahead.": "Services for drivers, such as rest areas, are on blue signs. A yellow sign warns you of something ahead, such as a sharp curve."
+        }
       },
       "rule": "Yellow is the background for warning signs, except where orange is used, and for school signs."
     },
@@ -719,7 +767,11 @@
       ],
       "answer": "A sign's shape and color tell you what it means.",
       "then": {
-        "say": "The shape and the color of a sign tell you its purpose, even from far away. That is how you know what a sign tells you to do before you can read it, and even when snow or dirt covers it."
+        "say": "The shape and the color of a sign tell you its purpose, even from far away. That is how you know what a sign tells you to do before you can read it, and even when snow or dirt covers it.",
+        "wrong": {
+          "A sign's words tell you what it means.": "The signs drawn in this lesson had no words on them, and their shape and color were enough to tell what each one meant. A sign's shape and color tell you what it means from far away, before you can read any words.",
+          "A sign's place beside the road tells you what it means.": "Every sign drawn in this lesson stood beside the road, and each one meant something different. A sign's shape and color tell you what it means, even from far away."
+        }
       }
     }
   ]

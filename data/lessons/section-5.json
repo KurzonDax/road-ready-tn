@@ -164,7 +164,10 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop behind the stop line. Past it, your car is out in the intersection, in the way of the cross traffic."
+        "say": "You stop behind the stop line. Past it, your car is out in the intersection, in the way of the cross traffic.",
+        "wrong": {
+          "past": "That puts your car out in the intersection, in the way of the cross traffic. You stop behind the stop line."
+        }
       },
       "rule": "At a stop sign with a white stop line, you stop your vehicle behind the line."
     },
@@ -318,7 +321,10 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop before the crosswalk, so your car is not where people walk across. Past it, your car is out in the intersection."
+        "say": "You stop before the crosswalk, so your car is not where people walk across. Past it, your car is out in the intersection.",
+        "wrong": {
+          "past": "That puts your car out in the intersection, past where people walk across. With no stop line, you stop before the crosswalk."
+        }
       },
       "rule": "At a stop sign with no stop line, you stop before the crosswalk, and with neither, before you enter the intersection, where you can see the cross traffic."
     },
@@ -375,7 +381,10 @@
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stop before the crossing, before the gate comes down. Flashing red lights mean a train is coming, even before you can see it."
+        "say": "No, you stop before the crossing, before the gate comes down. Flashing red lights mean a train is coming, even before you can see it.",
+        "wrong": {
+          "Yes": "Flashing red lights mean a train is coming, even when you cannot see it yet. You stop before the crossing, before the gate comes down."
+        }
       },
       "rule": "At a crossing with lights and a gate, you stop when the lights begin flashing, before the gate comes down."
     },
@@ -427,7 +436,11 @@
       ],
       "answer": "Between 15 and 50 feet from the tracks.",
       "then": {
-        "say": "You stop between 15 and 50 feet from the tracks, and never on the tracks."
+        "say": "You stop between 15 and 50 feet from the tracks, and never on the tracks.",
+        "wrong": {
+          "Between 5 and 10 feet from the tracks.": "A stop 5 to 10 feet back is nearer to the tracks than the law allows. You stop between 15 and 50 feet from the tracks, and never on them.",
+          "At least 100 feet from the tracks.": "A stop 100 feet back is farther from the tracks than the law allows. You stop between 15 and 50 feet from the tracks, and never on them."
+        }
       },
       "rule": "When a train is coming, you stop between 15 and 50 feet from the railroad tracks, and never on the tracks."
     },
@@ -609,7 +622,11 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop behind the stop line, 30 feet from the tracks, inside the 15 to 50 feet the law sets. On the tracks the train hits you, and 80 feet is farther back than the law allows."
+        "say": "You stop behind the stop line, 30 feet from the tracks, inside the 15 to 50 feet the law sets. On the tracks the train hits you, and 80 feet is farther back than the law allows.",
+        "wrong": {
+          "on": "That puts your car in the path of the train, and you never stop on the tracks. You stop behind the stop line, 30 feet from the tracks, inside the 15 to 50 feet the law sets.",
+          "at80": "That far back is outside the 15 to 50 feet the law sets. You stop behind the stop line, 30 feet from the tracks."
+        }
       },
       "rule": "At a railroad crossing with a stop line, you stop behind the stop line, which is painted between 15 and 50 feet from the tracks."
     },
@@ -666,7 +683,10 @@
       ],
       "answer": "No",
       "then": {
-        "say": "No, you stay stopped. Flashing lights and a lowered gate mean a train is coming, even after one has passed."
+        "say": "No, you stay stopped. Flashing lights and a lowered gate mean a train is coming, even after one has passed.",
+        "wrong": {
+          "Yes": "The lights are still flashing and the gate is still down, and that means a train is coming, even after one has passed. You stay stopped until the gate is up and the lights have stopped flashing."
+        }
       },
       "rule": "At a crossing with lights and a gate, you stay stopped until the gates are raised and the lights stop flashing."
     },
@@ -723,7 +743,10 @@
       ],
       "answer": "Yes",
       "then": {
-        "say": "Yes, you go across. You wait for both the gate to go up and the lights to stop, never only one."
+        "say": "Yes, you go across. You wait for both the gate to go up and the lights to stop, never only one.",
+        "wrong": {
+          "No": "Nothing keeps you stopped: the train has passed, the gate is up, and the red lights have stopped flashing. You go across."
+        }
       },
       "rule": "At a crossing with lights and a gate, you may go across once the gates are raised and the lights have stopped flashing."
     },
@@ -766,7 +789,11 @@
       ],
       "answer": "You slow down and get ready to stop.",
       "then": {
-        "say": "You slow down and get ready to stop. Flashing yellow lights mean the bus is about to stop for children."
+        "say": "You slow down and get ready to stop. Flashing yellow lights mean the bus is about to stop for children.",
+        "wrong": {
+          "You pass the bus before it stops.": "Flashing yellow lights mean the bus is about to stop to load or unload children, so you slow down instead of passing it. You get ready to stop behind it.",
+          "You keep the same speed.": "Flashing yellow lights mean the bus is about to stop to load or unload children, and at the same speed you are not ready to stop when it does. You slow down and get ready to stop."
+        }
       },
       "rule": "When the yellow lights on a school bus are flashing, the bus is about to stop to load or unload children, so you slow down and get ready to stop."
     },
@@ -816,7 +843,11 @@
       ],
       "answer": "When the red lights are off, the stop arm is pulled back, and the bus moves.",
       "then": {
-        "say": "You drive on when the red lights are off, the stop arm is pulled back, and the bus moves. Until then, children may still be crossing near the bus."
+        "say": "You drive on when the red lights are off, the stop arm is pulled back, and the bus moves. Until then, children may still be crossing near the bus.",
+        "wrong": {
+          "As soon as the children have reached the side of the road.": "Where the children are does not end the stop, and until the bus moves, children may still be crossing near it. You drive on when the red lights are off, the stop arm is pulled back, and the bus moves.",
+          "After you have waited 30 seconds.": "No count of seconds ends the stop. You drive on when the red lights are off, the stop arm is pulled back, and the bus moves, because until then children may still be crossing near the bus."
+        }
       },
       "rule": "When a school bus has its red lights flashing and its stop arm out, you stop and stay stopped until the red lights are turned off, the stop arm is pulled back, and the bus starts moving."
     },
@@ -882,7 +913,11 @@
       ],
       "answer": "You and the car on the cross road must both stop.",
       "then": {
-        "say": "Both of you stop. When a school bus is stopped at an intersection, drivers from every direction stop until it moves again."
+        "say": "Both of you stop. When a school bus is stopped at an intersection, drivers from every direction stop until it moves again.",
+        "wrong": {
+          "Only you must stop.": "When a school bus is stopped at an intersection, drivers from every direction stop, not only the drivers coming toward it. You and the car on the cross road both stop until the bus moves again.",
+          "Only the car on the cross road must stop.": "You are coming toward the bus, and drivers from every direction stop when a school bus is stopped at an intersection. You and the car on the cross road both stop until the bus moves again."
+        }
       },
       "rule": "When a school bus is stopped at an intersection to load or unload children, drivers from all directions stop until the bus moves again."
     },
@@ -954,7 +989,11 @@
       ],
       "answer": "You do not have to stop, but you drive on with care.",
       "then": {
-        "say": "You do not have to stop, but you drive on with care. The median separates your side from the bus, so only the drivers on the bus's side stop."
+        "say": "You do not have to stop, but you drive on with care. The median separates your side from the bus, so only the drivers on the bus's side stop.",
+        "wrong": {
+          "You stop until the bus moves again.": "The median that cars cannot drive on separates your side from the bus, so only the drivers on the bus's side stop. You do not have to stop, but you drive on with care.",
+          "You speed up to get past the bus.": "The law tells you to drive on with care past the bus, not to speed up. You do not have to stop, because the median separates your side from the bus."
+        }
       },
       "rule": "On a highway divided by a median or a barrier that cars cannot drive on, drivers on the other side from a stopped school bus do not have to stop, but drive on with caution."
     },
@@ -1027,7 +1066,11 @@
       ],
       "answer": "You stop until the bus moves again.",
       "then": {
-        "say": "You stop until the bus moves again. A turn lane cars can drive on is not a median, so drivers going both ways stop."
+        "say": "You stop until the bus moves again. A turn lane cars can drive on is not a median, so drivers going both ways stop.",
+        "wrong": {
+          "You do not have to stop, but you drive on with care.": "That is the law only where a median or a barrier that cars cannot drive on separates you from the bus. A turn lane cars can drive on is not a median, so drivers going both ways stop, and you stop until the bus moves again.",
+          "You speed up to get past the bus.": "You may not get past this bus at all, because a turn lane cars can drive on is not a median, and drivers going both ways stop. You stop until the bus moves again."
+        }
       },
       "rule": "A turn lane in the middle of a four-lane highway is not a barrier, so drivers going both directions stop for a stopped school bus."
     },
@@ -1233,7 +1276,11 @@
             "anchor": "start"
           }
         ],
-        "say": "You stop at the right edge of the road until the police car has passed. In your lane you block its way, and the left edge is the oncoming lane."
+        "say": "You stop at the right edge of the road until the police car has passed. In your lane you block its way, and the left edge is the oncoming lane.",
+        "wrong": {
+          "middle": "Stopped there, your car blocks the police car's way. You stop at the right edge of the road until the police car has passed.",
+          "left": "That is the side of the cars coming toward you, so you would stop in the oncoming lane. You stop at the right edge of the road until the police car has passed."
+        }
       },
       "rule": "When an emergency vehicle with a siren comes, you drive to the right edge or curb of the road and stop, and stay stopped until it has passed or a police officer directs you to move."
     },
@@ -1293,7 +1340,11 @@
       ],
       "answer": "You drive on through, then pull over to the right and stop.",
       "then": {
-        "say": "You drive on through, then pull over to the right and stop. Stopped in the intersection, you block the police car's way."
+        "say": "You drive on through, then pull over to the right and stop. Stopped in the intersection, you block the police car's way.",
+        "wrong": {
+          "You stop where you are, in the intersection.": "Stopped in the intersection, you block the police car's way. You drive on through, then pull over to the right and stop.",
+          "You back up out of the intersection.": "Backing up moves your car toward the police car coming up behind you. You drive on through, then pull over to the right and stop."
+        }
       },
       "rule": "If you are in an intersection when an emergency vehicle comes, you drive on through the intersection before you pull over, so you do not block its path."
     },
@@ -1353,7 +1404,11 @@
       ],
       "answer": "You stay stopped until it has passed.",
       "then": {
-        "say": "You stay stopped until the emergency vehicle has passed or has turned onto another street. A green light does not let you go in front of it."
+        "say": "You stay stopped until the emergency vehicle has passed or has turned onto another street. A green light does not let you go in front of it.",
+        "wrong": {
+          "You go, because the light is green.": "A green light does not let you go in front of an emergency vehicle. You stay stopped until it has passed or has turned onto another street.",
+          "You pull into the intersection and stop there.": "Stopped in the intersection, your car is in the path of the emergency vehicle on the cross road. You stay stopped where you are until it has passed or has turned onto another street."
+        }
       },
       "rule": "When the light turns green before an emergency vehicle has passed, you stay stopped until it has passed or turned onto another street."
     }
