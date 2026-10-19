@@ -51,6 +51,15 @@
         ]
       },
       "prompt": "You are the red car, parked at the curb. You have looked, and your left turn signal is on. The blue car is coming up behind you in the lane. Who goes first? Tap the car.",
+      "answer": "behind",
+      "then": {
+        "highlight": "behind",
+        "say": "The blue car goes first. When you come out of any parking space, including a parallel space, you look, signal, and let the traffic on the road go first. You pull out after the blue car has passed.",
+        "wrong": {
+          "you": "Your signal tells the blue car's driver what you plan to do, but it does not let you go first. When you come out of a parking space, the traffic on the road goes first, so you wait until the blue car has passed."
+        }
+      },
+      "rule": "When you come out of any parking space, including a parallel space, you look, signal, and let the traffic on the road go first.",
       "targets": [
         {
           "id": "behind",
@@ -60,21 +69,12 @@
           "id": "you",
           "label": "your car"
         }
-      ],
-      "answer": "behind",
-      "then": {
-        "highlight": "behind",
-        "say": "The blue car goes first. When you come out of any parking space, including a parallel space, you look, signal, and let the traffic on the road go first. You pull out after the blue car has passed.",
-        "wrong": {
-          "you": "Your signal tells the blue car's driver what you plan to do, but it does not let you go first. When you come out of a parking space, the traffic on the road goes first, so you wait until the blue car has passed."
-        }
-      },
-      "rule": "When you come out of any parking space, including a parallel space, you look, signal, and let the traffic on the road go first."
+      ]
     },
     {
       "id": "s8-02",
       "fact": "b-250",
-      "kind": "tap",
+      "kind": "choose",
       "scene": {
         "parts": [
           {
@@ -92,73 +92,10 @@
           },
           {
             "t": "label",
-            "x": 258,
-            "y": 206,
+            "x": 270,
+            "y": 224,
             "text": "Fire hydrant",
-            "anchor": "end"
-          },
-          {
-            "t": "space",
-            "id": "near",
-            "x": 206,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "middle",
-            "x": 160,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "far",
-            "x": 68,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "measure",
-            "from": [
-              270,
-              228
-            ],
-            "to": [
-              224,
-              228
-            ],
-            "text": "10 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              270,
-              254
-            ],
-            "to": [
-              178,
-              254
-            ],
-            "text": "20 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              270,
-              280
-            ],
-            "to": [
-              86,
-              280
-            ],
-            "text": "40 feet",
-            "side": "n"
+            "anchor": "middle"
           },
           {
             "t": "car",
@@ -171,28 +108,64 @@
           }
         ]
       },
-      "prompt": "You are the red car. The three spaces are 10, 20 and 40 feet from the fire hydrant. You want to park as close to it as the law allows. Which space do you use? Tap the space.",
-      "targets": [
-        {
-          "id": "near",
-          "label": "the space 10 feet from the fire hydrant"
-        },
-        {
-          "id": "middle",
-          "label": "the space 20 feet from the fire hydrant"
-        },
-        {
-          "id": "far",
-          "label": "the space 40 feet from the fire hydrant"
-        }
+      "prompt": "You are the red car. You want to park near the fire hydrant. How close to it may you park?",
+      "options": [
+        "You may park no closer than 5 feet from the fire hydrant.",
+        "You may park no closer than 10 feet from the fire hydrant.",
+        "You may park no closer than 15 feet from the fire hydrant.",
+        "You may park no closer than 30 feet from the fire hydrant."
       ],
-      "answer": "middle",
+      "answer": "You may park no closer than 15 feet from the fire hydrant.",
       "then": {
-        "highlight": "middle",
-        "say": "You park in the space 20 feet from the fire hydrant, the closest space more than 15 feet from it. You may not park within 15 feet of a fire hydrant, so that firefighters can get to it.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 80,
+            "w": 320,
+            "h": 110,
+            "center": "yellow"
+          },
+          {
+            "t": "hydrant",
+            "x": 270,
+            "y": 202
+          },
+          {
+            "t": "label",
+            "x": 270,
+            "y": 224,
+            "text": "Fire hydrant",
+            "anchor": "middle"
+          },
+          {
+            "t": "measure",
+            "from": [
+              270,
+              246
+            ],
+            "to": [
+              210,
+              246
+            ],
+            "text": "15 feet",
+            "side": "n"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 192,
+            "y": 178,
+            "heading": "e",
+            "you": true,
+            "color": "red"
+          }
+        ],
+        "say": "You may park no closer than 15 feet from the fire hydrant, so that firefighters can get to it.",
         "wrong": {
-          "near": "That space is 10 feet from the fire hydrant, and you may not park within 15 feet of one. The closest space you may use is the one 20 feet from the fire hydrant.",
-          "far": "You may park there, but a closer space is allowed. You may not park within 15 feet of a fire hydrant, so the space 20 feet from it is the closest you may use."
+          "You may park no closer than 5 feet from the fire hydrant.": "Five feet is closer than the law allows. You may park no closer than 15 feet from a fire hydrant.",
+          "You may park no closer than 10 feet from the fire hydrant.": "Ten feet is closer than the law allows. You may park no closer than 15 feet from a fire hydrant.",
+          "You may park no closer than 30 feet from the fire hydrant.": "The law says 15 feet, not 30. You may park no closer than 15 feet from a fire hydrant."
         }
       },
       "rule": "You may not park within 15 feet of a fire hydrant."
@@ -200,7 +173,7 @@
     {
       "id": "s8-03",
       "fact": "b-252",
-      "kind": "tap",
+      "kind": "choose",
       "scene": {
         "parts": [
           {
@@ -219,69 +192,6 @@
             "h": 110
           },
           {
-            "t": "space",
-            "id": "near",
-            "x": 214,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "middle",
-            "x": 154,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "far",
-            "x": 64,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "measure",
-            "from": [
-              262,
-              228
-            ],
-            "to": [
-              232,
-              228
-            ],
-            "text": "10 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              262,
-              254
-            ],
-            "to": [
-              172,
-              254
-            ],
-            "text": "30 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              262,
-              280
-            ],
-            "to": [
-              82,
-              280
-            ],
-            "text": "60 feet",
-            "side": "n"
-          },
-          {
             "t": "car",
             "id": "you",
             "x": 22,
@@ -292,28 +202,59 @@
           }
         ]
       },
-      "prompt": "You are the red car. The three spaces are 10, 30 and 60 feet from the crosswalk. You want to park as close to it as the law allows. Which space do you use? Tap the space.",
-      "targets": [
-        {
-          "id": "near",
-          "label": "the space 10 feet from the crosswalk"
-        },
-        {
-          "id": "middle",
-          "label": "the space 30 feet from the crosswalk"
-        },
-        {
-          "id": "far",
-          "label": "the space 60 feet from the crosswalk"
-        }
+      "prompt": "You are the red car. You want to park near the crosswalk. How close to it may you park?",
+      "options": [
+        "You may park no closer than 5 feet from the crosswalk.",
+        "You may park no closer than 10 feet from the crosswalk.",
+        "You may park no closer than 20 feet from the crosswalk.",
+        "You may park no closer than 50 feet from the crosswalk."
       ],
-      "answer": "middle",
+      "answer": "You may park no closer than 20 feet from the crosswalk.",
       "then": {
-        "highlight": "middle",
-        "say": "You park in the space 30 feet from the crosswalk, the closest space more than 20 feet from it. You may not park in a crosswalk or within 20 feet of one, so that drivers coming up to the crosswalk can see the people crossing.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 80,
+            "w": 320,
+            "h": 110,
+            "center": "yellow"
+          },
+          {
+            "t": "crosswalk",
+            "x": 262,
+            "y": 80,
+            "w": 20,
+            "h": 110
+          },
+          {
+            "t": "measure",
+            "from": [
+              262,
+              232
+            ],
+            "to": [
+              182,
+              232
+            ],
+            "text": "20 feet",
+            "side": "n"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 164,
+            "y": 178,
+            "heading": "e",
+            "you": true,
+            "color": "red"
+          }
+        ],
+        "say": "You may park no closer than 20 feet from the crosswalk, and never in it, so that drivers coming up to it can see the people crossing.",
         "wrong": {
-          "near": "That space is 10 feet from the crosswalk, and you may not park within 20 feet of one. The closest space you may use is the one 30 feet from the crosswalk.",
-          "far": "You may park there, but a closer space is allowed. You may not park within 20 feet of a crosswalk, so the space 30 feet from it is the closest you may use."
+          "You may park no closer than 5 feet from the crosswalk.": "Five feet is closer than the law allows. You may park no closer than 20 feet from a crosswalk.",
+          "You may park no closer than 10 feet from the crosswalk.": "Ten feet is closer than the law allows. You may park no closer than 20 feet from a crosswalk.",
+          "You may park no closer than 50 feet from the crosswalk.": "The law says 20 feet, not 50. You may park no closer than 20 feet from a crosswalk."
         }
       },
       "rule": "You may not park in a crosswalk or within 20 feet of one."
@@ -321,7 +262,7 @@
     {
       "id": "s8-04",
       "fact": "b-253",
-      "kind": "tap",
+      "kind": "choose",
       "scene": {
         "parts": [
           {
@@ -347,69 +288,6 @@
             "y": 202
           },
           {
-            "t": "space",
-            "id": "near",
-            "x": 182,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "middle",
-            "x": 132,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "far",
-            "x": 82,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "measure",
-            "from": [
-              250,
-              228
-            ],
-            "to": [
-              200,
-              228
-            ],
-            "text": "20 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              250,
-              254
-            ],
-            "to": [
-              150,
-              254
-            ],
-            "text": "40 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              250,
-              280
-            ],
-            "to": [
-              100,
-              280
-            ],
-            "text": "60 feet",
-            "side": "n"
-          },
-          {
             "t": "car",
             "id": "you",
             "x": 22,
@@ -420,28 +298,66 @@
           }
         ]
       },
-      "prompt": "You are the red car. The three spaces are 20, 40 and 60 feet from the stop sign. You want to park as close to it as the law allows. Which space do you use? Tap the space.",
-      "targets": [
-        {
-          "id": "near",
-          "label": "the space 20 feet from the stop sign"
-        },
-        {
-          "id": "middle",
-          "label": "the space 40 feet from the stop sign"
-        },
-        {
-          "id": "far",
-          "label": "the space 60 feet from the stop sign"
-        }
+      "prompt": "You are the red car. You want to park near the stop sign. How close to it may you park?",
+      "options": [
+        "You may park no closer than 10 feet from the stop sign.",
+        "You may park no closer than 15 feet from the stop sign.",
+        "You may park no closer than 30 feet from the stop sign.",
+        "You may park no closer than 50 feet from the stop sign."
       ],
-      "answer": "middle",
+      "answer": "You may park no closer than 30 feet from the stop sign.",
       "then": {
-        "highlight": "middle",
-        "say": "You park in the space 40 feet from the stop sign, the closest space more than 30 feet from it. You may not park within 30 feet of a stop sign, a traffic signal or any other traffic control device. That keeps the sign in view for drivers coming up to it.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 80,
+            "w": 320,
+            "h": 110,
+            "center": "yellow"
+          },
+          {
+            "t": "road",
+            "x": 262,
+            "y": 0,
+            "w": 58,
+            "h": 320,
+            "center": "yellow"
+          },
+          {
+            "t": "sign",
+            "kind": "stop",
+            "x": 250,
+            "y": 202
+          },
+          {
+            "t": "measure",
+            "from": [
+              250,
+              232
+            ],
+            "to": [
+              160,
+              232
+            ],
+            "text": "30 feet",
+            "side": "n"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 142,
+            "y": 178,
+            "heading": "e",
+            "you": true,
+            "color": "red"
+          }
+        ],
+        "say": "You may park no closer than 30 feet from the stop sign. The same 30 feet applies to a traffic signal or any other traffic control device, so that drivers coming up to it can see it.",
         "wrong": {
-          "near": "That space is 20 feet from the stop sign, and you may not park within 30 feet of one. The closest space you may use is the one 40 feet from the stop sign.",
-          "far": "You may park there, but a closer space is allowed. You may not park within 30 feet of a stop sign, so the space 40 feet from it is the closest you may use."
+          "You may park no closer than 10 feet from the stop sign.": "Ten feet is closer than the law allows. You may park no closer than 30 feet from a stop sign.",
+          "You may park no closer than 15 feet from the stop sign.": "Fifteen feet is closer than the law allows. You may park no closer than 30 feet from a stop sign.",
+          "You may park no closer than 50 feet from the stop sign.": "The law says 30 feet, not 50. You may park no closer than 30 feet from a stop sign."
         }
       },
       "rule": "You may not park within 30 feet of a traffic signal, a stop sign or any other traffic control device."
@@ -449,7 +365,7 @@
     {
       "id": "s8-05",
       "fact": "b-251",
-      "kind": "tap",
+      "kind": "choose",
       "scene": {
         "parts": [
           {
@@ -475,69 +391,6 @@
             "gate": "none"
           },
           {
-            "t": "space",
-            "id": "near",
-            "x": 190,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "middle",
-            "x": 136,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "space",
-            "id": "far",
-            "x": 64,
-            "y": 178,
-            "w": 36,
-            "h": 22
-          },
-          {
-            "t": "measure",
-            "from": [
-              280,
-              228
-            ],
-            "to": [
-              208,
-              228
-            ],
-            "text": "40 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              280,
-              254
-            ],
-            "to": [
-              154,
-              254
-            ],
-            "text": "70 feet",
-            "side": "n"
-          },
-          {
-            "t": "measure",
-            "from": [
-              280,
-              280
-            ],
-            "to": [
-              82,
-              280
-            ],
-            "text": "110 feet",
-            "side": "n"
-          },
-          {
             "t": "car",
             "id": "you",
             "x": 22,
@@ -548,28 +401,66 @@
           }
         ]
       },
-      "prompt": "You are the red car. The three spaces are 40, 70 and 110 feet from the railroad crossing. You want to park as close to it as the law allows. Which space do you use? Tap the space.",
-      "targets": [
-        {
-          "id": "near",
-          "label": "the space 40 feet from the railroad crossing"
-        },
-        {
-          "id": "middle",
-          "label": "the space 70 feet from the railroad crossing"
-        },
-        {
-          "id": "far",
-          "label": "the space 110 feet from the railroad crossing"
-        }
+      "prompt": "You are the red car. You want to park near the railroad crossing. How close to it may you park?",
+      "options": [
+        "You may park no closer than 15 feet from the railroad crossing.",
+        "You may park no closer than 20 feet from the railroad crossing.",
+        "You may park no closer than 50 feet from the railroad crossing.",
+        "You may park no closer than 100 feet from the railroad crossing."
       ],
-      "answer": "middle",
+      "answer": "You may park no closer than 50 feet from the railroad crossing.",
       "then": {
-        "highlight": "middle",
-        "say": "You park in the space 70 feet from the railroad crossing, the closest space more than 50 feet from it. You may not park within 50 feet of a railroad crossing, so that drivers coming up to the crossing can see along the tracks.",
+        "parts": [
+          {
+            "t": "road",
+            "x": 0,
+            "y": 80,
+            "w": 320,
+            "h": 110,
+            "center": "yellow"
+          },
+          {
+            "t": "rails",
+            "x": 280,
+            "y": 80,
+            "w": 20,
+            "h": 110
+          },
+          {
+            "t": "crossbuck",
+            "x": 268,
+            "y": 204,
+            "lights": "off",
+            "gate": "none"
+          },
+          {
+            "t": "measure",
+            "from": [
+              280,
+              232
+            ],
+            "to": [
+              180,
+              232
+            ],
+            "text": "50 feet",
+            "side": "n"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 162,
+            "y": 178,
+            "heading": "e",
+            "you": true,
+            "color": "red"
+          }
+        ],
+        "say": "You may park no closer than 50 feet from the railroad crossing, so that drivers coming up to it can see along the tracks.",
         "wrong": {
-          "near": "That space is 40 feet from the railroad crossing, and you may not park within 50 feet of one. The closest space you may use is the one 70 feet from the railroad crossing.",
-          "far": "You may park there, but a closer space is allowed. You may not park within 50 feet of a railroad crossing, so the space 70 feet from it is the closest you may use."
+          "You may park no closer than 15 feet from the railroad crossing.": "Fifteen feet is closer than the law allows. You may park no closer than 50 feet from a railroad crossing.",
+          "You may park no closer than 20 feet from the railroad crossing.": "Twenty feet is closer than the law allows. You may park no closer than 50 feet from a railroad crossing.",
+          "You may park no closer than 100 feet from the railroad crossing.": "The law says 50 feet, not 100. You may park no closer than 50 feet from a railroad crossing."
         }
       },
       "rule": "You may not park within 50 feet of a railroad crossing."
@@ -673,6 +564,15 @@
         ]
       },
       "prompt": "You are the red car. You are parked facing downhill, and there is a curb on your right. Which way do you turn your front wheels? Tap the wheels.",
+      "answer": "toward",
+      "then": {
+        "highlight": "toward",
+        "say": "You turn your front wheels toward the curb and set the parking brake. If the car rolls, it rolls into the curb and stops.",
+        "wrong": {
+          "away": "Turned away from the curb, the front wheels steer a rolling car out into the road and into traffic. You turn them toward the curb, so the car rolls into the curb and stops."
+        }
+      },
+      "rule": "When you park facing downhill with a curb, you turn your front wheels toward the curb and set the parking brake.",
       "targets": [
         {
           "id": "toward",
@@ -682,16 +582,7 @@
           "id": "away",
           "label": "the front wheels turned away from the curb"
         }
-      ],
-      "answer": "toward",
-      "then": {
-        "highlight": "toward",
-        "say": "You turn your front wheels toward the curb and set the parking brake. If the car rolls, it rolls into the curb and stops.",
-        "wrong": {
-          "away": "Turned away from the curb, the front wheels steer a rolling car out into the road and into traffic. You turn them toward the curb, so the car rolls into the curb and stops."
-        }
-      },
-      "rule": "When you park facing downhill with a curb, you turn your front wheels toward the curb and set the parking brake."
+      ]
     },
     {
       "id": "s8-09",
@@ -727,6 +618,15 @@
         ]
       },
       "prompt": "You are the red car. You are parked facing uphill, and there is a curb on your right. Which way do you turn your front wheels? Tap the wheels.",
+      "answer": "away",
+      "then": {
+        "highlight": "away",
+        "say": "You turn your front wheels away from the curb. If the car rolls back, the front wheel on the curb side catches the curb and the car stops, instead of rolling into traffic.",
+        "wrong": {
+          "toward": "Turned toward the curb, the front wheels steer the car away from the curb as it rolls back, out into the road and into traffic. You turn them away from the curb, so the front wheel catches the curb and the car stops."
+        }
+      },
+      "rule": "When you park facing uphill with a curb, you turn your front wheels away from the curb, so a car that rolls back stops against the curb.",
       "targets": [
         {
           "id": "toward",
@@ -736,16 +636,7 @@
           "id": "away",
           "label": "the front wheels turned away from the curb"
         }
-      ],
-      "answer": "away",
-      "then": {
-        "highlight": "away",
-        "say": "You turn your front wheels away from the curb. If the car rolls back, the front wheel on the curb side catches the curb and the car stops, instead of rolling into traffic.",
-        "wrong": {
-          "toward": "Turned toward the curb, the front wheels steer the car away from the curb as it rolls back, out into the road and into traffic. You turn them away from the curb, so the front wheel catches the curb and the car stops."
-        }
-      },
-      "rule": "When you park facing uphill with a curb, you turn your front wheels away from the curb, so a car that rolls back stops against the curb."
+      ]
     },
     {
       "id": "s8-10",
@@ -781,6 +672,15 @@
         ]
       },
       "prompt": "You are the red car. You are parked facing downhill, and there is no curb. Which way do you turn your front wheels? Tap the wheels.",
+      "answer": "toward",
+      "then": {
+        "highlight": "toward",
+        "say": "You turn your front wheels toward the edge of the road. With no curb to stop it, a car that rolls goes off the road, away from traffic, instead of into it.",
+        "wrong": {
+          "away": "Turned away from the edge of the road, the front wheels steer a rolling car out into the road and into traffic. You turn them toward the edge of the road, so the car rolls off the road, away from traffic."
+        }
+      },
+      "rule": "When you park facing downhill with no curb, you turn your front wheels toward the edge of the road, so the car rolls away from traffic.",
       "targets": [
         {
           "id": "toward",
@@ -790,16 +690,7 @@
           "id": "away",
           "label": "the front wheels turned away from the edge of the road"
         }
-      ],
-      "answer": "toward",
-      "then": {
-        "highlight": "toward",
-        "say": "You turn your front wheels toward the edge of the road. With no curb to stop it, a car that rolls goes off the road, away from traffic, instead of into it.",
-        "wrong": {
-          "away": "Turned away from the edge of the road, the front wheels steer a rolling car out into the road and into traffic. You turn them toward the edge of the road, so the car rolls off the road, away from traffic."
-        }
-      },
-      "rule": "When you park facing downhill with no curb, you turn your front wheels toward the edge of the road, so the car rolls away from traffic."
+      ]
     },
     {
       "id": "s8-11",
@@ -835,6 +726,15 @@
         ]
       },
       "prompt": "You are the red car. You are parked facing uphill, and there is no curb. Which way do you turn your front wheels? Tap the wheels.",
+      "answer": "toward",
+      "then": {
+        "highlight": "toward",
+        "say": "You turn your front wheels toward the edge of the road, the same as facing downhill with no curb. If the car rolls back, it goes off the road, away from traffic.",
+        "wrong": {
+          "away": "Turned away from the edge of the road, the front wheels let a car that rolls back go out toward the center of the road, into traffic. With no curb, uphill or downhill, you turn them toward the edge of the road."
+        }
+      },
+      "rule": "When you park on a hill with no curb, uphill or downhill, you turn your front wheels toward the edge of the road, so the car rolls away from traffic.",
       "targets": [
         {
           "id": "toward",
@@ -844,16 +744,7 @@
           "id": "away",
           "label": "the front wheels turned away from the edge of the road"
         }
-      ],
-      "answer": "toward",
-      "then": {
-        "highlight": "toward",
-        "say": "You turn your front wheels toward the edge of the road, the same as facing downhill with no curb. If the car rolls back, it goes off the road, away from traffic.",
-        "wrong": {
-          "away": "Turned away from the edge of the road, the front wheels let a car that rolls back go out toward the center of the road, into traffic. With no curb, uphill or downhill, you turn them toward the edge of the road."
-        }
-      },
-      "rule": "When you park on a hill with no curb, uphill or downhill, you turn your front wheels toward the edge of the road, so the car rolls away from traffic."
+      ]
     }
   ]
 }

@@ -1329,8 +1329,8 @@ function wrapTarget(p, inner, { targets, highlight, picked }) {
   return `<g class="k-target" role="button" tabindex="0" data-t="${esc(p.id)}" aria-label="${esc(t.label)}"><circle cx="${p.x}" cy="${p.y}" r="26" fill="transparent"/>${ring}${inner}</g>`;
 }
 // A box target: a dashed box centered at x,y, with nothing written on it, whose whole area is the hit area and
-// which carries the marks itself (no ring), so boxes sit side by side. A lane box (Section 6, `lane`), a parking
-// space (Section 8, `space`) and a wheel picture (Section 8, `wheels`) are box targets; `inner` is drawn inside.
+// which carries the marks itself (no ring), so boxes sit side by side. A lane box (Section 6, `lane`) and a wheel
+// picture (Section 8, `wheels`) are box targets; `inner` is drawn inside.
 function boxTarget(p, o, cls, inner = '') {
   const t = o.targets.find(x => x.id === p.id), hi = o.highlight === p.id, no = o.picked === p.id;
   const x = p.x - p.w / 2, y = p.y - p.h / 2;
@@ -1344,10 +1344,6 @@ function boxTarget(p, o, cls, inner = '') {
 // A lane box (Section 6): a dashed box filling a stretch of one lane, a tap target for "Which lane do you turn
 // into? Tap the lane." The prompt and the target labels name the lanes.
 const lanePart = (p, o) => boxTarget(p, o, 'k-lane');
-// A parking space (Section 8): a dashed box along the curb where a car would stand, a tap target for "Which space
-// do you use? Tap the space." A `measure` in the scene says how far it is from the hydrant, the crosswalk, the sign
-// or the crossing, and the prompt names them.
-const spacePart = (p, o) => boxTarget(p, o, 'k-lane k-space');
 // A fire hydrant (Section 8), seen from above at the curb: a red cap with its two side outlets. Not a target.
 const hydrantPart = p => `<g class="k-hydrant" transform="translate(${p.x} ${p.y})"><rect x="-9" y="-2.5" width="18" height="5" rx="2" fill="#d1453f"/><circle r="6" fill="#d1453f" stroke="#f2b9b4" stroke-width="1.2"/><circle r="2" fill="#f2b9b4"/></g>`;
 // A hill seen from the side (Section 8): the one kit part besides the bicyclist that is not top-down, because a
@@ -1427,7 +1423,6 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'crosswalk') return crosswalkPart(p);
     if (p.t === 'post') return postPart(p);
     if (p.t === 'lane') return lanePart(p, o);
-    if (p.t === 'space') return spacePart(p, o);
     if (p.t === 'wheels') return wheelsPart(p, o);
     if (p.t === 'hill') return hillPart(p);
     if (p.t === 'hydrant') return hydrantPart(p);
