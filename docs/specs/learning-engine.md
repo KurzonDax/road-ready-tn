@@ -4,6 +4,13 @@ A build spec. Written 2026-10-17. It replaces the study loop in `src/app.html` w
 
 This spec supersedes GitHub issues #33 (the rule card is reworked here), #34, #36, #37, and the "confusable pairs" and "why line" parts of #41. It defers #38, #39 and #40. Close or edit those issues in the PR that finishes each phase.
 
+**Revised 2026-10-19** (`docs/adr/0003-lesson-answers-count.md`), after the owner used the app with lessons for every Section. Where this spec and that ADR differ, the ADR and the page win:
+
+- A lesson's answers are counted answers. A fact is new only while it has no answer at all.
+- `setPlan` walks the Sections in cursor order and stops at the first one with new facts whose lesson is not finished: that Section's lesson is what the home screen offers (`lesson` in the plan), and no new fact is taken from it or past it. New facts are asked cold, with the first look and rule screen below, only in a Section with no lesson file.
+- Fill facts (step 4) are those last answered `SPACING_MS` or more ago, so nothing taught minutes ago is asked again. A Set with first looks may also fill with more recent facts, so "Why the gap always holds" still holds. A Set of fill facts alone is never offered: there is no "Nothing is due. This set goes over N facts you already know."
+- On every Learner screen a Set is a "Practice quiz", with no number and no line saying what it holds. The record type stays `daily`; the Helper's History may still number them. The home screen shows one thing to do (the quiz when something is due, else the next lesson, else the practice tests, else "Nothing is due today.") and has no "See each section" block. The wording in "Screens" and "Home screen" below is the first draft from 2026-10-17; `src/app.html` and `docs/DECISIONS.md` have the current wording.
+
 The reasoning behind it is in `reports/Making it a learning tool.md` and `reports/Autism friendly study app design.md` (both gitignored, in the working copy at `/opt/road-ready-tn/reports/`). You do not need them to build.
 
 ## Principles this spec keeps

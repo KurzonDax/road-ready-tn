@@ -6,7 +6,7 @@ I am developing this specifically for my son who is on the autism spectrum and s
 
 I am not an educator by trade or training.  In fact, I'm pretty terrible at trying to teach anything, so I'm trying to build a tool that will help my son learn what he needs to pass the test.
 
-This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner sees one short Set at a time: the facts due again and a few new ones, each new fact's rule before its question, a plain explanation after each answer, and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
+This app is mainly geared toward mobile first, but also supports a desktop browser.  The learner takes one Section at a time, acting on a drawing or a choice before each rule is stated, and then short practice quizzes on the facts that are due again, with a plain explanation after each answer and at the end how many facts are learned. There's no menu, no topic list, and no pile of hundreds of questions. It was built for a learner who reads literally and finds tests stressful, and it works for anyone who wants a structured path instead of a question dump.
 
 Since this app is in active development, the content of this README may not always be up to date.  
 
@@ -14,14 +14,14 @@ Since this app is in active development, the content of this README may not alwa
 
 | Step | What the learner does | Done when |
 | --- | --- | --- |
-| Lessons | One per Section, before its first Set: on each step the learner acts on a drawing or a choice first, then sees the rule | The Section's facts are taught |
-| Sets | Up to 10 counted questions: facts due again, then up to 5 new facts in Section order. Each new fact gets a first look, its rule, and its question a few screens later | Every fact is learned |
+| Sections | One at a time: on each question the learner acts on a drawing or a choice first, then sees the rule. Each answer counts as the fact's first answer | Every Section is done |
+| Practice quizzes | Up to 10 counted questions on the facts that are due again, in the test's own wording. Offered only when something is due, never right after a lesson | Every fact is learned |
 | Practice tests | 30 questions drawn from all 120, like the real test | 27 or more right, three times in a row |
 
-- A fact answered right comes back after 12 hours, then 48 hours, then every 7 days. A fact answered wrong comes back once more in the same Set and again in the next one. The home screen shows how many of the 120 facts are learned, never a score, and a Section shows as finished once its 10 facts are learned. The full design is in [docs/specs/learning-engine.md](docs/specs/learning-engine.md).
-- Stopping partway, or closing the page, keeps the answers so far. The home screen offers to continue where the learner stopped.
+- A fact answered right, in a lesson or a quiz, comes back after 12 hours, then 48 hours, then every 7 days. A fact answered wrong comes back at once: in the next quiz, and in a quiz once more a few questions later. The home screen shows one thing to do and how many of the 120 facts are learned, never a score. The full design is in [docs/specs/learning-engine.md](docs/specs/learning-engine.md) and [docs/adr/0003-lesson-answers-count.md](docs/adr/0003-lesson-answers-count.md).
+- Stopping a quiz partway, or closing the page, keeps the answers so far. The home screen offers to continue the practice quiz.
 - The real test is 30 questions and needs 24 right (80%). "Ready" asks for 27 (90%) to leave room for nerves.
-- Progress is stored on the Instance, so it follows the learner from one device to another. With no connection the app still works, and finished sets wait on the device until it is back online.
+- Progress is stored on the Instance, so it follows the learner from one device to another. With no connection the app still works, and finished lessons and quizzes wait on the device until it is back online.
 
 The 120 questions cover the rules the test asks about, including all 29 of the manual's own end-of-chapter sample questions. They come from a bank of 847 questions written from and checked against the manual, and the app asks many of them in more than one wording. See [docs/QUESTIONS.md](docs/QUESTIONS.md).
 
@@ -53,7 +53,7 @@ server/                  the Instance's server: python -m server
   app.py                 routes, response headers and the files from dist/
   auth.py                accounts, passwords, sign-in and sessions
   limits.py              the pauses after too many failed sign-ins
-  records.py             each Learner's records and unfinished Set
+  records.py             each Learner's records and unfinished practice quiz or test
   helpers.py             what the Helper's view reads and changes
   db.py                  the SQLite database in the Instance folder and its schema steps
   manage.py              python -m server.manage: Helper accounts, unlock, backup

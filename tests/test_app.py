@@ -12,13 +12,15 @@ database, and signs in through the page like a person would.
 
 Covers the sign-in screen (its wording, the mismatch and pause messages, each role
 landing on its own screen, sign-out, and a sign-in that has ended) and the path the
-Learner takes (docs/specs/learning-engine.md): a new Learner's first Set of first looks,
+Learner takes (docs/specs/learning-engine.md, docs/adr/0003-*): lessons, then practice
+quizzes: a lesson's answers count, the quiz after it asks only what was answered wrong, and
+its facts come back 13 hours later but not a minute later; the home screen shows one thing
+to do; and, for a Section with no lesson file, a new Learner's first quiz of first looks,
 rule screens and counted questions with the gap between them, a wrong answer's re-ask,
-Set done, the next Set opening with the missed fact, a fact due again 13 hours later
-but not a minute later, the line naming the question a wrong choice answers, a Compare
-screen and its reverse questions once a group is learned, every fact
-learned, Practice tests up to the "ready" screen, saving a Set across a reload and picking
-it up again, and every screen at 375 px wide. The learning engine runs on fixtures in the
+the quiz done screen, the next quiz opening with the missed fact, the line naming the
+question a wrong choice answers, a Compare screen and its reverse questions once a group is
+learned, every fact learned, Practice tests up to the "ready" screen, saving a quiz across a
+reload and picking it up again, and every screen at 375 px wide. The learning engine runs on fixtures in the
 page: standings, the due order, the Section cursor, old records, retention, and buildSet()'s
 gap rule over 500 random histories. Progress is worked out from the Learner's records on
 the server: finished Sets stored as records and shown again in a fresh browser, a Reset and a
@@ -254,11 +256,44 @@ def h2(pg):
     return pg.inner_text(".home h2")
 
 
-def set_h(pg):
-    """The Set's heading on the home screen ("Set 1"). It is the h1, or the h2 under a lesson's offer when the
-    Section whose facts come next has a lesson (Section 1 does), so a new Learner's first heading is the lesson."""
-    found = pg.evaluate("[...document.querySelectorAll('.home h1, .home h2')].map(h => h.textContent).find(t => /^Set \\d+$/.test(t)) || null")
-    return found if found is not None else h1(pg)
+SET_WORDS = re.compile(r"\bSets?\b|See each section|questions from earlier")
+
+
+def learner_words_ok(pg):
+    """True when nothing on the Learner's screen says "Set", "See each section" or "questions from earlier lessons":
+    the names the owner struck (docs/adr/0003-*)."""
+    return SET_WORDS.search(pg.inner_text("#stage")) is None
+
+
+def without_lessons(pg):
+    """Make the page forget every lesson file, as for a Section that has none: the practice quiz then takes that
+    Section's new facts cold, with a first look and a rule screen each (the path buildSet keeps for such a
+    Section). The page's own copy of the lessons comes back on the next reload."""
+    pg.evaluate("() => { LESSONS = {}; LESSON_STEP = {}; if (onHome) renderHome(); }")
+
+
+def take_lesson(pg, wrong=0):
+    """Act through every question of the lesson on screen to its done screen, the first `wrong` questions with a wrong
+    pick and the rest with the correct one. Returns the facts of the questions answered wrong."""
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer,"
+                        " targets: (s.targets || []).map(t => t.id), options: s.options || []}))")
+    missed = []
+    for k, st in enumerate(steps):
+        miss = k < wrong
+        if st["kind"] == "tap":
+            pick = next(t for t in st["targets"] if t != st["answer"]) if miss else st["answer"]
+            pg.wait_for_selector(f".k-target[data-t='{pick}']")
+            pg.click(f".k-target[data-t='{pick}']")
+        else:
+            pg.wait_for_selector("button.opt")
+            pick = next(o for o in st["options"] if o != st["answer"]) if miss else st["answer"]
+            pg.query_selector_all("button.opt")[choice_texts(pg).index(pick)].click()
+        if miss and st["fact"]:
+            missed.append(st["fact"])
+        pg.wait_for_selector("#stepNextBtn")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#homeBtn")
+    return missed
 
 
 def fetch(base, path):
@@ -335,7 +370,7 @@ def check_sign_in(browser, inst):
     check(me_status(pg) == 401, "wrong details don't sign in")
 
     sign_in(pg, "  " + LEARNER[0].upper() + " ", LEARNER[1])
-    check(set_h(pg) == "Set 1", "a Learner lands on the study path (the name matched ignoring capitals and spaces)")
+    check(h1(pg) == "Section 1", "a Learner lands on the home screen, offered the first lesson (the name matched ignoring capitals and spaces)")
     fine = pg.evaluate("""() => { const b = [...document.querySelectorAll('.home button')].find(b => b.textContent === 'Sign out');
         const fine = b && b.closest('.fine');
         return !!fine && fine.textContent.includes('This is a practice app.'); }""")
@@ -344,7 +379,7 @@ def check_sign_in(browser, inst):
     check(stage_text(pg) == "Sign out? You will need your name and password to sign in again. Yes, sign out No, stay signed in",
           f"Sign out asks first (got {stage_text(pg)!r})")
     pg.get_by_role("button", name="No, stay signed in").click()
-    check(set_h(pg) == "Set 1" and me_status(pg) == 200, "No, stay signed in goes back home, still signed in")
+    check(h1(pg) == "Section 1" and me_status(pg) == 200, "No, stay signed in goes back home, still signed in")
     pg.get_by_role("button", name="Sign out").click()
     pg.get_by_role("button", name="Yes, sign out").click()
     pg.wait_for_selector("#signInForm")
@@ -371,8 +406,8 @@ def check_sign_in(browser, inst):
 
     print("\n[a sign-in that has ended]")
     sign_in(pg, *LEARNER)
-    pg.click("#startBtn")
-    answer_set(pg)
+    pg.click("#lessonBtn")
+    take_lesson(pg, wrong=1)  # one fact answered wrong in the lesson, so a practice quiz is due from now on
     pg.click("#homeBtn")
     inst.end_sessions(LEARNER[0])
     requested.clear()
@@ -381,7 +416,7 @@ def check_sign_in(browser, inst):
           "once the sign-in has ended, the app opens on the sign-in screen and says nothing else")
     check(not any(u.endswith("questions.json") for u in requested), "and it doesn't ask for questions.json")
     sign_in(pg, *LEARNER)
-    check(set_h(pg) == "Set 2", "signing in again goes back to where the Learner was")
+    check(h1(pg) == "Practice quiz", "signing in again goes back to where the Learner was: a practice quiz is due")
     ctx.close()
 
     print("\n[sign-in paused]")
@@ -451,7 +486,7 @@ def check_offline(browser):
         pg.on("pageerror", lambda e: errors.append(str(e)))
         open_page(pg, inst.url)
         sign_in(pg, *LEARNER)
-        check(set_h(pg) == "Set 1", "online, the Learner signs in and sees Set 1")
+        check(h1(pg) == "Section 1", "online, the Learner signs in and sees the first lesson")
         try:
             pg.wait_for_function("() => !!navigator.serviceWorker.controller", timeout=10000)
         except PlaywrightTimeout:
@@ -460,12 +495,13 @@ def check_offline(browser):
 
         ctx.set_offline(True)
         reload(pg)
-        check(set_h(pg) == "Set 1", "with no connection, opening the app again shows the study path")
+        check(h1(pg) == "Section 1", "with no connection, opening the app again shows the home screen")
+        without_lessons(pg)
         pg.click("#startBtn")
-        check(answer_set(pg, miss=1) == 6 and pg.inner_text(".home h2").startswith("You finished Set"),
-              "with no connection, a whole Set can be answered")
+        check(answer_set(pg, miss=1) == 6 and pg.inner_text(".home h2") == "You finished the practice quiz.",
+              "with no connection, a whole practice quiz can be answered")
         pg.click("#homeBtn")
-        check(set_h(pg) == "Set 2", "and the home screen moves on to Set 2")
+        check(h1(pg) == "Practice quiz", "and the home screen offers the next practice quiz")
         fonts = pg.evaluate("""document.fonts.check('800 18px Overpass')
                                && document.fonts.check('400 18px "Atkinson Hyperlegible"')""")
         check(fonts, "with no connection, the page still has its fonts")
@@ -502,7 +538,7 @@ def check_offline(browser):
         wait_until(lambda: ["rrtn-pages", "/questions.json"] in cached(pg2), 5)
         ctx2.set_offline(True)
         reload(pg2)
-        check(set_h(pg2) == "Set 2", "with no connection, the next open still shows the study path",
+        check(h1(pg2) == "Practice quiz", "with no connection, the next open still shows the home screen, with the fact missed due",
               stage_text(pg2))
         ctx2.close()
 
@@ -528,8 +564,8 @@ def check_offline(browser):
         check(not left, "after sign-out, questions.json is not kept in rrtn-pages")
         ctx.set_offline(True)
         reload(pg)
-        check(not pg.query_selector("#startBtn") and not pg.evaluate("me"),
-              "after sign-out, opening the app with no connection doesn't open the study path")
+        check(not pg.query_selector("#startBtn, #lessonBtn") and not pg.evaluate("me"),
+              "after sign-out, opening the app with no connection doesn't open the home screen")
         check(not errors, "no page errors offline or across the new build" + (f": {errors}" if errors else ""))
         ctx.close()
 
@@ -572,8 +608,21 @@ def daily(n, answers, group=None, reset=None, seq=None):
                     for q, right, h, role in rows]}, **({} if seq is None else {"seq": seq})}
 
 
-# Checks buildSet's rules over `n` random histories, in both FIRST_LOOK modes; returns what broke.
-BUILD_SET_PROPERTIES = """n => {
+def lesson_rec(n, section, answers, reset=None, seq=None):
+    """A finished lesson. `answers` is a list of (fact id, right, hour); the lesson finishes at its last answer."""
+    last = max(h for _, _, h in answers)
+    return {"id": f"record-{n:012d}", "kind": "set", "reset": reset, "at": hours(last), "data": {
+        "set_id": f"lesson-{n}", "type": "lesson", "section": section, "started_at": hours(answers[0][2]),
+        "answers": [{"q": q, "chosen": "an answer", "right": right, "at": hours(h), "role": "lesson", "format": "choice"}
+                    for q, right, h in answers]}, **({} if seq is None else {"seq": seq})}
+
+
+# Runs `f` with the page's lesson files forgotten, as for Sections that have none (see without_lessons).
+WITHOUT_LESSONS = "f => { const L = LESSONS; LESSONS = {}; try { return f(); } finally { LESSONS = L; } }"
+
+# Checks buildSet's rules over `n` random histories, in both FIRST_LOOK modes, with no lesson files (every
+# Section's new facts are asked cold, which is the path these rules are about); returns what broke.
+BUILD_SET_PROPERTIES = """n => withoutLessons(() => {
   const ids = QS.map(q => q.id), problems = [], H = 3600e3, t0 = Date.parse('2026-10-01T12:00:00Z');
   const rnd = Math.random;
   for (let k = 0; k < n; k++) {
@@ -589,10 +638,14 @@ BUILD_SET_PROPERTIES = """n => {
       const screens = buildSet(p, now, firstLook), say = what => problems.push(`history ${k}, FIRST_LOOK ${firstLook}: ${what}`);
       const counted = screens.filter(s => s.kind === 'counted'), rules = screens.filter(s => s.kind === 'rule');
       if (counted.length > COUNTED_TARGET) say(`${counted.length} counted questions`);
-      // A group block takes no new facts, so with too few other facts to fill it, a Set can be short.
-      const blockOf = screens[0] && screens[0].kind === 'contrast' ? GROUPS.find(g => g.id === screens[0].group).facts.map(f => f.id) : [];
-      const spare = QS.filter(q => p.facts[q.id].asked && !blockOf.includes(q.id)).length;
-      if (counted.length < Math.min(MIN_SET, blockOf.length ? blockOf.length + spare : ids.length)) say(`only ${counted.length} counted questions`);
+      // A quiz is filled to MIN_SET only with facts not answered in the last SPACING_MS, unless it has first looks
+      // (then any not-yet-due fact fills it, so the gap holds). A group block takes no new facts, so with too few
+      // other facts to fill it, a quiz can be short.
+      const plan = setPlan(p, now), firstLooks = plan.fresh.some(id => !taught(p, id));
+      const spareAll = QS.filter(q => p.facts[q.id].asked && !isDue(p.facts[q.id], now) && !plan.block.includes(q.id));
+      const spare = firstLooks ? spareAll : spareAll.filter(q => p.facts[q.id].lastAt <= now - SPACING_MS);
+      if (counted.length < Math.min(MIN_SET, plan.block.length + plan.due.length + plan.fresh.length + spare.length)) say(`only ${counted.length} counted questions`);
+      if (!firstLooks && plan.fill.some(id => p.facts[id].lastAt > now - SPACING_MS)) say('a fill fact answered in the last 12 hours, with no first looks');
       if (new Set(counted.map(s => s.id)).size !== counted.length) say('a fact asked twice');
       if (rules.length > NEW_PER_SET) say(`${rules.length} new facts`);
       if (due >= 10 && rules.length) say(`${due} due and still ${rules.length} new facts`);
@@ -620,7 +673,7 @@ BUILD_SET_PROPERTIES = """n => {
     }
   }
   return problems;
-}"""
+})"""
 
 
 def check_engine(browser, inst):
@@ -632,6 +685,7 @@ def check_engine(browser, inst):
     ids = pg.evaluate("Object.fromEntries(DAYS.map(d => [d.day, QS.filter(q => q.day === d.day).map(q => q.id)]))")
     s1, s2, s3 = ids["1"], ids["2"], ids["3"]
     a, b, c = s1[0], s1[1], s1[2]
+    pg.evaluate(f"() => {{ window.withoutLessons = {WITHOUT_LESSONS}; }}")
 
     def fact(records, q, now=None):
         """A fact's standing, spaced successes and whether it is due `now` hours in."""
@@ -667,6 +721,30 @@ def check_engine(browser, inst):
     got = fact([daily(1, [(a, False, 0, "first_look"), (a, True, 0.1, "counted"), (a, False, 0.2, "reask")])], a, 1)
     check(got == {"standing": "learned", "spaced": 1, "due": False}, "first looks and re-asks never change a standing", got)
 
+    print("\n[lesson answers count]")
+    taught = [lesson_rec(1, 1, [(q, q != b, 0) for q in s1])]
+    check(fact(taught, a, 1) == {"standing": "learned", "spaced": 1, "due": False}
+          and fact(taught, a, 11.9)["due"] is False and fact(taught, a, 12)["due"] is True,
+          "a fact answered correctly in a lesson is learned, and due again 12 hours later, not sooner")
+    check(fact(taught, b, 0.1) == {"standing": "seen", "spaced": 0, "due": True}, "a fact answered wrong in a lesson is seen, and due at once")
+    got = pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now)); return [p.due, p.fresh, p.fill, p.lesson, quizDue(p), learnedCount(progressFrom(r))]; }",
+                      [taught, hours(0.1)])
+    check(got == [[b], [], [], 2, True, 9],
+          "a minute after the lesson, the quiz holds only the fact answered wrong: the others are neither new nor fill, and the next lesson is Section 2's", got)
+    got = pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now)); return [[...p.block, ...p.due].sort(), p.group && p.group.id, p.fresh, p.lesson, quizDue(p)]; }",
+                      [taught, hours(13)])
+    check(got == [sorted(s1), "sign-colors", [], 2, True],
+          "13 hours later every fact from the lesson is in the quiz: the sign colors, all learned, as a Compare block, and the rest due", got)
+    right = [lesson_rec(2, 1, [(q, True, 0) for q in s1])]
+    got = pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now)); return [quizDue(p), p.fill, p.lesson]; }", [right, hours(0.1)])
+    check(got == [False, [], 2], "with every lesson answer correct, nothing is due a minute later and there is no quiz, only the next lesson", got)
+    got = pg.evaluate("r => { const p = progressFrom(r); return [p.lessons[1] !== undefined, learnedCount(p), standing(p.facts[QS[0].id])]; }",
+                      right + [lesson_rec(3, 1, [(q, q != a, 13) for q in s1])])
+    check(got == [True, 10, "learned"], "a lesson taken again adds its answers like any others: the fact answered wrong stays learned and is due", got)
+    got = pg.evaluate("r => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z')).lesson",
+                      [daily(4, [(q, True, 1) for q in s1 + s2 + s3])])
+    check(got == 4, "the lesson offered is the first Section in cursor order with a new fact", got)
+
     print("\n[due order]")
     recs = [daily(1, [(s2[0], True, 0), (s2[1], True, 0), (s2[1], True, 13), (s2[1], True, 26), (s2[2], True, 1)]),
             daily(2, [(s2[3], True, 2), (s2[3], False, 5), (s2[4], False, 3)])]
@@ -694,28 +772,33 @@ def check_engine(browser, inst):
     check(got == [6, True, True], "a Move to 13 unlocks Practice tests and keeps the Section cursor", got)
     got = pg.evaluate("r => { const p = progressFrom(r); return [p.cursor, learnedCount(p), p.tests, p.sets]; }",
                       old + [record(5, "reset", 70, {}, seq=9), daily(9, [(a, True, 2)], reset=reset, seq=10)])
-    check(got == [1, 1, [], 1], "after a Reset only the records naming it count, and the Set number starts again", got)
+    check(got == [1, 1, [], 1], "after a Reset only the records naming it count, and the Helper's quiz count starts again", got)
 
     print("\n[buildSet]")
-    got = pg.evaluate("""() => buildSet(progressFrom([]), Date.now(), true).map(s => s.kind + ' ' + s.id)""")
+    # New facts are asked cold, with a first look and a rule screen, only in a Section with no lesson file.
+    got = pg.evaluate("""() => withoutLessons(() => buildSet(progressFrom([]), Date.now(), true).map(s => s.kind + ' ' + s.id))""")
     want = [f"{k} {q}" for q in s1[:5] for k in ("first_look", "rule")] + [f"counted {q}" for q in s1[:5]]
-    check(got == want, "a new Learner's first Set: 5 first looks, each with its rule, then the 5 counted questions", got)
-    got = pg.evaluate("""() => buildSet(progressFrom([]), Date.now(), false).map(s => s.kind + ' ' + s.id)""")
+    check(got == want, "with no lesson file, a new Learner's first quiz: 5 first looks, each with its rule, then the 5 counted questions", got)
+    got = pg.evaluate("""() => withoutLessons(() => buildSet(progressFrom([]), Date.now(), false).map(s => s.kind + ' ' + s.id))""")
     check(got == [f"rule {q}" for q in s1[:5]] + [f"counted {q}" for q in s1[:5]],
           "with FIRST_LOOK false, 5 rule screens and then the 5 counted questions", got)
+    got = pg.evaluate("""() => { const p = setPlan(progressFrom([]), Date.now()); return [p.fresh, p.lesson, buildSet(progressFrom([]), Date.now())]; }""")
+    check(got == [[], 1, []], "with Section 1's lesson file there and not taken, no new fact is asked cold: the lesson is next and there is no quiz", got)
     moved = [record(1, "move", 0, {"to": 12}, seq=1), daily(2, [(q, True, 1) for q in ids["12"][:8]], seq=2)]
-    got = pg.evaluate("r => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z')).fresh", moved)
+    got = pg.evaluate("r => withoutLessons(() => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z')).fresh)", moved)
     check(got == ids["12"][8:] + s1[:3], "new facts come from the Section cursor on, then round to Section 1", got)
     got = pg.evaluate("r => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z'))",
                       [daily(1, [(q, False, 1) for q in s1 + s2[:2]])])
-    check(len(got["due"]) == 10 and got["fresh"] == [] and got["fill"] == [], "with 10 or more due, a Set is 10 due facts and no new ones", got)
-    # Every fact right, and every group compared after that, so no group block is due.
+    check(len(got["due"]) == 10 and got["fresh"] == [] and got["fill"] == [], "with 10 or more due, a quiz is 10 due facts and no new ones", got)
+    # Every fact right twice, 13 hours apart, and every group compared after that, so no group block is due.
     groups = pg.evaluate("GROUPS.map(g => [g.id, g.facts[0].id])")
-    everything = [daily(1, [(q["id"], True, 1) for q in pg.evaluate("QS")])] + \
-        [daily(40 + k, [(first, True, 1.5)], group=g) for k, (g, first) in enumerate(groups)]
-    got = pg.evaluate("r => setPlan(progressFrom(r), Date.parse('2026-10-01T14:00:00Z'))", everything)
-    check(got["due"] == [] and got["fresh"] == [] and len(got["fill"]) == 5,
-          "with nothing due and nothing new, a Set is 5 fill facts", got)
+    all_ids = [q["id"] for q in pg.evaluate("QS")]
+    everything = [daily(1, [(q, True, 0) for q in all_ids]), daily(2, [(q, True, 13) for q in all_ids])] + \
+        [daily(40 + k, [(first, True, 13.5)], group=g) for k, (g, first) in enumerate(groups)]
+    got = pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now)); return [p.due, p.fresh, p.fill.length, quizDue(p)]; }", [everything, hours(26)])
+    check(got == [[], [], 5, False], "with nothing due and nothing new, the plan is 5 fill facts and no quiz is offered", got)
+    got = pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now)); return [p.due, p.fill, quizDue(p)]; }", [everything, hours(14)])
+    check(got == [[], [], False], "a fact answered in the last 12 hours is never a fill fact", got)
     problems = pg.evaluate(BUILD_SET_PROPERTIES, 500)
     check(problems == [], "over 500 random histories, in both FIRST_LOOK modes: at least GAP screens for other facts "
           "between each rule and its counted question, at most 5 new and 10 counted, never fewer than 5", problems[:5])
@@ -725,8 +808,8 @@ def check_engine(browser, inst):
     learned = [daily(30, [(q, True, 1) for q in parking])]
 
     def plan(records, at_hour):
-        return pg.evaluate("([r, now]) => { const p = setPlan(progressFrom(r), Date.parse(now));"
-                           " return {group: p.group && p.group.id, block: p.block, due: p.due, fresh: p.fresh, fill: p.fill}; }",
+        return pg.evaluate("([r, now]) => withoutLessons(() => { const p = setPlan(progressFrom(r), Date.parse(now));"
+                           " return {group: p.group && p.group.id, block: p.block, due: p.due, fresh: p.fresh, fill: p.fill}; })",
                            [records, hours(at_hour)])
 
     check(plan(learned, 12.9)["group"] is None, "a group is not compared within 12 hours of the newest answer on its facts")
@@ -744,10 +827,9 @@ def check_engine(browser, inst):
     got = plan(again, 17)
     check(got["group"] == "parking-distances" and "b-252" not in got["due"],
           "12 hours after that wrong answer the group is due again, and its facts leave the due list", got)
-    got = plan([daily(34, [("b-031", True, 1), ("b-030", True, 1), (s3[0], True, 13), (s3[1], True, 13),
-                           (s3[2], True, 13), (s3[3], True, 13)])], 14)
+    got = plan([daily(34, [("b-031", True, 1), ("b-030", True, 1)] + [(q, True, h) for q in s3[:4] for h in (-20, 1)])], 14)
     check(got["group"] == "speed-limits" and got["block"] == ["b-031", "b-030"] and len(got["fill"]) == 3,
-          "a group block of 2 is filled to 5 counted questions with facts not yet due", got)
+          "a group block of 2 is filled to 5 counted questions with facts not yet due, last answered 12 or more hours ago", got)
     blocks = pg.evaluate("""r => [0, 1, 2, 3, 4, 5].map(() => buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z'))
         .map(s => ({kind: s.kind, id: s.id, group: s.group, format: s.format, options: s.options})))""", learned)
     labels = {"b-250": "A fire hydrant", "b-252": "A crosswalk", "b-253": "A stop sign or traffic signal", "b-251": "A railroad crossing"}
@@ -791,8 +873,8 @@ def check_engine(browser, inst):
     got = pg.evaluate("""r => buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z'))
         .filter(s => s.id === 'b-077').map(s => [s.kind, s.q, sameOptions(s.options, BY_ID[s.q])])""", [daily(84, [("b-077", True, 1)])])
     check(got == [["counted", "d-165", True]], "a due fact's counted question is asked in that wording, with its own choices", got)
-    got = pg.evaluate("""() => buildSet(progressFrom([]), Date.now()).filter(s => s.kind === 'first_look' || s.kind === 'counted')
-        .every(s => s.q === s.id)""")
+    got = pg.evaluate("""() => withoutLessons(() => buildSet(progressFrom([]), Date.now()).filter(s => s.kind === 'first_look' || s.kind === 'counted')
+        .every(s => s.q === s.id))""")
     check(got, "first looks, and a new fact's first counted question, use the fact's own question")
     got = pg.evaluate("""r => { const run = { kind: 'daily', set_id: 'set-wording', started_at: '2026-10-02T02:00:00.000Z', number: 2, group: null,
           i: 0, answered: false, reasks: 0, screens: buildSet(progressFrom(r), Date.parse('2026-10-02T02:00:00Z')) };
@@ -888,9 +970,10 @@ def check_helper_helpers(browser, inst):
     check(got[0] == "Unlocked practice tests" and got[2] == "Started new facts from Section 4"
           and got[3] == "Progress reset by a Helper",
           "a Move and a Reset are worded as decided", got)
-    got = [pg.evaluate("([t, s, n]) => setName(t, s, n)", x) for x in (("daily", None, 12), ("test", None, None),
+    got = [pg.evaluate("([t, s, n]) => setName(t, s, n)", x) for x in (("daily", None, 12), ("test", None, None), ("lesson", 3, None),
                                                                       ("day", 3, None), ("redo", 3, None), ("review", None, None))]
-    check(got == ["Set 12", "Practice test", "Section 3", "Section 3 again", "Review"], "Sets are named as decided", got)
+    check(got == ["Practice quiz 12", "Practice test", "Section 3", "Section 3", "Section 3 again", "Review"],
+          "quizzes, tests, lessons and old Sets are named as decided", got)
 
     print("\n[Helper's view: Questions missed most]")
     # Since the Reset: qs[0] missed 4 of 5, qs[1] 3 of 3, qs[2] 3 of 6, qs[3] to qs[10] 2 of 2,
@@ -924,9 +1007,11 @@ def check_helper_helpers(browser, inst):
         return timed_set(n, "test", None, [(q, "x", i < right, minute) for i, q in enumerate(tests_all)], seq=n)
 
     for records, want, next_set in (
-            ([], "0 of 120 facts learned, 0 solid.", "Next set: 5 new."),
+            ([], "0 of 120 facts learned, 0 solid.", "Next: Section 1."),
             ([daily_set(1, [(q, i > 1, 10, "counted") for i, q in enumerate(s1)], seq=1)],
-             "8 of 120 facts learned, 0 solid.", "Next set: 2 come back, 5 new."),
+             "8 of 120 facts learned, 0 solid.", "Next practice quiz: 2 come back. Then Section 2."),
+            ([daily_set(2, [(q, True, 10, "counted") for q in s1], seq=1)],
+             "10 of 120 facts learned, 0 solid.", "Next: Section 2."),
             ([record(1, "move", 10, {"to": 13}, seq=1), practice(2, 20, 28), practice(3, 30, 27), practice(4, 40, 29)],
              "29 of 120 facts learned, 0 solid.", "Ready for the test: 3 practice tests in a row at 27 or more")):
         got = pg.evaluate("r => [whereNow(progressFrom(r)), nextSetLine(progressFrom(r), Date.parse('2026-10-01T13:00:00Z'))]", records)
@@ -939,7 +1024,7 @@ def check_helper_helpers(browser, inst):
 
     old = {"kind": "day", "dayNum": 6, "i": 3, "answered": True, "set_id": "u", "started_at": at(0),
            "items": [{"id": q, "options": [], "chosen": None, "at": None} for q in qs[:10]]}
-    for u, want in ((unfinished("daily", 4, ["first_look", "rule", "counted", "counted", "reask"], 3), "Unfinished: Set 4, 2 of 4 answered"),
+    for u, want in ((unfinished("daily", 4, ["first_look", "rule", "counted", "counted", "reask"], 3), "Unfinished: Practice quiz 4, 2 of 4 answered"),
                     (unfinished("test", 9, ["counted"] * 30, 4), "Unfinished: Practice test, 4 of 30 answered"),
                     (old, "Unfinished: Section 6, 4 of 10 answered")):
         got = run("unfinishedLine", u)
@@ -1028,9 +1113,10 @@ def check_helper_view(browser):
         pg.get_by_role("button", name="Casey").click()
         pg.wait_for_selector("#stage .part")
         check(pg.inner_text("#stage h1") == "Casey", "the Learner's page opens with the Learner's name")
-        check(texts(pg, ".now p") == ["45 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 5 come back.",
-                                      "Unfinished: Set 2, 5 of 10 answered"],
-              "Now: the facts learned, what the next Set holds, and the unfinished Set", texts(pg, ".now p"))
+        check(texts(pg, ".now p") == ["45 of 120 facts learned, 0 solid.",
+                                      "Next practice quiz: Compare: What each sign color means, 5 come back. Then Section 4.",
+                                      "Unfinished: Practice quiz 2, 5 of 10 answered"],
+              "Now: the facts learned, what the next quiz holds and the lesson after it, and the unfinished quiz", texts(pg, ".now p"))
         check(texts(pg, ".retention p") == ["Of 3 times a fact was answered correctly and asked again at least 12 hours later, "
                                             "it was correct 1 time.", "In the last 14 days: 0 of 0."],
               "Retention counts each right answer asked again 12 or more hours later", texts(pg, ".retention p"))
@@ -1061,7 +1147,7 @@ def check_helper_view(browser):
                                f"Missed 2 of 2 times Driver manual, page {q['p']}",
               "Questions missed most counts only since the Reset and shows the question, answers, count and page", missed)
         check(texts(pg, ".sessions > li") == [
-            "October 2, 2026, 7:00 AM 7 minutes Set 1: 1 of 8",
+            "October 2, 2026, 7:00 AM 7 minutes Practice quiz 1: 1 of 8",
             "October 1, 2026, 12:00 PM Less than 1 minute Practice test: 28 of 30",
             "October 1, 2026, 10:20 AM 9 minutes Section 1 again: 8 of 10",
             "October 1, 2026, 8:40 AM Started new facts from Section 4",
@@ -1082,7 +1168,7 @@ def check_helper_view(browser):
         pg.get_by_role("button", name="Wolfeschlegel").click()
         pg.wait_for_selector("#stage .part")
         check(no_sideways_scroll(pg), "a long name doesn't make the Learner's page scroll sideways")
-        check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next set: 5 new."]
+        check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next: Section 1."]
               and texts(pg, ".retention p") == ["No fact has been asked again 12 or more hours after a correct answer yet."]
               and texts(pg, ".history p") == ["No Study sessions yet."]
               and texts(pg, ".tests p") == ["No Practice tests yet."]
@@ -1207,7 +1293,7 @@ def check_manage_learner(browser):
         lpg = lctx.new_page()
         open_page(lpg, inst.url)
         sign_in(lpg, "Jordan", "jordan password")
-        check(set_h(lpg) == "Set 1", "the new Learner can sign in, and starts at Set 1", set_h(lpg))
+        check(h1(lpg) == "Section 1", "the new Learner can sign in, and starts at the first lesson", h1(lpg))
 
         # Manage this Learner: its own part at the bottom of the Learner's page.
         open_learner(pg, "Casey")
@@ -1286,7 +1372,7 @@ def check_manage_learner(browser):
         pg.get_by_role("button", name="Back to Learners").first.click()
         open_learner(pg, "Jordan")
         paused = texts(pg, ".now p")
-        check(paused == ["0 of 120 facts learned, 0 solid.", "Next set: 5 new.", want],
+        check(paused == ["0 of 120 facts learned, 0 solid.", "Next: Section 1.", want],
               "under where they are now, the paused line says until when", paused)
 
         pg.get_by_role("button", name="Reset sign-in").click()
@@ -1302,7 +1388,7 @@ def check_manage_learner(browser):
         tries.close()
         open_page(lpg, inst.url)
         sign_in(lpg, "Jordan", "jordan new password")
-        check(set_h(lpg) == "Set 1", "the new password signs the Learner in", set_h(lpg))
+        check(h1(lpg) == "Section 1", "the new password signs the Learner in", h1(lpg))
         lctx.close()
 
         # Reset progress. Casey Lee has finished Sections 1 and 2 and is signed in on a device of their own.
@@ -1319,17 +1405,18 @@ def check_manage_learner(browser):
         open_learner(pg, "Casey Lee")
         pg.get_by_role("button", name="Reset progress").click()
         want = ("Put Casey Lee back at the start of Section 1? Every fact goes back to new, and Practice tests start over. "
-                "The History of finished Sets is kept.")
+                "The History is kept.")
         check(stage_text(pg).startswith(want), "Reset progress asks first, in the decided words", stage_text(pg))
         pg.click("#confirmNo")
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["19 of 120 facts learned, 0 solid.", "Next set: Compare: What each sign color means, 5 come back.",
-                                      "Unfinished: Set 1, 2 of 10 answered"],
+        check(texts(pg, ".now p") == ["19 of 120 facts learned, 0 solid.",
+                                      "Next practice quiz: Compare: What each sign color means, 5 come back. Then Section 3.",
+                                      "Unfinished: Practice quiz 1, 2 of 10 answered"],
               "saying no to Reset progress changes nothing", texts(pg, ".now p"))
         pg.get_by_role("button", name="Reset progress").click()
         pg.click("#confirmYes")
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next set: 5 new."],
+        check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next: Section 1."],
               "after Reset progress, the Learner's page says no fact is learned", texts(pg, ".now p"))
         sessions = texts(pg, ".sessions > li")
         check(len(sessions) == 2 and sessions[0].endswith("Progress reset by a Helper")
@@ -1337,10 +1424,12 @@ def check_manage_learner(browser):
               "Study sessions still shows the old Sets, under a Progress reset by a Helper line", sessions)
         reload(cpg)
         wait_for_stage_text(cpg, "Questions learned 0 of 120")
-        check("This set has 5 new questions." in stage_text(cpg), "the Learner's next app open starts from no facts learned",
+        check(h1(cpg) == "Section 1", "the Learner's next app open starts from no facts learned, at the first lesson",
               stage_text(cpg))
         check_set_dropped(cpg, inst, casey, "Reset progress")
-        # This time the Set is still on the Learner's screen when the Helper moves them.
+        # This time the quiz is still on the Learner's screen when the Helper moves them. With no lesson files,
+        # the quiz takes Section 1's new facts cold.
+        without_lessons(cpg)
         stop_partway(cpg, inst, casey, stop=False)
         shown = cpg.evaluate("unfinishedLine(packRun(run))")
 
@@ -1353,12 +1442,12 @@ def check_manage_learner(browser):
         pg.get_by_label("What to change for Casey Lee").select_option(label="Start new facts from Section 4")
         submit_form(pg, "Move")
         want = ("Start new facts from Section 4 for Casey Lee? Every fact keeps its standing, and the History is kept. "
-                "Any unfinished Set is dropped. Yes, start new facts from Section 4")
+                "An unfinished practice quiz or test is dropped. Yes, start new facts from Section 4")
         check(stage_text(pg).startswith(want), "Move asks first, in the decided words", stage_text(pg))
         pg.click("#confirmNo")
         pg.get_by_role("button", name="Cancel").click()
         pg.wait_for_selector("#stage .manage")
-        check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next set: 5 new.", shown],
+        check(texts(pg, ".now p") == ["0 of 120 facts learned, 0 solid.", "Next: Section 1.", shown],
               "saying no to Move changes nothing", [texts(pg, ".now p"), shown])
         pg.get_by_role("button", name="Move", exact=True).click()
         pg.get_by_label("What to change for Casey Lee").select_option(label="Start new facts from Section 4")
@@ -1377,8 +1466,8 @@ def check_manage_learner(browser):
               "an answer given after the Move sends that Set to the server again")
         reload(cpg)
         wait_for_stage_text(cpg, "Questions learned 0 of 120")
-        check(cpg.evaluate("setPlan(S, Date.now()).fresh") == ids["4"][:5] and texts(cpg, ".route-where") == [f"New questions come from Section 4: {SECTION_TITLES[4]}."],
-              "the Learner's next app open takes new facts from Section 4", texts(cpg, ".route-where"))
+        check(cpg.evaluate("setPlan(S, Date.now()).lesson") == 4 and h1(cpg) == "Section 4" and not cpg.query_selector(".route p"),
+              "the Learner's next app open offers Section 4's lesson, and nothing is written under the bar", stage_text(cpg))
         check_set_dropped(cpg, inst, casey, "Move")
         pg.get_by_role("button", name="Move", exact=True).click()
         check(pg.eval_on_selector("#fTo", "s => s.selectedOptions[0].textContent") == "Start new facts from Section 4",
@@ -1450,10 +1539,10 @@ def wait_for_records(pg, n):
 def wait_for_h1(pg, text):
     """Wait (up to 5 seconds) for the home screen's heading to read `text`; return what it reads."""
     try:
-        pg.wait_for_function("t => [...document.querySelectorAll('.home h1, .home h2')].some(h => h.textContent === t)", arg=text, timeout=5000)
+        pg.wait_for_function("t => [...document.querySelectorAll('.home h1')].some(h => h.textContent === t)", arg=text, timeout=5000)
     except Exception:
         pass
-    return set_h(pg) if text.startswith("Set ") else h1(pg)
+    return h1(pg)
 
 
 def store_for(inst, learner_id, kind, data):
@@ -1474,17 +1563,18 @@ def check_records_on_server(browser, inst):
     pg = ctx.new_page()
     open_page(pg, inst.url)
     sign_in(pg, name, password)
-    check(set_h(pg) == "Set 1", "a new Learner starts at Set 1")
+    check(h1(pg) == "Section 1", "a new Learner starts at the first lesson")
 
+    without_lessons(pg)  # with no lesson files, the practice quiz takes new facts cold
     pg.click("#startBtn")
     answer_set(pg, miss=2)
-    check(pg.inner_text(".home h2").startswith("You finished Set"), "the Set ends on the Set done screen")
+    check(pg.inner_text(".home h2") == "You finished the practice quiz.", "the quiz ends on its done screen")
     got = wait_for_records(pg, 1)
     rec = got[0] if len(got) == 1 else {}
     data = rec.get("data", {})
     check(len(got) == 1 and rec["kind"] == "set" and rec["reset"] is None
           and (data["type"], data["section"], data["group"]) == ("daily", None, None),
-          "finishing a Set stores one daily Set record on the server", got)
+          "finishing a practice quiz stores one record of type daily on the server", got)
     answers = data.get("answers", [])
     roles = [a["role"] for a in answers]
     check(sorted(roles) == ["counted"] * 5 + ["first_look"] * 5 + ["reask"] * 2,
@@ -1494,46 +1584,47 @@ def check_records_on_server(browser, inst):
           and all(a["at"] >= data["started_at"] and a["at"] <= rec["at"] for a in answers),
           "each answer says whether it was right, its role and format, and when it was chosen", data)
     pg.click("#homeBtn")
-    check(set_h(pg) == "Set 2", "home then shows Set 2")
+    check(h1(pg) == "Practice quiz", "home then offers the next practice quiz, with the two missed facts due")
     reload(pg)
-    check(set_h(pg) == "Set 2" and "Questions learned 3 of 120" in stage_text(pg), "reloading keeps Progress", stage_text(pg))
+    check(h1(pg) == "Practice quiz" and "Questions learned 3 of 120" in stage_text(pg), "reloading keeps Progress", stage_text(pg))
 
     other = browser.new_context()
     pg2 = other.new_page()
     open_page(pg2, inst.url)
     sign_in(pg2, name, password)
-    check(set_h(pg2) == "Set 2" and "Questions learned 3 of 120" in stage_text(pg2), "signing in on a fresh browser shows the same")
+    check(h1(pg2) == "Practice quiz" and "Questions learned 3 of 120" in stage_text(pg2), "signing in on a fresh browser shows the same")
     other.close()
 
     reset = store_for(inst, learner, "reset", {})
     reload(pg)
-    check(wait_for_h1(pg, "Set 1") == "Set 1" and "Questions learned 0 of 120" in stage_text(pg),
+    check(wait_for_h1(pg, "Section 1") == "Section 1" and "Questions learned 0 of 120" in stage_text(pg),
           "a Reset put into the database shows on the Learner's next app open")
     store_for(inst, learner, "move", {"to": 4})
     reload(pg)
-    wait_for_stage_text(pg, "Section 4, where your new facts come from")
-    check(texts(pg, ".route-where") == [f"New questions come from Section 4: {SECTION_TITLES[4]}."],
-          "a Move to Section 4 put into the database shows on the Learner's next app open", texts(pg, ".route-where"))
+    check(wait_for_h1(pg, "Section 4") == "Section 4" and texts(pg, ".home .theme") == [SECTION_TITLES[4]],
+          "a Move to Section 4 put into the database shows on the Learner's next app open", stage_text(pg))
+    without_lessons(pg)
     pg.click("#startBtn")
     check(pg.evaluate("run.screens.filter(s => s.kind === 'rule').map(s => BY_ID[s.id].day)") == [4] * 5,
-          "and the next Set's new facts come from Section 4")
+          "and, with no lesson files, the next quiz's new facts come from Section 4")
     answer_set(pg)
     got = wait_for_records(pg, 4)
     check(len(got) == 4 and got[-1]["reset"] == reset and got[-1]["data"]["type"] == "daily",
-          "a Set finished after the Reset names that Reset", got[-1:])
+          "a quiz finished after the Reset names that Reset", got[-1:])
     pg.click("#homeBtn")
-    check(set_h(pg) == "Set 2", "and the Set number counts from the Reset")
+    check(pg.evaluate("S.sets") == 1, "and the Helper's quiz count starts from the Reset")
 
-    # The server can't be reached when a Set finishes: the record waits and is sent next time.
+    # The server can't be reached when a quiz finishes: the record waits and is sent next time.
     ctx.route("**/api/records", lambda route: route.abort() if route.request.method == "POST" else route.continue_())
     pg.click("#startBtn")
     answer_set(pg)
-    check(pg.inner_text(".home h2").startswith("You finished Set"), "with the server out of reach, the Set still finishes")
+    check(pg.inner_text(".home h2") == "You finished the practice quiz.", "with the server out of reach, the quiz still finishes")
     pg.click("#homeBtn")
-    check(set_h(pg) == "Set 3", "and the home screen shows Set 3")
+    check("Questions learned 10 of 120" in stage_text(pg), "and the home screen counts its answers")
     check(len(server_records(pg)) == 4, "the record hasn't reached the server yet")
     reload(pg)
-    check(set_h(pg) == "Set 3", "the waiting record still counts after a reload")
+    check(wait_for_h1(pg, "Section 5") == "Section 5" and "Questions learned 10 of 120" in stage_text(pg),
+          "the waiting record still counts after a reload: Section 4 is learned, and Section 5's lesson is next")
     ctx.unroute("**/api/records")
     reload(pg)
     got = wait_for_records(pg, 5)
@@ -1542,10 +1633,10 @@ def check_records_on_server(browser, inst):
     check(len(server_records(pg)) == 5, "and it is stored only once")
     pg.goto(inst.url + "#section9")
     pg.wait_for_selector("#stage section")
-    check(set_h(pg) == "Set 3", "#section9 does nothing")
+    check(h1(pg) == "Section 5", "#section9 does nothing")
     pg.goto(inst.url + "?r=1#restart")
     pg.wait_for_selector("#stage section")
-    check(set_h(pg) == "Set 3" and not pg.query_selector("#yes"), "#restart does nothing")
+    check(h1(pg) == "Section 5" and not pg.query_selector("#yes"), "#restart does nothing")
     ctx.close()
 
 
@@ -1610,11 +1701,12 @@ def check_offline_and_sync(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, name, password)
     ctx.set_offline(True)
+    without_lessons(pg)  # with no lesson files, the practice quiz takes new facts cold
     pg.click("#startBtn")
     answer_set(pg, miss=1)
-    check(pg.inner_text(".home h2").startswith("You finished Set"), "with no connection the Learner keeps answering to the end of a Set")
+    check(pg.inner_text(".home h2") == "You finished the practice quiz.", "with no connection the Learner keeps answering to the end of a quiz")
     pg.click("#homeBtn")
-    check(set_h(pg) == "Set 2", "and the home screen moves on to Set 2")
+    check(h1(pg) == "Practice quiz", "and the home screen offers the next practice quiz")
     shown = stage_text(pg).lower()
     check("offline" not in shown and "connection" not in shown, "nothing on the page says the device is offline", shown)
     check(db_state(inst, kit)[0] == [], "the server doesn't have the Set yet")
@@ -1623,7 +1715,7 @@ def check_offline_and_sync(browser, inst):
     check(len(got) == 1 and got[0]["data"]["type"] == "daily",
           "going back online sends the waiting Set without reopening the app", got)
     reload(pg)
-    check(len(server_records(pg)) == 1 and set_h(pg) == "Set 2", "and the server holds it exactly once")
+    check(len(server_records(pg)) == 1 and h1(pg) == "Practice quiz", "and the server holds it exactly once")
     check(json.loads(local_item(pg, copy_key(kit)))["pending"] == [], "the device copy has nothing left waiting")
 
     # A long wait: 40 Practice tests (well over the server's 64 KB body limit in all), with one
@@ -1649,7 +1741,7 @@ def check_offline_and_sync(browser, inst):
     check(kept == [bad], "but it is kept aside in the device copy, not deleted", kept)
     reload(pg)
     kept = json.loads(local_item(pg, copy_key(kit))).get("rejected")
-    check(kept == [bad] and set_h(pg) == "Set 2", "and stays kept aside when the app opens again", kept)
+    check(kept == [bad] and h1(pg) == "Practice quiz", "and stays kept aside when the app opens again", kept)
     ctx.close()
 
     print("\n[an unfinished Set on two devices]")
@@ -1659,6 +1751,7 @@ def check_offline_and_sync(browser, inst):
     pg, pg2 = phone.new_page(), laptop.new_page()
     open_page(pg, inst.url)
     sign_in(pg, name, password)
+    without_lessons(pg)  # with no lesson files, the practice quiz takes new facts cold
     pg.click("#startBtn")
     for _ in range(3):
         answer_one(pg)
@@ -1669,8 +1762,9 @@ def check_offline_and_sync(browser, inst):
           "after each answer the unfinished Set is on the server, with saved_at", unfinished)
     open_page(pg2, inst.url)
     sign_in(pg2, name, password)
-    check(pg2.query_selector("#resumeBtn") is not None and "Set 1. You answered 3 of its 5 questions" in stage_text(pg2),
-          "the second device offers the Set the first one stopped partway through", stage_text(pg2))
+    check(pg2.query_selector("#resumeBtn") is not None and "You stopped partway through a practice quiz. You answered 3 of its 5 questions." in stage_text(pg2)
+          and pg2.inner_text("#resumeBtn") == "Continue the practice quiz",
+          "the second device offers the quiz the first one stopped partway through", stage_text(pg2))
     pg2.click("#resumeBtn")
     check(pg2.evaluate("run.i") == i and pg2.evaluate("run.set_id") == pg.evaluate("run.set_id"),
           "and continues it at the next question")
@@ -1687,8 +1781,8 @@ def check_offline_and_sync(browser, inst):
     check(len(got) == 1 and wait_until(lambda: db_state(inst, lee)[1] is None, 5),
           "finishing it stores the Set and the server drops the unfinished one", db_state(inst, lee))
     reload(pg)
-    check(wait_for_h1(pg, "Set 2") == "Set 2" and not pg.query_selector("#resumeBtn"),
-          "the first device then shows Set 2 and nothing to continue")
+    check(wait_for_h1(pg, "Section 1") == "Section 1" and not pg.query_selector("#resumeBtn"),
+          "the first device then shows the next thing to do and nothing to continue")
     phone.close()
     laptop.close()
 
@@ -1753,7 +1847,7 @@ def check_offline_and_sync(browser, inst):
     check(local_item(pg, "rrtn-learner-someone-else") == "{}", "but leaves other copies alone")
 
     sign_in(pg, name, password)
-    check(wait_for_h1(pg, "Set 2") == "Set 2", "signing in again shows Set 2")
+    check(wait_for_h1(pg, "Section 1") == "Section 1", "signing in again shows the home screen")
     imports = [r for body in posts for r in body["records"] if r["kind"] == "imported"]
     check(len(imports) == 1 and len(db_state(inst, ash)[0]) == 2, "and doesn't import the old progress again", imports)
     calls = [c for c in pg.evaluate("window.oldKeyCalls") if c != "getItem"]
@@ -1766,8 +1860,8 @@ def check_offline_and_sync(browser, inst):
     pg.wait_for_selector("#signInForm")
     cy = inst.add_learner("Cy", "second import password")
     sign_in(pg, "Cy", "second import password")
-    check(set_h(pg) == "Set 1" and "Questions learned 0 of 120" in stage_text(pg),
-          "a second Learner signing in on that device starts from nothing", set_h(pg))
+    check(h1(pg) == "Section 1" and "Questions learned 0 of 120" in stage_text(pg),
+          "a second Learner signing in on that device starts from nothing", h1(pg))
     time.sleep(0.5)
     imports = [r for body in posts for r in body["records"] if r["kind"] == "imported"]
     check(len(imports) == 1 and db_state(inst, cy)[0] == [], "and the old progress is not imported for them", imports)
@@ -1828,8 +1922,9 @@ def daily_at(n, answers, group=None):
 
 
 def check_study_path(browser, inst, scheme="light"):
-    """A new Learner's first Sets, in light or dark mode: first looks, rule screens, the gap, re-asks,
-    Set done, the next Set, and a Set stopped partway through."""
+    """The practice quiz path for Sections with no lesson file, in light or dark mode: a new Learner's first
+    quizzes of first looks, rule screens, the gap, re-asks, the quiz done screen, the next quiz, and a quiz
+    stopped partway through. The page is made to forget the lesson files first (without_lessons)."""
     print(f"\n[the study path, device set to {scheme}]")
     errors = []
     ctx = browser.new_context(viewport={"width": 400, "height": 900}, color_scheme=scheme)
@@ -1843,9 +1938,10 @@ def check_study_path(browser, inst, scheme="light"):
 
     check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(24, 23, 21)",
           f"the page is dark even when the device is set to {scheme}")
-    check(set_h(pg) == "Set 1" and "This set has 5 new questions. You see them one at a time. There is no time limit." in stage_text(pg)
-          and "Questions learned 0 of 120" in stage_text(pg),
-          "a new Learner's home screen: Set 1, 5 new facts, none learned yet", stage_text(pg))
+    without_lessons(pg)
+    check(h1(pg) == "Practice quiz" and pg.inner_text("#startBtn") == "Start the practice quiz" and "Questions learned 0 of 120" in stage_text(pg)
+          and "This set" not in stage_text(pg) and learner_words_ok(pg),
+          "with no lesson files, a new Learner's home screen offers the practice quiz, with nothing explained", stage_text(pg))
     check(not pg.query_selector("#testBtn") and "Practice tests" not in texts(pg, ".home h2"),
           "no Practice test until every fact is learned")
     check("parent" not in pg.inner_text("body").lower() and "helper" not in pg.inner_text("body").lower(),
@@ -1858,57 +1954,57 @@ def check_study_path(browser, inst, scheme="light"):
     check([k for k, _ in first] == ["first_look", "rule"] * 5 + ["counted"] * 5 and not gap_problems(first),
           "the first Set is 5 first looks, each with its rule screen, then 5 counted questions, none right after its rule",
           first)
-    check(stage_text(pg).startswith("Set 1: a new question This is a new question. Pick the answer you think is correct. This answer does not count."),
+    check(stage_text(pg).startswith("Practice quiz: a new question This is a new question. Pick the answer you think is correct. This answer does not count."),
           "a first look says so above the question", stage_text(pg))
     click_choice(pg, right=False)
     picked = pg.evaluate("run.screens[0].chosen")
     q = pg.evaluate("BY_ID[run.screens[1].id]")
     check(pg.inner_text("#ruleHead") == f"The answer is: {q['a']}." and texts(pg, ".picked") == [f"You picked: {picked}. This answer does not count."]
-          and stage_text(pg).startswith(f"Set 1: the answer The answer is: {q['a']}. You picked: {picked}.") and pg.inner_text(".rule") == q["why"]
+          and stage_text(pg).startswith(f"Practice quiz: the answer The answer is: {q['a']}. You picked: {picked}.") and pg.inner_text(".rule") == q["why"]
           and not pg.query_selector("blockquote") and "Driver manual" not in stage_text(pg)
-          and "This question comes back later in this set." in stage_text(pg),
+          and "This question comes back later in this practice quiz." in stage_text(pg),
           "choosing goes straight to the next screen: what was picked, the answer and its explanation, and no manual quote",
           stage_text(pg))
     check(not pg.query_selector(".opt.right, .opt.wrong, .verdict") and "Correct" not in stage_text(pg),
           "a first look is not scored: no colors and no Correct")
-    check(pg.inner_text(".progress") == "Set 1: the answer" and pg.inner_text("#ruleGoBtn") == "Go on",
+    check(pg.inner_text(".progress") == "Practice quiz: the answer" and pg.inner_text("#ruleGoBtn") == "Go on",
           "the screen after a first look says it is a new fact, and its button is Go on")
     pg.click("#ruleGoBtn")
     click_choice(pg)
     q = pg.evaluate("BY_ID[run.screens[run.i].id]")
     check(pg.inner_text("#ruleHead") == f"You picked the correct answer: {q['a']}." and "good" in pg.get_attribute("#ruleHead", "class")
-          and stage_text(pg).startswith(f"Set 1: the answer You picked the correct answer: {q['a']}.") and not pg.query_selector(".picked"),
+          and stage_text(pg).startswith(f"Practice quiz: the answer You picked the correct answer: {q['a']}.") and not pg.query_selector(".picked"),
           "after a right pick, the screen says so first, as its heading", stage_text(pg)[:120])
     answer_set(pg)
     done = stage_text(pg)
-    check(done.startswith("You finished Set 1. Correct You learned the answers to 5 new questions. Questions learned 5 of 120")
+    check(done.startswith("You finished the practice quiz. Correct You learned the answers to 5 new questions. Questions learned 5 of 120")
           and len(pg.query_selector_all(".strip .tile.got")) == 5 and not pg.query_selector(".strip .tile.back"),
-          "with every answer right, Set done says 5 new facts learned", done)
-    check("correct out of" not in done and "score" not in done.lower(), "Set done shows no score", done)
-    check(pg.get_attribute("#moreBtn", "class") == "btn primary" and pg.inner_text("#homeBtn") == "I'm done for now",
-          "with more to do, Another set is the main button and I'm done for now comes after it")
+          "with every answer right, the quiz done screen says 5 new facts learned", done)
+    check("correct out of" not in done and "score" not in done.lower() and learner_words_ok(pg), "the quiz done screen shows no score and no Set", done)
+    check(pg.get_attribute("#moreBtn", "class") == "btn primary" and pg.inner_text("#moreBtn") == "Start the practice quiz"
+          and pg.inner_text("#homeBtn") == "I'm done for now",
+          "with more to do, Start the practice quiz is the main button and I'm done for now comes after it")
 
     # Set 2: the first counted question is answered wrong; it comes back once in this Set.
     pg.click("#moreBtn")
     second = screens(pg)
     check(not {f for _, f in second} & {f for _, f in first},
-          "a fact answered right is not in the next Set started a minute later", second)
+          "a fact answered right is not in the next quiz started a minute later", second)
     while screen_kind(pg) != "counted":
         go_on(pg) if screen_kind(pg) in ("rule", "contrast") else click_choice(pg)
     p = pg.evaluate("run.i")
-    check(pg.inner_text(".progress") == "Set 2: question 1 of 5", "a counted question says which of the Set's counted questions it is",
+    check(pg.inner_text(".progress") == "Practice quiz: question 1 of 5", "a counted question says which of the quiz's counted questions it is",
           pg.inner_text(".progress"))
     click_choice(pg, right=False)
     feedback = stage_text(pg)
     right = pg.evaluate("BY_ID[run.screens[run.i].id].a")
     check(pg.inner_text("#outcome") == f"The answer is: {right}." and "Not correct" not in feedback
-          and feedback.startswith(f"Set 2: question 1 of 5 The answer is: {right}. You picked: ")
-          and feedback.endswith("This question comes back later in this set, and in your next set. See how this works Next question Stop for now and save my place"),
-          "after a wrong answer, the screen gives the right answer and says the question comes back, with no verdict", feedback)
+          and feedback.startswith(f"Practice quiz: question 1 of 5 The answer is: {right}. You picked: ")
+          and feedback.endswith("This question comes back later in this practice quiz, and in your next practice quiz. Next question Stop for now and save my place"),
+          "after a wrong answer, the screen gives the right answer and says the question comes back, with no verdict (and, with no lesson files, no lesson question to see)", feedback)
     shown = pg.evaluate("BY_ID[run.screens[run.i].id]")
     said = pg.text_content("#announce")
-    check(said.startswith(f"The answer is: {right}. You picked: ") and said.endswith(f"{shown['why']} This question comes back later in this set, and in your next set.")
-          and said.endswith("This question comes back later in this set, and in your next set."),
+    check(said.startswith(f"The answer is: {right}. You picked: ") and said.endswith(f"{shown['why']} This question comes back later in this practice quiz, and in your next practice quiz."),
           "and the screen reader hears the same sentences, in the same order", said)
     now = screens(pg)
     r = next(i for i, s in enumerate(now) if s[0] == "reask")
@@ -1920,50 +2016,52 @@ def check_study_path(browser, inst, scheme="light"):
         answer_one(pg) if screen_kind(pg) != "counted" else click_choice(pg)
         if pg.query_selector("#nextBtn"):
             pg.click("#nextBtn")
-    check(stage_text(pg).startswith("Set 2: a question from earlier You saw this question earlier in this set. Here it is again."),
-          "a re-ask says it is a question from earlier in the set", stage_text(pg))
+    check(stage_text(pg).startswith("Practice quiz: a question from earlier You saw this question earlier in this practice quiz. Here it is again."),
+          "a re-ask says it is a question from earlier in the quiz", stage_text(pg))
     click_choice(pg, right=False)
-    check(pg.inner_text(".explain .back") == "This question comes back in your next set."
+    check(pg.inner_text(".explain .back") == "This question comes back in your next practice quiz."
           and len([s for s in screens(pg) if s[0] == "reask"]) == 1,
-          "a wrong re-ask puts nothing more in, and says the question comes back in the next Set")
+          "a wrong re-ask puts nothing more in, and says the question comes back in the next quiz")
     missed = pg.evaluate("run.screens[run.i].id")
     pg.click("#nextBtn")
     answer_set(pg)
     done = stage_text(pg)
-    check(done.startswith("You finished Set 2. Correct Comes back in your next set You learned the answers to 4 new questions. Questions learned 9 of 120")
+    check(done.startswith("You finished the practice quiz. Correct Comes back in your next practice quiz You learned the answers to 4 new questions. Questions learned 9 of 120")
           and len(pg.query_selector_all(".strip .tile.got")) == 4 and len(pg.query_selector_all(".strip .tile.back")) == 1,
-          "Set done counts the new facts learned and the one that comes back", done)
+          "the quiz done screen counts the new facts learned and the one that comes back", done)
     check("See the 1 question you missed" in done, "and lists the missed question once", done)
     pg.click("#homeBtn")
 
     # Section 1's five sign colors are all learned, but minutes ago, so they are not compared yet.
-    # Set 3 opens with the missed fact. Stopping partway keeps the answers.
-    check(set_h(pg) == "Set 3" and "This set has 1 question to answer again and 5 new questions." in stage_text(pg) and "Compare" not in stage_text(pg),
-          "the home screen says what the next Set holds", stage_text(pg))
+    # The third quiz opens with the missed fact. Stopping partway keeps the answers.
+    check(h1(pg) == "Practice quiz" and "This set" not in stage_text(pg) and "Compare" not in stage_text(pg) and learner_words_ok(pg),
+          "the home screen offers the next practice quiz and explains nothing", stage_text(pg))
     pg.click("#startBtn")
     third = screens(pg)
     check([s for s in third if s[0] == "counted"][0] == ["counted", missed] and not gap_problems(third),
-          "the next Set opens with the fact answered wrong", third)
+          "the next quiz opens with the fact answered wrong", third)
     answer_one(pg)
     pg.click("#nextBtn")
     answer_one(pg)
     pg.click("#quitBtn")
-    check(pg.query_selector("#resumeBtn") is not None and "You stopped partway through Set 3. You answered 2 of its 6 questions." in stage_text(pg)
-          and not pg.query_selector("#startBtn") and set_h(pg) == "Set 3",
-          "stopping partway goes home, where Continue takes the place of Start the set", stage_text(pg))
+    check(pg.query_selector("#resumeBtn") is not None and "You stopped partway through a practice quiz. You answered 2 of its 6 questions." in stage_text(pg)
+          and pg.inner_text("#resumeBtn") == "Continue the practice quiz" and not pg.query_selector("#startBtn") and h1(pg) == "Practice quiz"
+          and learner_words_ok(pg),
+          "stopping partway goes home, where Continue the practice quiz takes the place of Start the practice quiz", stage_text(pg))
     reload(pg)
-    check(pg.query_selector("#resumeBtn") is not None, "a Set stopped partway through survives a reload")
+    check(pg.query_selector("#resumeBtn") is not None, "a quiz stopped partway through survives a reload")
     at = pg.evaluate("S.run.i")
     pg.click("#resumeBtn")
     check(pg.evaluate("run.i") == at and pg.query_selector("#nextBtn") is not None, "continuing picks up at the same screen")
     pg.click("#nextBtn")
     answer_set(pg)
-    check(pg.inner_text(".home h2").startswith("You finished Set"), "a continued Set finishes normally")
+    check(pg.inner_text(".home h2") == "You finished the practice quiz.", "a continued quiz finishes normally")
     pg.click("#homeBtn")
     reload(pg)
-    check(set_h(pg) == "Set 4", "progress is kept across a reload")
-    check(texts(pg, ".route-where") == [f"New questions come from Section 2: {SECTION_TITLES[2]}."] and texts(pg, ".route-count") == ["15 of 120"],
-          "once all 10 of Section 1's facts are learned, new facts come from Section 2", texts(pg, ".route"))
+    check(texts(pg, ".route-count") == ["15 of 120"], "progress is kept across a reload")
+    check(h1(pg) == "Section 2" and texts(pg, ".home .theme") == [SECTION_TITLES[2]] and not pg.query_selector(".route p"),
+          "once all 10 of Section 1's facts are learned, and the lesson files are back, Section 2's lesson is next, and nothing is written under the bar",
+          texts(pg, ".route"))
     check(not errors, f"no page errors in {scheme} mode" + (f": {errors}" if errors else ""))
     ctx.close()
 
@@ -1983,10 +2081,11 @@ def check_known_facts(browser, inst):
     store_history(inst, a, [daily_at(1, [(s1[0], True, 13)]), daily_at(2, [(s1[1], True, 1 / 60)])])
     open_page(pg, inst.url)
     sign_in(pg, "Dana", "timed password")
-    check("This set has 1 question to answer again and 5 new questions." in stage_text(pg), "a fact answered right 13 hours ago comes back", stage_text(pg))
+    check(h1(pg) == "Practice quiz" and texts(pg, ".later h2") == ["Section 1"],
+          "a fact answered right 13 hours ago comes back: the practice quiz comes first, and the lesson under it", stage_text(pg))
     pg.click("#startBtn")
     ids = {f for _, f in screens(pg)}
-    check(s1[0] in ids and s1[1] not in ids, "it is in the Set; one answered right a minute ago is not", screens(pg))
+    check(s1[0] in ids and s1[1] not in ids, "it is in the quiz; one answered right a minute ago is not", screens(pg))
     pg.click("#quitBtn")
     ctx.close()
 
@@ -2028,49 +2127,52 @@ def check_known_facts(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Finn", "known password")
     home = stage_text(pg)
-    check(h1(pg) == "Practice tests" and pg.inner_text(".later h2") == "Set 19" and "Nothing is due. This set asks 5 questions you already know." in home
-          and "Questions learned 120 of 120" in home,
-          "with every fact learned and nothing due, the home screen says the Set goes over known facts", home)
+    check(h1(pg) == "Practice tests" and not pg.query_selector("#startBtn, #lessonBtn, .later") and "Nothing is due" not in home
+          and "Questions learned 120 of 120" in home and learner_words_ok(pg),
+          "with every fact learned and nothing due, the home screen offers the practice test alone: no fill-only quiz, no lesson", home)
     check(home.startswith("Practice tests To pass the real test, you need 24 or more correct out of 30. You are Ready for the test when you get 27 or more correct on 3 practice tests in a row.")
-          and pg.get_attribute("#testBtn", "class") == "btn primary" and pg.get_attribute("#startBtn", "class") == "btn",
+          and pg.get_attribute("#testBtn", "class") == "btn primary",
           "Practice tests appear, and Start a practice test is the main button", home)
-    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-where") == ["You have learned every question. Practice tests are open to you."],
-          "the road is full and says Practice tests are open", texts(pg, ".route"))
-    pg.click("#startBtn")
-    check([k for k, _ in screens(pg)] == ["counted"] * 5, "the fill Set is 5 counted questions")
-    answer_set(pg)
-    check("Nothing is due. The next set asks 5 questions you already know." in stage_text(pg)
-          and pg.get_attribute("#homeBtn", "class") == "btn primary" and pg.get_attribute("#moreBtn", "class") == "link"
-          and pg.get_attribute("#testBtn", "class") == "btn",
-          "after it, I'm done for now is the main button, with Start a practice test and a quiet Another set", stage_text(pg))
-    pg.click("#homeBtn")
+    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-ends .open") == ["Practice tests"] and not pg.query_selector(".route p"),
+          "the road is full, its end is lit, and nothing is written under it", texts(pg, ".route"))
 
-    # A Practice test: 30 questions, no rule screens; its wrong answers come back in the next Set.
+    # A Practice test: 30 questions, no rule screens; its wrong answers come back in the next quiz.
     pg.click("#testBtn")
     check(pg.inner_text(".progress") == "Practice test: question 1 of 30" and [k for k, _ in screens(pg)] == ["counted"] * 30,
           "a Practice test is 30 counted questions with no rule screens")
     answer_one(pg)
     pg.click("#quitBtn")
-    check("You stopped partway through a practice test." in stage_text(pg) and pg.get_attribute("#startBtn", "class") == "btn",
-          "a Practice test stopped partway is one line, with Start the set as a plain button", stage_text(pg))
-    pg.click("#startBtn")
-    check(pg.inner_text(".home h2").startswith("Start Set ") and "the answers you gave there will be cleared" in stage_text(pg),
-          "starting a Set instead asks first", stage_text(pg))
-    pg.click("#newSetNo")
+    check("You stopped partway through a practice test." in stage_text(pg) and pg.inner_text("#resumeBtn") == "Continue the practice test"
+          and h1(pg) == "Practice tests" and not pg.query_selector("#startBtn, #lessonBtn, .later") and learner_words_ok(pg),
+          "a Practice test stopped partway is one line, with nothing else to do while nothing is due", stage_text(pg))
     pg.click("#resumeBtn")
     pg.click("#nextBtn")
     check(answer_set(pg, miss=5) == 29, "the rest of the Practice test is answered")
     end = stage_text(pg)
     check(pg.inner_text(".score") == "You got 25 correct out of 30." and "You finished this practice test." in end
-          and "The questions you missed come back in your next set." in end and "pass" not in end,
+          and "The questions you missed come back in your next practice quiz." in end and "pass" not in end,
           "a Practice test with 25 right says so, says the missed ones come back, with no pass or fail", end)
     pg.click("#homeBtn")
     missed = pg.evaluate("copyRecords().filter(r => r.data && r.data.type === 'test').pop().data.answers.filter(a => !a.right).map(a => a.q)")
     coming = pg.evaluate("(p => [...p.block, ...p.due])(setPlan(S, Date.now()))")
     check("Your last practice test: 25 correct out of 30." in stage_text(pg) and len(missed) == 5 and set(missed) <= set(coming)
-          and pg.get_attribute("#startBtn", "class") == "btn primary",
-          "the home screen lists the Practice test score, and the missed questions come back in the next Set", stage_text(pg))
-    for n in range(3):
+          and h1(pg) == "Practice quiz" and pg.get_attribute("#startBtn", "class") == "btn primary",
+          "the home screen lists the Practice test score, and the missed questions come back in the practice quiz, which comes first", stage_text(pg))
+    # With facts due, a Practice test stopped partway has the practice quiz as a plain button under it, and starting it asks first.
+    pg.click("#testBtn")
+    answer_one(pg)
+    pg.click("#quitBtn")
+    check(h1(pg) == "Practice tests" and texts(pg, ".later h2") == ["Practice quiz"] and pg.get_attribute("#startBtn", "class") == "btn",
+          "with facts due, a Practice test stopped partway has the practice quiz as a plain button under it", stage_text(pg))
+    pg.click("#startBtn")
+    check(pg.inner_text(".home h2") == "Start the practice quiz?" and "the answers you gave there will be cleared" in stage_text(pg),
+          "starting the practice quiz instead asks first", stage_text(pg))
+    pg.click("#newSetNo")
+    pg.click("#resumeBtn")
+    pg.click("#nextBtn")
+    answer_set(pg, 2)
+    pg.click("#homeBtn")
+    for n in range(2):
         pg.click("#testBtn")
         answer_set(pg, 2)
         pg.click("#homeBtn")
@@ -2079,7 +2181,7 @@ def check_known_facts(browser, inst):
           "three Practice tests in a row at 27 or more shows Ready for the test", stage_text(pg))
     reload(pg)
     check(texts(pg, ".sign h1") == ["Ready for the test"], "Ready for the test is still shown after a reload")
-    check(texts(pg, ".route-where") == ["You are Ready for the test."], "and the road says so", texts(pg, ".route-where"))
+    check(texts(pg, ".route-ends .open") == ["Ready for the test"] and not pg.query_selector(".route p"), "and the road's end says so", texts(pg, ".route"))
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
     ctx.close()
 
@@ -2097,16 +2199,16 @@ def check_compare(browser, inst):
     store_history(inst, hal, [daily_at(60, [(q, True, 13) for q in parking])])
     open_page(pg, inst.url)
     sign_in(pg, "Hal", "compare password")
-    check(set_h(pg) == "Set 2" and "This set starts by showing 4 answers side by side: No-parking distances." in stage_text(pg),
-          "the home screen says the next Set compares the parking distances", stage_text(pg))
+    check(h1(pg) == "Practice quiz" and "This set" not in stage_text(pg) and pg.evaluate("setPlan(S, Date.now()).group.id") == "parking-distances",
+          "the home screen offers the practice quiz, which compares the parking distances", stage_text(pg))
     for _ in range(20):  # the hydrant's question has to be a choice one, not reverse, for the last check
         pg.click("#startBtn") if pg.query_selector("#startBtn") else pg.click("#overBtn")
         if pg.evaluate("run.screens.find(s => s.id === 'b-250').format") == "choice":
             break
         pg.click("#quitBtn")
-    check(stage_text(pg).startswith("Set 2: answers side by side No-parking distances These 4 answers are easy to confuse with each other. "
+    check(stage_text(pg).startswith("Practice quiz: answers side by side No-parking distances These 4 answers are easy to confuse with each other. "
                                     "Here they are side by side. The questions on them come next."),
-          "the Set opens with the Compare screen", stage_text(pg))
+          "the quiz opens with the Compare screen", stage_text(pg))
     check(texts(pg, ".compare li") == ["A fire hydrant 15 feet", "A crosswalk 20 feet", "A stop sign or traffic signal 30 feet",
                                        "A railroad crossing 50 feet"],
           "it shows each fact beside its answer, in the group's order", texts(pg, ".compare li"))
@@ -2144,19 +2246,19 @@ def check_compare(browser, inst):
             click_choice(pg)
         pg.click("#nextBtn")
     answer_set(pg)
-    check(pg.inner_text(".home h2").startswith("You finished Set"), "the Set ends on Set done")
+    check(pg.inner_text(".home h2") == "You finished the practice quiz.", "the quiz ends on its done screen")
     rec = wait_until(lambda: [r for r in db_state(inst, hal)[0] if r["data"].get("group")])
     formats = sorted(a["format"] for a in rec[0]["data"]["answers"]) if rec else []
     check(rec and rec[0]["data"]["group"] == "parking-distances" and formats.count("reverse") >= 2,
-          "the Set's record names the group, and its reverse answers say so", rec)
+          "the quiz's record names the group, and its reverse answers say so", rec)
     pg.click("#homeBtn")
-    check("Compare:" not in stage_text(pg), "the next Set does not compare the same group again", stage_text(pg))
+    check(pg.evaluate("setPlan(S, Date.now()).group") is None, "the next quiz does not compare the same group again", stage_text(pg))
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
     ctx.close()
 
 
 def check_phone_screens(browser, inst):
-    """At 375 px wide, nothing on any screen of a Set scrolls sideways."""
+    """At 375 px wide, nothing on the home screen or any screen of a practice quiz scrolls sideways."""
     print("\n[every screen at 375 px wide]")
     ctx = browser.new_context(viewport={"width": 375, "height": 812}, is_mobile=True, has_touch=True)
     pg = ctx.new_page()
@@ -2171,6 +2273,8 @@ def check_phone_screens(browser, inst):
             wide.append(what)
 
     look("home")
+    without_lessons(pg)  # the quiz with first looks and rule screens, for a Section with no lesson file
+    look("home, quiz due")
     pg.click("#startBtn")
     missed = 0
     while (kind := screen_kind(pg)) is not None:
@@ -2184,11 +2288,11 @@ def check_phone_screens(browser, inst):
         if kind != "first_look":
             look(f"{kind} feedback")
             pg.click("#nextBtn")
-    look("Set done")
+    look("quiz done")
     pg.eval_on_selector_all("details", "els => els.forEach(d => d.open = true)")
-    look("Set done, missed questions open")
-    check(seen >= {"home", "first_look", "rule", "counted", "counted feedback", "reask", "reask feedback", "Set done"} and not wide,
-          "first look, rule, counted, re-ask and Set done screens fit 375 px", [sorted(seen), wide])
+    look("quiz done, missed questions open")
+    check(seen >= {"home", "home, quiz due", "first_look", "rule", "counted", "counted feedback", "reask", "reask feedback", "quiz done"} and not wide,
+          "home, first look, rule, counted, re-ask and quiz done screens fit 375 px", [sorted(seen), wide])
     ctx.close()
 
 
@@ -2207,9 +2311,9 @@ def run_only(names):
 
 
 def check_lessons(browser, inst):
-    """A Section's lesson comes before the Set that would first ask about its facts; every step is acted on
-    before its rule shows; the finished lesson is a record of type lesson; the next Set asks the taught facts
-    with no first look; a wrong answer offers the lesson step; the lesson stays open under Lessons."""
+    """A Section's lesson is the one thing to do while nothing is due; every step is acted on before its rule
+    shows; the finished lesson is a record of type lesson whose answers count; the quiz after it asks only the
+    fact answered wrong; a wrong answer offers the lesson step; the lesson stays open under Lessons."""
     print("\n[lessons]")
     lid = inst.add_learner("Morgan", "lesson password")
     store_for(inst, lid, "move", {"to": 3})  # new facts come from Section 3, which has a lesson
@@ -2218,8 +2322,9 @@ def check_lessons(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Morgan", "lesson password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 3:") and "primary" in pg.get_attribute("#lessonBtn", "class")
-          and "primary" not in pg.get_attribute("#startBtn", "class"), "the lesson is the main button before Set 1")
+    check(h1(pg) == "Section 3" and texts(pg, ".home .theme") == [SECTION_TITLES[3]] and pg.inner_text("#lessonBtn") == "Start Section 3"
+          and "primary" in pg.get_attribute("#lessonBtn", "class") and not pg.query_selector("#startBtn, .later") and learner_words_ok(pg),
+          "with nothing due, the home screen offers the lesson alone: its name, its title and its button, no quiz", stage_text(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector(".k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer}))")
@@ -2232,7 +2337,7 @@ def check_lessons(browser, inst):
     pg.click(".k-target[data-t='you']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith("Lesson for Section 3: 1 of 12 Incorrect. You picked your car.") and shown.count("car on the main road goes first") == 1
+    check(shown.startswith("Section 3: 1 of 12 Incorrect. You picked your car.") and shown.count("car on the main road goes first") == 1
           and "Driver manual" not in shown and "Tap the car" not in shown and pg.query_selector(".k-no") is not None
           and steps[0]["fact"] == "b-110", "a wrong tap leads with Incorrect and what was picked, then the one explanation with nothing repeated, with the wrong pick crossed on the drawing and nothing else", shown[:120])
     check(pg.evaluate("document.activeElement.id") == "stepHead", "after acting, focus moves to the result")
@@ -2252,20 +2357,22 @@ def check_lessons(browser, inst):
             pg.query_selector_all("button.opt")[opts.index(st["answer"])].click()
         pg.wait_for_selector("#stepNextBtn")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 3.", "the lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 3." and pg.inner_text("#moreBtn") == "Start the practice quiz" and learner_words_ok(pg),
+          "the lesson ends on its own screen, offering the practice quiz since one answer was wrong", stage_text(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 3 and len(lesson[0]["data"]["answers"]) == 10
           and all(a["role"] == "lesson" and a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"])
           and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 1,
           "the finished lesson is one record of type lesson with one answer per fact, role lesson, the wrong tap among them")
-    check(pg.evaluate("learnedCount()") == 0, "lesson answers change no standing")
+    check(pg.evaluate("[learnedCount(), standing(S.facts['b-110'])]") == [9, "seen"],
+          "lesson answers count: the nine answered correctly are learned, the one tapped wrong is seen")
     pg.click("#moreBtn")
     pg.wait_for_selector("#stage .card")
-    kinds = pg.evaluate("run.screens.map(s => s.kind)")
-    check(kinds and all(k == "counted" for k in kinds) and len(kinds) == 5,
-          "the Set after the lesson asks the taught facts as counted questions, with no first look or rule screen", kinds)
+    kinds = pg.evaluate("run.screens.map(s => [s.kind, s.id])")
+    check(kinds == [["counted", "b-110"]],
+          "the quiz after the lesson asks only the fact answered wrong, as a counted question with no first look; the others come back by the ladder", kinds)
     click_choice(pg, right=False)
     pg.wait_for_selector("#peekBtn")
     pg.click("#peekBtn")
@@ -2278,17 +2385,105 @@ def check_lessons(browser, inst):
     check(pg.evaluate("run.answered && run.i === 0"), "back from the lesson step, the Set is where it was")
     pg.click("#quitBtn")
     pg.wait_for_selector("details.lessons")
+    check(h1(pg) == "Practice quiz" and "You stopped partway through a practice quiz." in stage_text(pg) and not pg.query_selector(".later, #lessonBtn")
+          and learner_words_ok(pg), "home: the practice quiz stopped partway is the one thing to do", stage_text(pg))
     pg.click("details.lessons summary")
-    check("You finished this lesson." in pg.inner_text("details.lessons"), "Lessons on the home screen lists the finished lesson")
-    pg.click(".lesson-open")
+    check("You have done it." in pg.inner_text("details.lessons li:has(.lesson-open[data-section='3'])")
+          and pg.inner_text(".lesson-open[data-section='3']") == "Start Section 3 again" and pg.inner_text("details.lessons summary") == "Sections",
+          "Sections on the home screen lists the Section as done, with a way to start it again")
+    pg.click(".lesson-open[data-section='3']")
     pg.wait_for_selector(".k-target")
     check(pg.evaluate("lesson.i") == 0 and ": 1 of 12" in pg.inner_text(".progress"), "a lesson can be opened again from the start")
+    take_lesson(pg)
+    check(pg.evaluate("[learnedCount(), standing(S.facts['b-110']), isDue(S.facts['b-110'], Date.now())]") == [10, "learned", False]
+          and pg.evaluate("copyRecords().filter(r => r.data.type === 'lesson').length") == 2 and not pg.query_selector("#moreBtn"),
+          "a lesson taken again is another lesson record; its answers count like any others: the fact tapped wrong before is learned now, and nothing is due",
+          stage_text(pg))
     ctx.close()
+    check_lesson_flow(browser, inst)
     check_sign_lesson(browser, inst)
 
 
+def lesson_at(n, section, ids, hours_back, wrong=()):
+    """A finished lesson `hours_back` hours ago: one answer per fact in `ids`, right unless in `wrong`."""
+    return {"id": f"record-{n:012d}", "kind": "set", "reset": None, "at": ago(hours_back), "data": {
+        "set_id": f"lesson-{n}", "type": "lesson", "section": section, "started_at": ago(hours_back + 0.2),
+        "answers": [{"q": q, "chosen": "a pick", "right": q not in wrong, "at": ago(hours_back), "role": "lesson", "format": "choice"}
+                    for q in ids]}}
+
+
+def check_lesson_flow(browser, inst):
+    """Lessons, then practice quizzes (docs/adr/0003-*): a fact answered correctly in a lesson is not asked again a
+    minute later and is asked 13 hours later; a fact answered wrong in a lesson is due in the next quiz; the home
+    screen shows one thing to do, named plainly; and no Learner screen says Set."""
+    print("\n[lessons, then practice quizzes]")
+    sections = json.loads((ROOT / "data" / "sections.json").read_text())["sections"]
+    s1, s2 = sections[0]["questions"], sections[1]["questions"]
+    errors, contexts = [], []
+
+    def home_of(name, password, records):
+        """A new Learner with these records, signed in on a phone of their own, on the home screen."""
+        lid = inst.add_learner(name, password)
+        store_history(inst, lid, records)
+        ctx = browser.new_context(viewport={"width": 390, "height": 844})
+        contexts.append(ctx)
+        pg = ctx.new_page()
+        pg.on("pageerror", lambda e: errors.append(str(e)))
+        open_page(pg, inst.url)
+        sign_in(pg, name, password)
+        pg.wait_for_selector(".route")
+        return pg
+
+    pg = home_of("Ira", "minute password", [lesson_at(70, 1, s1, 1 / 60)])
+    check(h1(pg) == "Section 2" and not pg.query_selector("#startBtn, .later") and "Questions learned 10 of 120" in stage_text(pg),
+          "a minute after a lesson with every answer correct, nothing is due: the home screen shows only the next lesson", stage_text(pg))
+    check(learner_words_ok(pg) and "See each section" not in stage_text(pg) and not pg.query_selector("details.scores:not(.lessons)"),
+          "the home screen says no Set, has no See each section, and explains nothing", stage_text(pg))
+    pg.close()
+
+    pg = home_of("Jo", "later password", [lesson_at(71, 1, s1, 13)])
+    check(h1(pg) == "Practice quiz" and pg.get_attribute("#startBtn", "class") == "btn primary" and texts(pg, ".later h2") == ["Section 2"]
+          and texts(pg, ".later .theme") == [SECTION_TITLES[2]] and "This set" not in stage_text(pg) and learner_words_ok(pg),
+          "13 hours after the lesson its facts are due: the practice quiz comes first and the next lesson under it, nothing explained", stage_text(pg))
+    pg.click("#startBtn")
+    got = screens(pg)
+    check(sorted(f for k, f in got if k != "contrast") == sorted(s1) and all(k in ("counted", "contrast") for k, _ in got),
+          "the quiz asks every fact from the lesson, as counted questions with no first look (the sign colors after their Compare screen)", got)
+    check(pg.inner_text(".progress") == "Practice quiz: answers side by side" and learner_words_ok(pg), "the progress line names the practice quiz, with no number")
+    go_on(pg)
+    check(pg.inner_text(".progress") == "Practice quiz: question 1 of 10", "and counts the questions", pg.inner_text(".progress"))
+    pg.click("#quitBtn")
+    check("You stopped partway through a practice quiz." in stage_text(pg) and pg.inner_text("#resumeBtn") == "Continue the practice quiz"
+          and not pg.query_selector("#lessonBtn") and learner_words_ok(pg),
+          "stopped partway, the home screen offers only the quiz to continue", stage_text(pg))
+    pg.close()
+
+    pg = home_of("Kai", "wrong password", [lesson_at(72, 1, s1, 1 / 60, wrong=(s1[4],))])
+    check(h1(pg) == "Practice quiz" and texts(pg, ".later h2") == ["Section 2"],
+          "a fact answered wrong in a lesson makes the practice quiz due a minute later", stage_text(pg))
+    pg.click("#startBtn")
+    check(screens(pg) == [["counted", s1[4]]], "and that quiz asks that fact alone: nothing answered correctly minutes ago comes back", screens(pg))
+    click_choice(pg)
+    pg.click("#nextBtn")
+    check(h2(pg) == "You finished the practice quiz." and pg.get_attribute("#homeBtn", "class") == "btn primary" and not pg.query_selector("#moreBtn")
+          and learner_words_ok(pg), "after it nothing is due, so I'm done for now is the only main button", stage_text(pg))
+    pg.click("#homeBtn")
+    check(h1(pg) == "Section 2" and not pg.query_selector("#startBtn"), "and home offers the next lesson alone", stage_text(pg))
+    pg.close()
+
+    pg = home_of("Lou", "both password", [lesson_at(73, 1, s1, 13), lesson_at(74, 2, s2, 1 / 60)])
+    check(h1(pg) == "Practice quiz" and texts(pg, ".later h2") == ["Section 3"]
+          and sorted(pg.evaluate("(p => [...p.block, ...p.due])(setPlan(S, Date.now()))")) == sorted(s1)
+          and pg.evaluate("setPlan(S, Date.now()).fill") == [],
+          "with one Section 13 hours old and one a minute old, only the older Section's facts are in the quiz", stage_text(pg))
+    pg.close()
+    check(not errors, "no page errors" + (f": {errors}" if errors else ""))
+    for ctx in contexts:
+        ctx.close()
+
+
 def check_sign_lesson(browser, inst):
-    """The Section 1 lesson (signs: shapes and colors) is offered to a new Learner before Set 1; its tap
+    """The Section 1 lesson (signs: shapes and colors) is offered to a new Learner first; its tap
     questions have road signs as targets, drawn by shape and color with no words; a wrong tap on a sign
     leads with Incorrect and the sign's name and crosses that sign; every question is acted on through to
     the end, and the finished lesson is a record with one answer per fact."""
@@ -2299,7 +2494,7 @@ def check_sign_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Reese", "sign password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 1:"), "a new Learner is offered the Section 1 lesson before Set 1", h1(pg))
+    check(h1(pg) == "Section 1", "a new Learner is offered the Section 1 lesson first", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector(".k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, targets: s.targets || null}))")
@@ -2317,7 +2512,7 @@ def check_sign_lesson(browser, inst):
     pg.click(f".k-target[data-t='{wrong['id']}']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 1: 1 of {len(steps)} Incorrect. You picked {wrong['label']}.")
+    check(shown.startswith(f"Section 1: 1 of {len(steps)} Incorrect. You picked {wrong['label']}.")
           and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None and "Tap the sign" not in shown,
           "a wrong tap on a sign leads with Incorrect and the sign's name, crosses it, and rings the correct sign", shown[:120])
     pg.click("#stepNextBtn")
@@ -2332,8 +2527,8 @@ def check_sign_lesson(browser, inst):
         pg.wait_for_selector("#stepNextBtn")
         check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 1.", "the Section 1 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 1.", "the Section 1 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 1)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 1 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts,
@@ -2355,7 +2550,7 @@ def check_signal_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Sawyer", "signal password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 2:"), "a Learner moved to Section 2 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 2", "a Learner moved to Section 2 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
@@ -2383,7 +2578,7 @@ def check_signal_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 2: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
+    check(shown.startswith(f"Section 2: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
           and wrong in pg.inner_text("li.opt.wrong") and "You picked this" in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right")
           and "Driver manual" not in shown and "What do you do" not in shown,
           "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation names the answer once", shown[:160])
@@ -2415,8 +2610,8 @@ def check_signal_lesson(browser, inst):
         pg.wait_for_selector("#stepNextBtn")
         check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 2.", "the Section 2 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 2.", "the Section 2 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 2 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts,
@@ -2438,7 +2633,7 @@ def check_speed_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Quinn", "speed password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 4:"), "a Learner moved to Section 4 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 4", "a Learner moved to Section 4 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
@@ -2472,7 +2667,7 @@ def check_speed_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 4: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
+    check(shown.startswith(f"Section 4: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
           and wrong in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right")
           and "Driver manual" not in shown and "What is the fastest" not in shown,
           "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and nothing is repeated", shown[:160])
@@ -2489,8 +2684,8 @@ def check_speed_lesson(browser, inst):
             check(pg.query_selector(".scene .k-post") is not None and pg.query_selector(".scene .k-you") is not None,
                   "after counting, the drawing still shows the post and your car")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 4.", "the Section 4 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 4.", "the Section 4 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 4 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -2514,7 +2709,7 @@ def check_stop_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Emerson", "stop password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 5:"), "a Learner moved to Section 5 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 5", "a Learner moved to Section 5 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector(".k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, "
@@ -2568,7 +2763,7 @@ def check_stop_lesson(browser, inst):
     pg.click(f".k-target[data-t='{wrong['id']}']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 5: 1 of {len(steps)} Incorrect. You picked {wrong['label']}.") and pg.query_selector(".k-no") is not None
+    check(shown.startswith(f"Section 5: 1 of {len(steps)} Incorrect. You picked {wrong['label']}.") and pg.query_selector(".k-no") is not None
           and pg.query_selector(".k-ring") is not None and pg.query_selector(".scene .k-you") is not None and "Tap the place" not in shown and "Driver manual" not in shown,
           "a wrong tap leads with Incorrect and the place picked, crosses it, and shows your car at the correct place", shown[:140])
     pg.click("#stepNextBtn")
@@ -2587,8 +2782,8 @@ def check_stop_lesson(browser, inst):
         pg.wait_for_selector("#stepNextBtn")
         check(pg.inner_text("#stepHead") == "Correct.", f"question {k + 1} is answered as its answer says")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 5.", "the Section 5 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 5.", "the Section 5 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 5 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -2613,7 +2808,7 @@ def check_turn_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Rowan", "turn password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 6:"), "a Learner moved to Section 6 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 6", "a Learner moved to Section 6 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -2674,7 +2869,7 @@ def check_turn_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 6: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
+    check(shown.startswith(f"Section 6: 1 of {len(steps)} Incorrect. ") and "You picked" not in pg.inner_text("#stepHead")
           and wrong in pg.inner_text("li.opt.wrong") and "The answer" in pg.inner_text("li.opt.right") and "Driver manual" not in shown
           and pg.inner_text("#stepText") == first["wrong"][wrong] and first["say"] not in shown,
           "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation is the one written for that pick", shown[:160])
@@ -2715,8 +2910,8 @@ def check_turn_lesson(browser, inst):
         pg.wait_for_selector("#stepNextBtn")
         check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 6.", "the Section 6 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 6.", "the Section 6 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 6 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -2741,7 +2936,7 @@ def check_pass_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Finley", "pass password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 7:"), "a Learner moved to Section 7 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 7", "a Learner moved to Section 7 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector(".k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -2828,7 +3023,7 @@ def check_pass_lesson(browser, inst):
     pg.click(f".k-target[data-t='{other['id']}']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 7: 1 of {len(steps)} Incorrect. You picked {other['label']}.") and pg.query_selector(".k-no") is not None
+    check(shown.startswith(f"Section 7: 1 of {len(steps)} Incorrect. You picked {other['label']}.") and pg.query_selector(".k-no") is not None
           and pg.query_selector(".k-ring") is not None and pg.query_selector(".scene .k-you") is not None and len(pg.query_selector_all(".scene .k-lane")) == 1
           and pg.inner_text("#stepText") == first["wrong"][other["id"]] and "Tap the lane" not in shown and "Driver manual" not in shown,
           "a wrong tap leads with Incorrect and the lane picked, crosses it, shows your car in the lane he passes in, and explains that pick", shown[:160])
@@ -2867,8 +3062,8 @@ def check_pass_lesson(browser, inst):
             if st in trucks:
                 check(len(pg.query_selector_all(".scene .k-zone")) == 4, f"after acting, question {k + 1} shades the truck's four blind spots")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 7.", "the Section 7 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 7.", "the Section 7 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 7 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -2895,7 +3090,7 @@ def check_park_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Parker", "park password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 8:"), "a Learner moved to Section 8 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 8", "a Learner moved to Section 8 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector(".k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -2977,7 +3172,7 @@ def check_park_lesson(browser, inst):
     pg.click(f".k-target[data-t='{other['id']}']")
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 8: 1 of {len(steps)} Incorrect. You picked {other['label']}.") and pg.query_selector(".k-no") is not None
+    check(shown.startswith(f"Section 8: 1 of {len(steps)} Incorrect. You picked {other['label']}.") and pg.query_selector(".k-no") is not None
           and pg.query_selector(".k-ring") is not None and pg.inner_text("#stepText") == first["wrong"][other["id"]] and "Tap the car" not in shown and "Driver manual" not in shown,
           "a wrong tap leads with Incorrect and the car picked, crosses it, rings the blue car, and explains that pick", shown[:160])
     pg.click("#stepNextBtn")
@@ -3025,8 +3220,8 @@ def check_park_lesson(browser, inst):
             pg.wait_for_selector("#stepNextBtn")
             check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 8.", "the Section 8 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 8.", "the Section 8 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 8 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -3054,7 +3249,7 @@ def check_interstate_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Harper", "interstate password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 9:"), "a Learner moved to Section 9 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 9", "a Learner moved to Section 9 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt, .k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -3143,7 +3338,7 @@ def check_interstate_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 9: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+    check(shown.startswith(f"Section 9: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
           and "The answer" in pg.inner_text("li.opt.right") and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown,
           "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation is the one written for that pick", shown[:160])
     pg.click("#stepNextBtn")
@@ -3191,8 +3386,8 @@ def check_interstate_lesson(browser, inst):
             pg.wait_for_selector("#stepNextBtn")
             check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 9.", "the Section 9 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 9.", "the Section 9 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 9 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -3218,7 +3413,7 @@ def check_night_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Sage", "night password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 10:"), "a Learner moved to Section 10 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 10", "a Learner moved to Section 10 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt, .k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -3308,7 +3503,7 @@ def check_night_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 10: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+    check(shown.startswith(f"Section 10: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
           and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown,
           "a wrong choice leads with Incorrect alone, the list marks the pick, and the explanation is the one written for that pick", shown[:160])
     pg.click("#stepNextBtn")
@@ -3348,8 +3543,8 @@ def check_night_lesson(browser, inst):
             if st is flood:
                 check(pg.query_selector(".scene .k-path") is not None, "after the choice the turn back is drawn")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 10.", "the Section 10 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 10.", "the Section 10 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 10 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -3375,7 +3570,7 @@ def check_alcohol_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Tatum", "alcohol password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 11:"), "a Learner moved to Section 11 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 11", "a Learner moved to Section 11 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt, .k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -3429,7 +3624,7 @@ def check_alcohol_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 11: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+    check(shown.startswith(f"Section 11: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
           and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown and pg.evaluate("document.querySelector('.scene').textContent").count("Alcohol") == 2,
           "a wrong choice leads with Incorrect alone, the list marks the pick, the explanation is the one written for that pick, and the alcohol in each drink is drawn", shown[:160])
     pg.click("#stepNextBtn")
@@ -3445,8 +3640,8 @@ def check_alcohol_lesson(browser, inst):
         if st is hours:
             check(pg.query_selector(".scene .k-timeline .k-fill") is not None, "after the choice the band to 3 hours is shaded")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 11.", "the Section 11 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 11.", "the Section 11 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 11 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -3473,7 +3668,7 @@ def check_belt_lesson(browser, inst):
     open_page(pg, inst.url)
     sign_in(pg, "Ellis", "belt password")
     pg.wait_for_selector("#lessonBtn")
-    check(h1(pg).startswith("Section 12:"), "a Learner moved to Section 12 is offered its lesson before the Set", h1(pg))
+    check(h1(pg) == "Section 12", "a Learner moved to Section 12 is offered its lesson", h1(pg))
     pg.click("#lessonBtn")
     pg.wait_for_selector("button.opt, .k-target")
     steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
@@ -3548,7 +3743,7 @@ def check_belt_lesson(browser, inst):
     pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
     pg.wait_for_selector("#stepNextBtn")
     shown = " ".join(pg.inner_text("#stage").split())
-    check(shown.startswith(f"Lesson for Section 12: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+    check(shown.startswith(f"Section 12: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
           and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown,
           "a wrong choice leads with Incorrect alone, the list marks the pick, and the explanation is the one written for that pick", shown[:160])
     pg.click("#stepNextBtn")
@@ -3583,8 +3778,8 @@ def check_belt_lesson(browser, inst):
         if st is pass_by:
             check(pg.query_selector(".scene .k-path") is not None, "after the choice your way past the crash is drawn")
         pg.click("#stepNextBtn")
-    pg.wait_for_selector("#moreBtn")
-    check(h2(pg) == "You finished the lesson for Section 12.", "the Section 12 lesson ends on its own screen", h2(pg))
+    pg.wait_for_selector("#homeBtn")
+    check(h2(pg) == "You finished Section 12.", "the Section 12 lesson ends on its own screen", h2(pg))
     records = wait_for_records(pg, 2)
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 12 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
@@ -3668,7 +3863,7 @@ def main():
         check(pg.evaluate("document.compatMode") == "CSS1Compat", "page runs in standards mode")
         check(pg.evaluate("innerWidth") == 390, "phone lays the page out at the phone's width")
         check(pg.evaluate("document.documentElement.lang") == "en", "page language is set")
-        pg.click("#startBtn")
+        pg.click("#startBtn")  # a practice quiz is due: the sign-in check left one lesson answer wrong
         answer_one(pg, right=False)
         box = pg.query_selector("#outcome").bounding_box()
         check(box is not None and 0 <= box["y"] < 844, "after answering, the result is on screen")

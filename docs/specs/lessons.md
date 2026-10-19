@@ -2,7 +2,7 @@
 
 This is the format and the kit. The rules for what a question says and draws, and the steps a lesson goes through, are in `docs/agents/lessons.md`; read that first.
 
-A lesson teaches one Section's facts before any question is asked on them. The Learner acts on every screen before the rule is stated: he taps the car that goes, or commits to a choice, then sees what happens, then the rule in one sentence. The principle of the topic is stated only after two or three cases, and he is asked to name it first. The questions on the Section's facts come after, in the Set.
+A lesson is where the Learner meets one Section's facts. He acts on every question before the rule is stated: he taps the car that goes, or commits to a choice, then sees what happens, then the rule in one sentence. The principle of the topic is stated only after two or three cases, and he is asked to name it first. Each answer counts as the fact's first counted answer, so the test's own question on it comes in a practice quiz only when the fact is due: 12 hours later, or at once if the lesson answer was wrong (`docs/adr/0003-lesson-answers-count.md`).
 
 Lessons are data: one file per Section at `data/lessons/section-<N>.json`, rendered by one player in `src/app.html` from a small kit of top-down drawing parts. Writing a lesson is content work; the drawings stay consistent because the kit draws them.
 
@@ -96,12 +96,12 @@ Only cars (a stopping position is a car with `outline: true`), pedestrians, road
 
 ## How a lesson fits the engine
 
-- A Section's lesson is offered on the home screen before the first Set that would introduce that Section's facts, as the main button. The Set follows it.
-- A finished lesson is a `set` record of type `lesson` with the Section number; every step with a fact is one answer with role `lesson` and format `tap` or `choice`. Lesson answers never change a standing.
-- In a Set, a new fact whose Section's lesson is finished gets no first look and no rule screen: its first counted question is asked like a due question. A new fact from a Section with no lesson keeps the first look and rule screen.
-- After a wrong counted answer on a fact that has a lesson step, the feedback offers "See how this works", which shows that step without recording anything and returns to the Set.
-- Every lesson stays open from the home screen under "Lessons", to replay in full.
-- A lesson stopped partway is not saved; it starts from its first step next time. Lessons are ten to fifteen steps.
+- The home screen offers the next lesson as its Section, "Section N" with its title and "Start Section N", whenever nothing is due (the word "lesson" appears on no Learner screen: the progress line is "Section N: 3 of 12", the done screen "You finished Section N."); when a practice quiz is due the quiz comes first and the lesson is a quieter block under it. The next lesson is the first Section in cursor order with a fact that has no answer yet and a lesson not finished. No quiz follows a lesson: its done screen offers the practice quiz only when something is due (a lesson answer was wrong, or older facts have come due), else "I'm done for now".
+- A finished lesson is a `set` record of type `lesson` with the Section number; every question with a fact is one answer with role `lesson` and format `tap` or `choice`. Each one is a counted answer for its fact (`docs/adr/0003-lesson-answers-count.md`): right, the fact is learned and due 12 hours later; wrong, it is seen and due now. The role stays in the record so the Helper's History can tell a lesson from a quiz.
+- A fact is new only while it has no answer at all, so after a lesson none of its Section's facts is new. A new fact in a Section with no lesson file is met in a quiz instead, with its first look and rule screen.
+- After a wrong counted answer in a quiz on a fact that has a lesson question, the feedback offers "See how this works", which shows that question without recording anything and returns to the quiz.
+- Every lesson stays open from the home screen under "Sections", as "Start Section N again", to take again in full; its answers then count like any other quiz's.
+- A lesson stopped partway is not saved; it starts from its first question next time. Lessons are ten to fifteen questions.
 
 ## Validation (`tests/validate_data.py`)
 
