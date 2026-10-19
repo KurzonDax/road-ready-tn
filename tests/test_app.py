@@ -1465,9 +1465,8 @@ def check_manage_learner(browser):
               "an answer given after the Move sends that Set to the server again")
         reload(cpg)
         wait_for_stage_text(cpg, "Questions learned 0 of 120")
-        check(cpg.evaluate("setPlan(S, Date.now()).lesson") == 4 and h1(cpg) == "Lesson: Section 4"
-              and texts(cpg, ".route-where") == [f"New questions come from Section 4: {SECTION_TITLES[4]}."],
-              "the Learner's next app open offers Section 4's lesson", texts(cpg, ".route-where"))
+        check(cpg.evaluate("setPlan(S, Date.now()).lesson") == 4 and h1(cpg) == "Lesson: Section 4" and not cpg.query_selector(".route p"),
+              "the Learner's next app open offers Section 4's lesson, and nothing is written under the bar", stage_text(cpg))
         check_set_dropped(cpg, inst, casey, "Move")
         pg.get_by_role("button", name="Move", exact=True).click()
         check(pg.eval_on_selector("#fTo", "s => s.selectedOptions[0].textContent") == "Start new facts from Section 4",
@@ -1601,9 +1600,8 @@ def check_records_on_server(browser, inst):
           "a Reset put into the database shows on the Learner's next app open")
     store_for(inst, learner, "move", {"to": 4})
     reload(pg)
-    check(wait_for_h1(pg, "Lesson: Section 4") == "Lesson: Section 4"
-          and texts(pg, ".route-where") == [f"New questions come from Section 4: {SECTION_TITLES[4]}."],
-          "a Move to Section 4 put into the database shows on the Learner's next app open", texts(pg, ".route-where"))
+    check(wait_for_h1(pg, "Lesson: Section 4") == "Lesson: Section 4" and texts(pg, ".home .theme") == [SECTION_TITLES[4]],
+          "a Move to Section 4 put into the database shows on the Learner's next app open", stage_text(pg))
     without_lessons(pg)
     pg.click("#startBtn")
     check(pg.evaluate("run.screens.filter(s => s.kind === 'rule').map(s => BY_ID[s.id].day)") == [4] * 5,
@@ -2060,8 +2058,9 @@ def check_study_path(browser, inst, scheme="light"):
     pg.click("#homeBtn")
     reload(pg)
     check(texts(pg, ".route-count") == ["15 of 120"], "progress is kept across a reload")
-    check(h1(pg) == "Lesson: Section 2" and texts(pg, ".route-where") == [f"New questions come from Section 2: {SECTION_TITLES[2]}."],
-          "once all 10 of Section 1's facts are learned, and the lesson files are back, Section 2's lesson is next", texts(pg, ".route"))
+    check(h1(pg) == "Lesson: Section 2" and texts(pg, ".home .theme") == [SECTION_TITLES[2]] and not pg.query_selector(".route p"),
+          "once all 10 of Section 1's facts are learned, and the lesson files are back, Section 2's lesson is next, and nothing is written under the bar",
+          texts(pg, ".route"))
     check(not errors, f"no page errors in {scheme} mode" + (f": {errors}" if errors else ""))
     ctx.close()
 
@@ -2133,8 +2132,8 @@ def check_known_facts(browser, inst):
     check(home.startswith("Practice tests To pass the real test, you need 24 or more correct out of 30. You are Ready for the test when you get 27 or more correct on 3 practice tests in a row.")
           and pg.get_attribute("#testBtn", "class") == "btn primary",
           "Practice tests appear, and Start a practice test is the main button", home)
-    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-where") == ["You have learned every question. Practice tests are open to you."],
-          "the road is full and says Practice tests are open", texts(pg, ".route"))
+    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-ends .open") == ["Practice tests"] and not pg.query_selector(".route p"),
+          "the road is full, its end is lit, and nothing is written under it", texts(pg, ".route"))
 
     # A Practice test: 30 questions, no rule screens; its wrong answers come back in the next quiz.
     pg.click("#testBtn")
@@ -2181,7 +2180,7 @@ def check_known_facts(browser, inst):
           "three Practice tests in a row at 27 or more shows Ready for the test", stage_text(pg))
     reload(pg)
     check(texts(pg, ".sign h1") == ["Ready for the test"], "Ready for the test is still shown after a reload")
-    check(texts(pg, ".route-where") == ["You are Ready for the test."], "and the road says so", texts(pg, ".route-where"))
+    check(texts(pg, ".route-ends .open") == ["Ready for the test"] and not pg.query_selector(".route p"), "and the road's end says so", texts(pg, ".route"))
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
     ctx.close()
 

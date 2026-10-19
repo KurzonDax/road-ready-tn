@@ -103,7 +103,6 @@ h2 { font-size: clamp(24px, 6vw, 30px); }
 .route .tick { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--bg); opacity: .7; }
 .route-ends { font-size: 15px; color: var(--muted); }
 .route-ends .open { color: var(--guide); font-weight: 700; }
-.route-where { margin: 0; }
 @media (prefers-reduced-motion: no-preference) {
   .route-gain { animation: grow 900ms cubic-bezier(.16, 1, .3, 1) 250ms both; }
   @keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
@@ -727,15 +726,13 @@ function paint(html, focus) {
 const toTop = () => window.scrollTo({ top: 0, behavior: 'instant' });
 
 // The road from no facts to Practice tests: one bar of the 120 facts learned, marked off into the 12
-// Sections like mile markers. `before` (a Progress from before a Set) adds the stretch that Set covered,
-// in a lighter tint that grows in. Under it, one line says where new facts come from.
+// Sections like mile markers. `before` (a Progress from before a quiz) adds the stretch that quiz covered,
+// in a lighter tint that grows in. Nothing is written under it: the block above the bar already names what
+// comes next.
 function route(p = S, before = null) {
   const total = QS.length, l = learnedCount(p), was = before ? Math.min(learnedCount(before), l) : l;
   const pct = n => `${(n / total * 100).toFixed(2)}%`, isReady = ready(p), open = unlocked(p);
-  const next = cursorOrder(p).find(day => sectionFacts(p, day).some(f => !f.asked));
   const ticks = DAYS.slice(1).map((_, k) => `<span class="tick" style="left:${pct((k + 1) * total / DAYS.length)}"></span>`).join('');
-  const where = isReady ? 'You are Ready for the test.' : next !== undefined ? `New questions come from Section ${next}: ${DAYS[next - 1].title}.`
-    : open ? 'You have learned every question. Practice tests are open to you.' : '';
   return `<section class="route" aria-label="You have learned ${l} of the ${total} questions.">
       <div class="route-head" aria-hidden="true"><span>Questions learned</span><span class="route-count">${l} of ${total}</span></div>
       <div class="route-track" aria-hidden="true">
@@ -744,7 +741,6 @@ function route(p = S, before = null) {
         ${ticks}
       </div>
       <div class="route-ends" aria-hidden="true"><span>Start</span><span class="${isReady || open ? 'open' : ''}">${isReady ? 'Ready for the test' : 'Practice tests'}</span></div>
-      ${where ? `<p class="sub small route-where">${esc(where)}</p>` : ''}
     </section>`;
 }
 
