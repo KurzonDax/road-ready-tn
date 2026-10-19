@@ -1,0 +1,1147 @@
+{
+  "section": 9,
+  "title": "Interstate driving",
+  "steps": [
+    {
+      "id": "s9-01",
+      "fact": "c-001",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 40,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "ramp",
+            "x": 180,
+            "kind": "on",
+            "y1": 40,
+            "y2": 190,
+            "w": 56
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 145,
+            "y": 228,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 208,
+            "y": 150,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, on the ramp. To merge is to move into a lane where traffic is already moving. You want to merge into the right lane of the interstate. What do you do?",
+      "options": [
+        "You speed up on the ramp to the speed of the interstate traffic, then merge when the way is clear.",
+        "You stop at the end of the ramp, check for cars, then enter when it is safe.",
+        "You slow to 25 miles per hour before you enter the right lane.",
+        "You drive onto the shoulder first, then merge when the way is clear."
+      ],
+      "answer": "You speed up on the ramp to the speed of the interstate traffic, then merge when the way is clear.",
+      "then": {
+        "say": "You speed up on the ramp to the speed of the interstate traffic, then merge when the way is clear. Before you enter most busy roads you slow down or stop, but before you enter the interstate you do the opposite. Matching the speed of the cars in the lane lets you move in without making them brake.",
+        "wrong": {
+          "You stop at the end of the ramp, check for cars, then enter when it is safe.": "Stopping at the end of the ramp leaves you no room to reach the speed of the interstate traffic. Drivers behind you on the ramp do not expect you to stop and can hit you from behind. You speed up on the ramp, then merge when the way is clear.",
+          "You slow to 25 miles per hour before you enter the right lane.": "At 25 miles per hour you would enter the right lane far slower than the cars in it, and they could hit you from behind. You speed up on the ramp to the speed of the interstate traffic, then merge when the way is clear.",
+          "You drive onto the shoulder first, then merge when the way is clear.": "The shoulder is not a lane, and you do not drive on it to enter the interstate. You speed up on the ramp to the speed of the interstate traffic, then merge from the ramp when the way is clear."
+        }
+      },
+      "rule": "When you enter the interstate, you use the ramp to speed up to the speed of the interstate traffic, then merge when the way is clear."
+    },
+    {
+      "id": "s9-02",
+      "fact": "c-004",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 40,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "ramp",
+            "x": 180,
+            "kind": "on",
+            "y1": 40,
+            "y2": 190,
+            "w": 56
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 145,
+            "y": 228,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "path",
+            "from": [
+              204,
+              128
+            ],
+            "to": [
+              150,
+              70
+            ],
+            "via": [
+              186,
+              92
+            ]
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 208,
+            "y": 150,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, on the ramp, and you want to merge into the right lane. The blue car is in that lane, coming up beside you. Who goes first? Tap the car.",
+      "targets": [
+        {
+          "id": "blue",
+          "label": "the blue car"
+        },
+        {
+          "id": "you",
+          "label": "your car"
+        }
+      ],
+      "answer": "blue",
+      "then": {
+        "highlight": "blue",
+        "parts": [
+          {
+            "t": "road",
+            "x": 40,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "ramp",
+            "x": 180,
+            "kind": "on",
+            "y1": 40,
+            "y2": 190,
+            "w": 56
+          },
+          {
+            "t": "car",
+            "id": "blue",
+            "x": 145,
+            "y": 50,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "path",
+            "from": [
+              204,
+              128
+            ],
+            "to": [
+              150,
+              100
+            ],
+            "via": [
+              190,
+              104
+            ]
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 208,
+            "y": 150,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "The blue car goes first. You are entering the interstate, so you let the cars already on it go first and merge into a gap between them. Drivers on the interstate should make room for you when they can, but you do not count on it.",
+        "wrong": {
+          "you": "Your car is entering the interstate, and the cars already on it go first, whichever car is faster or larger. You let the blue car go by, then merge into the gap behind it."
+        }
+      },
+      "rule": "When you merge onto the interstate from a ramp, you let the cars already on the interstate go first."
+    },
+    {
+      "id": "s9-03",
+      "fact": "c-010",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 192,
+            "h": 320,
+            "oneway": 3
+          },
+          {
+            "t": "shoulder",
+            "x": 212,
+            "y": 0,
+            "w": 32,
+            "h": 320
+          },
+          {
+            "t": "lane",
+            "id": "left",
+            "x": 52,
+            "y": 150,
+            "w": 56,
+            "h": 70
+          },
+          {
+            "t": "lane",
+            "id": "middle",
+            "x": 116,
+            "y": 150,
+            "w": 56,
+            "h": 70
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 180,
+            "y": 150,
+            "w": 56,
+            "h": 70
+          },
+          {
+            "t": "car",
+            "id": "fast-left",
+            "x": 52,
+            "y": 262,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "fast-right",
+            "x": 180,
+            "y": 40,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 116,
+            "y": 262,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car and driving slower than the other cars. Tap the lane you must use.",
+      "targets": [
+        {
+          "id": "left",
+          "label": "the left lane"
+        },
+        {
+          "id": "middle",
+          "label": "the middle lane"
+        },
+        {
+          "id": "right",
+          "label": "the right lane"
+        }
+      ],
+      "answer": "right",
+      "then": {
+        "highlight": "right",
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 192,
+            "h": 320,
+            "oneway": 3
+          },
+          {
+            "t": "shoulder",
+            "x": 212,
+            "y": 0,
+            "w": 32,
+            "h": 320
+          },
+          {
+            "t": "lane",
+            "id": "left",
+            "x": 52,
+            "y": 150,
+            "w": 56,
+            "h": 70
+          },
+          {
+            "t": "lane",
+            "id": "middle",
+            "x": 116,
+            "y": 150,
+            "w": 56,
+            "h": 70
+          },
+          {
+            "t": "car",
+            "id": "fast-left",
+            "x": 52,
+            "y": 262,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "fast-right",
+            "x": 180,
+            "y": 40,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "right",
+            "x": 180,
+            "y": 150,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You use the right lane. On the interstate, a driver going slower than the flow of traffic must use the right lane, and the lanes to its left are for faster cars and passing.",
+        "wrong": {
+          "left": "The left lane is for passing and for the fastest cars, and a slow car there slows every car behind it. A driver going slower than the other cars must use the right lane.",
+          "middle": "Staying in the middle lane keeps you in the way of faster cars, which then have to pass you on both sides. A driver going slower than the other cars must use the right lane."
+        }
+      },
+      "rule": "On the interstate, if you drive slower than the flow of traffic, you must use the right lane."
+    },
+    {
+      "id": "s9-04",
+      "fact": "c-021",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 40,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "ramp",
+            "x": 180,
+            "kind": "off",
+            "y1": 40,
+            "y2": 210,
+            "w": 60
+          },
+          {
+            "t": "lane",
+            "id": "decel",
+            "x": 210,
+            "y": 110,
+            "w": 54,
+            "h": 60
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 145,
+            "y": 110,
+            "w": 56,
+            "h": 60
+          },
+          {
+            "t": "car",
+            "id": "behind",
+            "x": 145,
+            "y": 296,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 145,
+            "y": 220,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, leaving the interstate at the exit ahead. The deceleration lane opens beside the right lane and leads to the exit. You want to slow down for the exit. Tap the lane you must use.",
+      "targets": [
+        {
+          "id": "decel",
+          "label": "the deceleration lane"
+        },
+        {
+          "id": "right",
+          "label": "the right lane"
+        }
+      ],
+      "answer": "decel",
+      "then": {
+        "highlight": "decel",
+        "parts": [
+          {
+            "t": "road",
+            "x": 40,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "ramp",
+            "x": 180,
+            "kind": "off",
+            "y1": 40,
+            "y2": 210,
+            "w": 60
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 145,
+            "y": 110,
+            "w": 56,
+            "h": 60
+          },
+          {
+            "t": "car",
+            "id": "behind",
+            "x": 145,
+            "y": 296,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "decel",
+            "x": 210,
+            "y": 110,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You keep your speed until you are in the deceleration lane, then slow to the ramp's posted speed. Slowing there keeps your car out of the way of the cars behind you in the right lane, which are still at interstate speed.",
+        "wrong": {
+          "right": "Slowing in the right lane puts you in the way of the cars behind you, which are still at interstate speed. You keep your speed until you are in the deceleration lane, then slow to the ramp's posted speed."
+        }
+      },
+      "rule": "When you leave the interstate, you keep your speed until you enter the deceleration lane, then slow to the ramp's posted speed."
+    },
+    {
+      "id": "s9-05",
+      "fact": "c-024",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 20,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 40,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "shoulder",
+            "x": 180,
+            "y": 0,
+            "w": 36,
+            "h": 320
+          },
+          {
+            "t": "ramp",
+            "x": 180,
+            "kind": "off",
+            "y1": 280,
+            "y2": 380,
+            "w": 50
+          },
+          {
+            "t": "label",
+            "x": 268,
+            "y": 168,
+            "text": "Your exit",
+            "anchor": "middle"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 145,
+            "y": 70,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, and you have just driven past your exit. What must you do?",
+      "options": [
+        "You go on to the next exit.",
+        "You back up on the shoulder to the exit.",
+        "You make a U-turn through the median.",
+        "You stop on the shoulder and wait."
+      ],
+      "answer": "You go on to the next exit.",
+      "then": {
+        "say": "You go on to the next exit and leave the interstate there. It is illegal to back up, make a U-turn, or cross the median on the interstate.",
+        "wrong": {
+          "You back up on the shoulder to the exit.": "Backing up on the interstate is illegal, and it puts your car in the path of the cars coming up behind you at full speed. You go on to the next exit and leave the interstate there.",
+          "You make a U-turn through the median.": "A U-turn on the interstate is illegal, and a U-turn through the median carries your car across the fast traffic going the other way. You go on to the next exit and leave the interstate there.",
+          "You stop on the shoulder and wait.": "The shoulder is for emergencies, and a missed exit is not one. Waiting there does not bring you back to your exit, because you may not back up or turn around. You go on to the next exit and leave the interstate there."
+        }
+      },
+      "rule": "If you miss your exit on the interstate, you must go on to the next exit."
+    },
+    {
+      "id": "s9-06",
+      "fact": "c-002",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "road",
+            "x": 180,
+            "y": 0,
+            "w": 120,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "median",
+            "x": 140,
+            "y": 0,
+            "w": 40,
+            "h": 130
+          },
+          {
+            "t": "median",
+            "x": 140,
+            "y": 190,
+            "w": 40,
+            "h": 130
+          },
+          {
+            "t": "road",
+            "x": 139,
+            "y": 130,
+            "w": 42,
+            "h": 60,
+            "center": "none"
+          },
+          {
+            "t": "car",
+            "id": "other-side",
+            "x": 50,
+            "y": 70,
+            "heading": "s",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 270,
+            "y": 250,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. The gap in the median ahead is a crossover between the two sides of the interstate. Who may drive through it?",
+      "options": [
+        "Only emergency vehicles and highway maintenance crews may drive through it.",
+        "Any driver who missed an exit and needs to turn around may drive through it.",
+        "Any driver may drive through it when no other cars are around.",
+        "Trucks and buses that need to turn around may drive through it."
+      ],
+      "answer": "Only emergency vehicles and highway maintenance crews may drive through it.",
+      "then": {
+        "say": "Only emergency vehicles and highway maintenance crews may drive through it. Every other driver, you included, may never cross the median, even where there is a gap.",
+        "wrong": {
+          "Any driver who missed an exit and needs to turn around may drive through it.": "Missing an exit does not allow a driver to cross the median. Only emergency vehicles and highway maintenance crews may drive through it, and a driver who missed an exit goes on to the next exit.",
+          "Any driver may drive through it when no other cars are around.": "An empty road does not change who may cross the median. Only emergency vehicles and highway maintenance crews may drive through it, at any time.",
+          "Trucks and buses that need to turn around may drive through it.": "Trucks and buses may not cross the median any more than your car may. Only emergency vehicles and highway maintenance crews may drive through it."
+        }
+      },
+      "rule": "Only emergency vehicles and highway maintenance crews may cross an interstate median."
+    },
+    {
+      "id": "s9-07",
+      "fact": "b-136",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "shoulder",
+            "x": 160,
+            "y": 0,
+            "w": 36,
+            "h": 320
+          },
+          {
+            "t": "car",
+            "id": "stopped",
+            "x": 178,
+            "y": 70,
+            "heading": "n",
+            "color": "white",
+            "emergency": true
+          },
+          {
+            "t": "lane",
+            "id": "left",
+            "x": 55,
+            "y": 170,
+            "w": 62,
+            "h": 70
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 125,
+            "y": 170,
+            "w": 62,
+            "h": 70
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 125,
+            "y": 270,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. The white car is an emergency vehicle stopped on the right shoulder with its lights flashing, and no car is near you in the left lane. Tap the lane you must use.",
+      "targets": [
+        {
+          "id": "left",
+          "label": "the left lane"
+        },
+        {
+          "id": "right",
+          "label": "the right lane"
+        }
+      ],
+      "answer": "left",
+      "then": {
+        "highlight": "left",
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "shoulder",
+            "x": 160,
+            "y": 0,
+            "w": 36,
+            "h": 320
+          },
+          {
+            "t": "car",
+            "id": "stopped",
+            "x": 178,
+            "y": 70,
+            "heading": "n",
+            "color": "white",
+            "emergency": true
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 125,
+            "y": 170,
+            "w": 62,
+            "h": 70
+          },
+          {
+            "t": "car",
+            "id": "left",
+            "x": 55,
+            "y": 170,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You move into the left lane, which is not next to the stopped vehicle. The Move Over law requires you to change to a lane not next to a stopped emergency vehicle with its lights flashing, when you can do it safely. That keeps your car away from anyone working beside it.",
+        "wrong": {
+          "right": "The right lane is next to the stopped emergency vehicle, and anyone working beside it is a few feet from that lane. The Move Over law requires you to change to a lane not next to it when you can do it safely, so you move into the left lane."
+        }
+      },
+      "rule": "When you come up to an emergency vehicle stopped with its lights flashing, you change to a lane not next to it, or slow down and drive with caution if you cannot."
+    },
+    {
+      "id": "s9-08",
+      "fact": "b-136",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "shoulder",
+            "x": 160,
+            "y": 0,
+            "w": 36,
+            "h": 320
+          },
+          {
+            "t": "car",
+            "id": "stopped",
+            "x": 178,
+            "y": 70,
+            "heading": "n",
+            "color": "white",
+            "emergency": true
+          },
+          {
+            "t": "car",
+            "id": "beside",
+            "x": 55,
+            "y": 262,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 125,
+            "y": 270,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. The white car is an emergency vehicle stopped on the right shoulder with its lights flashing. The blue car beside you keeps you from moving into the left lane. What do you do?",
+      "options": [
+        "You slow down and drive past it with caution in your lane.",
+        "You stop behind it and wait until it drives away.",
+        "You honk your horn and keep going at the same speed.",
+        "You turn on your high beams and pass it quickly."
+      ],
+      "answer": "You slow down and drive past it with caution in your lane.",
+      "then": {
+        "say": "You slow down and drive past it with caution in your lane. The Move Over law requires you to change to a lane not next to the stopped vehicle. When you cannot do that safely, you slow down and drive with caution instead.",
+        "wrong": {
+          "You stop behind it and wait until it drives away.": "The law does not ask you to stop, and stopping on the interstate puts your car in the way of the fast traffic behind you. When you cannot move over safely, you slow down and drive past it with caution.",
+          "You honk your horn and keep going at the same speed.": "Honking does not protect anyone working beside the emergency vehicle, and keeping your speed takes you past them close and fast. When you cannot move over safely, you slow down and drive past it with caution.",
+          "You turn on your high beams and pass it quickly.": "High beams can blind anyone working there, and passing quickly is the opposite of what the law requires. When you cannot move over safely, you slow down and drive past it with caution."
+        }
+      },
+      "rule": "When you come up to an emergency vehicle stopped with its lights flashing, you change to a lane not next to it, or slow down and drive with caution if you cannot."
+    },
+    {
+      "id": "s9-09",
+      "fact": "d-155",
+      "kind": "tap",
+      "scene": {
+        "parts": [
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "cone",
+            "x": 156,
+            "y": 150,
+            "to": [
+              92,
+              60
+            ],
+            "n": 6
+          },
+          {
+            "t": "roadsign",
+            "kind": "diamond",
+            "color": "orange",
+            "x": 185,
+            "y": 230
+          },
+          {
+            "t": "lane",
+            "id": "left",
+            "x": 55,
+            "y": 205,
+            "w": 62,
+            "h": 70
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 125,
+            "y": 205,
+            "w": 62,
+            "h": 70
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 125,
+            "y": 285,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. The orange diamond sign warns that the right lane is closed ahead for road work, and no car is near you in the left lane. Tap the lane you must use.",
+      "targets": [
+        {
+          "id": "left",
+          "label": "the left lane"
+        },
+        {
+          "id": "right",
+          "label": "the right lane"
+        }
+      ],
+      "answer": "left",
+      "then": {
+        "highlight": "left",
+        "parts": [
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "cone",
+            "x": 156,
+            "y": 150,
+            "to": [
+              92,
+              60
+            ],
+            "n": 6
+          },
+          {
+            "t": "roadsign",
+            "kind": "diamond",
+            "color": "orange",
+            "x": 185,
+            "y": 230
+          },
+          {
+            "t": "lane",
+            "id": "right",
+            "x": 125,
+            "y": 205,
+            "w": 62,
+            "h": 70
+          },
+          {
+            "t": "car",
+            "id": "left",
+            "x": 55,
+            "y": 205,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You merge into the left lane now, as soon as you see the work zone. Merging early keeps the traffic moving at the posted speed, and no driver is forced over at the last moment.",
+        "wrong": {
+          "right": "The right lane is open until the cones, but waiting until the last moment to merge can get you a ticket and can cause a crash. You merge into the left lane as soon as you see the work zone."
+        }
+      },
+      "rule": "When a lane is closed ahead in a work zone, you merge out of it as soon as you see the work zone, not at the last moment."
+    },
+    {
+      "id": "s9-10",
+      "fact": "c-035",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "shoulder",
+            "x": 160,
+            "y": 0,
+            "w": 36,
+            "h": 320
+          },
+          {
+            "t": "car",
+            "id": "behind",
+            "x": 55,
+            "y": 290,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 125,
+            "y": 200,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car, and your engine is losing power. What do you do first?",
+      "options": [
+        "You move to the right shoulder and turn on your emergency flashers.",
+        "You stop where you are in your lane and turn on your emergency flashers.",
+        "You move to the left shoulder and turn off your lights.",
+        "You keep driving slowly in the right lane."
+      ],
+      "answer": "You move to the right shoulder and turn on your emergency flashers.",
+      "then": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 140,
+            "h": 320,
+            "oneway": 2
+          },
+          {
+            "t": "shoulder",
+            "x": 160,
+            "y": 0,
+            "w": 36,
+            "h": 320
+          },
+          {
+            "t": "car",
+            "id": "behind",
+            "x": 55,
+            "y": 290,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 178,
+            "y": 150,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ],
+        "say": "You move to the right shoulder as soon as you can and turn on your emergency flashers, which make all your turn signal lights flash at once. The shoulder takes your car out of the fast traffic, and the flashers warn other drivers that your car is stopped there.",
+        "wrong": {
+          "You stop where you are in your lane and turn on your emergency flashers.": "A car stopped in a lane of the interstate can be hit from behind by traffic at full speed, even with its emergency flashers on. You move to the right shoulder as soon as you can, then turn on your emergency flashers, which make all your turn signal lights flash at once.",
+          "You move to the left shoulder and turn off your lights.": "The left shoulder is beside the fastest lane, and with your lights off other drivers cannot see your car. You move to the right shoulder and turn on your emergency flashers, which make all your turn signal lights flash to warn other traffic.",
+          "You keep driving slowly in the right lane.": "A car far below the speed of traffic is in the way of every car behind it, and your engine may stop while you are still in the lane. You move to the right shoulder as soon as you can and turn on your emergency flashers, which make all your turn signal lights flash at once."
+        }
+      },
+      "rule": "If your car has trouble on the interstate, you move to the right shoulder as soon as you can and turn on your emergency flashers."
+    },
+    {
+      "id": "s9-11",
+      "fact": "c-003",
+      "kind": "choose",
+      "scene": {
+        "parts": [
+          {
+            "t": "median",
+            "x": 0,
+            "y": 0,
+            "w": 20,
+            "h": 320
+          },
+          {
+            "t": "road",
+            "x": 20,
+            "y": 0,
+            "w": 192,
+            "h": 320,
+            "oneway": 3
+          },
+          {
+            "t": "shoulder",
+            "x": 212,
+            "y": 0,
+            "w": 32,
+            "h": 320
+          },
+          {
+            "t": "car",
+            "id": "ahead",
+            "x": 52,
+            "y": 70,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "beside",
+            "x": 180,
+            "y": 200,
+            "heading": "n",
+            "color": "blue"
+          },
+          {
+            "t": "car",
+            "id": "you",
+            "x": 116,
+            "y": 230,
+            "heading": "n",
+            "color": "red",
+            "you": true
+          }
+        ]
+      },
+      "prompt": "You are the red car. Safe interstate driving demands complete awareness of driving at higher speed. What else does it demand?",
+      "options": [
+        "It demands constant alertness by the driver.",
+        "It demands a car with a large engine.",
+        "It demands driving in the left lane at all times.",
+        "It demands keeping up with the fastest car."
+      ],
+      "answer": "It demands constant alertness by the driver.",
+      "then": {
+        "say": "It demands constant alertness by the driver. At interstate speed the cars around you change lanes, merge and brake within seconds. You keep watching the road ahead, your mirrors and the cars beside you the whole time.",
+        "wrong": {
+          "It demands a car with a large engine.": "The size of the engine does not make a driver safe. Safe interstate driving demands constant alertness by the driver, along with awareness of driving at higher speed.",
+          "It demands driving in the left lane at all times.": "The left lane is for passing and for the fastest cars, not for driving in at all times. Safe interstate driving demands constant alertness by the driver.",
+          "It demands keeping up with the fastest car.": "You keep pace with the traffic, but you never speed to stay with the fastest car. Safe interstate driving demands constant alertness by the driver."
+        }
+      },
+      "rule": "Safe interstate driving demands complete awareness of driving at higher speed and constant alertness by the driver."
+    }
+  ]
+}

@@ -3033,6 +3033,172 @@ def check_park_lesson(browser, inst):
           and all(a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 4,
           "the finished lesson is one record of type lesson with every Section 8 fact answered, the wrong taps and the wrong choice among them")
     ctx.close()
+    check_interstate_lesson(browser, inst)
+
+
+def check_interstate_lesson(browser, inst):
+    """The Section 9 lesson (interstate driving) is offered to a Learner whose new facts come from Section 9; every
+    question has a fact and its own explanation per wrong pick; the lane questions keep one form ("You are the red
+    car ... Tap the lane you must use.") with lane boxes side by side, nothing written in them, and your car put in
+    the correct lane afterwards: the right lane of three for slower traffic, the deceleration lane beside an off-ramp
+    to slow down, the left lane past an emergency vehicle stopped on the shoulder, and the left lane as soon as the
+    cones close the right lane; the ramp question asks who goes first and the blue car on the interstate is the
+    answer; the missed exit, the median crossover, the car trouble and the alertness questions are choices about the
+    drawn scene; a wrong tap names the lane or the car and a wrong choice leads with Incorrect alone; every question
+    is acted on to the end and the finished lesson is a record with one answer per fact."""
+    print("\n[interstate lesson]")
+    lid = inst.add_learner("Harper", "interstate password")
+    store_for(inst, lid, "move", {"to": 9})  # new facts come from Section 9, which has a lesson
+    ctx = browser.new_context(viewport={"width": 390, "height": 844})
+    pg = ctx.new_page()
+    open_page(pg, inst.url)
+    sign_in(pg, "Harper", "interstate password")
+    pg.wait_for_selector("#lessonBtn")
+    check(h1(pg).startswith("Section 9:"), "a Learner moved to Section 9 is offered its lesson before the Set", h1(pg))
+    pg.click("#lessonBtn")
+    pg.wait_for_selector("button.opt, .k-target")
+    steps = pg.evaluate("lesson.lesson.steps.map(s => ({id: s.id, kind: s.kind, fact: s.fact || null, answer: s.answer, prompt: s.prompt, say: s.then.say, wrong: s.then.wrong || null, "
+                        "options: s.options || null, targets: s.targets || null, parts: s.scene ? s.scene.parts : [], after: s.then.parts || null, highlight: s.then.highlight || null}))")
+    facts = set(pg.evaluate("QS.filter(q => q.day === 9).map(q => q.id)"))
+    check(10 <= len(steps) <= 15 and {s["fact"] for s in steps} >= facts and all(s["fact"] for s in steps),
+          "the lesson has 10 to 15 questions, every one with a fact, and teaches every Section 9 fact", len(steps))
+    check(all(s["wrong"] and set(s["wrong"]) == {k for k in ([t["id"] for t in s["targets"]] if s["kind"] == "tap" else s["options"]) if k != s["answer"]} for s in steps),
+          "every question has its own explanation for every wrong pick")
+    check(all(all(o == "Yes" or o == "No" or o.endswith(".") for o in s["options"]) for s in steps if s["kind"] != "tap"),
+          "every option is a complete sentence or a plain Yes or No")
+    check(all(s["parts"] and s["prompt"].startswith("You are the red car") for s in steps)
+          and all(all((p.get("color") == "red") == bool(p.get("you")) for p in s["parts"] if p["t"] == "car") for s in steps),
+          "every question draws a scene and says you are the red car, and only your car is red")
+    check(all(len([p for p in s["parts"] if p["t"] == "road"]) == 1 for s in steps if s["kind"] == "tap"), "every tap question draws one roadway, a close-up")
+    by_fact = lambda f: [s for s in steps if s["fact"] == f]
+    # The lane questions: one form, lane boxes side by side as the targets, your car in the correct box afterwards.
+    lanes = [s for s in steps if s["kind"] == "tap" and s["fact"] != "c-004"]
+    def lane_q(s):
+        boxes = sorted((p for p in s["parts"] if p["t"] == "lane"), key=lambda p: p["x"])
+        gaps = [boxes[k + 1]["x"] - boxes[k]["x"] - (boxes[k]["w"] + boxes[k + 1]["w"]) / 2 for k in range(len(boxes) - 1)]
+        box = next(p for p in boxes if p["id"] == s["answer"])
+        you = next((p for p in (s["after"] or []) if p["t"] == "car" and p.get("you")), None)
+        return (s["prompt"].endswith("Tap the lane you must use.") and len(boxes) >= 2 and {p["id"] for p in boxes} == {t["id"] for t in s["targets"]}
+                and all(p["y"] == boxes[0]["y"] and p["w"] >= 54 and p["h"] >= 50 and "label" not in p for p in boxes) and all(0 <= g <= 10 for g in gaps)
+                and all(t["label"].startswith("the ") and t["label"].endswith(" lane") for t in s["targets"])
+                and s["highlight"] == s["answer"] and you is not None and abs(you["x"] - box["x"]) <= 4 and abs(you["y"] - box["y"]) <= 40
+                and all(p["t"] != "lane" or p["id"] != s["answer"] for p in s["after"]))
+    check(len(lanes) == 4 and all(lane_q(s) for s in lanes) and [s["fact"] for s in lanes] == ["c-010", "c-021", "b-136", "d-155"],
+          "the four lane questions keep the one form, draw lane boxes side by side with nothing written in them, and put your car in the correct lane afterwards")
+    slow = by_fact("c-010")[0]
+    check(slow["answer"] == "right" and len([p for p in slow["parts"] if p["t"] == "lane"]) == 3 and next(p for p in slow["parts"] if p["t"] == "road").get("oneway") == 3
+          and "slower" in slow["prompt"] and any(p["t"] == "shoulder" for p in slow["parts"]) and any(p["t"] == "median" for p in slow["parts"]),
+          "the slower-traffic question draws three lanes one way between the median and the shoulder, and the right lane is the answer")
+    decel = by_fact("c-021")[0]
+    ramp_off = next((p for p in decel["parts"] if p["t"] == "ramp"), None)
+    check(ramp_off is not None and ramp_off["kind"] == "off" and next(t["label"] for t in decel["targets"] if t["id"] == decel["answer"]) == "the deceleration lane"
+          and "slow down" in decel["prompt"] and "deceleration lane" in decel["say"] and "deceleration lane" in decel["wrong"]["right"],
+          "the exit question draws the off-ramp, and the deceleration lane is the answer, named in the explanation")
+    over, slowed = by_fact("b-136")
+    def stopped_on_shoulder(s):
+        sh = next((p for p in s["parts"] if p["t"] == "shoulder"), None)
+        em = [p for p in s["parts"] if p["t"] == "car" and p.get("emergency")]
+        return sh is not None and len(em) == 1 and sh["x"] <= em[0]["x"] <= sh["x"] + sh["w"] and "emergency vehicle" in s["prompt"] and "flashing" in s["prompt"]
+    check(over["kind"] == "tap" and over["answer"] == "left" and stopped_on_shoulder(over) and "left lane" in over["prompt"],
+          "the Move Over question draws the emergency vehicle stopped on the shoulder with its lights flashing, says the left lane is clear, and the left lane is the answer")
+    check(slowed["kind"] == "choose" and stopped_on_shoulder(slowed) and "slow down" in slowed["answer"] and "caution" in slowed["answer"]
+          and any(p["t"] == "car" and p.get("color") == "blue" for p in slowed["parts"]) and "blue car" in slowed["prompt"],
+          "the second Move Over question is a choice, with the blue car blocking the left lane, answered by slowing down with caution")
+    work = by_fact("d-155")[0]
+    check(work["answer"] == "left" and any(p["t"] == "cone" and p.get("to") and p.get("n", 0) >= 4 for p in work["parts"])
+          and any(p["t"] == "roadsign" and p["kind"] == "diamond" and p["color"] == "orange" for p in work["parts"])
+          and "closed" in work["prompt"] and "as soon as" in work["say"] and "as soon as" in work["wrong"]["right"],
+          "the work zone question draws the orange diamond and a row of cones closing the right lane, the left lane is the answer, and the explanations say as soon as you see it")
+    ramp = by_fact("c-004")[0]
+    enter = by_fact("c-001")[0]
+    check(ramp["kind"] == "tap" and ramp["prompt"].endswith("Who goes first? Tap the car.") and any(p["t"] == "ramp" and p["kind"] == "on" for p in ramp["parts"])
+          and any(p["t"] == "car" and p.get("color") == "blue" and p.get("id") == ramp["answer"] for p in ramp["parts"]) and any(p["t"] == "path" for p in ramp["parts"])
+          and ramp["highlight"] == ramp["answer"] and "yield" not in (ramp["say"] + ramp["wrong"]["you"]).lower(),
+          "the ramp question asks who goes first with the on-ramp drawn, and the blue car on the interstate is the answer")
+    check(enter["kind"] == "choose" and any(p["t"] == "ramp" and p["kind"] == "on" for p in enter["parts"]) and "speed up" in enter["answer"] and "merge" in enter["answer"]
+          and enter["prompt"].count("merge") >= 2,
+          "the entering question is a choice on the ramp, answered by speeding up and merging when the way is clear, with merge explained in the prompt")
+    missed = by_fact("c-024")[0]
+    check(missed["kind"] == "choose" and "next exit" in missed["answer"] and any(p["t"] == "ramp" and p["kind"] == "off" for p in missed["parts"])
+          and any(p["t"] == "median" for p in missed["parts"]) and any(p["t"] == "shoulder" for p in missed["parts"])
+          and all("next exit" in w for w in missed["wrong"].values()) and sum("illegal" in w for w in missed["wrong"].values()) >= 2,
+          "the missed exit question is a choice with the exit behind you, the median and the shoulder drawn, answered by going on to the next exit")
+    cross = by_fact("c-002")[0]
+    check(cross["kind"] == "choose" and len([p for p in cross["parts"] if p["t"] == "road"]) == 3 and len([p for p in cross["parts"] if p["t"] == "median"]) == 2
+          and "emergency vehicles and highway maintenance crews" in cross["answer"] and "crossover" in cross["prompt"],
+          "the crossover question draws both roadways with a gap in the median, and only emergency vehicles and highway maintenance crews may use it")
+    trouble = by_fact("c-035")[0]
+    sh = next(p for p in trouble["parts"] if p["t"] == "shoulder")
+    you_after = next(p for p in trouble["after"] if p["t"] == "car" and p.get("you"))
+    check(trouble["kind"] == "choose" and "right shoulder" in trouble["answer"] and "flashers" in trouble["answer"] and sh["x"] <= you_after["x"] <= sh["x"] + sh["w"],
+          "the car trouble question is a choice answered by the right shoulder and the flashers, and afterwards your car stands on the shoulder")
+    alert = by_fact("c-003")[0]
+    check(alert["kind"] == "choose" and "alertness" in alert["answer"] and "higher speed" in alert["prompt"], "the alertness question is a choice answered by constant alertness")
+    check(not any(re.search(r"\b(right\.|yield|step|screen|case)\b", (s["prompt"] + " " + s["say"]).lower()) for s in steps), "no banned word reaches the Learner")
+    # On screen: the first question is the entering choice; a wrong choice leads with Incorrect alone and explains that pick.
+    first = steps[0]
+    check(first["fact"] == "c-001" and pg.query_selector(".scene .k-ramp") is not None and pg.evaluate("document.querySelectorAll('.scene .k-car.k-red').length") == 1,
+          "the first question is the entering choice, with the ramp and the red car drawn")
+    wrong = next(o for o in first["options"] if o != first["answer"])
+    pg.query_selector_all("button.opt")[choice_texts(pg).index(wrong)].click()
+    pg.wait_for_selector("#stepNextBtn")
+    shown = " ".join(pg.inner_text("#stage").split())
+    check(shown.startswith(f"Lesson for Section 9: 1 of {len(steps)} Incorrect.") and "You picked" not in pg.inner_text("#stepHead") and wrong in pg.inner_text("li.opt.wrong")
+          and "The answer" in pg.inner_text("li.opt.right") and pg.inner_text("#stepText") == first["wrong"][wrong] and "Driver manual" not in shown,
+          "a wrong choice leads with Incorrect alone, the list marks the pick and the answer, and the explanation is the one written for that pick", shown[:160])
+    pg.click("#stepNextBtn")
+    wrong_car_done = wrong_lane_done = False
+    for k in range(1, len(steps)):
+        st = steps[k]
+        if st["kind"] == "tap":
+            pg.wait_for_selector(f".k-target[data-t='{st['answer']}']")
+            if st in lanes:
+                n = len(st["targets"])
+                check(len(pg.query_selector_all(".scene .k-lane")) == n and len(pg.query_selector_all(".scene .k-target")) == n
+                      and pg.evaluate("[...document.querySelectorAll('.scene .k-target')].every(t => t.querySelector('text') === null)"),
+                      f"question {k + 1} draws its lane boxes as the targets, with nothing written in them")
+            if st is slow:
+                check(pg.evaluate("document.querySelectorAll('.scene line.k-white').length") == 2 and pg.query_selector(".scene .k-shoulder") is not None,
+                      "the three-lane roadway draws two broken white lines and the shoulder")
+            if st is decel:
+                check(pg.query_selector(".scene .k-ramp") is not None, "the exit question draws the off-ramp")
+            if st is over:
+                check(pg.query_selector(".scene .k-car.k-emergency") is not None and pg.query_selector(".scene .k-shoulder") is not None, "the Move Over question draws the emergency vehicle on the shoulder")
+            if st is work:
+                check(len(pg.query_selector_all(".scene .k-cone g")) >= 4 and pg.query_selector(".scene .k-roadsign") is not None, "the work zone question draws the cones and the orange sign")
+            if st["fact"] == "c-004" and not wrong_car_done or st in lanes and not wrong_lane_done:
+                # A wrong tap names the car or the lane picked, crosses it, checks the answer, and explains that pick.
+                pick = next(t for t in st["targets"] if t["id"] != st["answer"])
+                pg.click(f".k-target[data-t='{pick['id']}']")
+                pg.wait_for_selector("#stepNextBtn")
+                check(pg.inner_text("#stepHead") == f"Incorrect. You picked {pick['label']}." and pg.query_selector(".k-no") is not None and pg.query_selector(".k-ring") is not None
+                      and pg.inner_text("#stepText") == st["wrong"][pick["id"]], f"question {k + 1}: a wrong tap names the pick, crosses it, checks the answer, and explains that pick")
+                if st["fact"] == "c-004": wrong_car_done = True
+                else: wrong_lane_done = True
+                pg.click("#stepNextBtn")
+                continue
+            pg.click(f".k-target[data-t='{st['answer']}']")
+            pg.wait_for_selector("#stepNextBtn")
+            check(pg.inner_text("#stepHead") == "Correct." and pg.query_selector(".k-ring") is not None and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
+            if st in lanes:
+                check(pg.evaluate("document.querySelectorAll('.scene .k-car.k-you').length") == 1 and len(pg.query_selector_all(".scene .k-lane")) == len(st["targets"]) - 1,
+                      f"question {k + 1}: after the tap your car stands in the correct lane and the other boxes stay")
+        else:
+            pg.wait_for_selector("button.opt")
+            if st is cross:
+                check(len(pg.query_selector_all(".scene .k-median")) == 2, "the crossover question draws the median in two pieces with the gap between them")
+            pg.query_selector_all("button.opt")[choice_texts(pg).index(st["answer"])].click()
+            pg.wait_for_selector("#stepNextBtn")
+            check(pg.inner_text("#stepHead") == "Correct." and pg.inner_text("#stepText") == st["say"], f"question {k + 1} is answered as its answer says, with its explanation")
+        pg.click("#stepNextBtn")
+    pg.wait_for_selector("#moreBtn")
+    check(h2(pg) == "You finished the lesson for Section 9.", "the Section 9 lesson ends on its own screen", h2(pg))
+    records = wait_for_records(pg, 2)
+    lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
+    check(len(lesson) == 1 and lesson[0]["data"]["section"] == 9 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts
+          and all(a["format"] in ("tap", "choice") for a in lesson[0]["data"]["answers"]) and sum(1 for a in lesson[0]["data"]["answers"] if not a["right"]) == 3,
+          "the finished lesson is one record of type lesson with every Section 9 fact answered, the wrong choice and the two wrong taps among them")
+    ctx.close()
 
 
 def main():

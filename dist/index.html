@@ -1139,6 +1139,14 @@ function roadMarks(r, roads) {
     ? `<line class="${cls}" x1="${s}" y1="${at}" x2="${e}" y2="${at}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`
     : `<line class="${cls}" x1="${at}" y1="${s}" x2="${at}" y2="${e}"${dash ? ` stroke-dasharray="${dash}"` : ''}/>`).join('');
   const [lo, hi, mid] = horizontal ? [r.y + 1.5, r.y + r.h - 1.5, r.y + r.h / 2] : [r.x + 1.5, r.x + r.w - 1.5, r.x + r.w / 2];
+  // `oneway: N` is one roadway of a divided highway (Section 9): N lanes all going the same way, split by broken
+  // white lines, with no center line. `center` and `lanes` are ignored.
+  if (r.oneway >= 2) {
+    const lane = (horizontal ? r.h : r.w) / r.oneway, start = horizontal ? r.y : r.x;
+    let splits = '';
+    for (let k = 1; k < r.oneway; k++) splits += line(start + k * lane, 'k-white', '14 10');
+    return line(lo, 'k-edge') + line(hi, 'k-edge') + splits;
+  }
   let center = '';
   const c = r.center || 'yellow';
   if (c === 'yellow') center = line(mid, 'k-yellow');
@@ -1388,6 +1396,43 @@ function wheelsPart(p, o) {
     `<g clip-path="url(#${cid})"><rect x="${x}" y="${y}" width="${p.w}" height="${p.h}" fill="var(--road)"/>${side}${car}</g>`;
   return boxTarget(p, o, 'k-lane k-wheels', inner);
 }
+// A ramp (Section 9) joining the east edge of a northbound roadway at an angle. `x` is the roadway's east edge, `w`
+// the ramp lane's width (default 44), and the lane runs beside the roadway from `y1` (north) to `y2` (south).
+// `kind: "on"` is an entrance: the ramp comes in from the bottom right, meets the roadway at `y2` and runs beside it
+// as the acceleration lane, narrowing to nothing at `y1`. `kind: "off"` is an exit: the deceleration lane opens from
+// nothing at `y2`, runs beside the roadway to `y1` and leaves toward the top right. A broken white line lies between
+// the ramp lane and the roadway; where the angled part meets the roadway, the roadway keeps its solid edge line.
+// Not a target: a `lane` box in the ramp lane is. The prompt says the ramp is there.
+function rampPart(p) {
+  const x = p.x, w = p.w || 44, y1 = p.y1, y2 = p.y2, taper = p.taper === undefined ? 56 : p.taper, on = p.kind !== 'off';
+  const slope = 0.55;  // the angled part leans this much east for each unit it runs south (on) or north (off)
+  let surface, edges;
+  if (on) {
+    const dx = (320 - y2) * slope;
+    surface = `${x - 3},${y1} ${x + w},${y1 + taper} ${x + w},${y2} ${x + w + dx},320 ${x + dx},320 ${x},${y2} ${x - 3},${y2}`;
+    edges = `<polyline class="k-edge" fill="none" points="${x + w + dx},320 ${x + w},${y2} ${x + w},${y1 + taper} ${x},${y1}"/><line class="k-edge" x1="${x + dx}" y1="320" x2="${x}" y2="${y2}"/>`;
+  } else {
+    const dx = y1 * slope;
+    surface = `${x - 3},${y2} ${x + w},${y2 - taper} ${x + w},${y1} ${x + w + dx},0 ${x + dx},0 ${x},${y1} ${x - 3},${y1}`;
+    edges = `<polyline class="k-edge" fill="none" points="${x + w + dx},0 ${x + w},${y1} ${x + w},${y2 - taper} ${x},${y2}"/><line class="k-edge" x1="${x + dx}" y1="0" x2="${x}" y2="${y1}"/>`;
+  }
+  return `<g class="k-ramp"><polygon points="${surface}" fill="var(--road)"/><line class="k-white" x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke-dasharray="14 10"/>${edges}</g>`;
+}
+// A paved shoulder (Section 9): a strip beside a roadway, outside its edge line, darker than the lanes, with a thin
+// outer edge. A car stops on it and never drives on it. Not a target. The prompt names it.
+const shoulderPart = p => `<rect class="k-shoulder" x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" fill="#282a2d" stroke="#4a4d52" stroke-width="1"/>`;
+// A traffic cone seen from above (Section 9): an orange square base with a white-ringed top. With `to: [x, y]` and `n`
+// it is a row of n cones from x,y to that point, the taper that closes a lane in a work zone. Not a target.
+function conePart(p) {
+  const n = p.to ? Math.max(2, p.n || 5) : 1;
+  const one = (x, y) => `<g transform="translate(${x} ${y})"><rect x="-5" y="-5" width="10" height="10" rx="1.5" fill="#f27423"/><circle r="3.6" fill="#f27423" stroke="#f2f0eb" stroke-width="1.4"/><circle r="1.3" fill="#f2f0eb"/></g>`;
+  const cones = [];
+  for (let k = 0; k < n; k++) {
+    const f = n === 1 ? 0 : k / (n - 1);
+    cones.push(one(p.x + (p.to ? (p.to[0] - p.x) * f : 0), p.y + (p.to ? (p.to[1] - p.y) * f : 0)));
+  }
+  return `<g class="k-cone">${cones.join('')}</g>`;
+}
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
 // `emergency: true` puts a red and blue light bar on the roof, flashing: an emergency vehicle (the prompt names the siren).
@@ -1434,6 +1479,9 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'bicyclist') return bicyclistPart(p);
     if (p.t === 'stopline') return stoplinePart(p);
     if (p.t === 'median') return medianPart(p);
+    if (p.t === 'ramp') return rampPart(p);
+    if (p.t === 'shoulder') return shoulderPart(p);
+    if (p.t === 'cone') return conePart(p);
     if (p.t === 'rails') return railsPart(p);
     if (p.t === 'crossbuck') return crossbuckPart(p);
     if (p.t === 'bus') return busPart(p);
