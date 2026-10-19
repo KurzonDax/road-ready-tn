@@ -119,7 +119,9 @@ def main():
                         f"{html.escape(per_pick.get(key) or st['then']['say'])}</p></li>" for label, key in wrongs)
         parts.append(f"<p class='meta'>After a wrong pick:</p><ul class='wrongs'>{lines}</ul>")
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(f"<!doctype html><meta charset='utf-8'><title>Lesson for Section {section}</title><style>{STYLE}</style><main>{''.join(parts)}</main>\n")
+    # A full document skeleton, one element per line, so a file viewer recognizes the page as HTML and renders it.
+    out.write_text(f"<!DOCTYPE html>\n<html lang='en'>\n<head>\n<meta charset='utf-8'>\n<meta name='viewport' content='width=device-width, initial-scale=1'>\n"
+                   f"<title>Lesson for Section {section}</title>\n<style>{STYLE}</style>\n</head>\n<body>\n<main>\n{chr(10).join(parts)}\n</main>\n</body>\n</html>\n")
     print(f"Wrote {out}")
 
 

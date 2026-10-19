@@ -203,6 +203,7 @@ button.opt { cursor: pointer; }
 .k-target:focus { outline: none; }
 .k-target:focus-visible .k-body, .k-target:hover .k-body { stroke: var(--focus); stroke-width: 3.5; }
 .k-path { stroke: var(--guide); stroke-width: 2.5; stroke-dasharray: 6 5; fill: none; }
+.k-measure { stroke: var(--ink); stroke-width: 1.5; }
 /* Only cars, pedestrians and road signs are tappable; nothing drawn over them catches the tap. */
 .scene :not(.k-target):not(.k-target *) { pointer-events: none; }
 .k-target, .k-target * { pointer-events: auto; }
@@ -1267,6 +1268,45 @@ function busPart(p) {
     `<path d="M-9 -27 L9 -27 L7.5 -21 L-7.5 -21 Z" fill="var(--glass)"/><rect x="-5" y="-6" width="10" height="12" rx="1" fill="#f0c650" stroke="#231f20" stroke-width=".6"/>` +
     `${lamp(-8, -27)}${lamp(8, -27)}${lamp(-8, 27)}${lamp(8, 27)}${arm}</g>`;
 }
+// A tractor-trailer (Section 7): a cab with a windshield pulling a longer trailer, about 26 by 100, centered at
+// x,y and turned toward its heading. Not a target. Its blind spots are `zone` parts the prompt names.
+function truckPart(p) {
+  const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
+  return `<g class="k-truck" transform="translate(${p.x} ${p.y}) rotate(${rot})">` +
+    `<rect class="k-body" x="-13" y="-26" width="26" height="76" rx="2" fill="#8f939a" stroke="#50535a" stroke-width="1"/>` +
+    `<rect x="-12" y="-50" width="24" height="23" rx="4" fill="var(--car-b)"/>` +
+    `<path d="M-9 -47 L9 -47 L7.5 -40 L-7.5 -40 Z" fill="var(--glass)"/></g>`;
+}
+// A bicycle seen from above (Section 7), or with `motor: true` a motorcycle: two wheels in line with the rider
+// on top, turned toward its heading. Not a target. The prompt says it is there and which way it goes.
+function bikePart(p) {
+  const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
+  // Light wheels and a mid-tone body, so a small two-wheeler still shows on the dark road.
+  const body = p.motor
+    ? `<rect x="-2.5" y="-18" width="5" height="11" rx="2" fill="#c9c7c2"/><rect x="-2.5" y="7" width="5" height="11" rx="2" fill="#c9c7c2"/>` +
+      `<rect x="-6" y="-10" width="12" height="22" rx="5" fill="var(--car-b)"/><line x1="-11" y1="-7" x2="11" y2="-7" stroke="#c9c7c2" stroke-width="2.5" stroke-linecap="round"/>`
+    : `<rect x="-2" y="-16" width="4" height="11" rx="1.5" fill="#c9c7c2"/><rect x="-2" y="5" width="4" height="11" rx="1.5" fill="#c9c7c2"/>` +
+      `<line x1="0" y1="-7" x2="0" y2="7" stroke="var(--car-b)" stroke-width="3"/><line x1="-8" y1="-7" x2="8" y2="-7" stroke="#c9c7c2" stroke-width="2.5" stroke-linecap="round"/>`;
+  return `<g class="k-bike${p.motor ? ' k-motorcycle' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})">${body}` +
+    `<ellipse cx="0" cy="2" rx="${p.motor ? 7 : 6}" ry="3.5" fill="var(--ink)"/><circle cx="0" cy="-1.5" r="${p.motor ? 4.5 : 4}" fill="var(--ink)"/></g>`;
+}
+// A shaded zone on the road (Section 7): a translucent red box the prompt names, such as a truck's blind spot, with
+// an optional label in its middle (or at `lx, ly`). Not a target. The prompt says what the zone is.
+function zonePart(p) {
+  const label = p.label ? svgText(p.lx !== undefined ? p.lx : p.x + p.w / 2, p.ly !== undefined ? p.ly : p.y + p.h / 2 + 4, p.label, p.anchor || 'middle') : '';
+  return `<g class="k-zone"><rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="4" fill="var(--bad)" opacity=".24"/>` +
+    `<rect x="${p.x}" y="${p.y}" width="${p.w}" height="${p.h}" rx="4" fill="none" stroke="var(--bad)" stroke-width="1.2" stroke-dasharray="4 3" opacity=".8"/>${label}</g>`;
+}
+// A dimension line (Section 7): a line between two points with a short tick across each end and its length in
+// words beside the middle ("3 feet"), on the side `side` names (n, s, e, w) or above a level line and to the
+// right of an upright one. The number is said in the prompt or the explanation too.
+function measurePart(p) {
+  const [x1, y1] = p.from, [x2, y2] = p.to, level = Math.abs(x2 - x1) >= Math.abs(y2 - y1);
+  const tick = (x, y) => level ? `<line class="k-measure" x1="${x}" y1="${y - 5}" x2="${x}" y2="${y + 5}"/>` : `<line class="k-measure" x1="${x - 5}" y1="${y}" x2="${x + 5}" y2="${y}"/>`;
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, side = p.side || (level ? 'n' : 'e');
+  const at = { n: [mx, my - 7, 'middle'], s: [mx, my + 14, 'middle'], e: [mx + 8, my + 4, 'start'], w: [mx - 8, my + 4, 'end'] }[side];
+  return `<g><line class="k-measure" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>${tick(x1, y1)}${tick(x2, y2)}${svgText(at[0], at[1], p.text, at[2])}</g>`;
+}
 function crosswalkPart(p) {
   const bars = [];
   if (p.w >= p.h) for (let x = p.x + 3; x + 4 <= p.x + p.w; x += 8) bars.push(`<rect x="${x}" y="${p.y + 1}" width="4" height="${p.h - 2}" fill="var(--lane-white)"/>`);
@@ -1304,11 +1344,14 @@ function lanePart(p, o) {
 // `outline: true` draws a stopping position instead of a car: the dashed outline of a car where the Learner's
 // car would stand, for "Where do you stop? Tap the place." (Section 5); a `label` beside it says which place it is.
 // `emergency: true` puts a red and blue light bar on the roof, flashing: an emergency vehicle (the prompt names the siren).
+const CAR_COLORS = { red: '#d1453f', blue: '#3f7fd9', green: '#3f9d62', white: '#e6e3dd' };
 function carPart(p, o) {
   const rot = { n: 0, e: 90, s: 180, w: 270 }[p.heading || 'n'];
   if (p.outline) return wrapTarget(p, `<g class="k-car k-outline" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="none" stroke="var(--guide)" stroke-width="2" stroke-dasharray="5 4"/></g>`, o);
   const bar = p.emergency ? `<rect x="-7" y="-2" width="6" height="4" rx="1" fill="#d9534f" class="k-flash"/><rect x="1" y="-2" width="6" height="4" rx="1" fill="#4f8ef7" class="k-flash"/>` : '';
-  const body = `<g class="k-car${p.you ? ' k-you' : ''}${p.emergency ? ' k-emergency' : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="var(--car-${p.tone === 'b' ? 'b' : 'a'})"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/>${bar}</g>`;
+  // `color` paints the car so the prompt can name it ("You are the red car. You want to pass the blue car.").
+  const fill = CAR_COLORS[p.color] || `var(--car-${p.tone === 'b' ? 'b' : 'a'})`;
+  const body = `<g class="k-car${p.you ? ' k-you' : ''}${p.emergency ? ' k-emergency' : ''}${p.color ? ' k-' + p.color : ''}" transform="translate(${p.x} ${p.y}) rotate(${rot})"><rect class="k-body" x="-10" y="-18" width="20" height="36" rx="4" fill="${fill}"/><path d="M-7 -9 L7 -9 L5.5 -3 L-5.5 -3 Z" fill="var(--glass)"/><path d="M-6 9 L6 9 L7 14 L-7 14 Z" fill="var(--glass)" opacity=".7"/>${bar}</g>`;
   const you = p.you ? svgText(p.x, p.y + (p.heading === 's' || p.heading === 'n' ? 32 : 30), 'You') : '';
   return wrapTarget(p, body + you, o);
 }
@@ -1343,6 +1386,10 @@ function drawScene(parts, o = { targets: [], highlight: null, picked: null }) {
     if (p.t === 'rails') return railsPart(p);
     if (p.t === 'crossbuck') return crossbuckPart(p);
     if (p.t === 'bus') return busPart(p);
+    if (p.t === 'truck') return truckPart(p);
+    if (p.t === 'bike') return bikePart(p);
+    if (p.t === 'zone') return zonePart(p);
+    if (p.t === 'measure') return measurePart(p);
     if (p.t === 'path') return pathPart(p);
     if (p.t === 'label') return svgText(p.x, p.y, p.text, p.anchor || 'middle');
     return '';
