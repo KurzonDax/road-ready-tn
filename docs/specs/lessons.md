@@ -100,7 +100,7 @@ Only cars (a stopping position is a car with `outline: true`), pedestrians, road
 - A finished lesson is a `set` record of type `lesson` with the Section number; every question with a fact is one answer with role `lesson` and format `tap` or `choice`. Each one is a counted answer for its fact (`docs/adr/0003-lesson-answers-count.md`): right, the fact is learned and due 12 hours later; wrong, it is seen and due now. The role stays in the record so the Helper's History can tell a lesson from a quiz.
 - A fact is new only while it has no answer at all, so after a lesson none of its Section's facts is new. A new fact in a Section with no lesson file is met in a quiz instead, with its first look and rule screen.
 - After a wrong counted answer in a quiz on a fact that has a lesson question, the feedback offers "See how this works", which shows that question without recording anything and returns to the quiz.
-- Every lesson stays open from the home screen under "Sections", as "Start Section N again", to take again in full; its answers then count like any other quiz's.
+- Every lesson stays open from the home screen under "Sections", as a row with a check, its title and nothing else, to take again in full; its answers then count like any other quiz's.
 - A lesson stopped partway is not saved; it starts from its first question next time. Lessons are ten to fifteen questions.
 
 ## Validation (`tests/validate_data.py`)

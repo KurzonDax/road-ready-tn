@@ -2396,9 +2396,12 @@ def check_lessons(browser, inst):
     check(h1(pg) == "Practice quiz" and "You stopped partway through a practice quiz." in stage_text(pg) and not pg.query_selector(".later, #lessonBtn")
           and learner_words_ok(pg), "home: the practice quiz stopped partway is the one thing to do", stage_text(pg))
     pg.click("details.lessons summary")
-    check("You have done it." in pg.inner_text("details.lessons li:has(.lesson-open[data-section='3'])")
-          and pg.inner_text(".lesson-open[data-section='3']") == "Start Section 3 again" and pg.inner_text("details.lessons summary") == "Sections",
-          "Sections on the home screen lists the Section as done, with a way to start it again")
+    row = ".lesson-open[data-section='3']"
+    check(pg.get_attribute(row, "class") == "sec lesson-open done" and pg.query_selector(row + " .sec-n svg") is not None
+          and pg.get_attribute(row, "aria-label") == "Section 3: Right of way and intersections. Done."
+          and pg.inner_text(row) == "Right of way and intersections" and pg.inner_text("details.lessons summary") == "Sections"
+          and pg.inner_text(".lesson-open[data-section='4'] .sec-n") == "4",
+          "Sections on the home screen is one row per Section: a check once done, else its number, then its title, nothing more")
     pg.click(".lesson-open[data-section='3']")
     pg.wait_for_selector(".k-target")
     check(pg.evaluate("lesson.i") == 0 and ": 1 of 12" in pg.inner_text(".progress"), "a lesson can be opened again from the start")
