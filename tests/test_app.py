@@ -304,7 +304,7 @@ def fetch(base, path):
 def check_manifest(base):
     m = json.loads(fetch(base, "manifest.webmanifest"))
     want = {"name": "Road Ready TN", "short_name": "Road Ready", "id": "/", "start_url": "/", "scope": "/",
-            "display": "standalone", "background_color": "#181715", "theme_color": "#181715", "lang": "en"}
+            "display": "standalone", "background_color": "#0d1317", "theme_color": "#0d1317", "lang": "en"}
     check({k: m.get(k) for k in want} == want, "the manifest names the app and opens it standalone at /")
     check("orientation" not in m, "the manifest doesn't lock the orientation")
     icons = sorted((i.get("src"), i.get("sizes"), i.get("purpose", "any")) for i in m.get("icons", []))
@@ -502,8 +502,8 @@ def check_offline(browser):
               "with no connection, a whole practice quiz can be answered")
         pg.click("#homeBtn")
         check(h1(pg) == "Practice quiz", "and the home screen offers the next practice quiz")
-        fonts = pg.evaluate("""document.fonts.check('800 18px Overpass')
-                               && document.fonts.check('400 18px "Atkinson Hyperlegible"')""")
+        fonts = pg.evaluate("""document.fonts.check('800 18px "Atkinson Hyperlegible Next"')
+                               && document.fonts.check('400 18px "Atkinson Hyperlegible Next"')""")
         check(fonts, "with no connection, the page still has its fonts")
 
         ctx.set_offline(False)
@@ -1051,6 +1051,11 @@ def no_sideways_scroll(pg, width=375):
     """True when nothing on the page is wider than `width`. (On a phone, innerWidth itself grows
     to fit content that is too wide, so the width is given rather than read.)"""
     return pg.evaluate("w => document.documentElement.scrollWidth <= w && innerWidth === w", width)
+
+
+def end_label(pg):
+    """The lit label at the route's end (SVG text, which has no innerText)."""
+    return pg.eval_on_selector_all(".route-ends .open", "els => els.map(e => e.textContent)")
 
 
 def texts(pg, selector):
@@ -1939,7 +1944,7 @@ def check_study_path(browser, inst, scheme="light"):
     open_page(pg, inst.url)
     sign_in(pg, *learner)
 
-    check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(24, 23, 21)",
+    check(pg.evaluate("getComputedStyle(document.body).backgroundColor") == "rgb(13, 19, 23)",
           f"the page is dark even when the device is set to {scheme}")
     without_lessons(pg)
     check(h1(pg) == "Practice quiz" and pg.inner_text("#startBtn") == "Start the practice quiz" and "Questions learned 0 of 120" in stage_text(pg)
@@ -2136,7 +2141,7 @@ def check_known_facts(browser, inst):
     check(home.startswith("Practice tests To pass the real test, you need 24 or more correct out of 30. You are Ready for the test when you get 27 or more correct on 3 practice tests in a row.")
           and pg.get_attribute("#testBtn", "class") == "btn primary",
           "Practice tests appear, and Start a practice test is the main button", home)
-    check(texts(pg, ".route-count") == ["120 of 120"] and texts(pg, ".route-ends .open") == ["Practice tests"] and not pg.query_selector(".route p"),
+    check(texts(pg, ".route-count") == ["120 of 120"] and end_label(pg) == ["Practice tests"] and not pg.query_selector(".route p"),
           "the road is full, its end is lit, and nothing is written under it", texts(pg, ".route"))
 
     # A Practice test: 30 questions, no rule screens; its wrong answers come back in the next quiz.
@@ -2184,7 +2189,7 @@ def check_known_facts(browser, inst):
           "three Practice tests in a row at 27 or more shows Ready for the test", stage_text(pg))
     reload(pg)
     check(texts(pg, ".sign h1") == ["Ready for the test"], "Ready for the test is still shown after a reload")
-    check(texts(pg, ".route-ends .open") == ["Ready for the test"] and not pg.query_selector(".route p"), "and the road's end says so", texts(pg, ".route"))
+    check(end_label(pg) == ["Ready for the test"] and not pg.query_selector(".route p"), "and the road's end says so", texts(pg, ".route"))
     check(not errors, "no page errors" + (f": {errors}" if errors else ""))
     ctx.close()
 
@@ -3822,8 +3827,8 @@ def main():
         pg.evaluate("document.fonts.ready")
         outside = [u for u in requested if not u.startswith(base)]
         check(requested and not outside, f"the page loads nothing from another origin (got {outside})")
-        for face in ('400 18px "Atkinson Hyperlegible"', '700 18px "Atkinson Hyperlegible"',
-                     '600 18px "Overpass"', '800 18px "Overpass"'):
+        for face in ('400 18px "Atkinson Hyperlegible Next"', '700 18px "Atkinson Hyperlegible Next"',
+                     '800 18px "Atkinson Hyperlegible Next"'):
             loaded = pg.evaluate("async f => (await document.fonts.load(f)).length > 0 && document.fonts.check(f)", face)
             check(loaded, f"text can render in {face}")
         head = pg.evaluate("""() => ({
@@ -3835,7 +3840,7 @@ def main():
         })""")
         check(head["viewport"] == "width=device-width, initial-scale=1, viewport-fit=cover",
               "the viewport covers the whole screen, with zoom left on")
-        check(head["themes"] == [["", "#181715"]], f"theme-color is the dark background (got {head['themes']})")
+        check(head["themes"] == [["", "#0d1317"]], f"theme-color is the dark background (got {head['themes']})")
         check(head["title"] == "Road Ready", "the Home Screen label is Road Ready")
         check(sorted(head["links"]) == [["apple-touch-icon", "apple-touch-icon.png"], ["icon", "icon-192.png"],
                                         ["manifest", "manifest.webmanifest"]],

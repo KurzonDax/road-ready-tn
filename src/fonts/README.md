@@ -1,32 +1,34 @@
 # Fonts
 
-The page's two typefaces, self-hosted so that the page contacts no outside server.
+The page's typeface, Atkinson Hyperlegible Next, self-hosted so that the page contacts no outside server.
+Overpass is kept for `tools/make_icons.py`, which draws the icon's "TN" with it; the page does not use it.
 `build.py` copies this folder, except this README, to `dist/fonts/`.
 
 | File | Family | Weights |
 |---|---|---|
-| `atkinson-hyperlegible/atkinson-hyperlegible-400.woff2` | Atkinson Hyperlegible | 400 |
-| `atkinson-hyperlegible/atkinson-hyperlegible-700.woff2` | Atkinson Hyperlegible | 700 |
+| `atkinson-hyperlegible-next/atkinson-hyperlegible-next-variable.woff2` | Atkinson Hyperlegible Next, variable | 200 to 800 |
 | `overpass/overpass-variable.woff2` | Overpass, variable | 600 to 800 (the file's axis runs 100 to 900) |
 
 Each is the Latin subset only. It covers every character the page and the questions use;
 the only non-ASCII ones are ® – — ’ “ ” •.
 
-Both families are under the SIL Open Font License 1.1. Each folder holds its family's `OFL.txt`.
+All of them are under the SIL Open Font License 1.1. Each folder holds its family's `OFL.txt`.
 `tools/make_icons.py` draws the icon's "TN" with the Overpass file, so no TTF is needed.
 
 ## Where they came from
 
-Downloaded on 2026-10-16 from the Google Fonts CSS API, asking with a current Chrome
-user agent so the API answers with WOFF2 files, and keeping the `/* latin */` block of each:
+Atkinson Hyperlegible Next was downloaded on 2026-10-20 from the Google Fonts CSS API, asking with a current
+Chrome user agent so the API answers with WOFF2 files, and keeping the `/* latin */` block:
 
-- CSS: `https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap`
-  - 400: `https://fonts.gstatic.com/s/atkinsonhyperlegible/v12/9Bt23C1KxNDXMspQ1lPyU89-1h6ONRlW45G04pIo.woff2`
-  - 700: `https://fonts.gstatic.com/s/atkinsonhyperlegible/v12/9Bt73C1KxNDXMspQ1lPyU89-1h6ONRlW45G8Wbc9dCWP.woff2`
+- CSS: `https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@200..800&display=swap`
+  - variable: `https://fonts.gstatic.com/s/atkinsonhyperlegiblenext/v7/NaPNcYPdHfdVxJw0IfIP0lvYFqijb-UxCtm5_wdGseiJn3o.woff2`
+- License: `https://raw.githubusercontent.com/google/fonts/main/ofl/atkinsonhyperlegiblenext/OFL.txt`
+
+Overpass was downloaded on 2026-10-16 the same way:
+
 - CSS: `https://fonts.googleapis.com/css2?family=Overpass:wght@600..800&display=swap`
   - variable: `https://fonts.gstatic.com/s/overpass/v19/qFdH35WCmI96Ajtm81GlU9s.woff2`
 - Licenses:
-  - `https://raw.githubusercontent.com/google/fonts/main/ofl/atkinsonhyperlegible/OFL.txt`
   - `https://raw.githubusercontent.com/google/fonts/main/ofl/overpass/OFL.txt`
 
 The Latin block's `unicode-range` is

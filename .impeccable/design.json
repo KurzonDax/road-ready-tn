@@ -1,0 +1,764 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-20T00:00:00Z",
+  "title": "Design System: Road Ready TN",
+  "extensions": {
+    "colorMeta": {
+      "night-map": {
+        "role": "neutral",
+        "displayName": "Night Map",
+        "canonical": "#0d1317",
+        "tonalRamp": [
+          "#0f161a",
+          "#21303b",
+          "#375162",
+          "#4d7189",
+          "#6c93ac",
+          "#97b2c4",
+          "#c1d1dc",
+          "#e8eef2"
+        ]
+      },
+      "map-grid": {
+        "role": "neutral",
+        "displayName": "Map Grid",
+        "canonical": "#151e25",
+        "tonalRamp": [
+          "#0f151a",
+          "#212f3b",
+          "#374f62",
+          "#4e6f89",
+          "#6d90ac",
+          "#97b0c4",
+          "#c1d0dc",
+          "#e8eef2"
+        ]
+      },
+      "map-road": {
+        "role": "neutral",
+        "displayName": "Map Road",
+        "canonical": "#19242c",
+        "tonalRamp": [
+          "#0f151a",
+          "#21303b",
+          "#375062",
+          "#4e7089",
+          "#6d91ac",
+          "#97b1c4",
+          "#c1d1dc",
+          "#e8eef2"
+        ]
+      },
+      "map-water": {
+        "role": "neutral",
+        "displayName": "Map Water",
+        "canonical": "#0c1924",
+        "tonalRamp": [
+          "#0a151f",
+          "#173045",
+          "#265073",
+          "#3670a1",
+          "#5391c6",
+          "#85b1d6",
+          "#b6d1e7",
+          "#e4eef6"
+        ]
+      },
+      "sheet": {
+        "role": "neutral",
+        "displayName": "Sheet",
+        "canonical": "#172027",
+        "tonalRamp": [
+          "#0f151a",
+          "#222f3a",
+          "#394f60",
+          "#4f6f87",
+          "#6f90aa",
+          "#98b0c2",
+          "#c2d0db",
+          "#e9eef2"
+        ]
+      },
+      "sheet-raised": {
+        "role": "neutral",
+        "displayName": "Sheet Raised",
+        "canonical": "#1f2a33",
+        "tonalRamp": [
+          "#0f1519",
+          "#232f39",
+          "#3a4e5f",
+          "#516e85",
+          "#708fa8",
+          "#99afc1",
+          "#c3d0da",
+          "#e9eef2"
+        ]
+      },
+      "sheet-edge": {
+        "role": "neutral",
+        "displayName": "Sheet Edge",
+        "canonical": "#26323c",
+        "tonalRamp": [
+          "#101519",
+          "#242f38",
+          "#3b4e5e",
+          "#536d83",
+          "#728fa6",
+          "#9bafc0",
+          "#c4d0d9",
+          "#e9eef1"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#2a3640",
+        "tonalRamp": [
+          "#101519",
+          "#242f37",
+          "#3d4e5c",
+          "#556d81",
+          "#748ea4",
+          "#9cafbe",
+          "#c4cfd9",
+          "#e9edf1"
+        ]
+      },
+      "control-line": {
+        "role": "neutral",
+        "displayName": "Control Line",
+        "canonical": "#3a4753",
+        "tonalRamp": [
+          "#111518",
+          "#262e36",
+          "#3f4d5a",
+          "#586c7e",
+          "#788da1",
+          "#9faebc",
+          "#c6cfd7",
+          "#eaedf0"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#eef2f5",
+        "tonalRamp": [
+          "#0f151a",
+          "#22303a",
+          "#394f60",
+          "#4f6f87",
+          "#6e90aa",
+          "#98b0c3",
+          "#c2d0db",
+          "#e9eef2"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#9babb8",
+        "tonalRamp": [
+          "#111518",
+          "#262f36",
+          "#404e59",
+          "#596d7d",
+          "#798ea0",
+          "#a0afbb",
+          "#c6cfd7",
+          "#eaedf0"
+        ]
+      },
+      "banner-blue": {
+        "role": "primary",
+        "displayName": "Banner Blue",
+        "canonical": "#1a58c2",
+        "tonalRamp": [
+          "#051024",
+          "#0b2551",
+          "#123d87",
+          "#1956bd",
+          "#3575e4",
+          "#6f9dec",
+          "#aac5f4",
+          "#e0eafb"
+        ]
+      },
+      "banner-blue-top": {
+        "role": "primary",
+        "displayName": "Banner Blue Top",
+        "canonical": "#2467d8",
+        "tonalRamp": [
+          "#061123",
+          "#0d264f",
+          "#163f83",
+          "#1f58b8",
+          "#3a77de",
+          "#739fe8",
+          "#acc6f1",
+          "#e0eafa"
+        ]
+      },
+      "banner-ink": {
+        "role": "primary",
+        "displayName": "Banner Ink",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#141414",
+          "#2e2e2e",
+          "#4c4c4c",
+          "#6b6b6b",
+          "#8c8c8c",
+          "#adadad",
+          "#cfcfcf",
+          "#ededed"
+        ]
+      },
+      "banner-button-ink": {
+        "role": "primary",
+        "displayName": "Banner Button Ink",
+        "canonical": "#0e3a85",
+        "tonalRamp": [
+          "#041025",
+          "#092453",
+          "#0f3c8a",
+          "#1455c2",
+          "#2f74e9",
+          "#6b9cef",
+          "#a7c4f6",
+          "#dfe9fc"
+        ]
+      },
+      "route-blue": {
+        "role": "primary",
+        "displayName": "Route Blue",
+        "canonical": "#4c98ff",
+        "tonalRamp": [
+          "#001129",
+          "#00275c",
+          "#004199",
+          "#005bd6",
+          "#1a7bff",
+          "#5ca1ff",
+          "#9ec7ff",
+          "#dbeaff"
+        ]
+      },
+      "route-casing": {
+        "role": "primary",
+        "displayName": "Route Casing",
+        "canonical": "#0f2f63",
+        "tonalRamp": [
+          "#051123",
+          "#0c2650",
+          "#143f85",
+          "#1c58ba",
+          "#3878e1",
+          "#719fea",
+          "#abc6f2",
+          "#e0eafa"
+        ]
+      },
+      "route-gain": {
+        "role": "primary",
+        "displayName": "Route Gain",
+        "canonical": "#a9cdff",
+        "tonalRamp": [
+          "#001129",
+          "#00265c",
+          "#004099",
+          "#005ad6",
+          "#1a7aff",
+          "#5ca0ff",
+          "#9ec7ff",
+          "#dbeaff"
+        ]
+      },
+      "route-ink": {
+        "role": "primary",
+        "displayName": "Route Ink",
+        "canonical": "#071a36",
+        "tonalRamp": [
+          "#051124",
+          "#0b2751",
+          "#124187",
+          "#195bbe",
+          "#347be5",
+          "#6fa1ec",
+          "#a9c7f4",
+          "#dfebfb"
+        ]
+      },
+      "route-soft": {
+        "role": "primary",
+        "displayName": "Route Soft",
+        "canonical": "#16263d",
+        "tonalRamp": [
+          "#0b131e",
+          "#182a43",
+          "#294670",
+          "#39629d",
+          "#5683c2",
+          "#87a7d4",
+          "#b8cae5",
+          "#e5ecf6"
+        ]
+      },
+      "correct-green": {
+        "role": "secondary",
+        "displayName": "Correct Green",
+        "canonical": "#5fd08a",
+        "tonalRamp": [
+          "#092012",
+          "#154728",
+          "#237643",
+          "#31a65d",
+          "#4ecb7d",
+          "#81daa3",
+          "#b4e9c8",
+          "#e3f7eb"
+        ]
+      },
+      "correct-ink": {
+        "role": "secondary",
+        "displayName": "Correct Ink",
+        "canonical": "#0c1f13",
+        "tonalRamp": [
+          "#0b1d12",
+          "#1a4229",
+          "#2b6e44",
+          "#3c9a5f",
+          "#5abf7f",
+          "#89d1a4",
+          "#b9e4c9",
+          "#e5f5eb"
+        ]
+      },
+      "correct-soft": {
+        "role": "secondary",
+        "displayName": "Correct Soft",
+        "canonical": "#16291f",
+        "tonalRamp": [
+          "#0e1b14",
+          "#203c2d",
+          "#35644b",
+          "#4b8b69",
+          "#6aaf8a",
+          "#95c6ac",
+          "#c0ddce",
+          "#e8f3ed"
+        ]
+      },
+      "incorrect-coral": {
+        "role": "secondary",
+        "displayName": "Incorrect Coral",
+        "canonical": "#f27c6b",
+        "tonalRamp": [
+          "#260803",
+          "#541107",
+          "#8d1d0c",
+          "#c52811",
+          "#ec442c",
+          "#f27a69",
+          "#f7b0a6",
+          "#fce2de"
+        ]
+      },
+      "incorrect-ink": {
+        "role": "secondary",
+        "displayName": "Incorrect Ink",
+        "canonical": "#2a0f0b",
+        "tonalRamp": [
+          "#200c08",
+          "#491a13",
+          "#792b20",
+          "#aa3d2c",
+          "#cf5a49",
+          "#dd8a7e",
+          "#ebbab2",
+          "#f8e5e3"
+        ]
+      },
+      "incorrect-soft": {
+        "role": "secondary",
+        "displayName": "Incorrect Soft",
+        "canonical": "#33201e",
+        "tonalRamp": [
+          "#1a100f",
+          "#3a2422",
+          "#603c39",
+          "#87554f",
+          "#aa746e",
+          "#c39c98",
+          "#dbc4c2",
+          "#f2e9e9"
+        ]
+      },
+      "focus-amber": {
+        "role": "tertiary",
+        "displayName": "Focus Amber",
+        "canonical": "#ffd479",
+        "tonalRamp": [
+          "#291c00",
+          "#5c3e00",
+          "#996800",
+          "#d69100",
+          "#ffb51a",
+          "#ffcb5c",
+          "#ffe09e",
+          "#fff4db"
+        ]
+      },
+      "scene-ground": {
+        "role": "neutral",
+        "displayName": "Scene Ground",
+        "canonical": "#111920",
+        "tonalRamp": [
+          "#0e151b",
+          "#202f3c",
+          "#354e64",
+          "#4a6d8c",
+          "#698faf",
+          "#94afc6",
+          "#c0d0dd",
+          "#e8eef3"
+        ]
+      },
+      "road": {
+        "role": "neutral",
+        "displayName": "Road",
+        "canonical": "#28333c",
+        "tonalRamp": [
+          "#101518",
+          "#252f37",
+          "#3d4e5c",
+          "#566d81",
+          "#758fa3",
+          "#9dafbe",
+          "#c5d0d8",
+          "#eaeef1"
+        ]
+      },
+      "road-edge": {
+        "role": "neutral",
+        "displayName": "Road Edge",
+        "canonical": "#a3b0bb",
+        "tonalRamp": [
+          "#111517",
+          "#272e35",
+          "#414d58",
+          "#5b6c7b",
+          "#7b8e9d",
+          "#a1aeba",
+          "#c7cfd6",
+          "#eaedf0"
+        ]
+      },
+      "lane-yellow": {
+        "role": "neutral",
+        "displayName": "Lane Yellow",
+        "canonical": "#e7b442",
+        "tonalRamp": [
+          "#241a05",
+          "#513b0a",
+          "#886311",
+          "#be8b18",
+          "#e5ae33",
+          "#edc66e",
+          "#f4dda9",
+          "#fbf2df"
+        ]
+      },
+      "lane-white": {
+        "role": "neutral",
+        "displayName": "Lane White",
+        "canonical": "#e6e9ec",
+        "tonalRamp": [
+          "#121417",
+          "#282e34",
+          "#424c57",
+          "#5c6b7a",
+          "#7d8c9c",
+          "#a2adb9",
+          "#c8cfd5",
+          "#ebedf0"
+        ]
+      },
+      "car-light": {
+        "role": "neutral",
+        "displayName": "Car Light",
+        "canonical": "#a3aeb8",
+        "tonalRamp": [
+          "#121517",
+          "#282e34",
+          "#434d56",
+          "#5d6c79",
+          "#7d8d9b",
+          "#a3aeb8",
+          "#c8cfd5",
+          "#ebedef"
+        ]
+      },
+      "car-dark": {
+        "role": "neutral",
+        "displayName": "Car Dark",
+        "canonical": "#687480",
+        "tonalRamp": [
+          "#121417",
+          "#292e33",
+          "#454c54",
+          "#606b76",
+          "#808c98",
+          "#a5adb6",
+          "#cacfd4",
+          "#ebedef"
+        ]
+      },
+      "glass": {
+        "role": "neutral",
+        "displayName": "Glass",
+        "canonical": "#22303b",
+        "tonalRamp": [
+          "#0f151a",
+          "#222f3a",
+          "#384f61",
+          "#4e6f88",
+          "#6d90ab",
+          "#97b0c3",
+          "#c2d0dc",
+          "#e8eef2"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display-banner": {
+        "displayName": "Display Banner",
+        "purpose": "Heading inside the maneuver banner."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page headings outside the banner."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Sub-headings and scores; 22px on the next card and Helper parts."
+      },
+      "result": {
+        "displayName": "Result",
+        "purpose": "The result line that leads an answered screen."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "The question; steps back to 18px muted once answered."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Explanations, options and running text."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Every full-width button."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "App name, option keys, tags, map labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "banner-lift",
+        "value": "0 18px 40px -16px rgb(0 0 0 / .85), inset 0 1px 0 rgb(255 255 255 / .16)",
+        "purpose": "The maneuver banner."
+      },
+      {
+        "name": "card-tuck",
+        "value": "inset 0 0 0 1px #26323c, 0 14px 30px -18px rgb(0 0 0 / .9)",
+        "purpose": "The next card tucked under the banner."
+      },
+      {
+        "name": "sheet-rise",
+        "value": "0 -16px 36px -12px rgb(0 0 0 / .7), inset 0 1px 0 #26323c",
+        "purpose": "The sheet top edge riding over the map."
+      },
+      {
+        "name": "primary-press",
+        "value": "0 12px 24px -12px rgb(0 0 0 / .8), inset 0 1px 0 rgb(255 255 255 / .18)",
+        "purpose": "The primary button."
+      },
+      {
+        "name": "hairline",
+        "value": "inset 0 0 0 1px #26323c",
+        "purpose": "Every resting sheet, panel and scene."
+      },
+      {
+        "name": "focus-ring",
+        "value": "outline: 3px solid #ffd479; outline-offset: 3px",
+        "purpose": "Keyboard focus everywhere."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-settle",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Tiles landing, rings settling, the route drawing in, disclosure chevrons."
+      },
+      {
+        "name": "control-transition",
+        "value": "160ms ease-out",
+        "purpose": "Button brightness and press, option hover ring."
+      },
+      {
+        "name": "settle",
+        "value": "420ms",
+        "purpose": "Quiz tiles (staggered 70ms) and drawing result rings and badges."
+      },
+      {
+        "name": "route-gain",
+        "value": "1100ms, 250ms delay",
+        "purpose": "The stretch a finished quiz added draws in on the map."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: no-preference",
+        "purpose": "Every animation, including smooth scroll, is gated on it."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "phone",
+        "value": "max-width: 699px"
+      },
+      {
+        "name": "column",
+        "value": "640px max width"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one thing to do when no banner is on screen.",
+      "html": "<button class=\"ds-btn-primary\">Next question</button>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-btn-primary{font:inherit;font-weight:800;font-size:19px;letter-spacing:-.005em;padding:16px 18px;min-height:58px;border-radius:16px;cursor:pointer;border:0;width:100%;transition:filter 160ms ease-out,transform 160ms ease-out;background:var(--banner);color:var(--banner-ink);box-shadow:0 12px 24px -12px rgb(0 0 0 / .8),inset 0 1px 0 rgb(255 255 255 / .18)} .ds-btn-primary:hover{filter:brightness(1.08)} .ds-btn-primary:active{transform:translateY(1px)} .ds-btn-primary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    },
+    {
+      "name": "Quiet Button",
+      "kind": "button",
+      "refersTo": "button-quiet",
+      "description": "Secondary actions on a sheet.",
+      "html": "<button class=\"ds-btn-quiet\">Start Section 2</button>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-btn-quiet{font:inherit;font-weight:800;font-size:19px;letter-spacing:-.005em;padding:16px 18px;min-height:58px;border-radius:16px;cursor:pointer;border:0;width:100%;transition:filter 160ms ease-out,transform 160ms ease-out;background:var(--surface-2);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--control-line)} .ds-btn-quiet:hover{filter:brightness(1.08)} .ds-btn-quiet:active{transform:translateY(1px)} .ds-btn-quiet:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    },
+    {
+      "name": "Maneuver Banner",
+      "kind": "custom",
+      "refersTo": "maneuver-banner",
+      "description": "The home screen's one thing to do, with a white button.",
+      "html": "<div class=\"ds-mv\"><h1>Practice quiz</h1><button class=\"ds-mv-btn\">Start the practice quiz</button></div>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-mv{border-radius:26px;padding:22px 20px 20px;display:flex;flex-direction:column;gap:14px;background:linear-gradient(180deg,var(--banner-2),var(--banner));color:var(--banner-ink);box-shadow:0 18px 40px -16px rgb(0 0 0 / .85),inset 0 1px 0 rgb(255 255 255 / .16)} .ds-mv h1{margin:0;font-weight:800;font-size:clamp(38px,10.4vw,46px);line-height:1.08;letter-spacing:-.03em} .ds-mv-btn{font:inherit;font-weight:800;font-size:19px;letter-spacing:-.005em;padding:16px 18px;min-height:58px;border-radius:16px;cursor:pointer;border:0;width:100%;transition:filter 160ms ease-out,transform 160ms ease-out;background:var(--banner-ink);color:var(--banner-btn-ink);box-shadow:0 10px 24px -12px rgb(0 0 0 / .7)} .ds-mv-btn:hover{filter:brightness(1.08)} .ds-mv-btn:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    },
+    {
+      "name": "Answer Option",
+      "kind": "custom",
+      "refersTo": "answer-option",
+      "description": "One multiple-choice answer, with its letter key; correct, wrong and rest states.",
+      "html": "<div class=\"ds-opts\"><button class=\"ds-opt\"><span class=\"ds-key\">A</span><span>A warning sign</span></button><div class=\"ds-opt ds-right\"><span class=\"ds-key\">C</span><span>A motorist services sign<br><b class=\"ds-tag\">The answer</b></span></div><div class=\"ds-opt ds-wrong\"><span class=\"ds-key\">A</span><span>A warning sign<br><b class=\"ds-tag\">Your answer</b></span></div></div>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-opts{display:flex;flex-direction:column;gap:8px} .ds-opt{font:inherit;font-size:18px;line-height:1.35;text-align:left;width:100%;display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:16px;border:0;box-shadow:inset 0 0 0 1.5px var(--control-line);background:var(--surface);color:var(--ink);cursor:pointer;transition:box-shadow 160ms ease-out,background-color 160ms ease-out} button.ds-opt:hover{box-shadow:inset 0 0 0 2px var(--guide);background:var(--surface-2)} .ds-opt:focus-visible{outline:3px solid var(--focus);outline-offset:3px} .ds-key{flex:none;width:28px;height:28px;border-radius:8px;box-shadow:inset 0 0 0 1.5px var(--control-line);display:grid;place-items:center;font-weight:800;font-size:15px;color:var(--muted)} .ds-tag{font-size:15px;font-weight:800} .ds-right{box-shadow:inset 0 0 0 2px var(--good);background:var(--good-soft);font-weight:700} .ds-right .ds-key{background:var(--good);box-shadow:none;color:var(--good-ink)} .ds-right .ds-tag{color:var(--good)} .ds-wrong{box-shadow:inset 0 0 0 2px var(--bad)} .ds-wrong .ds-key{box-shadow:inset 0 0 0 2px var(--bad);color:var(--bad)} .ds-wrong .ds-tag{color:var(--bad)}"
+    },
+    {
+      "name": "Progress Panel",
+      "kind": "custom",
+      "refersTo": "progress-panel",
+      "description": "Where the Learner is: count and one segment per question; current is a broken line.",
+      "html": "<div class=\"ds-prog\"><span><b>Practice quiz:</b> question 2 of 7</span><div class=\"ds-segs\"><i class=\"d\"></i><i class=\"c\"></i><i></i><i></i><i></i><i></i><i></i></div></div>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-prog{display:flex;flex-direction:column;gap:11px;padding:14px 18px 16px;border-radius:22px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--edge);font-variant-numeric:tabular-nums;color:var(--muted);font-size:16px;font-weight:700} .ds-prog b{color:var(--ink);font-weight:800} .ds-segs{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px} .ds-segs i{height:6px;border-radius:3px;background:var(--line)} .ds-segs i.d{background:var(--guide)} .ds-segs i.c{background:linear-gradient(90deg,var(--guide) 0 3px,transparent 3px) 0 0 / 7px 100% repeat-x}"
+    },
+    {
+      "name": "Result Line",
+      "kind": "custom",
+      "refersTo": "",
+      "description": "Leads an answered screen: mark and result, green when correct; incorrect keeps ink words and a coral mark.",
+      "html": "<div class=\"ds-out ds-good\"><span class=\"ds-dot\"><svg viewBox=\"0 0 24 24\" width=\"19\" height=\"19\"><path d=\"M5 12.5l4.5 4.5L19 7.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg></span>Correct.</div><div class=\"ds-out ds-not\"><span class=\"ds-dot\"><svg viewBox=\"0 0 24 24\" width=\"19\" height=\"19\"><path d=\"M7 7l10 10M17 7L7 17\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\"/></svg></span>The answer is: A motorist services sign.</div>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-out{font-size:clamp(22px,5.4vw,28px);font-weight:800;letter-spacing:-.02em;line-height:1.2;margin:0 0 12px;display:flex;align-items:flex-start;gap:12px} .ds-good{color:var(--good)} .ds-not{color:var(--ink)} .ds-dot{flex:none;width:32px;height:32px;margin-top:1px;border-radius:50%;display:grid;place-items:center} .ds-good .ds-dot{background:var(--good);color:var(--good-ink)} .ds-not .ds-dot{background:var(--bad);color:var(--bad-ink)}"
+    },
+    {
+      "name": "Input Field",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Sign-in field, label above.",
+      "html": "<label class=\"ds-field\">Name<input class=\"ds-input\" value=\"jonah\"></label>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-field{display:flex;flex-direction:column;gap:6px;font-weight:700} .ds-input{font:inherit;font-weight:400;font-size:19px;padding:12px 14px;min-height:54px;border-radius:14px;border:0;box-shadow:inset 0 0 0 1.5px var(--control-line);background:var(--surface);color:var(--ink);caret-color:var(--guide);width:100%} .ds-input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}"
+    },
+    {
+      "name": "Quiet Link",
+      "kind": "button",
+      "refersTo": "link-quiet",
+      "description": "Low-weight actions such as Sign out and Stop for now.",
+      "html": "<button class=\"ds-link\">Stop for now and save my place</button>",
+      "css": ":host{--bg:#0d1317;--surface:#172027;--surface-2:#1f2a33;--edge:#26323c;--ink:#eef2f5;--muted:#9babb8;--line:#2a3640;--control-line:#3a4753;--banner:#1a58c2;--banner-2:#2467d8;--banner-ink:#fff;--banner-btn-ink:#0e3a85;--guide:#4c98ff;--good:#5fd08a;--good-ink:#0c1f13;--good-soft:#16291f;--bad:#f27c6b;--bad-ink:#2a0f0b;--focus:#ffd479;font-family:\"Atkinson Hyperlegible Next\",Verdana,system-ui,sans-serif;color:var(--ink)} .ds-link{font:inherit;font-size:16px;background:none;border:0;color:var(--muted);text-decoration:underline;text-decoration-color:var(--control-line);text-underline-offset:4px;cursor:pointer;padding:10px 8px;min-height:44px} .ds-link:hover{color:var(--ink)} .ds-link:focus-visible{outline:3px solid var(--focus);outline-offset:3px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Night Route",
+    "overview": "**Creative North Star: \"Night Route\"**\n\nThe app is turn-by-turn navigation driven at night. One maneuver banner in deep route blue says the one thing to do, a dark street map shows how far the Learner has come, and slate sheets hold everything else. The ground is a blue-black night map; panels are slate sheets marked by hairline inner edges rather than borders or heavy shadows. Route blue belongs to the Learner: his place on the map, his car's outline in a drawing, his path drawn as a cased route line, the segment of the quiz he is on.\n\nDensity is low and the hierarchy is single-file: one column, at most 640px wide, with each screen holding one heavy element (the banner, the question, the result) and everything else stepped down in weight and color. State is carried by form as well as hue so it reads without color: learned road is a solid line, road still ahead is a broken line, the current question is a broken segment, a correct pick wears a filled key and a check, a wrong pick a ring and a cross.\n\nThe world is dark on every device, with no light theme. It is calm by construction: no timers, no celebration effects, motion only to settle new things into place, and all of it gated on reduced-motion preference.",
+    "keyCharacteristics": [
+      "Blue-black night map ground with a faint street grid, water and two arterials, all within a few steps of the ground.",
+      "One maneuver banner per home screen: a deep blue gradient slab with a white full-width button.",
+      "Slate sheets with 1px inner hairlines; depth comes from tone, not borders.",
+      "Route blue marks the Learner and only the Learner; green and coral mark only results.",
+      "One family, Atkinson Hyperlegible Next, from 400 body to 800 headings and buttons.",
+      "Large, soft corners (16 to 28px) on every container and control."
+    ],
+    "rules": [
+      {
+        "name": "The Results-Only Rule",
+        "body": "In the interface, green appears only for a correct answer and coral only for an incorrect one. Drawings are the exception: real signs, signals, lane lines and painted cars keep their real-world colors (a stop sign is red and white), because the world itself is a road.",
+        "section": "colors"
+      },
+      {
+        "name": "The Route Belongs To You Rule",
+        "body": "Route blue marks the Learner's own place, car, path and progress. It never marks someone else's car, a decoration, or a result.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Banner Rule",
+        "body": "Banner blue fills one slab per screen: the maneuver banner on home, or the primary button where there is no banner. A second blue slab competes with the one thing to do.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Family Rule",
+        "body": "Every word is Atkinson Hyperlegible Next. Hierarchy is weight and size, never a second face.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Count Rule",
+        "body": "Every count (questions learned, question N of M, scores) uses tabular numerals so progress never jitters.",
+        "section": "typography"
+      },
+      {
+        "name": "The Hairline Not Border Rule",
+        "body": "Containers are edged with a 1px inset hairline, controls with a 1.5px inset control line, and state with a 2px inset ring. Outer borders are not used.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put the one thing to do in a single maneuver banner or a single primary button, and step everything else down.",
+      "Do carry state by form as well as color: solid for learned, broken for ahead and current, filled key and check for correct, ring and cross for incorrect.",
+      "Do mark the Learner's own place, car and path in route blue, and nothing else in it.",
+      "Do edge containers with 1px inset hairlines and controls with 1.5px inset strokes on slate sheets.",
+      "Do keep every count in tabular numerals and every target at least 44px.",
+      "Do gate every animation on reduced-motion preference and ease with cubic-bezier(.16, 1, .3, 1).",
+      "Do keep real-world colors in drawings: signs, signals, lane lines and painted cars."
+    ],
+    "donts": [
+      "Don't use green or coral in the interface for anything but a correct or incorrect answer.",
+      "Don't add a light theme or follow the device's light setting.",
+      "Don't add a second typeface.",
+      "Don't stack equal-weight blocks like a form page, or dress questions as a gamified quiz card.",
+      "Don't use outer borders or hard, unblurred shadows; depth is tone and soft deep-offset shadow.",
+      "Don't put a second banner-blue slab on a screen that already has one."
+    ]
+  }
+}
