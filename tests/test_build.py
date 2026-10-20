@@ -41,8 +41,8 @@ def test_build_writes_page_questions_and_csp(tmp):
     check(r.returncode == 0, "build succeeds" + (f": {r.stderr}" if r.returncode else ""))
     names = sorted(str(p.relative_to(out)) for p in out.rglob("*") if p.is_file()) if out.exists() else []
     want = ["apple-touch-icon.png", "csp.json",
-            "fonts/atkinson-hyperlegible/OFL.txt", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2",
-            "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2",
+            "fonts/atkinson-hyperlegible-next/OFL.txt",
+            "fonts/atkinson-hyperlegible-next/atkinson-hyperlegible-next-variable.woff2",
             "fonts/overpass/OFL.txt", "fonts/overpass/overpass-variable.woff2",
             "icon-192.png", "icon-512.png", "index.html", "manifest.webmanifest", "questions.json", "sw.js"]
     check(names == want, "build writes the page, questions, CSP hash, manifest, icons, fonts with their licenses,"
@@ -124,8 +124,8 @@ def test_sw_carries_a_build_version(tmp):
     check(sw_version(again) == v1, "building the same sources again gives the same version")
     static = re.search(r"const STATIC_FILES = (\[.*?\]);", (first / "sw.js").read_text(), re.S)
     listed = sorted(json.loads(static.group(1))) if static else None
-    want = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible/atkinson-hyperlegible-400.woff2",
-            "fonts/atkinson-hyperlegible/atkinson-hyperlegible-700.woff2", "fonts/overpass/overpass-variable.woff2",
+    want = ["apple-touch-icon.png", "fonts/atkinson-hyperlegible-next/atkinson-hyperlegible-next-variable.woff2",
+            "fonts/overpass/overpass-variable.woff2",
             "icon-192.png", "icon-512.png", "manifest.webmanifest"]
     check(listed == want, "sw.js lists the fonts, icons and manifest to keep" + ("" if listed == want else f" (got {listed})"))
 
