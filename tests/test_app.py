@@ -2544,6 +2544,9 @@ def check_sign_lesson(browser, inst):
     lesson = [r for r in records if r["kind"] == "set" and r["data"]["type"] == "lesson"]
     check(len(lesson) == 1 and lesson[0]["data"]["section"] == 1 and {a["q"] for a in lesson[0]["data"]["answers"]} == facts,
           "the finished lesson is one record of type lesson with every Section 1 fact answered")
+    spots = pg.evaluate("""Array.from({length: 40}, () => { startLesson(1); const k = lesson.lesson.steps.findIndex(s => s.options);
+      return lesson.order[k].indexOf(lesson.lesson.steps[k].answer); })""")
+    check(len(set(spots)) > 1 and -1 not in spots, "a choice question's options come in a fresh order each time, so the answer moves", spots)
     ctx.close()
     check_signal_lesson(browser, inst)
 
