@@ -1720,7 +1720,9 @@ function lessonsPanel() {
 function wireLessons() { document.querySelectorAll('.lesson-open').forEach(b => b.onclick = () => { startLesson(Number(b.dataset.section)); toTop(); }); }
 
 function startLesson(section) {
-  lesson = { lesson: LESSONS[section], i: 0, acts: {}, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), peek: false };
+  // Each choice question's options in a fresh order, so the answer is not always in the same place.
+  const order = LESSONS[section].steps.map(st => st.options ? shuffle(st.options) : null);
+  lesson = { lesson: LESSONS[section], i: 0, acts: {}, order, set_id: crypto.randomUUID(), started_at: new Date().toISOString(), peek: false };
   run = null;
   renderStep();
 }
@@ -1745,7 +1747,7 @@ function renderStep() {
   const pickedId = act && st.kind === 'tap' && !act.right ? st.targets.find(t => t.label === act.chosen).id : null;
   const scene = parts ? `<div class="visual">${drawScene(parts, { targets: !act && st.kind === 'tap' ? st.targets : [], highlight: act ? (st.kind === 'tap' ? st.answer : st.then.highlight || null) : null, picked: pickedId })}</div>` : '';
   const Lk = ['A', 'B', 'C', 'D'];
-  const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${st.options.map((o, k) => act
+  const options = st.kind !== 'tap' ? `<ul class="options" aria-labelledby="stepText">${stepOptions(L).map((o, k) => act
     ? `<li class="opt ${o === st.answer ? 'right' : o === act.chosen ? 'wrong' : 'rest'}"><span class="key" aria-hidden="true">${Lk[k]}</span><span class="otext"><span>${esc(o)}</span>${o === act.chosen && !L.peek ? '<span class="tag">You picked this</span>' : o === st.answer ? '<span class="tag">The answer</span>' : ''}</span></li>`
     : `<li><button type="button" class="opt" data-k="${k}" aria-keyshortcuts="${Lk[k]}"><span class="key">${Lk[k]}</span><span class="otext">${esc(o)}</span></button></li>`).join('')}</ul>` : '';
   // The result is the first line on the card: "Correct." (never "Right", a direction in this app), or "Incorrect."
@@ -1776,7 +1778,8 @@ function renderStep() {
   if ($('stepNextBtn')) $('stepNextBtn').onclick = L.peek ? () => { lesson = null; toTop(); renderQuestion(); } : nextStep;
   if ($('quitBtn')) $('quitBtn').onclick = () => { lesson = null; renderHome(); toTop(); };
 }
-function lessonChoose(k) { const st = lesson.lesson.steps[lesson.i]; if (st.kind !== 'tap') lessonAct(st.options[k]); }
+const stepOptions = L => (L.order && L.order[L.i]) || L.lesson.steps[L.i].options;
+function lessonChoose(k) { const st = lesson.lesson.steps[lesson.i]; if (st.kind !== 'tap') lessonAct(stepOptions(lesson)[k]); }
 function lessonAct(value) {
   const L = lesson, st = L.lesson.steps[L.i];
   if (L.acts[L.i] || L.peek) return;
