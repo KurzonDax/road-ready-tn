@@ -1153,7 +1153,7 @@ function setDone(r, before, missed, missedList) {
     </section>`, 'h2');
   wireDone();
 }
-// The buttons after a practice quiz or a lesson: the next practice quiz first while one is due, else
+// The buttons after a practice quiz: the next practice quiz first while one is due, else
 // I'm done for now, with a Practice test beside it when they are open. Nothing is explained.
 function nextButtons() {
   return quizDue(setPlan(S, Date.now()))
@@ -1792,20 +1792,14 @@ function lessonRecord(L) {
     data: { set_id: L.set_id, type: 'lesson', section: L.lesson.section, started_at: L.started_at, answers } };
 }
 function finishLesson() {
-  const L = lesson, rec = lessonRecord(L);
+  const rec = lessonRecord(lesson);
   copy.pending.push(rec);
   saveCopy();
   workOut();
   sendPending();
-  lesson = null;
-  paint(`
-    <section class="home">
-      <h2 tabindex="-1">You finished Section ${L.lesson.section}.</h2>
-      <p class="theme">${esc(L.lesson.title)}</p>
-      ${nextButtons()}
-    </section>`, 'h2');
+  // No done screen: the last "Finish Section N" goes straight home, which offers whatever comes next.
+  renderHome();
   toTop();
-  wireDone();
 }
 
 // Accounts. `me` is the signed-in account ({id, role, name}) or null. Every call to the
