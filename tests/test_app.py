@@ -2514,8 +2514,8 @@ def check_sign_lesson(browser, inst):
     taps = [s for s in steps if s["kind"] == "tap"]
     check(taps and all(s["targets"] and all(pg.evaluate(f"lesson.lesson.steps[{k}].scene.parts.some(p => p.t === 'roadsign' && p.id === {t['id']!r})") for t in s["targets"])
                        for k, s in enumerate(steps) if s["kind"] == "tap"), "every tap target in the lesson is a road sign in its scene")
-    check(all(" Tap the sign." in pg.evaluate(f"lesson.lesson.steps[{k}].prompt") and "Which sign means " in pg.evaluate(f"lesson.lesson.steps[{k}].prompt")
-              for k, s in enumerate(steps) if s["kind"] == "tap"), "every tap question asks which sign means something, in the one form")
+    check(all(pg.evaluate(f"lesson.lesson.steps[{k}].prompt").startswith("Which sign ") and pg.evaluate(f"lesson.lesson.steps[{k}].prompt").endswith("? Tap the sign.")
+              for k, s in enumerate(steps) if s["kind"] == "tap"), "every tap question is the one form, Which sign ...? Tap the sign., with no list of the signs before it")
     check(pg.evaluate("document.querySelectorAll('.k-roadsign text').length") == 0, "the signs carry no words")
     first = steps[0]
     check(first["kind"] == "tap", "the first question is a tap on a sign")

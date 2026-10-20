@@ -51,7 +51,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a green rectangle, a red eight-sided sign, and a yellow diamond. Which sign means you must come to a complete stop? Tap the sign.",
+      "prompt": "Which sign means you must come to a complete stop? Tap the sign.",
       "targets": [
         {
           "id": "guide-rect",
@@ -69,10 +69,10 @@
       "answer": "stop-sign",
       "then": {
         "highlight": "stop-sign",
-        "say": "The red eight-sided sign means you must come to a complete stop. No other sign has eight sides, and this sign is always red. The green rectangle gives directions, and the yellow diamond warns of a hazard ahead.",
+        "say": "The red eight-sided sign is the stop sign. It is the only sign with eight sides, and it is always red.",
         "wrong": {
-          "guide-rect": "The green rectangle gives directions to towns and highways. The red eight-sided sign is the one that means you must come to a complete stop, and no other sign has eight sides.",
-          "warning-diamond": "The yellow diamond warns of a hazard ahead, such as a sharp curve. The red eight-sided sign is the one that means you must come to a complete stop, and no other sign has eight sides."
+          "guide-rect": "The green rectangle gives directions. The red eight-sided sign means stop.",
+          "warning-diamond": "The yellow diamond warns of something ahead, such as a sharp curve. The red eight-sided sign means stop."
         }
       },
       "rule": "The octagon is the only eight-sided sign, it is always red, and it means you must come to a complete stop."
@@ -126,7 +126,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a red eight-sided sign, a blue rectangle, and a red and white three-sided sign pointing down. Which sign means you slow down and let the traffic on the other road go first? Tap the sign.",
+      "prompt": "Which sign means you slow down and let the traffic on the other road go first? Tap the sign.",
       "targets": [
         {
           "id": "stop-sign",
@@ -138,16 +138,16 @@
         },
         {
           "id": "yield-sign",
-          "label": "the red and white three-sided sign pointing down"
+          "label": "the red and white triangle"
         }
       ],
       "answer": "yield-sign",
       "then": {
         "highlight": "yield-sign",
-        "say": "The red and white three-sided sign pointing down, the yield sign, means you slow down and let the traffic on the other road go first. When no car is coming you do not have to stop, and when traffic is heavy you always stop. The red eight-sided sign means you must always stop, and the blue rectangle points to services for drivers.",
+        "say": "The red and white triangle is the yield sign. If no car is coming, you do not have to stop. If traffic is heavy, you always stop.",
         "wrong": {
-          "stop-sign": "The red eight-sided sign means you must always come to a complete stop. The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first. When no car is coming, you do not have to stop.",
-          "services-rect": "The blue rectangle points to services for drivers, such as a rest area. The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first."
+          "stop-sign": "The red eight-sided sign means you always stop. The red and white triangle means you let the other traffic go first.",
+          "services-rect": "The blue rectangle points to services, such as a rest area. The red and white triangle means you let the other traffic go first."
         }
       },
       "rule": "A yield sign means you slow down and let the traffic on the other road go first, you need not come to a complete stop when no cars are coming, and you always stop when traffic is heavy."
@@ -201,7 +201,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a yellow circle, a yellow diamond, and a green rectangle. Which sign means a railroad crossing is ahead? Tap the sign.",
+      "prompt": "Which sign means a railroad crossing is ahead? Tap the sign.",
       "targets": [
         {
           "id": "railroad-circle",
@@ -219,10 +219,10 @@
       "answer": "railroad-circle",
       "then": {
         "highlight": "railroad-circle",
-        "say": "The yellow circle means a railroad crossing is ahead, so you slow down and get ready to stop for a train. A round sign always means a railroad crossing. The yellow diamond warns of other hazards ahead, and the green rectangle gives directions.",
+        "say": "A round sign always means a railroad crossing is ahead. You slow down and get ready to stop.",
         "wrong": {
-          "warning-diamond": "The yellow diamond warns of a hazard or something unexpected ahead, such as a sharp curve. A round sign always means a railroad crossing, so the yellow circle means a railroad crossing is ahead.",
-          "guide-rect": "The green rectangle gives directions to towns and highways. A round sign always means a railroad crossing, so the yellow circle means a railroad crossing is ahead."
+          "warning-diamond": "The yellow diamond warns of other things ahead, such as a sharp curve. A round sign always means a railroad crossing.",
+          "guide-rect": "The green rectangle gives directions. A round sign always means a railroad crossing."
         }
       },
       "rule": "A round sign always means you are coming to a railroad crossing, so you slow down and get ready to stop."
@@ -230,18 +230,18 @@
     {
       "id": "s1-04",
       "kind": "principle",
-      "prompt": "The red eight-sided sign means you stop. The red and white three-sided sign pointing down means you let the traffic on the other road go first. The yellow circle means a railroad crossing is ahead. What tells you what each sign means, even from too far away to read it?",
+      "prompt": "What tells you what a sign means, even from too far away to read it?",
       "options": [
-        "Its shape and its color tell you.",
-        "The words written on it tell you.",
-        "Where it stands beside the road tells you."
+        "Its shape and color tell you.",
+        "The words on it tell you.",
+        "Where it stands tells you."
       ],
-      "answer": "Its shape and its color tell you.",
+      "answer": "Its shape and color tell you.",
       "then": {
-        "say": "Every sign's shape and color tell you its purpose, so you know what it means before you can read it. Even when snow or dirt covers a stop sign, its eight sides and its red color tell you to stop.",
+        "say": "You know what a sign means before you can read it. Even when snow covers a stop sign, its eight sides and its red color tell you to stop.",
         "wrong": {
-          "The words written on it tell you.": "From too far away to read a sign, you cannot read its words, and snow or dirt can cover them. Its shape and its color tell you what it means before you can read it.",
-          "Where it stands beside the road tells you.": "The red eight-sided sign, the red and white three-sided sign pointing down and the yellow circle all stand beside the road, and each means something different. Its shape and its color tell you what it means, even before you can read it."
+          "The words on it tell you.": "From far away you cannot read the words, and snow or dirt can cover them. The shape and color tell you.",
+          "Where it stands tells you.": "Every sign stands beside the road, and each one means something different. The shape and color tell you."
         }
       }
     },
@@ -303,7 +303,7 @@
           }
         ]
       },
-      "prompt": "Four signs stand beside the road: a red eight-sided sign, a green rectangle, a yellow diamond, and a blue rectangle. Which sign means a hazard or something unexpected is ahead, such as a sharp curve? Tap the sign.",
+      "prompt": "Which sign means a sharp curve or another hazard is ahead? Tap the sign.",
       "targets": [
         {
           "id": "stop-sign",
@@ -325,11 +325,11 @@
       "answer": "warning-diamond",
       "then": {
         "highlight": "warning-diamond",
-        "say": "The yellow diamond means a hazard or something unexpected is ahead. A diamond sign calls for care and usually a slower speed. The red eight-sided sign means stop, the green rectangle gives directions, and the blue rectangle points to services for drivers.",
+        "say": "A diamond means a hazard or something unexpected is ahead. You slow down and take care.",
         "wrong": {
-          "stop-sign": "The red eight-sided sign means you must come to a complete stop. The yellow diamond means a hazard or something unexpected is ahead, and it calls for care and usually a slower speed.",
-          "guide-rect": "The green rectangle gives directions to towns and highways. The yellow diamond means a hazard or something unexpected is ahead, and it calls for care and usually a slower speed.",
-          "services-rect": "The blue rectangle points to services for drivers, such as a rest area. The yellow diamond means a hazard or something unexpected is ahead, and it calls for care and usually a slower speed."
+          "stop-sign": "The red eight-sided sign means stop. A diamond means a hazard is ahead.",
+          "guide-rect": "The green rectangle gives directions. A diamond means a hazard is ahead.",
+          "services-rect": "The blue rectangle points to services, such as a rest area. A diamond means a hazard is ahead."
         }
       },
       "rule": "A diamond sign means a hazardous or unexpected condition is ahead, and it calls for caution and usually a slower speed."
@@ -382,7 +382,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a yellow diamond, a white rectangle, and a yellow circle. Which sign means a law you must obey, such as a speed limit? Tap the sign.",
+      "prompt": "Which sign means a law you must obey, such as a speed limit? Tap the sign.",
       "targets": [
         {
           "id": "warning-diamond",
@@ -400,10 +400,10 @@
       "answer": "law-rect",
       "then": {
         "highlight": "law-rect",
-        "say": "The white rectangle means a law you must obey, such as a speed limit or which lane to use. A sign that tells you a speed limit or which lane to use is always a rectangle. The yellow diamond warns of a hazard ahead, and the yellow circle means a railroad crossing is ahead.",
+        "say": "A sign for a law, such as a speed limit or which lane to use, is always a rectangle.",
         "wrong": {
-          "warning-diamond": "The yellow diamond warns of a hazard ahead, such as a sharp curve. A sign that tells you a law, such as a speed limit, is always a rectangle. The white rectangle is the one that means a law you must obey.",
-          "railroad-circle": "The yellow circle means a railroad crossing is ahead. A sign that tells you a law, such as a speed limit, is always a rectangle. The white rectangle is the one that means a law you must obey."
+          "warning-diamond": "The yellow diamond warns of a hazard ahead. A sign for a law is always a rectangle.",
+          "railroad-circle": "The yellow circle means a railroad crossing is ahead. A sign for a law is always a rectangle."
         }
       },
       "rule": "A regulatory sign, which tells you about laws such as speed limits and lane use, is always a rectangle."
@@ -458,7 +458,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a green rectangle, a blue rectangle, and a red and white three-sided sign pointing down. Which sign means directions to towns and highways? Tap the sign.",
+      "prompt": "Which sign gives directions to towns and highways? Tap the sign.",
       "targets": [
         {
           "id": "guide-rect",
@@ -470,16 +470,16 @@
         },
         {
           "id": "yield-sign",
-          "label": "the red and white three-sided sign pointing down"
+          "label": "the red and white triangle"
         }
       ],
       "answer": "guide-rect",
       "then": {
         "highlight": "guide-rect",
-        "say": "The green rectangle gives directions to towns and highways, such as which exit to take and how far it is to a town. Green is the color for signs that guide you, and for the mileposts along the highway. The blue rectangle points to services for drivers, and the red and white three-sided sign means you slow down and let the traffic on the other road go first.",
+        "say": "Green is the color for directions, such as which exit to take. The mileposts along the highway are green too.",
         "wrong": {
-          "services-rect": "The blue rectangle points to services for drivers, such as a rest area. The green rectangle gives directions to towns and highways, because green is the color for signs that guide you.",
-          "yield-sign": "The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first. The green rectangle gives directions to towns and highways, because green is the color for signs that guide you."
+          "services-rect": "The blue rectangle points to services, such as a rest area. Green signs give directions.",
+          "yield-sign": "The red and white triangle means you let the other traffic go first. Green signs give directions."
         }
       },
       "rule": "Green is used for guide signs, which give directions, and for mileposts."
@@ -540,7 +540,7 @@
           }
         ]
       },
-      "prompt": "Four signs stand beside the road: a white rectangle, an orange diamond, a yellow diamond, and a red eight-sided sign. Which sign means road work is ahead? Tap the sign.",
+      "prompt": "Which sign means road work is ahead? Tap the sign.",
       "targets": [
         {
           "id": "law-rect",
@@ -562,11 +562,11 @@
       "answer": "roadwork-diamond",
       "then": {
         "highlight": "roadwork-diamond",
-        "say": "The orange diamond means road work is ahead, so you slow down and watch for workers and their machines. Orange is used for road work and for nothing else. The yellow diamond warns of other hazards, the white rectangle states a law, and the red eight-sided sign means stop.",
+        "say": "Orange is used only for road work. You slow down and watch for workers and their machines.",
         "wrong": {
-          "law-rect": "The white rectangle states a law you must obey, such as a speed limit. The orange diamond means road work is ahead, because orange is used for road work and for nothing else.",
-          "warning-diamond": "The yellow diamond warns of other hazards ahead, such as a sharp curve, and road work has its own color. The orange diamond means road work is ahead, because orange is used for road work and for nothing else.",
-          "stop-sign": "The red eight-sided sign means you must come to a complete stop. The orange diamond means road work is ahead, because orange is used for road work and for nothing else."
+          "law-rect": "The white rectangle states a law, such as a speed limit. Orange is used only for road work.",
+          "warning-diamond": "The yellow diamond warns of other hazards, and road work has its own color. Orange is used only for road work.",
+          "stop-sign": "The red eight-sided sign means stop. Orange is used only for road work."
         }
       },
       "rule": "Orange is used only for construction and maintenance signs."
@@ -620,7 +620,7 @@
           }
         ]
       },
-      "prompt": "Three signs stand beside the road: a green rectangle, an orange diamond, and a fluorescent yellow-green diamond. Which sign means a school zone or a crosswalk is ahead? Tap the sign.",
+      "prompt": "Which sign means a school zone or a crosswalk is ahead? Tap the sign.",
       "targets": [
         {
           "id": "guide-rect",
@@ -632,16 +632,16 @@
         },
         {
           "id": "school-diamond",
-          "label": "the fluorescent yellow-green diamond"
+          "label": "the yellow-green diamond"
         }
       ],
       "answer": "school-diamond",
       "then": {
         "highlight": "school-diamond",
-        "say": "The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot. This bright color stands out in low light, fog and rain. The orange diamond means road work, and the green rectangle gives directions.",
+        "say": "Yellow-green, a bright fluorescent color, is for school zones and crosswalks. You watch for children and people walking.",
         "wrong": {
-          "guide-rect": "The green rectangle gives directions to towns and highways. The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot.",
-          "roadwork-diamond": "The orange diamond means road work is ahead, and orange is used for nothing else. The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead, so you watch for children and people on foot."
+          "guide-rect": "The green rectangle gives directions. Yellow-green is for school zones and crosswalks.",
+          "roadwork-diamond": "Orange is used only for road work. Yellow-green is for school zones and crosswalks."
         }
       },
       "rule": "Fluorescent yellow-green is the color for school zones and pedestrian areas such as crosswalks."
@@ -703,11 +703,11 @@
           }
         ]
       },
-      "prompt": "Four signs stand beside the road: a fluorescent yellow-green diamond, an orange diamond, a red and white three-sided sign pointing down, and a blue rectangle. Which sign means a rest area or other services for drivers are ahead? Tap the sign.",
+      "prompt": "Which sign means a rest area or another service is ahead? Tap the sign.",
       "targets": [
         {
           "id": "school-diamond",
-          "label": "the fluorescent yellow-green diamond"
+          "label": "the yellow-green diamond"
         },
         {
           "id": "roadwork-diamond",
@@ -715,7 +715,7 @@
         },
         {
           "id": "yield-sign",
-          "label": "the red and white three-sided sign pointing down"
+          "label": "the red and white triangle"
         },
         {
           "id": "services-rect",
@@ -725,11 +725,11 @@
       "answer": "services-rect",
       "then": {
         "highlight": "services-rect",
-        "say": "The blue rectangle means a rest area, police help or another service for drivers is ahead, because blue is the color for services for drivers. The orange diamond means road work, and the fluorescent yellow-green diamond means a school zone or a crosswalk. The red and white three-sided sign means you slow down and let the traffic on the other road go first.",
+        "say": "Blue is the color for services for drivers, such as rest areas and police help.",
         "wrong": {
-          "school-diamond": "The fluorescent yellow-green diamond means a school zone or a crosswalk is ahead. The blue rectangle means a rest area or another service for drivers is ahead, because blue is the color for services for drivers.",
-          "roadwork-diamond": "The orange diamond means road work is ahead. The blue rectangle means a rest area or another service for drivers is ahead, because blue is the color for services for drivers.",
-          "yield-sign": "The red and white three-sided sign pointing down means you slow down and let the traffic on the other road go first. The blue rectangle means a rest area or another service for drivers is ahead, because blue is the color for services for drivers."
+          "school-diamond": "Yellow-green is for school zones and crosswalks. Blue is for services, such as rest areas.",
+          "roadwork-diamond": "Orange is used only for road work. Blue is for services, such as rest areas.",
+          "yield-sign": "The red and white triangle means you let the other traffic go first. Blue is for services, such as rest areas."
         }
       },
       "rule": "Blue is used for motorist services, including police services and rest areas."
@@ -741,17 +741,17 @@
       "prompt": "A sign is yellow. What does its color tell you?",
       "options": [
         "It warns you of something ahead, such as a sharp curve.",
-        "It warns you that road work is ahead.",
-        "It gives you directions, such as which exit to take.",
-        "It tells you that a rest area is ahead."
+        "It warns you of road work ahead.",
+        "It gives you directions.",
+        "It tells you a rest area is ahead."
       ],
       "answer": "It warns you of something ahead, such as a sharp curve.",
       "then": {
-        "say": "A yellow sign warns you of something ahead, such as a sharp curve, so you slow down and drive with care. Yellow is also used for school signs, and fluorescent yellow-green is now used for school zones too. Road work is orange, directions are green, and services such as rest areas are blue.",
+        "say": "Yellow means a warning. Road work is orange, directions are green, and services are blue.",
         "wrong": {
-          "It warns you that road work is ahead.": "Road work signs are orange, and orange is used for nothing else. A yellow sign warns you of something ahead, such as a sharp curve.",
-          "It gives you directions, such as which exit to take.": "Directions are on green signs. A yellow sign warns you of something ahead, such as a sharp curve.",
-          "It tells you that a rest area is ahead.": "Services for drivers, such as rest areas, are on blue signs. A yellow sign warns you of something ahead, such as a sharp curve."
+          "It warns you of road work ahead.": "Road work signs are orange. Yellow warns you of something ahead, such as a sharp curve.",
+          "It gives you directions.": "Directions are on green signs. Yellow warns you of something ahead, such as a sharp curve.",
+          "It tells you a rest area is ahead.": "Rest areas and other services are on blue signs. Yellow warns you of something ahead, such as a sharp curve."
         }
       },
       "rule": "Yellow is the background for warning signs, except where orange is used, and for school signs."
@@ -759,7 +759,7 @@
     {
       "id": "s1-12",
       "kind": "principle",
-      "prompt": "Every question in this lesson came down to one thing. What was it?",
+      "prompt": "Every question in this Section came down to one thing. What was it?",
       "options": [
         "A sign's shape and color tell you what it means.",
         "A sign's words tell you what it means.",
@@ -767,10 +767,10 @@
       ],
       "answer": "A sign's shape and color tell you what it means.",
       "then": {
-        "say": "The shape and the color of a sign tell you its purpose, even from far away. That is how you know what a sign tells you to do before you can read it, and even when snow or dirt covers it.",
+        "say": "They tell you from far away, before you can read a word, and even when snow or dirt covers the sign.",
         "wrong": {
-          "A sign's words tell you what it means.": "The signs drawn in this lesson had no words on them, and their shape and color were enough to tell what each one meant. A sign's shape and color tell you what it means from far away, before you can read any words.",
-          "A sign's place beside the road tells you what it means.": "Every sign drawn in this lesson stood beside the road, and each one meant something different. A sign's shape and color tell you what it means, even from far away."
+          "A sign's words tell you what it means.": "The signs drawn here had no words, and you could still tell what each one meant. The shape and color tell you.",
+          "A sign's place beside the road tells you what it means.": "Every sign drawn here stood beside the road, and each one meant something different. The shape and color tell you."
         }
       }
     }
