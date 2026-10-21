@@ -153,19 +153,25 @@ def check_groups(groups, used):
 
 
 STEP_KINDS = {"tap", "choose", "principle"}
-TARGET_PARTS = {"car", "ped", "roadsign", "lane", "space", "wheels", "steer", "seat"}
+# The drawing kit's part types (src/kit.json), which the page draws from the same list: whether each can be a tap
+# target or a highlight, and which are roads.
+KIT = json.loads((ROOT / "src" / "kit.json").read_text())["parts"]
 
 
-def check_lessons(secs):
-    """data/lessons/section-N.json (docs/specs/lessons.md): a lesson teaches every fact of its Section
-    through steps the Learner acts on. Each step's answer must be one of what it offers, and every tap
-    target must be a car, pedestrian, road sign, lane box, parking space or wheel picture drawn in that step's scene."""
+def check_lessons(secs, lessons=None):
+    """data/lessons/section-N.json (docs/specs/lessons.md): a lesson teaches every fact of its Section in 10 to 15
+    steps the Learner acts on. Each step's answer must be one of what it offers, and every wrong pick has its own
+    explanation. Every part is a type the kit draws, and every tap target and highlight is a part in that step's
+    drawing whose type the kit lets be a target. `lessons` maps file names to their text; by default, the files in
+    data/lessons."""
     errors = []
     by_section = {s["section"]: s["questions"] for s in secs}
-    for file in sorted((ROOT / "data" / "lessons").glob("section-*.json")):
-        name = file.name
+    targetable = sorted(t for t, kind in KIT.items() if kind["target"])
+    if lessons is None:
+        lessons = {file.name: file.read_text() for file in (ROOT / "data" / "lessons").glob("section-*.json")}
+    for name, text in sorted(lessons.items()):
         try:
-            lesson = json.loads(file.read_text())
+            lesson = json.loads(text)
         except ValueError as e:
             errors.append(f"{name}: not valid JSON ({e})")
             continue
@@ -176,6 +182,8 @@ def check_lessons(secs):
         facts, steps, ids = set(by_section[number]), lesson.get("steps", []), set()
         if not lesson.get("title") or not steps:
             errors.append(f"{name}: needs a title and steps")
+        elif not 10 <= len(steps) <= 15:
+            errors.append(f"{name}: has {len(steps)} steps; a lesson has 10 to 15")
         covered = set()
         for step in steps:
             sid = step.get("id") or "?"
@@ -197,8 +205,11 @@ def check_lessons(secs):
             if not step.get("prompt") or not then.get("say"):
                 errors.append(f"{name} {sid}: needs a prompt and then.say")
             parts = (step.get("scene") or {}).get("parts", [])
-            part_ids = {p.get("id") for p in parts if p.get("t") in TARGET_PARTS and p.get("id")}
-            after_ids = {p.get("id") for p in then.get("parts", []) if p.get("t") in TARGET_PARTS and p.get("id")}
+            for p in parts + then.get("parts", []):
+                if p.get("t") not in KIT:
+                    errors.append(f"{name} {sid}: part type {p.get('t')!r} is not one the kit draws (src/kit.json)")
+            part_ids = {p.get("id") for p in parts if p.get("t") in targetable and p.get("id")}
+            after_ids = {p.get("id") for p in then.get("parts", []) if p.get("t") in targetable and p.get("id")}
             if kind == "tap":
                 targets = step.get("targets", [])
                 tids = [t.get("id") for t in targets]
@@ -206,7 +217,8 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: a tap step needs 2 or more targets, each with a label")
                 for tid in tids:
                     if tid not in part_ids:
-                        errors.append(f"{name} {sid}: target {tid!r} is not a car, pedestrian, road sign, lane box, parking space, wheel picture or seat in the scene")
+                        errors.append(f"{name} {sid}: target {tid!r} is not a part in the scene of a type that can be a target"
+                                      f" ({', '.join(targetable)})")
                 if step.get("answer") not in tids:
                     errors.append(f"{name} {sid}: answer must be one of the targets")
             else:
@@ -215,16 +227,20 @@ def check_lessons(secs):
                     errors.append(f"{name} {sid}: needs 2 to 4 different options")
                 if step.get("answer") not in options:
                     errors.append(f"{name} {sid}: answer must be one of the options")
-            # `then.wrong`, when present, holds an explanation for every wrong pick and nothing else.
+                # A principle step is left out: the closing principle question's options are questions (s3-12).
+                for o in options if kind == "choose" else []:
+                    if o not in ("Yes", "No") and not str(o).endswith("."):
+                        errors.append(f"{name} {sid}: option {o!r} must be Yes, No, or a complete sentence ending in a period")
+            # `then.wrong` holds an explanation for every wrong pick and nothing else.
             wrong = then.get("wrong")
-            if wrong is not None:
-                picks = [t.get("id") for t in step.get("targets", [])] if kind == "tap" else step.get("options", [])
-                wrong_picks = {k for k in picks if k != step.get("answer")}
-                if not isinstance(wrong, dict) or set(wrong) != wrong_picks or not all(isinstance(v, str) and v.strip() for v in wrong.values()):
-                    errors.append(f"{name} {sid}: then.wrong must give one non-empty explanation for each wrong pick, {sorted(wrong_picks)}")
+            picks = [t.get("id") for t in step.get("targets", [])] if kind == "tap" else step.get("options", [])
+            wrong_picks = {k for k in picks if k != step.get("answer")}
+            if not isinstance(wrong, dict) or set(wrong) != wrong_picks or not all(isinstance(v, str) and v.strip() for v in wrong.values()):
+                errors.append(f"{name} {sid}: then.wrong must give one non-empty explanation for each wrong pick, {sorted(wrong_picks)}")
             hi = then.get("highlight")
             if hi is not None and hi not in part_ids | after_ids:
-                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a car, pedestrian, road sign, lane box, parking space, wheel picture or seat in the scene")
+                errors.append(f"{name} {sid}: then.highlight {hi!r} is not a part in the scene of a type that can be a target"
+                              f" ({', '.join(targetable)})")
         missing = facts - covered
         if missing and steps:
             errors.append(f"{name}: no step teaches {sorted(missing)}")
@@ -259,7 +275,8 @@ def check_lesson_wording(name, steps):
     for step in steps:
         sid = step.get("id") or "?"
         texts = [("prompt", step.get("prompt", "")), ("say", (step.get("then") or {}).get("say", ""))]
-        texts += [("wrong", v) for v in ((step.get("then") or {}).get("wrong") or {}).values() if isinstance(v, str)]
+        wrong = (step.get("then") or {}).get("wrong")
+        texts += [("wrong", v) for v in (wrong.values() if isinstance(wrong, dict) else []) if isinstance(v, str)]
         texts += [("option", o) for o in step.get("options", [])]
         texts += [("target label", t.get("label", "")) for t in step.get("targets", [])]
         for field, text in texts:
@@ -276,7 +293,7 @@ def check_lesson_wording(name, steps):
             if len(re.findall(r"[.?](?!\d)", say)) > 3:  # a period inside a number (0.08 percent) ends no sentence
                 errors.append(f"{name} {sid} {field}: more than three sentences: {say!r}")
         parts = (step.get("scene") or {}).get("parts", [])
-        roads = [p for p in parts if p.get("t") in ("road", "circle-road")]
+        roads = [p for p in parts if KIT.get(p.get("t"), {}).get("road")]
         if len(roads) >= 2 and step.get("kind") == "tap" and not CONTROL.search(step.get("prompt", "")):
             errors.append(f"{name} {sid} prompt: draws an intersection but does not say what controls it (a sign, a light, or no sign)")
     return errors
