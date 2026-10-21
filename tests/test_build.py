@@ -75,6 +75,10 @@ def test_build_writes_page_questions_and_csp(tmp):
     check(len(grouped) == 55 and grouped.get("b-250") == "parking-distances" and grouped.get("a-084") == "sign-colors",
           f"the 55 grouped questions name their group (got {len(grouped)})")
     check("__DATA__" not in page, "the page has no __DATA__ placeholder left")
+    kit = json.loads((ROOT / "src" / "kit.json").read_text())["parts"]
+    m = re.search(r"const KIT = (\{.*?\});\n", page)
+    check("__KIT__" not in page and m is not None and json.loads(m.group(1)) == kit,
+          "the page has the drawing kit's part types from src/kit.json written in")
     by_id = {q["id"]: q for q in data["qs"]}
     also = {q["id"]: q["also"] for q in data["qs"] if "also" in q}
     check(sum(len(a) for a in also.values()) == 15 and len(also) == 12,
@@ -92,6 +96,7 @@ def test_build_refuses_pages_that_break_the_csp(tmp):
         "an on...= handler in the markup": page.replace('<main id="stage">', '<main id="stage" onclick="go()">'),
         "an on...= handler in HTML the script writes": page.replace(
             'id="homeBtn">', 'id="homeBtn" onclick="renderHome()">'),
+        "no place for the drawing kit's part types": page.replace("__KIT__", "{}"),
     }
     for name, bad in cases.items():
         check(bad != page, f"test setup: {name} was added to the copy")
@@ -218,6 +223,169 @@ def test_group_rules_catch_each_mistake():
           "a reverse stem with {answer} once, on 4 facts, passes")
 
 
+LESSON_SECTIONS = [{"section": 1, "questions": ["q-1", "q-2", "q-3"]}]
+
+
+def clean_lesson():
+    """A small Lesson for Section 1 that breaks no rule: a tap step, eight choose steps and a principle step whose
+    options are questions (the closing question's form, which the options rule leaves alone)."""
+    def choose(n, fact):
+        return {"id": f"s1-{n:02d}", "fact": fact, "kind": "choose", "prompt": "May you go now?", "options": ["Yes", "No"],
+                "answer": "Yes", "then": {"say": "You may go.", "wrong": {"No": "Nothing stops you. You may go."}},
+                "rule": "You may go."}
+    tap = {"id": "s1-01", "fact": "q-1", "kind": "tap",
+           "scene": {"parts": [{"t": "road", "x": 130, "y": 0, "w": 60, "h": 320},
+                               {"t": "car", "id": "other", "x": 145, "y": 100, "heading": "s"},
+                               {"t": "car", "id": "you", "x": 175, "y": 250, "heading": "n", "you": True}]},
+           "prompt": "Who goes first? Tap the car.",
+           "targets": [{"id": "other", "label": "the other car"}, {"id": "you", "label": "your car"}], "answer": "other",
+           "then": {"say": "The other car goes first.", "wrong": {"you": "Your car waits. The other car goes first."},
+                    "highlight": "other", "parts": [{"t": "car", "id": "other", "x": 145, "y": 40, "heading": "s"}]},
+           "rule": "The other car goes first."}
+    principle = {"id": "s1-10", "kind": "principle", "prompt": "What did every question come down to?",
+                 "options": ["Who must wait?", "Which car is faster?"], "answer": "Who must wait?",
+                 "then": {"say": "Every time, one driver waits.", "wrong": {"Which car is faster?": "Speed decides nothing. One driver waits."}}}
+    facts = ["q-2", "q-3"] * 4
+    return {"section": 1, "title": "A title", "steps": [tap] + [choose(n, f) for n, f in enumerate(facts, start=2)] + [principle]}
+
+
+def test_lesson_rules_catch_each_mistake():
+    """The rules validate_data.py checks every data/lessons file against, each shown catching its mistake on a small
+    Lesson built in memory, and the wording lint shown refusing each word it bans and allowing what it allows."""
+    sys.path.insert(0, str(ROOT / "tests"))
+    from validate_data import BANNED, check_lesson_wording, check_lessons
+
+    def errors_of(change=None, text=None, name="section-1.json"):
+        lesson = clean_lesson()
+        if change:
+            change(lesson)
+        return check_lessons(LESSON_SECTIONS, {name: json.dumps(lesson) if text is None else text})
+
+    def step(k, **fields):
+        """A change that sets fields of step k; a field set to None is removed."""
+        def change(lesson):
+            for key, value in fields.items():
+                lesson["steps"][k].pop(key, None) if value is None else lesson["steps"][k].__setitem__(key, value)
+        return change
+
+    def then(k, **fields):
+        """A change that sets fields of step k's then; a field set to None is removed."""
+        def change(lesson):
+            for key, value in fields.items():
+                lesson["steps"][k]["then"].pop(key, None) if value is None else lesson["steps"][k]["then"].__setitem__(key, value)
+        return change
+
+    def add_part(where, part):
+        def change(lesson):
+            parts = lesson["steps"][0]["scene"]["parts"] if where == "scene" else lesson["steps"][0]["then"]["parts"]
+            parts.append(part)
+        return change
+
+    def more_steps(n):
+        def change(lesson):
+            extra = [dict(lesson["steps"][1], id=f"s1-{k:02d}") for k in range(20, 20 + n)]
+            lesson["steps"][1:1] = extra
+        return change
+
+    check(errors_of() == [], f"a Lesson that breaks no rule passes (got {errors_of()})")
+    post = {"t": "post", "id": "pole", "x": 100, "y": 100}
+    for change, text, want, what in (
+            (None, "{", "not valid JSON", "a file that is not JSON"),
+            (lambda l: l.update(section=2), None, "its section must be", "a section that is not the file's number"),
+            (lambda l: l.pop("title"), None, "needs a title and steps", "a Lesson with no title"),
+            (lambda l: l["steps"].pop(1), None, "10 to 15", "a Lesson of 9 steps"),
+            (more_steps(6), None, "10 to 15", "a Lesson of 16 steps"),
+            (step(2, id="s1-01"), None, "used twice", "a step id used twice"),
+            (step(1, kind="drag"), None, "kind must be one of", "an unknown kind"),
+            (step(1, fact="x-9"), None, "fact x-9 is not in Section 1", "a fact from another Section"),
+            (step(1, rule=None), None, "needs a rule", "a step with a fact and no rule"),
+            (step(1, fact=None), None, "only a principle step has no fact", "a choose step with no fact"),
+            (step(1, prompt=None), None, "needs a prompt and then.say", "a step with no prompt"),
+            (then(1, say=None), None, "needs a prompt and then.say", "a step with no then.say"),
+            (lambda l: [s.update(fact="q-2") for s in l["steps"] if s.get("fact") == "q-3"], None, "no step teaches ['q-3']",
+             "a fact no step teaches"),
+            (step(0, targets=[{"id": "other", "label": "the other car"}]), None, "2 or more targets", "a tap step with one target"),
+            (step(0, targets=[{"id": "other", "label": "the other car"}, {"id": "you"}]), None, "each with a label",
+             "a target with no label"),
+            (step(0, targets=[{"id": "other", "label": "the other car"}, {"id": "ghost", "label": "a ghost"}]), None,
+             "target 'ghost'", "a target that is not drawn"),
+            (lambda l: (add_part("scene", post)(l), step(0, targets=[{"id": "other", "label": "the other car"},
+                                                                       {"id": "pole", "label": "the post"}])(l)), None,
+             "target 'pole'", "a target on a part whose type cannot be a target"),
+            (step(0, answer="ghost"), None, "answer must be one of the targets", "a tap answer that is not a target"),
+            (step(1, options=["Yes"]), None, "2 to 4 different options", "a choose step with one option"),
+            (step(1, options=["Yes", "No", "Maybe.", "Later.", "Never."]), None, "2 to 4 different options", "five options"),
+            (step(1, options=["Yes", "Yes"]), None, "2 to 4 different options", "the same option twice"),
+            (step(1, answer="Maybe."), None, "answer must be one of the options", "an answer that is not an option"),
+            (then(1, wrong=None), None, "then.wrong", "a choose step with no then.wrong"),
+            (then(0, wrong=None), None, "then.wrong", "a tap step with no then.wrong"),
+            (then(9, wrong=None), None, "then.wrong", "a principle step with no then.wrong"),
+            (then(1, wrong={}), None, "then.wrong", "a then.wrong missing a wrong pick"),
+            (then(0, wrong={"you": "Your car waits.", "other": "It goes."}), None, "then.wrong", "a then.wrong with an extra key"),
+            (then(1, wrong={"No": "  "}), None, "then.wrong", "an empty explanation"),
+            (then(1, wrong=["Nothing stops you."]), None, "then.wrong", "a then.wrong that is not an object"),
+            (lambda l: (step(1, options=["Go.", "Stop"], answer="Go.")(l), then(1, wrong={"Stop": "You may go."})(l)), None,
+             "option 'Stop'", "a choose option that is not Yes, No or a sentence"),
+            (then(0, highlight="ghost"), None, "then.highlight 'ghost'", "a highlight that is not drawn"),
+            (lambda l: (add_part("scene", post)(l), then(0, highlight="pole")(l)), None, "then.highlight 'pole'",
+             "a highlight on a part whose type cannot be a target"),
+            (add_part("scene", {"t": "lanes", "x": 0, "y": 0}), None, "s1-01: part type 'lanes'", "an unknown part type in the scene"),
+            (add_part("then", {"t": "carr", "x": 0, "y": 0}), None, "s1-01: part type 'carr'", "an unknown part type in then.parts")):
+        errors = errors_of(change, text)
+        check(any(want in e for e in errors), f"check_lessons catches {what} (got {errors})")
+    errors = errors_of(step(0, targets=[{"id": "other", "label": "the other car"}, {"id": "ghost", "label": "a ghost"}]))
+    kit = json.loads((ROOT / "src" / "kit.json").read_text())["parts"]
+    targetable = ", ".join(sorted(t for t, kind in kit.items() if kind["target"]))
+    check(targetable and any(targetable in e for e in errors),
+          f"the target message names the part types that can be targets, from the kit (got {errors})")
+
+    # The wording lint: one sentence per BANNED entry it must refuse, and the forms each entry allows.
+    def wording_errors(text, field="say"):
+        lesson = clean_lesson()
+        if field == "prompt":
+            lesson["steps"][1]["prompt"] = text
+        else:
+            lesson["steps"][1]["then"]["say"] = text
+        return check_lesson_wording("section-1.json", lesson["steps"])
+
+    refused = [("Right, you go first.", "says right"), ("That is right.", "says right"),
+               ("You yield to the car.", "says yield"), ("The driver yielded.", "says yield"),
+               ("This step is hard.", "says step"), ("In both cases you wait.", "points at earlier screens"),
+               ("In that case you wait.", "says case"), ("Look at the screen.", "says screen"),
+               ("You come up to a round red light.", "calls a light round"), ("Your light is green.", "says your light"),
+               ("You wait; it goes.", "semicolon"), ("You wait!", "exclamation mark"),
+               ("That is wrong.", "verdict"), ("Good job.", "verdict"), ("Oops.", "verdict")]
+    covered = set()
+    for text, want in refused:
+        errors = wording_errors(text)
+        hit = [why for _, why in BANNED if want in why and any(why in e for e in errors)]
+        covered.update(hit)
+        check(bool(hit), f"the wording lint refuses {text!r} (got {errors})")
+    check(covered == {why for _, why in BANNED},
+          f"every BANNED entry is shown refusing a sentence (missing {sorted({why for _, why in BANNED} - covered)})")
+    for text in ("Look to your right.", "You turn to the right.", "You make a right turn.", "Stay in the right lane.",
+                 "Who has the right-of-way?", "You stop at a yield sign.", "You step in.", "You are going the wrong way.",
+                 "You see the stop sign, then the light ahead of you turns green."):
+        errors = wording_errors(text)
+        check(errors == [], f"the wording lint allows {text!r} (got {errors})")
+
+    long_sentence = " ".join(["word"] * 31) + "."
+    for text, field, want, what in (
+            (long_sentence, "say", "more than 30 words", "a sentence of 31 words"),
+            (" ".join(["Go now."] * 31), "prompt", "more than 60 words", "a prompt of 62 words"),
+            ("You wait. It goes. You go. You leave.", "say", "more than three sentences", "an explanation of four sentences")):
+        errors = wording_errors(text, field)
+        check(any(want in e for e in errors), f"the wording lint refuses {what} (got {errors})")
+    check(wording_errors("Your limit is 0.08 percent. You may not drive. You wait.") == [],
+          "a period inside a number ends no sentence")
+    lesson = clean_lesson()
+    lesson["steps"][0]["scene"]["parts"].append({"t": "road", "x": 0, "y": 130, "w": 320, "h": 60})
+    errors = check_lesson_wording("section-1.json", lesson["steps"])
+    check(any("does not say what controls it" in e for e in errors), f"a tap step that draws an intersection must say what controls it (got {errors})")
+    lesson["steps"][0]["prompt"] = "There is no stop sign and no yield sign. Who goes first? Tap the car."
+    check(check_lesson_wording("section-1.json", lesson["steps"]) == [], "an intersection whose prompt names its control passes")
+
+
 def main():
     with tempfile.TemporaryDirectory() as t:
         tmp = pathlib.Path(t)
@@ -231,6 +399,8 @@ def main():
         test_check_dist_catches_a_stale_dist(tmp)
         print("\n[groups.json rules]")
         test_group_rules_catch_each_mistake()
+        print("\n[lesson rules]")
+        test_lesson_rules_catch_each_mistake()
     print("\nAll checks passed." if not failures else f"\n{len(failures)} check(s) failed.")
     raise SystemExit(1 if failures else 0)
 

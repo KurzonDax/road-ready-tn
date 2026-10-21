@@ -42,15 +42,17 @@ Every one of the Section's 10 facts appears in at least one step with that `fact
   - `tap`: the Learner taps one part of the drawing. `targets` lists two or more part ids with a spoken label each (the screen reader reads the label; the History stores it). `answer` is the right target's id.
   - `choose`: two to four text `options`, `answer` is one of them. Used for facts with no useful drawing, and for yes/no questions such as "May you turn now?". A `scene` is optional.
   - `principle`: a `choose` after two or more cases, with no `fact`. `prompt` asks what the cases have in common; `options` are two to four candidate sentences; `answer` is the principle. `say` restates it.
-- `prompt` is one sentence ending in a question or an instruction.
-- `then.say` is one or two sentences: what happens, then why, in plain words. Shown after the correct action, and after a wrong one when the step has no `then.wrong`.
-- `then.wrong` is an object with one explanation per wrong pick, keyed by the target id (a tap step) or the option text (a choose or principle step): why that pick is wrong, then what is correct, in at most three sentences. Shown instead of `then.say` after that pick, under "Incorrect. You picked {label}." When present it covers every wrong pick of the step. Section 6 has one for every wrong pick.
+- `prompt` ends in a question or an instruction. A sentence is at most 30 words and a prompt at most 60 (`check_lesson_wording`); most need far fewer.
+- `then.say` is at most three sentences of at most 30 words each: what happens, then why, in plain words. Shown after the correct action.
+- `then.wrong` is required on every step: an object with one explanation per wrong pick and no other key, keyed by the target id (a tap step) or the option text (a choose or principle step): why that pick is wrong, then what is correct, in at most three sentences. Shown instead of `then.say` after that pick, under "Incorrect. You picked {label}."
 - `then.highlight` is a part id drawn in the accent color after the action (the car that goes). `then.parts`, when present, replaces the scene after the action (the car moved through, an arrow drawn). Both optional.
 - `rule` is the fact's rule in one complete sentence, in the app's wording standard. Required when `fact` is set. The manual's sentence and page stay in `data/questions.json` to check the step against; the Learner never sees them.
 
 ## The kit
 
 The scene is an SVG with `viewBox="0 0 320 320"`, top-down, north up (the `bicyclist` is drawn from behind instead, and the `hill` and the `drink` from the side; the `cabin` is the Learner's own car from above, close up). Roads are two-lane unless said. A standard intersection has the horizontal road from y=130 to y=190 and the vertical road from x=130 to x=190; cars are about 20 by 36. Each part names its type in `t` (`{"t": "car", ...}`). Parts are drawn in the order listed. Colors are neutral except where color is the fact (lane lines, lights, signs).
+
+Every part type is listed once in `src/kit.json`, with whether it can be a tap target. The page draws from that list and the build refuses a lesson that uses a type not in it, so a new part needs a draw function named after its type (`lanePart` for `lane`) and an entry in the list.
 
 | part | fields | draws |
 |---|---|---|
@@ -92,7 +94,7 @@ The scene is an SVG with `viewBox="0 0 320 320"`, top-down, north up (the `bicyc
 | `path` | `from: [x, y]`, `to: [x, y]`, `via: [x, y]` (optional) | a dashed arrow for where a vehicle intends to go. |
 | `label` | `x, y, text`, `anchor` (`start`, `middle`, `end`) | a small text label on the drawing. |
 
-Only cars (a stopping position is a car with `outline: true`), pedestrians, road signs, lane boxes, parking spaces, wheel pictures, steering wheel pictures and seats can be targets or highlights. Everything a step says in words is also in `prompt`, `say` and `rule`; the drawing never carries a fact on its own.
+Only parts whose type `src/kit.json` marks `target` can be targets or highlights (a stopping position is a car with `outline: true`). Everything a step says in words is also in `prompt`, `say` and `rule`; the drawing never carries a fact on its own.
 
 ## How a lesson fits the engine
 
@@ -105,8 +107,8 @@ Only cars (a stopping position is a car with `outline: true`), pedestrians, road
 
 ## Validation (`tests/validate_data.py`)
 
-For every `data/lessons/section-N.json`: `section` matches the file name and is a Section in `data/sections.json`; every step `fact` is one of that Section's questions; every one of the Section's questions appears in at least one step; step ids are unique; `kind` is valid; a `tap` step has two or more targets whose ids are `car`, `ped`, `roadsign`, `lane`, `space`, `wheels`, `steer` or `seat` parts in its scene, and `answer` is one of them; a `choose` or `principle` step has two to four distinct options and `answer` is one; `prompt`, `then.say` and (with a fact) `rule` are non-empty; `then.wrong`, when present, has one non-empty explanation for each wrong target or option and no other key; `then.highlight`, when present, is a part id in the scene (or in `then.parts`).
+For every `data/lessons/section-N.json`: `section` matches the file name and is a Section in `data/sections.json`; the lesson has 10 to 15 steps; every step `fact` is one of that Section's questions; every one of the Section's questions appears in at least one step; step ids are unique; `kind` is valid; every part in `scene.parts` and `then.parts` has a type listed in `src/kit.json`; a `tap` step has two or more targets whose ids are parts in its scene of a type the list marks `target`, and `answer` is one of them; a `choose` or `principle` step has two to four distinct options and `answer` is one; every option of a `choose` step is "Yes", "No" or a sentence ending in a period (a `principle` step's options are left alone); `prompt`, `then.say` and (with a fact) `rule` are non-empty; `then.wrong` has one non-empty explanation for each wrong target or option and no other key; `then.highlight`, when present, is a part id in the scene (or in `then.parts`) of a type the list marks `target`. `tests/test_build.py` shows each rule catching its mistake.
 
 ## Wording lint and the review sheet
 
-`tests/validate_data.py` (`check_lesson_wording`) refuses lesson text that breaks the owner's wording rules: "yield" for waiting (only a yield sign), "right" for correct ("the wrong way", a direction, is allowed), "round" or "your" for a light, "step", "case", unnamed references to earlier screens ("both cases", "these ones"), semicolons, exclamation marks, verdict or praise words, an explanation longer than three sentences, and a tap step that draws an intersection without saying what controls it. `tools/lesson_sheet.py <section> <out.html>` writes a lesson as one page, every screen top to bottom with its drawings before and after the correct action, so a lesson is reviewed as a document.
+`tests/validate_data.py` (`check_lesson_wording`) refuses lesson text that breaks the owner's wording rules: "yield" for waiting (only a yield sign), "right" for correct ("the wrong way", a direction, is allowed), "round" or "your" for a light, "step", "case", unnamed references to earlier screens ("both cases", "these ones"), semicolons, exclamation marks, verdict or praise words, a sentence over 30 words, a prompt over 60 words, an explanation longer than three sentences, and a tap step that draws an intersection without saying what controls it. `tools/lesson_sheet.py <section> <out.html>` writes a lesson as one page, every screen top to bottom with its drawings before and after the correct action, so a lesson is reviewed as a document.

@@ -38,6 +38,7 @@ data/
   manual/sections-b-c.txt  text of manual Sections B and C, marked by printed page
 src/
   app.html               the page (styles and script) for Learners and Helpers; it fetches questions.json when it starts
+  kit.json               every drawing-kit part type, and whether it can be a tap target; build.py writes it into the page
   sw.js                  the service worker; build.py fills in its version and file list
   manifest.webmanifest   the Home Screen app manifest
   icons/                 the Home Screen icons, drawn by tools/make_icons.py
@@ -63,6 +64,7 @@ compose.yaml             runs an Instance with Docker Compose
 tests/
   validate_data.py       data rules (also run by build.py)
   check_quotes.py        every manual_quote appears on its page
+  test_lessons.py        each Section's lesson against that Section's own rules, on the data alone
   test_app.py            clicks through the whole app in a headless browser, on the real server
   test_server.py         the server: headers, sign-in, records, the Helper's routes, server.manage
   test_build.py          what build.py writes and refuses

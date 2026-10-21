@@ -5,7 +5,8 @@ Reads the question bank (data/questions.json), the 12-section study plan
 (data/sections.json) and the groups of easily mixed-up facts (data/groups.json),
 checks them, and writes to dist/:
 
-- index.html      the page (src/app.html), with no questions in it
+- index.html      the page (src/app.html), with no questions in it and the drawing
+                  kit's part types (src/kit.json) written in
 - questions.json  the questions the page fetches when it starts
 - csp.json        the SHA-256 hash of the page's one inline script, for the
                   server's Content-Security-Policy header
@@ -107,6 +108,14 @@ def add_also(facts, qs):
             q["also"] = also
 
 
+def with_kit(page):
+    """The page with the drawing kit's part types (src/kit.json) written in place of its one __KIT__."""
+    if page.count("__KIT__") != 1:
+        sys.exit("The page must have __KIT__ exactly once, where the drawing kit's part types go.")
+    kit = json.loads((SRC / "kit.json").read_text(encoding="utf-8"))["parts"]
+    return page.replace("__KIT__", json.dumps(kit, separators=(",", ":")))
+
+
 # An on...= attribute inside a tag the script writes as a string, such as `<button onclick="...">`.
 HANDLER_IN_SCRIPT = re.compile(r"<[a-zA-Z][^<>]*?\son[a-z]+\s*=")
 
@@ -187,7 +196,7 @@ def main():
             print("  -", e)
         sys.exit(1)
     data = build_data()
-    page = opts.src.read_text(encoding="utf-8")
+    page = with_kit(opts.src.read_text(encoding="utf-8"))
     csp = {"script": script_hash(page)}
     out = opts.out
     out.mkdir(parents=True, exist_ok=True)

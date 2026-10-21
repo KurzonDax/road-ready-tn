@@ -8,7 +8,7 @@ How a Section's lesson (`data/lessons/section-N.json`) gets written, checked and
 2. **Write** the lesson as an Opus subagent with this document and the spec in its brief. Ten to fifteen questions: two or three cases that share the Section's principle, the principle named, the remaining facts, a closing principle. The principle in the middle is asked only when the situations share something worth naming that was not said; when they do not, as with Section 2's flashing lights, there is no middle principle and the closing question carries it.
 3. **Lint**: `python3 tests/validate_data.py` prints `OK`. The lint (`check_lesson_wording`) is the enforced form of the language rules below; a lesson that fails it does not build.
 4. **Audit** with a second Opus subagent that reads every question as the Learner will, against the checklists under Questions and Language, and edits the file. Then lint again.
-5. **Build and check**: `python3 build.py`, then `tests/test_app.py check_lessons` passes (run with a Python that has Playwright; `CHROMIUM_PATH` picks an installed Chromium).
+5. **Build and check**: `python3 tests/test_lessons.py` passes, with the Section's own checks added to it (its question forms, what its drawings show, its numbers; it needs no browser). Then `python3 build.py`, then `tests/test_app.py check_lessons` passes (run with a Python that has Playwright; `CHROMIUM_PATH` picks an installed Chromium).
 6. **Sheet**: `python3 tools/lesson_sheet.py N reports/lessons/section-N.html` writes the lesson as one page. Read the whole page yourself, every wrong path included, and fix what you find. Regenerate.
 7. **Hand over the sheet** to the owner. A lesson is reviewed as that page, never by tapping through the app. Done when he has the page and nothing on it breaks a rule below.
 
@@ -80,7 +80,7 @@ Each of these was built and taken out: a Set right after the lesson that asked t
 
 ## Done when
 
-- `python3 tests/validate_data.py` prints `OK` and `tests/test_app.py check_lessons` passes on the built page.
+- `python3 tests/validate_data.py` prints `OK`, `python3 tests/test_lessons.py` passes, and `tests/test_app.py check_lessons` passes on the built page.
 - Every one of the Section's ten facts is taught by a question whose answer agrees with the fact's `explanation`.
 - Every tap question asks who goes first and has exactly one target that does.
 - Every wrong path has been read in the sheet and its explanation answers the pick.
